@@ -19,6 +19,7 @@
   },
   "files": [
     "dist",
+    "README.md",
     "AGENTS.md"
   ],
   "scripts": {
@@ -35,6 +36,20 @@
     "@types/react": "^19.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
+  },
+  "author": "Jason Poindexter",
+  "keywords": [
+    "fabrk",
+    "design-system",
+    "themes",
+    "terminal",
+    "design-tokens",
+    "react",
+    "typescript"
+  ],
+  "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
   },
   "publishConfig": {
     "access": "public"

@@ -1,19 +1,76 @@
 /**
  * @fabrk/components
  *
- * 70+ production-ready UI components
- *
- * TODO: Extract components from fabrk-dev boilerplate
+ * 70+ production-ready UI components and charts
  */
 
-// UI Components (will be extracted from fabrk-dev)
-// export * from './ui/button'
-// export * from './ui/card'
-// ... all 70 components
+// UI Components
+export * from './ui/accordion'
+export * from './ui/alert'
+export * from './ui/alert-dialog'
+export * from './ui/avatar'
+export * from './ui/badge'
+export * from './ui/breadcrumb'
+export * from './ui/button'
+export * from './ui/calendar'
+export * from './ui/card'
+export * from './ui/checkbox'
+export * from './ui/code-block'
+export * from './ui/command'
+export * from './ui/container'
+export * from './ui/data-table'
+export * from './ui/date-picker'
+export * from './ui/dialog'
+export * from './ui/dropdown-menu'
+export * from './ui/empty-state'
+export * from './ui/form'
+export * from './ui/form-error'
+export * from './ui/heatmap'
+export * from './ui/input'
+export * from './ui/input-group'
+export * from './ui/input-number'
+export * from './ui/input-otp'
+export * from './ui/input-password'
+export * from './ui/input-search'
+export * from './ui/kpi-card'
+export * from './ui/label'
+export * from './ui/loading'
+export * from './ui/notification-badge'
+export * from './ui/notification-list'
+export * from './ui/pagination'
+export * from './ui/popover'
+export * from './ui/pricing-card'
+export * from './ui/progress'
+export * from './ui/radio-group'
+export * from './ui/scroll-area'
+export * from './ui/select'
+export * from './ui/separator'
+export * from './ui/sheet'
+export * from './ui/sidebar'
+export * from './ui/simple-icon'
+export * from './ui/slider'
+export * from './ui/stat-card'
+export * from './ui/styled-tabs'
+export * from './ui/switch'
+export * from './ui/table'
+export * from './ui/tabs'
+// Note: terminal-card exports are not included to avoid Badge naming conflict
+// Import directly from '@fabrk/components/ui/terminal-card' if needed
+export * from './ui/terminal-spinner'
+export * from './ui/textarea'
+export * from './ui/toaster'
+export * from './ui/tooltip'
+export * from './ui/typewriter'
 
 // Charts
-// export * from './charts/bar-chart'
-// export * from './charts/line-chart'
-// ... all 8 charts
+export * from './charts/area-chart'
+export * from './charts/bar-chart'
+export * from './charts/donut-chart'
+export * from './charts/funnel-chart'
+export * from './charts/gauge'
+export * from './charts/line-chart'
+export * from './charts/pie-chart'
+export * from './charts/sparkline'
 
-export const placeholder = 'Components will be extracted from fabrk-dev'
+// Utilities
+export { cn } from './lib/utils'

@@ -6,22 +6,26 @@ Welcome to the FABRK Framework repository! This is a fresh monorepo being built 
 
 FABRK Framework is designed to be the first UI framework built FOR AI coding agents (Claude Code, Cursor, GitHub Copilot, v0.dev). Instead of humans forking a boilerplate and customizing it, AI agents will install `@fabrk/components` and other packages to build apps in minutes.
 
-**Current Status:** Day 2 Complete ✅
-- Monorepo foundation is set up
-- All package structures are ready
-- Ready to extract code from fabrk-dev boilerplate
+**Current Status:** Day 5 Complete ✅
+- ✅ Monorepo foundation is set up
+- ✅ Component extraction complete (70+ components)
+- ✅ Design system extraction complete (18 terminal themes)
+- ✅ AI toolkit extraction complete (cost tracking, validation, integrations)
+- ✅ @fabrk/core framework runtime implemented
+- ✅ All 6 packages building cleanly with no warnings
+- Ready for templates and examples
 
 ## Repository Structure
 
 ```
 fabrk-framework/
 ├── packages/
-│   ├── core/              # @fabrk/core - Framework runtime
-│   ├── components/        # @fabrk/components - 70+ UI components (TO EXTRACT)
-│   ├── ai/                # @fabrk/ai - AI toolkit (TO EXTRACT)
-│   ├── design-system/     # @fabrk/design-system - Design tokens (TO EXTRACT)
-│   ├── config/            # @fabrk/config - Config builder (DONE)
-│   └── cli/               # create-fabrk-app - CLI tool (TO BUILD)
+│   ├── core/              # @fabrk/core - Framework runtime (✅ DONE)
+│   ├── components/        # @fabrk/components - 70+ UI components (✅ DONE)
+│   ├── ai/                # @fabrk/ai - AI toolkit (✅ DONE)
+│   ├── design-system/     # @fabrk/design-system - Design tokens (✅ DONE)
+│   ├── config/            # @fabrk/config - Config builder (✅ DONE)
+│   └── cli/               # create-fabrk-app - CLI tool (⏳ PLACEHOLDER)
 ├── templates/             # Starter templates (TO CREATE)
 ├── examples/              # Example apps (TO CREATE)
 ├── FULL_PLAN.md          # Complete 5-6 week transformation plan
@@ -39,30 +43,39 @@ This boilerplate has:
 - Design system in `src/design-system/`
 - 18 terminal themes with full design tokens
 
-## Next Steps (Day 3)
+## Next Steps (Day 6+)
 
-Your immediate task is to **extract the components package**:
+Your immediate task is to **create templates and examples**:
 
-1. **Copy all UI components**
+1. **Create starter templates**
    ```bash
-   # From fabrk-dev/src/components/ui/ → packages/components/src/ui/
-   # From fabrk-dev/src/components/charts/ → packages/components/src/charts/
+   # Basic template - minimal setup
+   templates/basic/
+
+   # AI-SaaS template - full AI features
+   templates/ai-saas/
+
+   # Dashboard template - analytics focus
+   templates/dashboard/
    ```
 
-2. **Update imports**
-   - Remove `@/` path aliases
-   - Make dependencies explicit
-   - Update to use `@fabrk/design-system`
-
-3. **Create barrel exports**
-   - `packages/components/src/index.ts` should export all components
-
-4. **Test build**
+2. **Create example applications**
    ```bash
-   cd packages/components
-   pnpm install
-   pnpm build
+   # Show real-world usage
+   examples/ai-cost-dashboard/
+   examples/chat-interface/
+   examples/analytics-platform/
    ```
+
+3. **Implement create-fabrk-app CLI**
+   - Scaffolding tool to generate projects from templates
+   - Interactive prompt for template selection
+   - Dependency installation and setup
+
+4. **Documentation**
+   - API reference for each package
+   - Component usage guides
+   - Migration guide from boilerplate
 
 ## Key Files to Read First
 
@@ -96,13 +109,19 @@ pnpm type-check
 pnpm clean
 ```
 
-## Goals
+## Completed Milestones
 
-**Week 1-2 Goal:** Extract all code from fabrk-dev into packages
-- Day 3: Extract components ← **YOU ARE HERE**
-- Day 4: Test component builds and exports
-- Day 5: Extract AI toolkit
-- Weekend: Extract design system
+**Week 1-2:** Extract all code from fabrk-dev into packages ✅
+- ✅ Day 3: Extract components (70+ UI components)
+- ✅ Day 4: Test component builds and exports
+- ✅ Day 5: Extract AI toolkit (cost tracking, validation, integrations)
+- ✅ Day 5: Extract design system (18 terminal themes, tokens, providers)
+- ✅ Day 5: Implement @fabrk/core framework runtime
+
+**Current Focus:** Templates and CLI tooling ← **YOU ARE HERE**
+- Create starter templates (basic, ai-saas, dashboard)
+- Build example applications
+- Implement create-fabrk-app scaffolding CLI
 
 **Final Goal:** Create a framework that enables this:
 

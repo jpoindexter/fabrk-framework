@@ -1,18 +1,17 @@
 {
-  "name": "fabrk-template-dashboard",
-  "version": "0.1.0",
+  "name": "fabrk-example-basic-usage",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@fabrk/components": "^0.1.0",
-    "@fabrk/core": "^0.1.0",
-    "@fabrk/design-system": "^0.1.0",
+    "@fabrk/components": "workspace:*",
+    "@fabrk/core": "workspace:*",
+    "@fabrk/design-system": "workspace:*",
     "next": "^15.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -21,14 +20,6 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "autoprefixer": "^10.4.20",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^15.1.0",
-    "postcss": "^8.4.49",
-    "tailwindcss": "^4.0.0",
     "typescript": "^5.3.3"
-  },
-  "engines": {
-    "node": ">=18.0.0"
   }
 }

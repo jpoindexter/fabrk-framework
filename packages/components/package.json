@@ -28,8 +28,8 @@
     "AGENTS.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --external react --external react-dom",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external react --external react-dom",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
@@ -38,7 +38,7 @@
   "peerDependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "^16.0.0"
+    "next": ">=14.0.0"
   },
   "dependencies": {
     "@fabrk/design-system": "workspace:*",

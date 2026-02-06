@@ -18,19 +18,21 @@
     "AGENTS.md"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
+    "next": ">=14.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "next": "^16.0.0"
+    "react-dom": "^19.0.0"
   },
   "dependencies": {
     "@fabrk/design-system": "workspace:*",
+    "clsx": "^2.1.0",
+    "tailwind-merge": "^2.2.1",
     "zod": "^3.22.4"
   },
   "devDependencies": {

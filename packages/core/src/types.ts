@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import type { Middleware } from './middleware'
+import type * as hooks from './hooks'
 
 /**
  * FABRK framework configuration schema
@@ -27,10 +29,6 @@ export type FabrkConfig = z.infer<typeof fabrkConfigSchema>
 
 export interface FabrkInstance {
   config: FabrkConfig
-  middleware: any // TODO: Define middleware type
-  providers: any // TODO: Define providers type
-  hooks: {
-    useCostTracking: () => any
-    useDesignSystem: () => any
-  }
+  middleware: Middleware
+  hooks: typeof hooks
 }

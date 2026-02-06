@@ -1,4 +1,6 @@
 import { FabrkConfig, FabrkInstance, fabrkConfigSchema } from './types'
+import { createMiddleware } from './middleware'
+import * as hooks from './hooks'
 
 /**
  * Create a FABRK framework instance
@@ -21,11 +23,7 @@ export function createFabrk(config: FabrkConfig = {}): FabrkInstance {
 
   return {
     config: validatedConfig,
-    middleware: {}, // TODO: Implement middleware
-    providers: {}, // TODO: Implement providers
-    hooks: {
-      useCostTracking: () => {}, // TODO: Implement hook
-      useDesignSystem: () => {}, // TODO: Implement hook
-    },
+    middleware: createMiddleware(),
+    hooks,
   }
 }

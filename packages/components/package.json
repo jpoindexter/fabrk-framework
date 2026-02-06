@@ -1,0 +1,67 @@
+{
+  "name": "@fabrk/components",
+  "version": "0.1.0",
+  "description": "70+ production-ready UI components for FABRK framework",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./ui/*": {
+      "import": "./dist/ui/*.mjs",
+      "require": "./dist/ui/*.js",
+      "types": "./dist/ui/*.d.ts"
+    },
+    "./charts/*": {
+      "import": "./dist/charts/*.mjs",
+      "require": "./dist/charts/*.js",
+      "types": "./dist/charts/*.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --external react --external react-dom",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch --external react --external react-dom",
+    "lint": "eslint src",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "generate-docs": "npx @jpoindexter/agent-smith --output AGENTS.md"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "next": "^16.0.0"
+  },
+  "dependencies": {
+    "@fabrk/design-system": "workspace:*",
+    "@radix-ui/react-slot": "^1.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.0",
+    "lucide-react": "^0.344.0",
+    "tailwind-merge": "^2.2.1",
+    "recharts": "^2.10.4"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "tailwindcss": "^4.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpoindexter/fabrk-framework.git",
+    "directory": "packages/components"
+  },
+  "license": "MIT"
+}

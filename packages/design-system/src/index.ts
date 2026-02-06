@@ -95,6 +95,24 @@ export {
 export type { ThemeName, ThemeUtils } from './themes';
 
 // =============================================================================
+// PROVIDER EXPORTS
+// =============================================================================
+
+export {
+  ThemeProvider,
+  useThemeContext,
+  useOptionalThemeContext,
+  ThemeScript,
+} from './providers';
+
+export type {
+  ThemeContextValue,
+  ThemeProviderProps,
+  ThemeScriptProps,
+  ColorThemeName,
+} from './providers';
+
+// =============================================================================
 // BACKWARDS COMPATIBILITY LAYER
 // =============================================================================
 // The following exports maintain compatibility with the 100+ components

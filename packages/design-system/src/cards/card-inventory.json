@@ -1,0 +1,730 @@
+{
+  "meta": {
+    "generatedAt": "2025-12-06",
+    "totalCards": 50,
+    "version": "1.0.0"
+  },
+  "cards": [
+    {
+      "id": "base-card",
+      "name": "Card",
+      "filePath": "src/components/ui/card.tsx",
+      "type": "component",
+      "role": "base",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "varies by subcomponent (p-6 header, px-6 pb-6 content)",
+        "radius": "mode.radius"
+      },
+      "status": "canonical",
+      "notes": "Base card component with CardHeader, CardTitle, CardDescription, CardContent, CardFooter. Semantic element support (div/article/section)."
+    },
+    {
+      "id": "styled-card",
+      "name": "StyledCard",
+      "filePath": "src/components/ui/card.tsx",
+      "type": "component",
+      "role": "terminal-container",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border border-border",
+        "padding": "none (wrapper only)",
+        "radius": "mode.radius"
+      },
+      "status": "canonical",
+      "notes": "Terminal-style card container. Works with StyledCardHeader."
+    },
+    {
+      "id": "styled-card-header",
+      "name": "StyledCardHeader",
+      "filePath": "src/components/ui/card.tsx",
+      "type": "component",
+      "role": "terminal-header",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "none",
+        "border": "border-b border-border",
+        "padding": "px-4 py-2",
+        "radius": "none"
+      },
+      "status": "canonical",
+      "notes": "Terminal header with [ [0xXX] TITLE ] format. Supports optional icon."
+    },
+    {
+      "id": "features-card",
+      "name": "FeaturesCard",
+      "filePath": "src/components/ui/card.tsx",
+      "type": "component",
+      "role": "feature-list",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "canonical",
+      "notes": "Complete feature list card. Props: title, code, features[], note."
+    },
+    {
+      "id": "code-output",
+      "name": "CodeOutput",
+      "filePath": "src/components/ui/card.tsx",
+      "type": "component",
+      "role": "code-display",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "canonical",
+      "notes": "Code/CLI output display card."
+    },
+    {
+      "id": "kpi-card",
+      "name": "KpiCard",
+      "filePath": "src/components/ui/kpi-card.tsx",
+      "type": "component",
+      "role": "metric",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "KPI metric card. Missing terminal header pattern."
+    },
+    {
+      "id": "stat-card",
+      "name": "StatCard",
+      "filePath": "src/components/ui/stat-card.tsx",
+      "type": "component",
+      "role": "metric",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "alias-for-kpi",
+      "notes": "Alias for KpiCard."
+    },
+    {
+      "id": "docs-card",
+      "name": "DocsCard",
+      "filePath": "src/components/docs/blocks/docs-card.tsx",
+      "type": "component",
+      "role": "documentation",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border border-border",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Documentation card with terminal header."
+    },
+    {
+      "id": "docs-link-card",
+      "name": "DocsLinkCard",
+      "filePath": "src/components/docs/blocks/docs-link-card.tsx",
+      "type": "component",
+      "role": "navigation",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border border-border hover:border-primary/50",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Clickable navigation card for docs."
+    },
+    {
+      "id": "member-card",
+      "name": "MemberCard",
+      "filePath": "src/components/ui/member-card.tsx",
+      "type": "component",
+      "role": "profile",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6 / p-4 compact",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Member profile card with variants."
+    },
+    {
+      "id": "org-card",
+      "name": "OrgCard",
+      "filePath": "src/components/organization/org-card.tsx",
+      "type": "component",
+      "role": "organization",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Organization card with active state."
+    },
+    {
+      "id": "admin-metrics-card",
+      "name": "AdminMetricsCard",
+      "filePath": "src/components/admin/admin-metrics-card.tsx",
+      "type": "component",
+      "role": "metric",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "variant colors",
+        "border": "variant borders",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Metric card with 5 color variants."
+    },
+    {
+      "id": "security-password-card",
+      "name": "SecurityPasswordCard",
+      "filePath": "src/components/security/security-password-card.tsx",
+      "type": "component",
+      "role": "security-settings",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Password management card."
+    },
+    {
+      "id": "security-2fa-card",
+      "name": "Security2FACard",
+      "filePath": "src/components/security/security-2fa-card.tsx",
+      "type": "component",
+      "role": "security-settings",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Two-factor authentication card."
+    },
+    {
+      "id": "security-accounts-card",
+      "name": "SecurityAccountsCard",
+      "filePath": "src/components/security/security-accounts-card.tsx",
+      "type": "component",
+      "role": "security-settings",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Connected accounts card."
+    },
+    {
+      "id": "security-sessions-card",
+      "name": "SecuritySessionsCard",
+      "filePath": "src/components/security/security-sessions-card.tsx",
+      "type": "component",
+      "role": "security-settings",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Active sessions card."
+    },
+    {
+      "id": "security-recommendations-card",
+      "name": "SecurityRecommendationsCard",
+      "filePath": "src/components/security/security-recommendations-card.tsx",
+      "type": "component",
+      "role": "security-settings",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-accent/30",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Security recommendations with accent background."
+    },
+    {
+      "id": "license-card",
+      "name": "LicenseCard",
+      "filePath": "src/components/dashboard/purchase-status/license-card.tsx",
+      "type": "component",
+      "role": "purchase-status",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "License key display card."
+    },
+    {
+      "id": "access-card",
+      "name": "AccessCard",
+      "filePath": "src/components/dashboard/purchase-status/access-card.tsx",
+      "type": "component",
+      "role": "purchase-status",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "conditional border color",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Product access status card."
+    },
+    {
+      "id": "resources-card",
+      "name": "ResourcesCard",
+      "filePath": "src/components/dashboard/purchase-status/resources-card.tsx",
+      "type": "component",
+      "role": "purchase-status",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Resources & support links card."
+    },
+    {
+      "id": "feature-category-card",
+      "name": "FeatureCategoryCard",
+      "filePath": "src/app/features/components/feature-category-card.tsx",
+      "type": "component",
+      "role": "feature-showcase",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4 lg:p-6",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Feature showcase with animated entry."
+    },
+    {
+      "id": "payment-methods-card",
+      "name": "PaymentMethodsCard",
+      "filePath": "src/app/templates/billing-dashboard/components/payment-methods-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Payment methods management."
+    },
+    {
+      "id": "recent-invoices-card",
+      "name": "RecentInvoicesCard",
+      "filePath": "src/app/templates/billing-dashboard/components/recent-invoices-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Recent invoices list."
+    },
+    {
+      "id": "usage-metrics-card",
+      "name": "UsageMetricsCard",
+      "filePath": "src/app/templates/billing-dashboard/components/usage-metrics-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Usage statistics with progress bars."
+    },
+    {
+      "id": "current-plan-card-template",
+      "name": "CurrentPlanCard (Template)",
+      "filePath": "src/app/templates/billing-dashboard/components/current-plan-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-primary border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Active subscription details."
+    },
+    {
+      "id": "plan-cards",
+      "name": "PlanCards",
+      "filePath": "src/app/templates/billing-dashboard/components/plan-cards.tsx",
+      "type": "component",
+      "role": "pricing",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "conditional (current: border-primary)",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Plan options grid."
+    },
+    {
+      "id": "pricing-cards",
+      "name": "PricingCards",
+      "filePath": "src/app/templates/pricing-page/components/pricing-cards.tsx",
+      "type": "component",
+      "role": "pricing",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "conditional (featured: border-primary)",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Pricing template cards."
+    },
+    {
+      "id": "result-card",
+      "name": "ResultCard",
+      "filePath": "src/app/templates/search-results/components/result-card.tsx",
+      "type": "component",
+      "role": "search",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card hover:bg-muted/30",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Search result card."
+    },
+    {
+      "id": "metric-cards",
+      "name": "MetricCards",
+      "filePath": "src/app/templates/analytics-dashboard/components/metric-cards.tsx",
+      "type": "component",
+      "role": "metric",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Analytics metrics grid."
+    },
+    {
+      "id": "activity-feed",
+      "name": "ActivityFeed",
+      "filePath": "src/app/templates/analytics-dashboard/components/activity-feed.tsx",
+      "type": "component",
+      "role": "activity",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "migrated",
+      "notes": "Activity log card."
+    },
+    {
+      "id": "current-plan-card-org",
+      "name": "CurrentPlanCard (Org)",
+      "filePath": "src/app/(dashboard)/organizations/[slug]/billing/components/current-plan-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Organization billing plan card."
+    },
+    {
+      "id": "billing-history-card",
+      "name": "BillingHistoryCard",
+      "filePath": "src/app/(dashboard)/organizations/[slug]/billing/components/billing-history-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Invoice history table card."
+    },
+    {
+      "id": "usage-stats-card",
+      "name": "UsageStatsCard",
+      "filePath": "src/app/(dashboard)/organizations/[slug]/billing/components/usage-stats-card.tsx",
+      "type": "component",
+      "role": "billing",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Resource usage card."
+    },
+    {
+      "id": "role-permissions-card",
+      "name": "RolePermissionsCard",
+      "filePath": "src/app/(dashboard)/organizations/[slug]/members/components/role-permissions-card.tsx",
+      "type": "component",
+      "role": "permissions",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Role permissions grid."
+    },
+    {
+      "id": "stats-cards-dashboard",
+      "name": "StatsCards (Dashboard)",
+      "filePath": "src/app/(dashboard)/dashboard/components/stats-cards.tsx",
+      "type": "inline-jsx",
+      "role": "metric",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Dashboard stats grid using Card + StyledCardHeader."
+    },
+    {
+      "id": "stats-cards-team",
+      "name": "StatsCards (Team)",
+      "filePath": "src/app/templates/team-dashboard/components/stats-cards.tsx",
+      "type": "inline-jsx",
+      "role": "metric",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "needs-terminal-header",
+      "notes": "Team dashboard stats."
+    },
+    {
+      "id": "stats-cards-users",
+      "name": "StatsCards (Users)",
+      "filePath": "src/app/templates/user-management/components/stats-cards.tsx",
+      "type": "inline-jsx",
+      "role": "metric",
+      "hasTerminalHeader": false,
+      "headerPattern": "none",
+      "styles": {
+        "background": "bg-card",
+        "border": "border-border border",
+        "padding": "p-4",
+        "radius": "none"
+      },
+      "status": "needs-terminal-header",
+      "notes": "User management stats."
+    },
+    {
+      "id": "account-status",
+      "name": "AccountStatus",
+      "filePath": "src/app/(dashboard)/dashboard/components/account-status.tsx",
+      "type": "component",
+      "role": "status",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Account status with nested inline cards."
+    },
+    {
+      "id": "recent-activity",
+      "name": "RecentActivity",
+      "filePath": "src/app/(dashboard)/dashboard/components/recent-activity.tsx",
+      "type": "component",
+      "role": "activity",
+      "hasTerminalHeader": true,
+      "headerPattern": "style-b",
+      "styles": {
+        "background": "bg-card",
+        "border": "border",
+        "padding": "p-6",
+        "radius": "mode.radius"
+      },
+      "status": "migrated",
+      "notes": "Recent activity feed."
+    }
+  ],
+  "inlineCards": [
+    {
+      "id": "landing-hero-status",
+      "name": "Hero Status Card",
+      "filePath": "src/components/landing/hero-section.tsx",
+      "headerPattern": "style-a",
+      "notes": "Inline hero status card with dashes pattern."
+    },
+    {
+      "id": "features-hero-status",
+      "name": "Features Hero Status",
+      "filePath": "src/app/features/components/features-hero.tsx",
+      "headerPattern": "style-a",
+      "notes": "Inline hero status card."
+    },
+    {
+      "id": "about-hero-mission",
+      "name": "About Hero Mission",
+      "filePath": "src/app/about/components/about-hero.tsx",
+      "headerPattern": "style-a",
+      "notes": "Inline mission statement card."
+    },
+    {
+      "id": "grid-cards-landing",
+      "name": "Grid Cards (Landing)",
+      "filePaths": [
+        "src/components/landing/enterprise-features-section.tsx",
+        "src/components/landing/quality-section.tsx",
+        "src/components/landing/developer-experience-section.tsx",
+        "src/components/landing/tech-stack.tsx",
+        "src/components/landing/stats-section.tsx",
+        "src/components/landing/testimonials-section.tsx"
+      ],
+      "headerPattern": "style-b",
+      "notes": "Grid cards in landing sections with terminal headers."
+    },
+    {
+      "id": "grid-cards-features",
+      "name": "Grid Cards (Features)",
+      "filePaths": [
+        "src/app/features/components/tech-stack-section.tsx",
+        "src/app/features/components/quality-section.tsx",
+        "src/app/features/components/stats-section.tsx"
+      ],
+      "headerPattern": "style-b",
+      "notes": "Grid cards in features page."
+    },
+    {
+      "id": "grid-cards-about",
+      "name": "Grid Cards (About)",
+      "filePaths": [
+        "src/app/about/components/values-section.tsx",
+        "src/app/about/components/why-choose-section.tsx"
+      ],
+      "headerPattern": "style-b",
+      "notes": "Grid cards in about page."
+    }
+  ]
+}

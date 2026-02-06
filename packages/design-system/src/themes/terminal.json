@@ -1,0 +1,62 @@
+{
+  "$schema": "../spec/tokens.json",
+  "name": "terminal",
+  "description": "Sharp, developer-focused aesthetic inspired by CLI tools",
+  "version": "2.0.0",
+  "status": "FROZEN",
+
+  "radius": {
+    "button": "0",
+    "input": "0",
+    "card": "0",
+    "modal": "0",
+    "badge": "0.125rem",
+    "avatar": "0"
+  },
+
+  "shadow": {
+    "card": "none",
+    "dropdown": "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+    "modal": "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+    "button": "none"
+  },
+
+  "font": {
+    "body": "var(--font-mono)",
+    "heading": "var(--font-mono)",
+    "code": "var(--font-mono)",
+    "ui": "var(--font-mono)"
+  },
+
+  "textTransform": {
+    "button": "uppercase",
+    "label": "uppercase",
+    "heading": "uppercase"
+  },
+
+  "classes": {
+    "radius": "rounded-none",
+    "font": "font-mono",
+    "text": "uppercase",
+    "cardHeader": "font-mono text-xs text-muted-foreground",
+    "label": "font-mono text-xs text-muted-foreground uppercase",
+    "button": "rounded-none font-mono uppercase",
+    "input": "rounded-none font-mono border-border",
+    "card": "rounded-none border border-border",
+    "badge": "rounded-none font-mono text-xs uppercase"
+  },
+
+  "formatting": {
+    "buttonPrefix": "> ",
+    "labelFormat": "brackets",
+    "cardHeader": "bracketed",
+    "statusFormat": "brackets"
+  },
+
+  "examples": {
+    "button": "> SAVE_CHANGES",
+    "label": "[EMAIL]:",
+    "cardHeader": "[ [0x00] SETTINGS ]",
+    "status": "[ACTIVE]"
+  }
+}

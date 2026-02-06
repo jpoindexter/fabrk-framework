@@ -2,46 +2,100 @@
 node_modules/
 .pnp
 .pnp.js
+.yarn/
+.npm/
 
 # Testing
 coverage/
 *.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.nyc_output/
+test-results/
+playwright-report/
 
 # Build outputs
 dist/
 build/
 .next/
 out/
+*.tsbuildinfo
+.turbo/
+tsconfig.tsbuildinfo
 
-# Environment
+# Next.js
+.next/
+out/
+.vercel/
+.swc/
+
+# Environment variables
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env*.local
+*.env.backup
 
-# IDE
+# IDE & Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+.history/
 
 # OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-
-# Turbo
-.turbo/
+Desktop.ini
 
 # Package managers
 # pnpm-lock.yaml should be committed in monorepos
 yarn.lock
 package-lock.json
+# But ignore lock files in templates (they regenerate on install)
+templates/*/pnpm-lock.yaml
+templates/*/yarn.lock
+templates/*/package-lock.json
 
 # Claude Code
 .claude/
+*.claude.log
 
-# Misc
-*.tsbuildinfo
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
 .cache/
+.parcel-cache/
+
+# Changesets
 .changeset/*.md
 !.changeset/README.md
+!.changeset/config.json
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+
+# Misc
+.eslintcache
+*.seed
+*.pid
+*.pid.lock

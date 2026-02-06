@@ -1,0 +1,91 @@
+# Claude Code Ignore
+# Files and directories that Claude Code should not index or read
+
+# Dependencies - never need to read these
+node_modules/
+.pnp/
+.pnp.js
+.yarn/
+.npm/
+
+# Build outputs - generated files
+dist/
+build/
+out/
+.next/
+.turbo/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Lock files - too large and not useful for AI
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+templates/*/pnpm-lock.yaml
+templates/*/yarn.lock
+templates/*/package-lock.json
+
+# Test coverage - generated reports
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Logs - too noisy
+*.log
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache directories
+.cache/
+.parcel-cache/
+.eslintcache
+.turbo/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+Desktop.ini
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files - may contain secrets
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+.tmp/
+
+# Large generated files
+*.map
+*.min.js
+*.bundle.js
+
+# Git internals
+.git/
+.gitattributes
+
+# Claude internal
+.claude/
+
+# Specific large/noisy files in dependencies
+**/node_modules/**
+**/dist/**
+**/.next/**
+**/build/**
+**/coverage/**

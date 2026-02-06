@@ -13,7 +13,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "AGENTS.md"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
@@ -28,6 +30,19 @@
   "devDependencies": {
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
+  },
+  "author": "Jason Poindexter",
+  "keywords": [
+    "fabrk",
+    "config",
+    "configuration",
+    "type-safe",
+    "zod",
+    "typescript"
+  ],
+  "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
   },
   "publishConfig": {
     "access": "public"

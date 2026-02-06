@@ -21,12 +21,14 @@
     "test": "turbo run test",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
+    "generate-docs": "agent-smith --output AGENTS.md",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build && changeset publish"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
+    "@jpoindexter/agent-smith": "^1.0.1",
     "prettier": "^3.2.5",
     "turbo": "^1.12.4",
     "typescript": "^5.3.3"

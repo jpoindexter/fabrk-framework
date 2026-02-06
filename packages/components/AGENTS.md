@@ -30,7 +30,7 @@ npm run dev
 | **Class Utility** | `cn()` from `@/lib/utils` |
 | **Components** | 0 |
 | **Patterns** | 2 detected |
-| **Codebase** | 76 files, 10,386 lines |
+| **Codebase** | 77 files, 10,486 lines |
 
 ## Critical Rules
 

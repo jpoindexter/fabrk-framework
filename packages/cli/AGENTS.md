@@ -25,7 +25,7 @@ npm run dev
 | **Framework** | Unknown |
 | **Language** | TypeScript |
 | **Components** | 0 |
-| **Codebase** | 3 files, 243 lines |
+| **Codebase** | 34 files, 1,698 lines |
 
 ## Critical Rules
 

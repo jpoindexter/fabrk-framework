@@ -33,10 +33,15 @@ Thumbs.db
 .turbo/
 
 # Package managers
-pnpm-lock.yaml
+# pnpm-lock.yaml should be committed in monorepos
 yarn.lock
 package-lock.json
+
+# Claude Code
+.claude/
 
 # Misc
 *.tsbuildinfo
 .cache/
+.changeset/*.md
+!.changeset/README.md

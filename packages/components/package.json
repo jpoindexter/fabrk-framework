@@ -7,19 +7,19 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./ui/*": {
+      "types": "./dist/ui/*.d.ts",
       "import": "./dist/ui/*.mjs",
-      "require": "./dist/ui/*.js",
-      "types": "./dist/ui/*.d.ts"
+      "require": "./dist/ui/*.js"
     },
     "./charts/*": {
+      "types": "./dist/charts/*.d.ts",
       "import": "./dist/charts/*.mjs",
-      "require": "./dist/charts/*.js",
-      "types": "./dist/charts/*.d.ts"
+      "require": "./dist/charts/*.js"
     }
   },
   "files": [

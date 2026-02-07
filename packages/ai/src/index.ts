@@ -520,3 +520,34 @@ export {
   openai,
   vercelAI,
 } from './integrations';
+
+// Streaming utilities
+export {
+  streamToString as streamTextToString,
+  parseStreamChunks,
+  createTextStream,
+  mergeStreams,
+  transformStream,
+  toReadableStream,
+  fromReadableStream,
+} from './streaming/stream-text';
+
+// Prompt management
+export {
+  // Types
+  type PromptTemplate,
+  // Functions
+  createPromptTemplate,
+  composePrompts,
+  createMessagePair,
+} from './prompts/template';
+
+export {
+  // Types
+  type BuiltPrompt,
+  // Classes
+  PromptBuilder,
+} from './prompts/builder';
+
+// Prisma cost store (reference implementation)
+export { PrismaCostStore } from './cost-store-prisma';

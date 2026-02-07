@@ -1,13 +1,17 @@
 /**
  * Provider components for FABRK framework
  *
- * Wraps design system theme provider and other framework providers.
+ * Wraps design system theme provider and framework context providers.
  */
 
 'use client';
 
-import { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { ThemeProvider, type ColorThemeName } from '@fabrk/design-system';
+import { FabrkContextProvider } from './context';
+import { PluginRegistry } from './plugins';
+import type { FabrkConfig } from './types';
+import { fabrkConfigSchema } from './types';
 
 export interface FabrkProviderProps {
   /** Child components */
@@ -16,6 +20,10 @@ export interface FabrkProviderProps {
   defaultColorTheme?: ColorThemeName;
   /** Storage key prefix for theme persistence */
   storageKeyPrefix?: string;
+  /** Framework configuration */
+  config?: FabrkConfig;
+  /** Pre-configured plugin registry */
+  registry?: PluginRegistry;
 }
 
 /**
@@ -23,6 +31,7 @@ export interface FabrkProviderProps {
  *
  * Wraps all framework providers including:
  * - ThemeProvider - Design system color theme management
+ * - FabrkContext - Plugin registry and framework config
  *
  * @example
  * ```tsx
@@ -40,19 +49,44 @@ export interface FabrkProviderProps {
  *     </html>
  *   )
  * }
+ *
+ * // With plugins
+ * import { FabrkProvider, PluginRegistry } from '@fabrk/core'
+ *
+ * const registry = new PluginRegistry()
+ * registry.register('payment', stripeAdapter)
+ * registry.register('auth', nextAuthAdapter)
+ *
+ * export default function RootLayout({ children }) {
+ *   return (
+ *     <FabrkProvider
+ *       config={{ payments: { provider: 'stripe' } }}
+ *       registry={registry}
+ *     >
+ *       {children}
+ *     </FabrkProvider>
+ *   )
+ * }
  * ```
  */
 export function FabrkProvider({
   children,
   defaultColorTheme = 'green',
   storageKeyPrefix = 'fabrk-theme',
+  config = {},
+  registry: externalRegistry,
 }: FabrkProviderProps) {
+  const validatedConfig = useMemo(() => fabrkConfigSchema.parse(config), [config]);
+  const registry = useMemo(() => externalRegistry ?? new PluginRegistry(), [externalRegistry]);
+
   return (
     <ThemeProvider
       defaultColorTheme={defaultColorTheme}
       storageKeyPrefix={storageKeyPrefix}
     >
-      {children}
+      <FabrkContextProvider config={validatedConfig} registry={registry}>
+        {children}
+      </FabrkContextProvider>
     </ThemeProvider>
   );
 }

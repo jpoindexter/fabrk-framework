@@ -4,16 +4,20 @@
  * Persists AI cost events to the database for long-term tracking.
  * Use this in production instead of the in-memory store.
  *
+ * This is a reference implementation. Users must provide their own
+ * Prisma client instance since @fabrk/ai does not depend on Prisma.
+ *
  * @example
- * import { PrismaCostStore } from '@/lib/ai/cost-store-prisma'
- * import { AICostTracker, setCostStore } from '@/lib/ai/cost'
+ * ```ts
+ * import { PrismaCostStore } from '@fabrk/ai'
+ * import { setCostStore } from '@fabrk/ai'
+ * import { prisma } from './lib/prisma' // Your Prisma instance
  *
  * // At app startup:
- * setCostStore(new PrismaCostStore())
+ * setCostStore(new PrismaCostStore(prisma))
+ * ```
  */
 
-import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@/generated/prisma/client';
 import type {
   AICostEvent,
   CostStore,
@@ -21,9 +25,14 @@ import type {
   FeatureCost,
 } from './cost';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
+type PrismaClient = any;
+
 export class PrismaCostStore implements CostStore {
+  constructor(private prisma: PrismaClient) {}
+
   async save(event: AICostEvent): Promise<void> {
-    await prisma.aICostEvent.create({
+    await this.prisma.aICostEvent.create({
       data: {
         id: event.id,
         timestamp: event.timestamp,
@@ -39,7 +48,7 @@ export class PrismaCostStore implements CostStore {
         errorMessage: event.errorMessage,
         durationMs: event.durationMs,
         userId: event.userId,
-        metadata: event.metadata as Prisma.InputJsonValue | undefined,
+        metadata: event.metadata,
       },
     });
   }
@@ -52,7 +61,7 @@ export class PrismaCostStore implements CostStore {
     model?: string;
     provider?: string;
   }): Promise<AICostEvent[]> {
-    const events = await prisma.aICostEvent.findMany({
+    const events = await this.prisma.aICostEvent.findMany({
       where: {
         feature: filters.feature,
         model: filters.model,
@@ -66,21 +75,21 @@ export class PrismaCostStore implements CostStore {
       orderBy: { timestamp: 'desc' },
     });
 
-    return events.map((e) => ({
-      id: e.id,
-      timestamp: e.timestamp,
-      model: e.model,
+    return events.map((e: Record<string, unknown>) => ({
+      id: e.id as string,
+      timestamp: e.timestamp as Date,
+      model: e.model as string,
       provider: e.provider as AICostEvent['provider'],
-      promptTokens: e.promptTokens,
-      completionTokens: e.completionTokens,
-      totalTokens: e.totalTokens,
-      costUSD: e.costUSD,
-      feature: e.feature,
-      prompt: e.prompt ?? undefined,
-      success: e.success,
-      errorMessage: e.errorMessage ?? undefined,
-      durationMs: e.durationMs,
-      userId: e.userId ?? undefined,
+      promptTokens: e.promptTokens as number,
+      completionTokens: e.completionTokens as number,
+      totalTokens: e.totalTokens as number,
+      costUSD: e.costUSD as number,
+      feature: e.feature as string,
+      prompt: (e.prompt as string) ?? undefined,
+      success: e.success as boolean,
+      errorMessage: (e.errorMessage as string) ?? undefined,
+      durationMs: e.durationMs as number,
+      userId: (e.userId as string) ?? undefined,
       metadata: e.metadata as Record<string, unknown> | undefined,
     }));
   }
@@ -93,20 +102,9 @@ export class PrismaCostStore implements CostStore {
       userId?: string;
     }
   ): Promise<CostSummary[]> {
-    // Use raw query for date truncation
-    const truncFn = this.getDateTruncFn(period);
+    const truncFn = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
 
-    const results = await prisma.$queryRaw<
-      Array<{
-        date: Date;
-        total_cost: number;
-        total_tokens: bigint;
-        request_count: bigint;
-        success_count: bigint;
-        error_count: bigint;
-        avg_duration_ms: number;
-      }>
-    >`
+    const results = await this.prisma.$queryRaw`
       SELECT
         DATE_TRUNC(${truncFn}, timestamp) as date,
         SUM("costUSD") as total_cost,
@@ -124,8 +122,8 @@ export class PrismaCostStore implements CostStore {
       ORDER BY date DESC
     `;
 
-    return results.map((r) => ({
-      date: r.date.toISOString().split('T')[0],
+    return (results as Array<Record<string, unknown>>).map((r) => ({
+      date: (r.date as Date).toISOString().split('T')[0],
       totalCost: Number(r.total_cost),
       totalTokens: Number(r.total_tokens),
       requestCount: Number(r.request_count),
@@ -140,16 +138,7 @@ export class PrismaCostStore implements CostStore {
     endDate?: Date;
     userId?: string;
   }): Promise<FeatureCost[]> {
-    const results = await prisma.$queryRaw<
-      Array<{
-        feature: string;
-        total_cost: number;
-        call_count: bigint;
-        total_tokens: bigint;
-        success_count: bigint;
-        last_used: Date;
-      }>
-    >`
+    const results = await this.prisma.$queryRaw`
       SELECT
         feature,
         SUM("costUSD") as total_cost,
@@ -166,42 +155,20 @@ export class PrismaCostStore implements CostStore {
       ORDER BY total_cost DESC
     `;
 
-    return results.map((r) => {
+    return (results as Array<Record<string, unknown>>).map((r) => {
       const callCount = Number(r.call_count);
       const totalCost = Number(r.total_cost);
       const successCount = Number(r.success_count);
 
       return {
-        feature: r.feature,
+        feature: r.feature as string,
         totalCost,
         callCount,
         avgCostPerCall: callCount > 0 ? totalCost / callCount : 0,
         totalTokens: Number(r.total_tokens),
         successRate: callCount > 0 ? successCount / callCount : 0,
-        lastUsed: r.last_used,
+        lastUsed: r.last_used as Date,
       };
     });
   }
-
-  private getDateTruncFn(period: 'daily' | 'weekly' | 'monthly'): string {
-    switch (period) {
-      case 'daily':
-        return 'day';
-      case 'weekly':
-        return 'week';
-      case 'monthly':
-        return 'month';
-    }
-  }
-}
-
-/**
- * Initialize cost tracking with Prisma store
- * Call this at app startup
- */
-export function initializeCostTracking(): void {
-  // Dynamic import to avoid circular dependencies
-  import('./cost').then(({ setCostStore }) => {
-    setCostStore(new PrismaCostStore());
-  });
 }

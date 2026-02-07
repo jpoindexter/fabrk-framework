@@ -1,0 +1,56 @@
+{
+  "name": "@fabrk/referrals",
+  "version": "0.1.0",
+  "description": "Referral and affiliate marketing system for FABRK framework",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fabrk/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "author": "Jason Poindexter",
+  "keywords": [
+    "fabrk",
+    "referrals",
+    "affiliate",
+    "tracking",
+    "commissions",
+    "ai-coding"
+  ],
+  "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpoindexter/fabrk-framework.git",
+    "directory": "packages/referrals"
+  },
+  "license": "MIT"
+}

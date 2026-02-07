@@ -62,6 +62,22 @@ export * from './ui/toaster'
 export * from './ui/tooltip'
 export * from './ui/typewriter'
 
+// New UI Components (extracted from indx)
+export * from './ui/tag'
+export * from './ui/segmented-control'
+export * from './ui/status-pulse'
+export * from './ui/ascii-progress-bar'
+export * from './ui/log-stream'
+export * from './ui/token-counter'
+export * from './ui/usage-bar'
+export * from './ui/json-viewer'
+export * from './ui/star-rating'
+export * from './ui/nps-survey'
+export * from './ui/feedback-widget'
+export * from './ui/upgrade-cta'
+export * from './ui/cookie-consent'
+export * from './ui/onboarding-checklist'
+
 // Charts
 export * from './charts/area-chart'
 export * from './charts/bar-chart'

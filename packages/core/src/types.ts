@@ -70,4 +70,12 @@ export interface FabrkInstance {
   middleware: Middleware
   hooks: typeof hooks
   registry: PluginRegistry
+  /** Auto-wired feature modules (available after autoWire()) */
+  features?: {
+    notifications: unknown
+    teams: unknown
+    featureFlags: unknown
+    webhooks: unknown
+    jobs: unknown
+  }
 }

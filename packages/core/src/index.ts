@@ -5,7 +5,15 @@
  */
 
 // Framework
-export * from './framework'
+export { createFabrk, initFabrk } from './framework'
+export type { CreateFabrkOptions } from './framework'
+
+// Auto-wiring
+export { autoWire } from './auto-wire'
+export type { AutoWireResult, FeatureModules, AdapterOverrides } from './auto-wire'
+
+// Defaults
+export { isDev, applyDevDefaults } from './defaults'
 export * from './middleware'
 export * from './middleware-presets'
 export * from './hooks'
@@ -34,3 +42,27 @@ export type { WebhookManager } from './webhooks/manager'
 
 export { createJobQueue } from './jobs/queue'
 export type { JobQueue } from './jobs/queue'
+
+// Validation utilities
+export {
+  // Types
+  type Severity,
+  type ValidationIssue,
+  type ValidationReport,
+  type ValidatorOptions,
+  type ComponentMeta,
+  type ComponentRegistry,
+  // Validators
+  checkHardcodedColors,
+  checkInlineStyles,
+  checkEvalUsage,
+  checkDangerousHTML,
+  checkHardcodedSecrets,
+  checkAccessibility,
+  validateFile,
+  // Registry
+  createComponentRegistry,
+  // Report
+  generateReport,
+  formatReport,
+} from './validation'

@@ -12,6 +12,7 @@
   "dependencies": {
     "@fabrk/ai": "^0.1.0",
     "@fabrk/components": "^0.1.0",
+    "@fabrk/config": "^0.1.0",
     "@fabrk/core": "^0.1.0",
     "@fabrk/design-system": "^0.1.0",
     "@ai-sdk/openai": "^1.0.0",

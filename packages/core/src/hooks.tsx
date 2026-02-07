@@ -348,22 +348,32 @@ export function useBilling() {
 // ============================================================================
 
 /**
- * Access team/organization data (placeholder — fully implemented in Phase 3)
+ * Access the team/organization manager
+ *
+ * Returns the TeamManager from auto-wired features, or null if teams
+ * aren't enabled in config.
  *
  * @example
  * ```tsx
  * function TeamPage() {
- *   const team = useTeam()
- *   return <h1>{team?.name ?? 'No team'}</h1>
+ *   const { manager, enabled } = useTeam()
+ *   if (!manager) return <p>Teams not enabled</p>
+ *
+ *   const handleCreate = async () => {
+ *     await manager.createOrg({ name: 'My Team', slug: 'my-team', ownerId: 'user_1' })
+ *   }
+ *
+ *   return <button onClick={handleCreate}>&gt; CREATE TEAM</button>
  * }
  * ```
  */
 export function useTeam() {
   const fabrk = useOptionalFabrk();
-  const config = fabrk?.config;
+  const manager = fabrk?.features?.teams ?? null;
 
   return {
-    enabled: config?.teams?.enabled ?? false,
+    enabled: !!manager,
+    manager,
   };
 }
 
@@ -412,23 +422,37 @@ export function useAPIKeys() {
 // ============================================================================
 
 /**
- * Notification state hook (placeholder — fully implemented in Phase 3)
+ * Access the notification manager
+ *
+ * Returns the NotificationManager from auto-wired features, providing
+ * methods to send, read, and subscribe to notifications.
  *
  * @example
  * ```tsx
  * function NotificationBell() {
- *   const { enabled } = useNotifications()
- *   if (!enabled) return null
- *   return <BellIcon />
+ *   const { manager, enabled } = useNotifications()
+ *   if (!manager) return null
+ *
+ *   const handleSend = async () => {
+ *     await manager.notify({
+ *       type: 'info',
+ *       title: 'Welcome',
+ *       message: 'You have new updates',
+ *       userId: 'user_1',
+ *     })
+ *   }
+ *
+ *   return <button onClick={handleSend}>&gt; NOTIFY</button>
  * }
  * ```
  */
 export function useNotifications() {
   const fabrk = useOptionalFabrk();
-  const config = fabrk?.config;
+  const manager = fabrk?.features?.notifications ?? null;
 
   return {
-    enabled: config?.notifications?.enabled ?? true,
+    enabled: !!manager,
+    manager,
   };
 }
 
@@ -437,22 +461,129 @@ export function useNotifications() {
 // ============================================================================
 
 /**
- * Check if a feature flag is enabled (placeholder — fully implemented in Phase 3)
+ * Check if a specific feature flag is enabled
+ *
+ * Uses the FeatureFlagManager from auto-wired features to evaluate
+ * flags with rollout percentages, user targeting, and role targeting.
  *
  * @example
  * ```tsx
  * function NewFeature() {
- *   const { enabled } = useFeatureFlag('new-dashboard')
+ *   const { enabled, isLoading } = useFeatureFlag('new-dashboard')
+ *   if (isLoading) return <Skeleton />
  *   if (!enabled) return null
  *   return <NewDashboard />
  * }
+ *
+ * // With user context for targeted rollouts
+ * function BetaFeature() {
+ *   const { enabled } = useFeatureFlag('beta-ui', { userId: 'user_123', role: 'admin' })
+ *   if (!enabled) return null
+ *   return <BetaUI />
+ * }
  * ```
  */
-export function useFeatureFlag(_name: string) {
+export function useFeatureFlag(
+  name: string,
+  context?: { userId?: string; role?: string }
+) {
   const fabrk = useOptionalFabrk();
-  const config = fabrk?.config;
+  const manager = fabrk?.features?.featureFlags ?? null;
+  const [enabled, setEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!manager) {
+      setIsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    manager.isEnabled(name, context).then((result) => {
+      if (!cancelled) {
+        setEnabled(result);
+        setIsLoading(false);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, context?.userId, context?.role, manager]);
 
   return {
-    enabled: config?.featureFlags?.enabled ?? false,
+    enabled,
+    isLoading,
+    manager,
+  };
+}
+
+// ============================================================================
+// HOOK: useWebhooks
+// ============================================================================
+
+/**
+ * Access the webhook manager
+ *
+ * @example
+ * ```tsx
+ * function WebhookAdmin() {
+ *   const { manager } = useWebhooks()
+ *   if (!manager) return <p>Webhooks not enabled</p>
+ *
+ *   const handleRegister = async () => {
+ *     await manager.register({
+ *       url: 'https://example.com/hook',
+ *       events: ['user.created'],
+ *     })
+ *   }
+ *
+ *   return <button onClick={handleRegister}>&gt; ADD WEBHOOK</button>
+ * }
+ * ```
+ */
+export function useWebhooks() {
+  const fabrk = useOptionalFabrk();
+  const manager = fabrk?.features?.webhooks ?? null;
+
+  return {
+    enabled: !!manager,
+    manager,
+  };
+}
+
+// ============================================================================
+// HOOK: useJobs
+// ============================================================================
+
+/**
+ * Access the job queue
+ *
+ * @example
+ * ```tsx
+ * function JobDashboard() {
+ *   const { manager } = useJobs()
+ *   if (!manager) return <p>Jobs not enabled</p>
+ *
+ *   const handleEnqueue = async () => {
+ *     await manager.enqueue({
+ *       type: 'send-email',
+ *       payload: { to: 'user@example.com' },
+ *     })
+ *   }
+ *
+ *   return <button onClick={handleEnqueue}>&gt; ENQUEUE JOB</button>
+ * }
+ * ```
+ */
+export function useJobs() {
+  const fabrk = useOptionalFabrk();
+  const manager = fabrk?.features?.jobs ?? null;
+
+  return {
+    enabled: !!manager,
+    manager,
   };
 }

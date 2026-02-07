@@ -1,0 +1,271 @@
+// FABRK Dashboard Template - Prisma Schema
+// Database schema for team dashboards with organizations, roles, and audit logging
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION (NextAuth Compatible)
+// ============================================================================
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  accounts           Account[]
+  sessions           Session[]
+  ownedOrganizations Organization[]
+  memberships        OrgMember[]
+  invites            OrgInvite[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// ============================================================================
+// ORGANIZATIONS & TEAMS
+// ============================================================================
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // URL-friendly identifier
+  ownerId   String   @map("owner_id")
+  logo      String? // URL to logo image
+  settings  Json? // Org-specific settings (theme, features, etc.)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  owner   User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members OrgMember[]
+  invites OrgInvite[]
+
+  @@map("organizations")
+}
+
+model OrgMember {
+  id       String   @id @default(uuid())
+  userId   String   @map("user_id")
+  orgId    String   @map("org_id")
+  role     String // "owner", "admin", "member", "viewer"
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  // Relations
+  user User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+  @@index([orgId, role])
+  @@map("org_members")
+}
+
+model OrgInvite {
+  id        String    @id @default(uuid())
+  email     String
+  orgId     String    @map("org_id")
+  role      String // Role to assign when accepted
+  token     String    @unique // Invitation token
+  inviterId String    @map("inviter_id") // Who sent the invite
+  expiresAt DateTime  @map("expires_at")
+  acceptedAt DateTime? @map("accepted_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  inviter User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([orgId])
+  @@index([email])
+  @@map("org_invites")
+}
+
+// ============================================================================
+// FEATURE FLAGS
+// ============================================================================
+
+model FeatureFlag {
+  id             String   @id @default(uuid())
+  name           String   @unique // e.g., "new-dashboard", "beta-feature"
+  description    String? @db.Text
+  enabled        Boolean  @default(false)
+  rolloutPercent Int      @default(0) @map("rollout_percent") // 0-100 for gradual rollout
+  targetUsers    String[] @map("target_users") // User IDs to enable for
+  targetRoles    String[] @map("target_roles") // Roles to enable for (e.g., ["admin"])
+  targetOrgs     String[] @map("target_orgs") // Org IDs to enable for
+  metadata       Json? // Additional flag configuration
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
+}
+
+// ============================================================================
+// AUDIT LOGGING
+// ============================================================================
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  action       String // e.g., "user.created", "org.deleted", "member.role_changed"
+  resource     String // e.g., "user:uuid", "org:uuid"
+  actorId      String   @map("actor_id") // Who performed the action
+  actorEmail   String   @map("actor_email") // Cached for display
+  metadata     Json // Action-specific data (old/new values, etc.)
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  timestamp    DateTime @default(now())
+
+  // Blockchain-style integrity (optional but recommended)
+  hash         String   @unique // Hash of this log entry
+  previousHash String?  @map("previous_hash") // Hash of previous log entry
+
+  // Relations
+  actor User @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([actorId, timestamp])
+  @@index([resource, timestamp])
+  @@index([action, timestamp])
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String // "info", "success", "warning", "error"
+  title     String
+  message   String   @db.Text
+  link      String? // Optional link for "View Details"
+  read      Boolean  @default(false)
+  dismissed Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, dismissed])
+  @@map("notifications")
+}
+
+// ============================================================================
+// WEBHOOKS (Optional - for integrations)
+// ============================================================================
+
+model Webhook {
+  id          String   @id @default(uuid())
+  url         String
+  events      String[] // Events to listen for (e.g., ["user.created", "org.updated"])
+  secret      String // For signing webhook payloads
+  enabled     Boolean  @default(true)
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  deliveries WebhookDelivery[]
+
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id           String    @id @default(uuid())
+  webhookId    String    @map("webhook_id")
+  event        String
+  payload      Json
+  statusCode   Int?      @map("status_code")
+  responseBody String?   @map("response_body") @db.Text
+  attempt      Int       @default(1)
+  deliveredAt  DateTime? @map("delivered_at")
+  failedAt     DateTime? @map("failed_at")
+  nextRetryAt  DateTime? @map("next_retry_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId, createdAt])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================================
+// BACKGROUND JOBS (Optional - for task queue)
+// ============================================================================
+
+model Job {
+  id          String    @id @default(uuid())
+  type        String // Job type (e.g., "email.send", "report.generate")
+  payload     Json // Job data
+  status      String    @default("pending") // "pending", "processing", "completed", "failed"
+  priority    Int       @default(0) // Higher = more important
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  error       String?   @db.Text // Error message if failed
+  result      Json? // Job result if completed
+  processedAt DateTime? @map("processed_at")
+  failedAt    DateTime? @map("failed_at")
+  scheduledFor DateTime? @map("scheduled_for") // For delayed jobs
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([status, priority, createdAt])
+  @@index([type, status])
+  @@map("jobs")
+}

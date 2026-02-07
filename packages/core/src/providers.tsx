@@ -12,6 +12,7 @@ import { FabrkContextProvider } from './context';
 import { PluginRegistry } from './plugins';
 import type { FabrkConfig } from './types';
 import { fabrkConfigSchema } from './types';
+import type { FeatureModules } from './auto-wire';
 
 export interface FabrkProviderProps {
   /** Child components */
@@ -24,6 +25,8 @@ export interface FabrkProviderProps {
   config?: FabrkConfig;
   /** Pre-configured plugin registry */
   registry?: PluginRegistry;
+  /** Auto-wired feature modules from initFabrk() */
+  features?: FeatureModules;
 }
 
 /**
@@ -75,6 +78,7 @@ export function FabrkProvider({
   storageKeyPrefix = 'fabrk-theme',
   config = {},
   registry: externalRegistry,
+  features,
 }: FabrkProviderProps) {
   const validatedConfig = useMemo(() => fabrkConfigSchema.parse(config), [config]);
   const registry = useMemo(() => externalRegistry ?? new PluginRegistry(), [externalRegistry]);
@@ -84,7 +88,7 @@ export function FabrkProvider({
       defaultColorTheme={defaultColorTheme}
       storageKeyPrefix={storageKeyPrefix}
     >
-      <FabrkContextProvider config={validatedConfig} registry={registry}>
+      <FabrkContextProvider config={validatedConfig} registry={registry} features={features}>
         {children}
       </FabrkContextProvider>
     </ThemeProvider>

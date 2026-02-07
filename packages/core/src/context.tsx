@@ -10,6 +10,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import { PluginRegistry } from './plugins'
 import type { FabrkConfig } from './types'
+import type { FeatureModules } from './auto-wire'
 
 // ============================================================================
 // CONTEXT
@@ -20,6 +21,8 @@ export interface FabrkContextValue {
   config: FabrkConfig
   /** Plugin registry with all registered adapters */
   registry: PluginRegistry
+  /** Auto-wired feature modules (notifications, teams, flags, webhooks, jobs) */
+  features?: FeatureModules
 }
 
 const FabrkContext = createContext<FabrkContextValue | null>(null)
@@ -75,6 +78,7 @@ export interface FabrkContextProviderProps {
   children: ReactNode
   config: FabrkConfig
   registry: PluginRegistry
+  features?: FeatureModules
 }
 
 /**
@@ -86,9 +90,10 @@ export function FabrkContextProvider({
   children,
   config,
   registry,
+  features,
 }: FabrkContextProviderProps) {
   return (
-    <FabrkContext.Provider value={{ config, registry }}>
+    <FabrkContext.Provider value={{ config, registry, features }}>
       {children}
     </FabrkContext.Provider>
   )

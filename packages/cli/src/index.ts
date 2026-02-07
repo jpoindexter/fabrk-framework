@@ -160,15 +160,20 @@ async function main() {
     console.log(chalk.cyan(`  cd ${projectName}`));
     console.log(chalk.cyan('  pnpm dev'));
     console.log();
-    console.log(chalk.dim('  Open http://localhost:3000 to view your app\n'));
+    console.log(chalk.dim('  Open http://localhost:3000 to view your app'));
+    console.log(chalk.dim('  Edit fabrk.config.ts to configure your app\n'));
 
     // Template-specific instructions
     if (template === 'ai-saas') {
       console.log(chalk.yellow('⚡ AI SaaS Template Setup:\n'));
       console.log(chalk.dim('  1. Copy .env.example to .env.local'));
       console.log(chalk.dim('  2. Add your OPENAI_API_KEY or ANTHROPIC_API_KEY'));
-      console.log(chalk.dim('  3. Configure database (optional)'));
-      console.log(chalk.dim('  4. Run pnpm db:push to setup database\n'));
+      console.log(chalk.dim('  3. Edit fabrk.config.ts for AI budget & providers'));
+      console.log(chalk.dim('  4. Configure database (optional)\n'));
+    } else if (template === 'dashboard') {
+      console.log(chalk.yellow('⚡ Dashboard Template Setup:\n'));
+      console.log(chalk.dim('  1. Edit fabrk.config.ts to configure teams & feature flags'));
+      console.log(chalk.dim('  2. Configure database for persistence (optional)\n'));
     }
 
     console.log(

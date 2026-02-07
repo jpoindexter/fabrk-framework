@@ -550,4 +550,40 @@ export {
 } from './prompts/builder';
 
 // Prisma cost store (reference implementation)
-export { PrismaCostStore } from './cost-store-prisma';
+export { PrismaCostStore } from './cost-store-prisma'
+
+// LLM Provider Abstraction
+export {
+  getLLMClient,
+  OpenAIClient,
+  AnthropicClient,
+  OllamaClient,
+  LLM_DEFAULTS,
+} from './llm'
+
+export type {
+  LLMClient,
+  LLMOpts,
+  LLMConfig,
+  LLMProvider,
+  TaskComplexity,
+} from './llm'
+
+// Embeddings & Similarity
+export {
+  getEmbeddingProvider,
+  OpenAIEmbeddingProvider,
+  OllamaEmbeddingProvider,
+  cosineSimilarity,
+  cosineDistance,
+  findNearest,
+  centroid,
+  jaccardSimilarity,
+  EMBEDDING_DEFAULTS,
+} from './embeddings'
+
+export type {
+  EmbeddingProvider,
+  EmbeddingConfig,
+  SimilarityResult,
+} from './embeddings';

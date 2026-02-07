@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'
+import { mode } from '@fabrk/themes'
 import Link from 'next/link'
 
 const features = [

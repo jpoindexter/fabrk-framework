@@ -1,13 +1,13 @@
 /**
  * Provider components for FABRK framework
  *
- * Wraps design system theme provider and framework context providers.
+ * FabrkProvider wraps the framework context (plugins, config, features).
+ * Design system theming is separate — compose with ThemeProvider from @fabrk/themes.
  */
 
 'use client';
 
 import { useMemo, type ReactNode } from 'react';
-import { ThemeProvider, type ColorThemeName } from '@fabrk/design-system';
 import { FabrkContextProvider } from './context';
 import { PluginRegistry } from './plugins';
 import type { FabrkConfig } from './types';
@@ -17,10 +17,6 @@ import type { FeatureModules } from './auto-wire';
 export interface FabrkProviderProps {
   /** Child components */
   children: ReactNode;
-  /** Default color theme (defaults to "green") */
-  defaultColorTheme?: ColorThemeName;
-  /** Storage key prefix for theme persistence */
-  storageKeyPrefix?: string;
   /** Framework configuration */
   config?: FabrkConfig;
   /** Pre-configured plugin registry */
@@ -32,20 +28,21 @@ export interface FabrkProviderProps {
 /**
  * Root provider for FABRK applications
  *
- * Wraps all framework providers including:
- * - ThemeProvider - Design system color theme management
+ * Wraps the framework context including:
  * - FabrkContext - Plugin registry and framework config
+ *
+ * For theming, compose with ThemeProvider from @fabrk/themes:
  *
  * @example
  * ```tsx
- * // app/layout.tsx
+ * // app/layout.tsx — Framework only (no design system)
  * import { FabrkProvider } from '@fabrk/core'
  *
  * export default function RootLayout({ children }) {
  *   return (
  *     <html>
  *       <body>
- *         <FabrkProvider defaultColorTheme="green">
+ *         <FabrkProvider>
  *           {children}
  *         </FabrkProvider>
  *       </body>
@@ -53,20 +50,16 @@ export interface FabrkProviderProps {
  *   )
  * }
  *
- * // With plugins
- * import { FabrkProvider, PluginRegistry } from '@fabrk/core'
- *
- * const registry = new PluginRegistry()
- * registry.register('payment', stripeAdapter)
- * registry.register('auth', nextAuthAdapter)
+ * // With design system (opt-in)
+ * import { FabrkProvider } from '@fabrk/core'
+ * import { ThemeProvider } from '@fabrk/themes'
  *
  * export default function RootLayout({ children }) {
  *   return (
- *     <FabrkProvider
- *       config={{ payments: { provider: 'stripe' } }}
- *       registry={registry}
- *     >
- *       {children}
+ *     <FabrkProvider config={{ payments: { provider: 'stripe' } }}>
+ *       <ThemeProvider defaultColorTheme="green">
+ *         {children}
+ *       </ThemeProvider>
  *     </FabrkProvider>
  *   )
  * }
@@ -74,8 +67,6 @@ export interface FabrkProviderProps {
  */
 export function FabrkProvider({
   children,
-  defaultColorTheme = 'green',
-  storageKeyPrefix = 'fabrk-theme',
   config = {},
   registry: externalRegistry,
   features,
@@ -84,13 +75,8 @@ export function FabrkProvider({
   const registry = useMemo(() => externalRegistry ?? new PluginRegistry(), [externalRegistry]);
 
   return (
-    <ThemeProvider
-      defaultColorTheme={defaultColorTheme}
-      storageKeyPrefix={storageKeyPrefix}
-    >
-      <FabrkContextProvider config={validatedConfig} registry={registry} features={features}>
-        {children}
-      </FabrkContextProvider>
-    </ThemeProvider>
+    <FabrkContextProvider config={validatedConfig} registry={registry} features={features}>
+      {children}
+    </FabrkContextProvider>
   );
 }

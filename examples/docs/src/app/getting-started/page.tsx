@@ -54,7 +54,8 @@ pnpm dev`}</CodeBlock>
         <CodeBlock title="fabrk.config.ts">{`import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
-  design: { theme: 'terminal', radius: 'sharp' },
+  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
+  theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
   notifications: { enabled: true },
   teams: { enabled: true, maxMembers: 50 },
   featureFlags: { enabled: true },
@@ -62,7 +63,7 @@ export default defineFabrkConfig({
 
         <InfoCard title="TYPE SAFETY">
           <code>defineFabrkConfig()</code> provides full TypeScript autocomplete
-          and Zod validation for all 12 config sections.
+          and Zod validation for all 14 config sections.
         </InfoCard>
       </Section>
 
@@ -72,7 +73,7 @@ export default defineFabrkConfig({
         </p>
         <CodeBlock title="app/page.tsx">{`import { Button, Card, KPICard, Badge } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'
+import { mode } from '@fabrk/themes'
 
 export default function Dashboard() {
   return (

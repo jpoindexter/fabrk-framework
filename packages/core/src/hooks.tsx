@@ -1,13 +1,13 @@
 /**
  * React Hooks for FABRK Framework
  *
- * Cost tracking, design system, and other framework utilities.
+ * Cost tracking, billing, teams, feature flags, and other framework utilities.
+ * Design system hooks are provided by @fabrk/themes (separate package).
  */
 
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useThemeContext, useOptionalThemeContext } from '@fabrk/design-system';
 import { useOptionalFabrk } from './context';
 
 // ============================================================================
@@ -264,51 +264,6 @@ export function useFeatureCost(featureName: string): {
     avgCost: data?.avgCost ?? 0,
     successRate: data?.successRate ?? 1,
     isLoading,
-  };
-}
-
-// ============================================================================
-// HOOK: useDesignSystem
-// ============================================================================
-
-/**
- * Access design system theme context
- *
- * Returns the current theme, color theme, and setters from the
- * design system's ThemeProvider.
- *
- * @example
- * ```tsx
- * function ThemeSwitcher() {
- *   const { colorTheme, setColorTheme } = useDesignSystem()
- *   return (
- *     <select value={colorTheme} onChange={e => setColorTheme(e.target.value)}>
- *       <option value="green">Green</option>
- *       <option value="amber">Amber</option>
- *       <option value="blue">Blue</option>
- *     </select>
- *   )
- * }
- * ```
- */
-export function useDesignSystem() {
-  const themeContext = useOptionalThemeContext();
-
-  if (themeContext) {
-    return {
-      theme: themeContext.theme,
-      colorTheme: themeContext.colorTheme,
-      setTheme: themeContext.setTheme,
-      setColorTheme: themeContext.setColorTheme,
-    };
-  }
-
-  // Fallback when used outside ThemeProvider
-  return {
-    theme: 'terminal' as const,
-    colorTheme: 'green' as const,
-    setTheme: () => {},
-    setColorTheme: () => {},
   };
 }
 

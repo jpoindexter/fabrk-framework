@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'
+import { mode } from '@fabrk/themes'
 import { DocLayout, Section, CodeBlock } from '@/components/doc-layout'
 
 interface PackageInfo {
@@ -112,22 +112,23 @@ const summarize = createPromptTemplate({
     exports: [
       'defineFabrkConfig() — Main config builder',
       'fabrkConfigSchema — Complete Zod schema',
-      'Individual schemas: aiConfigSchema, designConfigSchema, etc.',
-      'Types: FabrkConfig, AIConfig, DesignConfig, PaymentsConfig, etc.',
+      'Individual schemas: frameworkConfigSchema, themeConfigSchema, aiConfigSchema, etc.',
+      'Types: FabrkConfig, FrameworkConfig, ThemeConfig, AIConfig, PaymentsConfig, etc.',
     ],
     install: 'pnpm add @fabrk/config',
     example: `import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
-  design: { theme: 'terminal', radius: 'sharp' },
+  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
+  theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
   ai: { costTracking: true, budget: { daily: 50 } },
   notifications: { enabled: true },
 })`,
   },
   {
-    id: 'design-system',
-    name: '@fabrk/design-system',
-    description: 'Design tokens, themes, and the mode system. Runtime-dynamic via CSS variables.',
+    id: 'themes',
+    name: '@fabrk/themes',
+    description: 'Opt-in design system theming. Design tokens, themes, and the mode system. Runtime-dynamic via CSS variables.',
     exports: [
       'mode — Design mode object (radius, font, shadow, color, spacing, typography)',
       'ThemeProvider, useThemeContext(), ThemeScript',
@@ -136,8 +137,8 @@ export default defineFabrkConfig({
       'Formatters: formatButtonText(), formatLabelText(), formatCardHeader()',
       'Theme utils: getActiveTheme(), getActiveThemeClasses()',
     ],
-    install: 'pnpm add @fabrk/design-system',
-    example: `import { mode } from '@fabrk/design-system'
+    install: 'pnpm add @fabrk/themes',
+    example: `import { mode } from '@fabrk/themes'
 import { cn } from '@fabrk/core'
 
 // Use design tokens everywhere

@@ -587,3 +587,19 @@ export type {
   EmbeddingConfig,
   SimilarityResult,
 } from './embeddings';
+
+// AI Middleware (budget enforcement, provider fallback)
+export {
+  createAIMiddleware,
+  budgetEnforcement,
+  providerFallback,
+} from './middleware'
+
+export type {
+  AIRequestContext,
+  AIMiddlewareFunction,
+  AIMiddleware,
+  BudgetConfig,
+  FallbackConfig,
+  ProviderName,
+} from './middleware'

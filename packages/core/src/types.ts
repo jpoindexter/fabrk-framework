@@ -7,6 +7,12 @@ import type * as hooks from './hooks'
  * FABRK framework configuration schema
  */
 export const fabrkConfigSchema = z.object({
+  framework: z.object({
+    runtime: z.enum(['nextjs']).default('nextjs'),
+    typescript: z.boolean().default(true),
+    srcDir: z.string().default('src'),
+    database: z.enum(['prisma', 'drizzle', 'none']).default('none'),
+  }).optional(),
   ai: z.object({
     costTracking: z.boolean().default(true),
     validation: z.enum(['strict', 'loose', 'off']).default('strict'),
@@ -16,8 +22,9 @@ export const fabrkConfigSchema = z.object({
       monthly: z.number().optional(),
     }).optional(),
   }).optional(),
-  design: z.object({
-    theme: z.string().default('terminal'),
+  theme: z.object({
+    system: z.string().default('terminal'),
+    colorScheme: z.string().default('green'),
     radius: z.enum(['sharp', 'rounded', 'pill']).default('sharp'),
   }).optional(),
   payments: z.object({

@@ -107,10 +107,10 @@ describe('applyDevDefaults', () => {
   it('should preserve user config for other fields', () => {
     const config = applyDevDefaults({
       ai: { costTracking: true, validation: 'strict' as const },
-      design: { theme: 'amber', radius: 'pill' as const },
+      theme: { system: 'amber', colorScheme: 'green', radius: 'pill' as const },
     })
     expect(config.ai).toEqual({ costTracking: true, validation: 'strict' })
-    expect(config.design).toEqual({ theme: 'amber', radius: 'pill' })
+    expect(config.theme).toEqual({ system: 'amber', colorScheme: 'green', radius: 'pill' })
   })
 
   it('should NOT apply defaults in production', () => {

@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <FabrkProvider defaultColorTheme="green" config={fabrkConfig}>
+        <FabrkProvider config={fabrkConfig}>
           {children}
         </FabrkProvider>
       </body>

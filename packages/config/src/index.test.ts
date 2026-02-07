@@ -15,8 +15,9 @@ describe('fabrkConfigSchema', () => {
         providers: ['claude', 'openai'],
         budget: { daily: 10, monthly: 100 },
       },
-      design: {
-        theme: 'terminal',
+      theme: {
+        system: 'terminal',
+        colorScheme: 'green',
         radius: 'sharp',
       },
       payments: {
@@ -73,13 +74,14 @@ describe('fabrkConfigSchema', () => {
   it('should apply defaults', () => {
     const config = defineFabrkConfig({
       ai: {},
-      design: {},
+      theme: {},
     })
 
     expect(config.ai?.costTracking).toBe(true)
     expect(config.ai?.validation).toBe('strict')
-    expect(config.design?.theme).toBe('terminal')
-    expect(config.design?.radius).toBe('sharp')
+    expect(config.theme?.system).toBe('terminal')
+    expect(config.theme?.colorScheme).toBe('green')
+    expect(config.theme?.radius).toBe('sharp')
   })
 
   it('should reject invalid payment adapter', () => {

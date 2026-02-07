@@ -1,8 +1,14 @@
 import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
-  design: {
-    theme: 'terminal',
+  framework: {
+    runtime: 'nextjs',
+    typescript: true,
+    srcDir: 'src',
+  },
+  theme: {
+    system: 'terminal',
+    colorScheme: 'green',
     radius: 'sharp',
   },
   notifications: {

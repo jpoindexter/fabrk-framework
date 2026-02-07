@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'
+import { mode } from '@fabrk/themes'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -23,7 +23,8 @@ const navigation: NavItem[] = [
       { label: '@fabrk/components', href: '/packages#components' },
       { label: '@fabrk/ai', href: '/packages#ai' },
       { label: '@fabrk/config', href: '/packages#config' },
-      { label: '@fabrk/design-system', href: '/packages#design-system' },
+      { label: '@fabrk/themes', href: '/packages#themes' },
+      { label: '@fabrk/ui', href: '/packages#ui' },
       { label: '@fabrk/payments', href: '/packages#payments' },
       { label: '@fabrk/auth', href: '/packages#auth' },
       { label: '@fabrk/email', href: '/packages#email' },

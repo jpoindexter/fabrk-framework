@@ -4,7 +4,7 @@ export default function ConfigurationPage() {
   return (
     <DocLayout
       title="CONFIGURATION"
-      description="All 12 configuration sections with type-safe validation via Zod."
+      description="All 14 configuration sections with type-safe validation via Zod."
     >
       <InfoCard title="ZERO-CONFIG DEFAULTS">
         In development mode, FABRK automatically applies sensible defaults:
@@ -13,10 +13,20 @@ export default function ConfigurationPage() {
         configure what you want to customize.
       </InfoCard>
 
-      <Section title="DESIGN">
-        <CodeBlock title="fabrk.config.ts">{`design: {
-  theme: 'terminal',    // Theme name (default: 'terminal')
-  radius: 'sharp',      // Border radius: 'sharp' | 'rounded' | 'pill'
+      <Section title="FRAMEWORK">
+        <CodeBlock title="fabrk.config.ts">{`framework: {
+  runtime: 'nextjs',       // Runtime: 'nextjs' (more coming)
+  typescript: true,        // TypeScript enabled (default: true)
+  srcDir: 'src',           // Source directory (default: 'src')
+  database: 'prisma',      // Database: 'prisma' | 'drizzle' | 'none'
+}`}</CodeBlock>
+      </Section>
+
+      <Section title="THEME">
+        <CodeBlock title="fabrk.config.ts">{`theme: {
+  system: 'terminal',     // Theme system: 'terminal' | 'swiss' | 'custom'
+  colorScheme: 'green',   // Color scheme name
+  radius: 'sharp',        // Border radius: 'sharp' | 'rounded' | 'pill'
 }`}</CodeBlock>
       </Section>
 
@@ -131,7 +141,8 @@ export default function ConfigurationPage() {
         <CodeBlock title="fabrk.config.ts">{`import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
-  design: { theme: 'terminal', radius: 'sharp' },
+  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
+  theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
   ai: {
     costTracking: true,
     validation: 'strict',

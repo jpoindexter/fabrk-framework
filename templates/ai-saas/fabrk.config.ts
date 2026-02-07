@@ -1,6 +1,11 @@
 import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
+  framework: {
+    runtime: 'nextjs',
+    typescript: true,
+    srcDir: 'src',
+  },
   ai: {
     costTracking: true,
     validation: 'strict',
@@ -10,8 +15,9 @@ export default defineFabrkConfig({
       monthly: 1000,
     },
   },
-  design: {
-    theme: 'terminal',
+  theme: {
+    system: 'terminal',
+    colorScheme: 'green',
     radius: 'sharp',
   },
   notifications: {

@@ -21,7 +21,7 @@ Options:
         </h3>
         <div className="space-y-3">
           <InfoCard title="BASIC">
-            Clean starting point with @fabrk/components, @fabrk/core, and @fabrk/design-system.
+            Clean starting point with @fabrk/core and optional @fabrk/themes.
             Prisma schema with User, Account, Session models.
           </InfoCard>
           <InfoCard title="AI-SAAS">

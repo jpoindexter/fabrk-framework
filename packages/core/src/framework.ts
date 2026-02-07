@@ -27,7 +27,7 @@ export interface CreateFabrkOptions extends FabrkConfig {
  *
  * const fabrk = createFabrk({
  *   ai: { costTracking: true },
- *   design: { theme: 'terminal' },
+ *   theme: { system: 'terminal' },
  * })
  * ```
  */

@@ -1,7 +1,7 @@
 {
-  "name": "@fabrk/core",
+  "name": "@fabrk/themes",
   "version": "0.1.0",
-  "description": "FABRK framework runtime and core utilities",
+  "description": "Design system themes for FABRK — opt-in theming layer (like shadcn/ui for Next.js)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -20,47 +20,37 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "peerDependencies": {
-    "next": ">=14.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
-  },
   "dependencies": {
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.1",
-    "zod": "^3.22.4"
+    "@fabrk/design-system": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
   "author": "Jason Poindexter",
   "keywords": [
     "fabrk",
-    "framework",
-    "ai",
-    "ai-coding",
+    "themes",
+    "design-system",
+    "terminal",
     "react",
-    "nextjs",
     "typescript"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
-  "bugs": {
-    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
-  },
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/jpoindexter/fabrk-framework.git",
-    "directory": "packages/core"
+    "directory": "packages/themes"
   },
   "license": "MIT"
 }

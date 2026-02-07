@@ -7,6 +7,15 @@
 
 import { z } from 'zod'
 
+// ─── Framework ───────────────────────────────────────
+
+const frameworkConfigSchema = z.object({
+  runtime: z.enum(['nextjs']).default('nextjs'),
+  typescript: z.boolean().default(true),
+  srcDir: z.string().default('src'),
+  database: z.enum(['prisma', 'drizzle', 'none']).default('none'),
+})
+
 // ─── AI ───────────────────────────────────────────────
 
 const aiConfigSchema = z.object({
@@ -20,10 +29,11 @@ const aiConfigSchema = z.object({
   }).optional(),
 })
 
-// ─── Design ───────────────────────────────────────────
+// ─── Theme ───────────────────────────────────────────
 
-const designConfigSchema = z.object({
-  theme: z.string().default('terminal'),
+const themeConfigSchema = z.object({
+  system: z.string().default('terminal'),
+  colorScheme: z.string().default('green'),
   radius: z.enum(['sharp', 'rounded', 'pill']).default('sharp'),
 })
 
@@ -166,8 +176,9 @@ const jobsConfigSchema = z.object({
 // ─── Full Config ──────────────────────────────────────
 
 export const fabrkConfigSchema = z.object({
+  framework: frameworkConfigSchema.optional(),
   ai: aiConfigSchema.optional(),
-  design: designConfigSchema.optional(),
+  theme: themeConfigSchema.optional(),
   payments: paymentsConfigSchema.optional(),
   auth: authConfigSchema.optional(),
   email: emailConfigSchema.optional(),
@@ -185,8 +196,9 @@ export type FabrkConfig = z.infer<typeof fabrkConfigSchema>
 
 // Re-export individual schema sections for package-level validation
 export {
+  frameworkConfigSchema,
   aiConfigSchema,
-  designConfigSchema,
+  themeConfigSchema,
   paymentsConfigSchema,
   authConfigSchema,
   emailConfigSchema,
@@ -199,9 +211,13 @@ export {
   jobsConfigSchema,
 }
 
+// Backwards compatibility aliases
+export { themeConfigSchema as designConfigSchema }
+
 // Inferred types for each section
+export type FrameworkConfig = z.infer<typeof frameworkConfigSchema>
 export type AIConfig = z.infer<typeof aiConfigSchema>
-export type DesignConfig = z.infer<typeof designConfigSchema>
+export type ThemeConfig = z.infer<typeof themeConfigSchema>
 export type PaymentsConfig = z.infer<typeof paymentsConfigSchema>
 export type AuthConfig = z.infer<typeof authConfigSchema>
 export type EmailConfig = z.infer<typeof emailConfigSchema>
@@ -213,6 +229,9 @@ export type FeatureFlagsConfig = z.infer<typeof featureFlagsConfigSchema>
 export type WebhooksConfig = z.infer<typeof webhooksConfigSchema>
 export type JobsConfig = z.infer<typeof jobsConfigSchema>
 
+// Backwards compatibility alias
+export type DesignConfig = ThemeConfig
+
 /**
  * Define a type-safe FABRK configuration.
  * All sections are optional — only configure what you use.
@@ -222,12 +241,18 @@ export type JobsConfig = z.infer<typeof jobsConfigSchema>
  * import { defineFabrkConfig } from '@fabrk/config'
  *
  * export default defineFabrkConfig({
+ *   framework: {
+ *     runtime: 'nextjs',
+ *     typescript: true,
+ *     srcDir: 'src',
+ *   },
+ *   theme: {
+ *     system: 'terminal',
+ *     colorScheme: 'green',
+ *   },
  *   ai: {
  *     costTracking: true,
  *     providers: ['claude', 'openai'],
- *   },
- *   design: {
- *     theme: 'terminal',
  *   },
  *   payments: {
  *     adapter: 'stripe',

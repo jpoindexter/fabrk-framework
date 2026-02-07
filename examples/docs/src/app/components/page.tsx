@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'
+import { mode } from '@fabrk/themes'
 import { DocLayout, Section, CodeBlock } from '@/components/doc-layout'
 
 interface ComponentCategory {
@@ -181,7 +181,7 @@ export default function ComponentsPage() {
       <Section title="USAGE">
         <CodeBlock title="import components">{`import { Button, Card, Badge, BarChart, KPICard } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'`}</CodeBlock>
+import { mode } from '@fabrk/themes'`}</CodeBlock>
 
         <CodeBlock title="design rules">{`// Full borders — ALWAYS add mode.radius
 <Card className={cn("border border-border", mode.radius)}>

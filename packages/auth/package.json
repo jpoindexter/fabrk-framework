@@ -1,0 +1,68 @@
+{
+  "name": "@fabrk/auth",
+  "version": "0.1.0",
+  "description": "Authentication adapters for FABRK framework (NextAuth, API keys, MFA)",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@fabrk/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": ">=14.0.0",
+    "next-auth": ">=4.0.0 || >=5.0.0-beta.0"
+  },
+  "peerDependenciesMeta": {
+    "next-auth": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  },
+  "author": "Jason Poindexter",
+  "keywords": [
+    "fabrk",
+    "auth",
+    "nextauth",
+    "api-keys",
+    "mfa",
+    "ai-coding"
+  ],
+  "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpoindexter/fabrk-framework.git",
+    "directory": "packages/auth"
+  },
+  "license": "MIT"
+}

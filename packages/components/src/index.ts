@@ -72,5 +72,45 @@ export * from './charts/line-chart'
 export * from './charts/pie-chart'
 export * from './charts/sparkline'
 
+// Error Boundary
+export * from './ui/error-boundary'
+
+// AI Chat Components
+export * from './ai'
+
+// Notification Center
+export { NotificationCenter } from './notifications/notification-center'
+export type { NotificationCenterItem, NotificationCenterProps } from './notifications/notification-center'
+
+// Admin Components
+export { AuditLog } from './admin/audit-log'
+export type { AuditLogProps, AuditLogEntry, AuditAction } from './admin/audit-log'
+export { AdminMetricsCard } from './admin/metrics-card'
+export type { AdminMetricsCardProps } from './admin/metrics-card'
+export { SystemHealthWidget } from './admin/system-health'
+export type { SystemHealthWidgetProps, SystemHealthMetric } from './admin/system-health'
+
+// Security Components
+export { MfaCard } from './security/mfa-card'
+export type { MfaCardProps } from './security/mfa-card'
+export { MfaSetupDialog } from './security/mfa-setup-dialog'
+export type { MfaSetupDialogProps } from './security/mfa-setup-dialog'
+export { BackupCodesModal } from './security/backup-codes-modal'
+export type { BackupCodesModalProps } from './security/backup-codes-modal'
+
+// Organization Components
+export { OrgSwitcher } from './organization/org-switcher'
+export type { OrgSwitcherProps, OrgSwitcherOrganization } from './organization/org-switcher'
+export { MemberCard } from './organization/member-card'
+export type { MemberCardProps, Member } from './organization/member-card'
+export { TeamActivityFeed } from './organization/team-activity-feed'
+export type { TeamActivityFeedProps, TeamActivity, ActivityType } from './organization/team-activity-feed'
+
+// SEO Components
+export { SchemaScript } from './seo/schema-script'
+export type { SchemaScriptProps } from './seo/schema-script'
+export { Breadcrumbs } from './seo/breadcrumbs'
+export type { BreadcrumbsProps, BreadcrumbItem as SeoBreadcrumbItem } from './seo/breadcrumbs'
+
 // Utilities
 export { cn } from './lib/utils'

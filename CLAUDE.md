@@ -46,13 +46,21 @@ pnpm release              # Build and publish to npm
 
 ## Architecture
 
-This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies flow from core packages outward:
+This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies flow from foundational packages outward:
 
 ```
-@fabrk/design-system (foundational - no dependencies)
+@fabrk/config (foundational — Zod schemas, no deps)
+@fabrk/design-system (foundational — themes, no deps)
     ↓
-@fabrk/core (depends on design-system)
+@fabrk/core (depends on config, design-system)
     ↓
+@fabrk/payments (depends on core)
+@fabrk/auth (depends on core)
+@fabrk/email (depends on core)
+@fabrk/storage (depends on core)
+@fabrk/security (depends on core)
+    ↓
+@fabrk/ai (depends on core)
 @fabrk/components (depends on core, design-system)
     ↓
 Templates & Examples (depend on all packages)
@@ -63,11 +71,16 @@ Templates & Examples (depend on all packages)
 ```
 fabrk-framework/
 ├── packages/
-│   ├── core/              # @fabrk/core - Framework runtime, hooks, providers
-│   ├── components/        # @fabrk/components - 70+ UI components & charts
-│   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, validation)
+│   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
+│   ├── components/        # @fabrk/components - 70+ UI components, charts, AI chat, admin, security
+│   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, validation, streaming, prompts)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
-│   ├── config/            # @fabrk/config - Type-safe config builder (Zod)
+│   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
+│   ├── payments/          # @fabrk/payments - Stripe, Polar, Lemon Squeezy adapters
+│   ├── auth/              # @fabrk/auth - NextAuth, API keys, MFA (TOTP + backup codes)
+│   ├── email/             # @fabrk/email - Resend adapter + email templates
+│   ├── storage/           # @fabrk/storage - S3, R2, local filesystem adapters
+│   ├── security/          # @fabrk/security - CSRF, CSP, rate limiting, audit, GDPR, CORS
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
 ├── examples/              # Example applications

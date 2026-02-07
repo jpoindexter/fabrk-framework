@@ -7,6 +7,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useThemeContext, useOptionalThemeContext } from '@fabrk/design-system';
+import { useOptionalFabrk } from './context';
 
 // ============================================================================
 // TYPES
@@ -270,22 +272,187 @@ export function useFeatureCost(featureName: string): {
 // ============================================================================
 
 /**
- * Access design system values
+ * Access design system theme context
+ *
+ * Returns the current theme, color theme, and setters from the
+ * design system's ThemeProvider.
  *
  * @example
  * ```tsx
- * function Component() {
- *   const { theme, radius, font } = useDesignSystem()
- *   return <div className={cn(radius, font)}>Styled</div>
+ * function ThemeSwitcher() {
+ *   const { colorTheme, setColorTheme } = useDesignSystem()
+ *   return (
+ *     <select value={colorTheme} onChange={e => setColorTheme(e.target.value)}>
+ *       <option value="green">Green</option>
+ *       <option value="amber">Amber</option>
+ *       <option value="blue">Blue</option>
+ *     </select>
+ *   )
  * }
  * ```
  */
 export function useDesignSystem() {
-  // This will be enhanced when we have a design system context
-  // For now, return static values from the design system
+  const themeContext = useOptionalThemeContext();
+
+  if (themeContext) {
+    return {
+      theme: themeContext.theme,
+      colorTheme: themeContext.colorTheme,
+      setTheme: themeContext.setTheme,
+      setColorTheme: themeContext.setColorTheme,
+    };
+  }
+
+  // Fallback when used outside ThemeProvider
   return {
-    theme: 'terminal',
-    radius: 'sharp',
-    font: 'monospace',
+    theme: 'terminal' as const,
+    colorTheme: 'green' as const,
+    setTheme: () => {},
+    setColorTheme: () => {},
+  };
+}
+
+// ============================================================================
+// HOOK: useBilling
+// ============================================================================
+
+/**
+ * Access billing/payment adapter from the plugin registry
+ *
+ * @example
+ * ```tsx
+ * function BillingStatus() {
+ *   const billing = useBilling()
+ *   if (!billing) return <p>Payments not configured</p>
+ *
+ *   const handleCheckout = async () => {
+ *     const result = await billing.createCheckout({
+ *       priceId: 'price_xxx',
+ *       successUrl: '/success',
+ *       cancelUrl: '/cancel',
+ *     })
+ *     window.location.href = result.url
+ *   }
+ *
+ *   return <button onClick={handleCheckout}>&gt; UPGRADE</button>
+ * }
+ * ```
+ */
+export function useBilling() {
+  const fabrk = useOptionalFabrk();
+  return fabrk?.registry.getPayment() ?? null;
+}
+
+// ============================================================================
+// HOOK: useTeam
+// ============================================================================
+
+/**
+ * Access team/organization data (placeholder — fully implemented in Phase 3)
+ *
+ * @example
+ * ```tsx
+ * function TeamPage() {
+ *   const team = useTeam()
+ *   return <h1>{team?.name ?? 'No team'}</h1>
+ * }
+ * ```
+ */
+export function useTeam() {
+  const fabrk = useOptionalFabrk();
+  const config = fabrk?.config;
+
+  return {
+    enabled: config?.teams?.enabled ?? false,
+  };
+}
+
+// ============================================================================
+// HOOK: useAPIKeys
+// ============================================================================
+
+/**
+ * Access API key management from the auth adapter
+ *
+ * @example
+ * ```tsx
+ * function ApiKeyManager() {
+ *   const apiKeys = useAPIKeys()
+ *   if (!apiKeys) return <p>Auth not configured</p>
+ *
+ *   const handleCreate = async () => {
+ *     const result = await apiKeys.create({
+ *       userId: 'user_123',
+ *       name: 'Production Key',
+ *       scopes: ['read', 'write'],
+ *     })
+ *     console.log('Key:', result.key)
+ *   }
+ *
+ *   return <button onClick={handleCreate}>&gt; CREATE KEY</button>
+ * }
+ * ```
+ */
+export function useAPIKeys() {
+  const fabrk = useOptionalFabrk();
+  const auth = fabrk?.registry.getAuth();
+
+  if (!auth) return null;
+
+  return {
+    create: auth.createApiKey.bind(auth),
+    revoke: auth.revokeApiKey.bind(auth),
+    list: auth.listApiKeys.bind(auth),
+    validate: auth.validateApiKey.bind(auth),
+  };
+}
+
+// ============================================================================
+// HOOK: useNotifications
+// ============================================================================
+
+/**
+ * Notification state hook (placeholder — fully implemented in Phase 3)
+ *
+ * @example
+ * ```tsx
+ * function NotificationBell() {
+ *   const { enabled } = useNotifications()
+ *   if (!enabled) return null
+ *   return <BellIcon />
+ * }
+ * ```
+ */
+export function useNotifications() {
+  const fabrk = useOptionalFabrk();
+  const config = fabrk?.config;
+
+  return {
+    enabled: config?.notifications?.enabled ?? true,
+  };
+}
+
+// ============================================================================
+// HOOK: useFeatureFlag
+// ============================================================================
+
+/**
+ * Check if a feature flag is enabled (placeholder — fully implemented in Phase 3)
+ *
+ * @example
+ * ```tsx
+ * function NewFeature() {
+ *   const { enabled } = useFeatureFlag('new-dashboard')
+ *   if (!enabled) return null
+ *   return <NewDashboard />
+ * }
+ * ```
+ */
+export function useFeatureFlag(_name: string) {
+  const fabrk = useOptionalFabrk();
+  const config = fabrk?.config;
+
+  return {
+    enabled: config?.featureFlags?.enabled ?? false,
   };
 }

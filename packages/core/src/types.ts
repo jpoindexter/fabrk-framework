@@ -71,6 +71,7 @@ export const fabrkConfigSchema = z.object({
 })
 
 export type FabrkConfig = z.infer<typeof fabrkConfigSchema>
+export type FabrkConfigInput = z.input<typeof fabrkConfigSchema>
 
 export interface FabrkInstance {
   config: FabrkConfig

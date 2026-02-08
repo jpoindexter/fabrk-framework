@@ -19,7 +19,7 @@
  * ```
  */
 
-import type { FabrkConfig } from './types'
+import type { FabrkConfigInput } from './types'
 
 /**
  * Detect if running in development mode.
@@ -62,7 +62,7 @@ export function isDev(): boolean {
  * // Result: { email: { adapter: 'resend' }, storage: { adapter: 'local' }, ... }
  * ```
  */
-export function applyDevDefaults(config: FabrkConfig): FabrkConfig {
+export function applyDevDefaults(config: FabrkConfigInput): FabrkConfigInput {
   if (!isDev()) return config
 
   return {

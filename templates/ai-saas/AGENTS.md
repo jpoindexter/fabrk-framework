@@ -110,7 +110,7 @@ export default defineFabrkConfig({
     providers: ['claude', 'openai'],
     budget: { daily: 50, monthly: 1000 },
   },
-  design: { theme: 'terminal' },
+  theme: { system: 'terminal', colorScheme: 'dark' },
   notifications: { enabled: true },
 })
 ```

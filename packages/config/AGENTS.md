@@ -19,7 +19,7 @@ import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
   ai: { costTracking: true, providers: ['claude', 'openai'] },
-  design: { theme: 'terminal', radius: 'sharp' },
+  theme: { system: 'terminal', colorScheme: 'dark', radius: 'sharp' },
   payments: { adapter: 'stripe', mode: 'test' },
   auth: { adapter: 'nextauth', apiKeys: { enabled: true }, mfa: { enabled: true } },
   security: { csrf: { enabled: true }, rateLimit: { enabled: true } },
@@ -33,7 +33,7 @@ All sections are optional. Only configure what you use.
 | Section | Key Options |
 |---------|-------------|
 | `ai` | `costTracking`, `validation` (strict/loose/off), `providers`, `budget` |
-| `design` | `theme`, `radius` (sharp/rounded/pill) |
+| `theme` | `system`, `colorScheme`, `radius` (sharp/rounded/pill) |
 | `payments` | `adapter` (stripe/polar/lemonsqueezy), `mode` (test/live), `config` |
 | `auth` | `adapter` (nextauth/custom), `apiKeys`, `mfa`, `config` |
 | `email` | `adapter` (resend/console/custom), `from`, `replyTo` |

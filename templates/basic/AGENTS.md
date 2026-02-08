@@ -80,7 +80,7 @@ Edit `fabrk.config.ts` at project root:
 import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
-  design: { theme: 'terminal', radius: 'sharp' },
+  theme: { system: 'terminal', colorScheme: 'dark', radius: 'sharp' },
   // Add more as needed: auth, email, storage, notifications, etc.
 })
 ```

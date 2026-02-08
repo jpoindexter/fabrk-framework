@@ -1,4 +1,4 @@
-import { FabrkConfig, FabrkInstance, fabrkConfigSchema } from './types'
+import { FabrkConfig, FabrkConfigInput, FabrkInstance, fabrkConfigSchema } from './types'
 import { createMiddleware } from './middleware'
 import { PluginRegistry } from './plugins'
 import type { FabrkPlugin } from './plugins'
@@ -6,7 +6,7 @@ import * as hooks from './hooks'
 import { autoWire, type AdapterOverrides, type FeatureModules } from './auto-wire'
 import { applyDevDefaults } from './defaults'
 
-export interface CreateFabrkOptions extends FabrkConfig {
+export interface CreateFabrkOptions extends FabrkConfigInput {
   /** Plugins to register during initialization */
   plugins?: FabrkPlugin[]
   /** Adapter overrides (take priority over auto-detected adapters) */
@@ -31,7 +31,7 @@ export interface CreateFabrkOptions extends FabrkConfig {
  * })
  * ```
  */
-export function createFabrk(config: FabrkConfig = {}): FabrkInstance {
+export function createFabrk(config: FabrkConfigInput = {}): FabrkInstance {
   const validatedConfig = fabrkConfigSchema.parse(config)
   const registry = new PluginRegistry()
 

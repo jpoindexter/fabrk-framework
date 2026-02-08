@@ -193,6 +193,7 @@ export const fabrkConfigSchema = z.object({
 })
 
 export type FabrkConfig = z.infer<typeof fabrkConfigSchema>
+export type FabrkConfigInput = z.input<typeof fabrkConfigSchema>
 
 // Re-export individual schema sections for package-level validation
 export {
@@ -270,6 +271,6 @@ export type DesignConfig = ThemeConfig
  * })
  * ```
  */
-export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {
+export function defineFabrkConfig(config: FabrkConfigInput): FabrkConfig {
   return fabrkConfigSchema.parse(config)
 }

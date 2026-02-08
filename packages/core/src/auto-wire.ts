@@ -8,7 +8,7 @@
  * and everything wires up automatically.
  */
 
-import type { FabrkConfig } from './types'
+import type { FabrkConfig, FabrkConfigInput } from './types'
 import { PluginRegistry } from './plugins'
 import type {
   PaymentAdapter,
@@ -119,7 +119,7 @@ export interface StoreOverrides {
  * ```
  */
 export async function autoWire(
-  config: FabrkConfig,
+  config: FabrkConfigInput,
   overrides?: AdapterOverrides,
   stores?: StoreOverrides
 ): Promise<AutoWireResult> {
@@ -161,7 +161,7 @@ export async function autoWire(
 // the modules at build time. The packages are optional peer dependencies.
 // ============================================================================
 
-async function wirePayment(config: FabrkConfig, registry: PluginRegistry): Promise<void> {
+async function wirePayment(config: FabrkConfigInput, registry: PluginRegistry): Promise<void> {
   const pkgName = '@fabrk/payments'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,7 +189,7 @@ async function wirePayment(config: FabrkConfig, registry: PluginRegistry): Promi
   }
 }
 
-async function wireEmail(config: FabrkConfig, registry: PluginRegistry): Promise<void> {
+async function wireEmail(config: FabrkConfigInput, registry: PluginRegistry): Promise<void> {
   const pkgName = '@fabrk/email'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -211,7 +211,7 @@ async function wireEmail(config: FabrkConfig, registry: PluginRegistry): Promise
   }
 }
 
-async function wireStorage(config: FabrkConfig, registry: PluginRegistry): Promise<void> {
+async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): Promise<void> {
   const pkgName = '@fabrk/storage'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -242,7 +242,7 @@ async function wireStorage(config: FabrkConfig, registry: PluginRegistry): Promi
 // FEATURE MODULE WIRING
 // ============================================================================
 
-function wireFeatures(config: FabrkConfig, stores?: StoreOverrides): FeatureModules {
+function wireFeatures(config: FabrkConfigInput, stores?: StoreOverrides): FeatureModules {
   const features: FeatureModules = {
     notifications: null,
     teams: null,

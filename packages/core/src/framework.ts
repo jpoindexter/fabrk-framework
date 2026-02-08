@@ -55,8 +55,8 @@ export function createFabrk(config: FabrkConfigInput = {}): FabrkInstance {
  * import { initFabrk } from '@fabrk/core'
  *
  * const fabrk = await initFabrk({
- *   payments: { provider: 'stripe', mode: 'live' },
- *   auth: { adapter: 'nextauth', apiKeys: true },
+ *   payments: { adapter: 'stripe', mode: 'live' },
+ *   auth: { adapter: 'nextauth', apiKeys: { enabled: true } },
  *   email: { adapter: 'resend', from: 'hi@myapp.com' },
  *   notifications: { enabled: true },
  *   teams: { enabled: true },

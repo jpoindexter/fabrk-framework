@@ -147,7 +147,7 @@ const DESIGN_PATTERNS = {
 const TYPE_SAFETY_PATTERNS = {
   // any type usage
   anyType: {
-    pattern: /:\s*any(?:\s*[;,\)\]\}]|\s*$)/gm,
+    pattern: /:\s*any(?:\s*[;,)\]}]|\s*$)/gm,
     message: '"any" type usage detected',
     severity: 'error' as const,
     suggestion: 'Use specific types instead of "any"',

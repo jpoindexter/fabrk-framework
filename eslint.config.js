@@ -53,8 +53,10 @@ export default [
       'react-hooks': reactHooks,
     },
     rules: {
-      // Disable base rule in favor of TypeScript-aware version
+      // Disable base rules that TypeScript handles natively
       'no-unused-vars': 'off',
+      'no-redeclare': 'off',
+      'no-undef': 'off',
       // TypeScript
       '@typescript-eslint/no-unused-vars': [
         'warn',

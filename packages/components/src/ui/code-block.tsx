@@ -89,12 +89,10 @@ export function CodeBlock({
           <Copy className="h-4 w-4" aria-hidden="true" />
         )}
       </button>
-      {/* eslint-disable design-system/no-inline-styles -- Background must use CSS var fallback for theme preview */}
       <div
         className={cn('w-full min-w-0 overflow-hidden', mode.radius)}
         style={{ backgroundColor: 'oklch(var(--code-bg, var(--card)))' }}
       >
-        {/* eslint-enable design-system/no-inline-styles */}
         <Highlight theme={cssVarTheme} code={code.trim()} language={language}>
           {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre

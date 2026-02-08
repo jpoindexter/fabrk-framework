@@ -3,7 +3,6 @@ import {
   createAIMiddleware,
   budgetEnforcement,
   providerFallback,
-  type AIRequestContext,
 } from './middleware'
 
 describe('createAIMiddleware', () => {

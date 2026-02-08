@@ -488,7 +488,7 @@ export async function testCompletesInMs(
 ): Promise<boolean> {
   const start = Date.now();
   try {
-    let result = fn(...inputs);
+    const result = fn(...inputs);
     if (result instanceof Promise) {
       await result;
     }

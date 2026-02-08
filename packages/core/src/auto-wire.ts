@@ -112,8 +112,8 @@ export interface StoreOverrides {
  * import { autoWire } from '@fabrk/core'
  *
  * const { registry, features } = await autoWire({
- *   payments: { provider: 'stripe', mode: 'test' },
- *   auth: { adapter: 'nextauth', apiKeys: true },
+ *   payments: { adapter: 'stripe', mode: 'test' },
+ *   auth: { adapter: 'nextauth', apiKeys: { enabled: true } },
  *   notifications: { enabled: true },
  * })
  * ```

@@ -8,7 +8,7 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-16-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-70%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-292-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-410-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
 </p>
@@ -200,7 +200,7 @@ fabrk CLI (orchestrates everything)
 
 pnpm install        # Install dependencies
 pnpm build          # Build all 18 packages
-pnpm test           # Run 292 tests
+pnpm test           # Run 410 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```

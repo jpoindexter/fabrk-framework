@@ -166,18 +166,18 @@ async function wirePayment(config: FabrkConfigInput, registry: PluginRegistry): 
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payments: any = await import(/* webpackIgnore: true */ pkgName)
-    const provider = config.payments?.provider
+    const adapter = config.payments?.adapter
 
-    if (provider === 'stripe' && payments.createStripeAdapter) {
+    if (adapter === 'stripe' && payments.createStripeAdapter) {
       registry.register('payment', payments.createStripeAdapter({
         secretKey: env('STRIPE_SECRET_KEY'),
         webhookSecret: env('STRIPE_WEBHOOK_SECRET'),
       }))
-    } else if (provider === 'polar' && payments.createPolarAdapter) {
+    } else if (adapter === 'polar' && payments.createPolarAdapter) {
       registry.register('payment', payments.createPolarAdapter({
         accessToken: env('POLAR_ACCESS_TOKEN'),
       }))
-    } else if (provider === 'lemonsqueezy' && payments.createLemonSqueezyAdapter) {
+    } else if (adapter === 'lemonsqueezy' && payments.createLemonSqueezyAdapter) {
       registry.register('payment', payments.createLemonSqueezyAdapter({
         apiKey: env('LEMONSQUEEZY_API_KEY'),
         storeId: env('LEMONSQUEEZY_STORE_ID'),

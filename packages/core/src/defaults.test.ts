@@ -75,11 +75,10 @@ describe('applyDevDefaults', () => {
   it('should apply security defaults', () => {
     const config = applyDevDefaults({})
     expect(config.security).toEqual({
-      csrf: true,
-      csp: true,
-      rateLimit: true,
-      auditLog: false,
-      headers: true,
+      csrf: { enabled: true },
+      csp: { enabled: true },
+      rateLimit: { enabled: true },
+      auditLog: { enabled: false },
     })
   })
 

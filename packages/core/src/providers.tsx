@@ -56,7 +56,7 @@ export interface FabrkProviderProps {
  *
  * export default function RootLayout({ children }) {
  *   return (
- *     <FabrkProvider config={{ payments: { provider: 'stripe' } }}>
+ *     <FabrkProvider config={{ payments: { adapter: 'stripe' } }}>
  *       <ThemeProvider defaultColorTheme="green">
  *         {children}
  *       </ThemeProvider>

@@ -1,9 +1,7 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import { FabrkProvider } from '@fabrk/core'
+import { ThemeProvider } from '@fabrk/design-system'
 import './globals.css'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'FABRK App',
@@ -16,11 +14,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <FabrkProvider>
-          {children}
-        </FabrkProvider>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="font-mono antialiased">
+        <ThemeProvider defaultColorTheme="green">
+          <FabrkProvider>
+            {children}
+          </FabrkProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

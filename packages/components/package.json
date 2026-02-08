@@ -69,7 +69,7 @@
     "prism-react-renderer": "^2.4.1",
     "react-day-picker": "^9.5.5",
     "react-hook-form": "^7.56.1",
-    "tailwind-merge": "^2.2.1",
+    "tailwind-merge": "^3.4.0",
     "recharts": "^2.10.4",
     "vaul": "^1.1.2",
     "@tanstack/react-table": "^8.20.5"

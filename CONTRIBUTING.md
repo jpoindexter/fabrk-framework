@@ -39,6 +39,7 @@ fabrk-framework/
 │   ├── mcp/               # @fabrk/mcp — Model Context Protocol toolkit
 │   ├── design-system/     # @fabrk/design-system — Base design tokens
 │   ├── referrals/         # @fabrk/referrals — Referral system
+│   ├── store-prisma/      # @fabrk/store-prisma — Prisma store adapters
 │   └── cli/               # create-fabrk-app + fabrk CLI
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
 ├── examples/

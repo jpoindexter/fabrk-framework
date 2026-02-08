@@ -6,9 +6,9 @@
 <p align="center">
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
-  <img src="https://img.shields.io/badge/packages-17-green" alt="Packages" />
+  <img src="https://img.shields.io/badge/packages-16-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-70%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-233-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-292-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
 </p>
@@ -71,6 +71,8 @@ FABRK is a modular monorepo — install only what you need.
 | [`@fabrk/storage`](packages/storage) | S3, Cloudflare R2, local filesystem adapters |
 | [`@fabrk/security`](packages/security) | CSRF, CSP, rate limiting, audit logging, GDPR, bot protection, CORS |
 | [`@fabrk/mcp`](packages/mcp) | Model Context Protocol server toolkit |
+| [`@fabrk/store-prisma`](packages/store-prisma) | Prisma store adapters for teams, API keys, audit, notifications, jobs, webhooks, feature flags |
+| [`@fabrk/referrals`](packages/referrals) | Referral system |
 
 ### Design System (opt-in, shadcn-style)
 
@@ -98,10 +100,10 @@ export default defineFabrkConfig({
   framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
   theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
   ai: { costTracking: true, budget: { daily: 50 } },
-  auth: { provider: 'nextauth', mfa: true, apiKeys: true },
-  payments: { provider: 'stripe', mode: 'test' },
-  email: { provider: 'resend' },
-  security: { csrf: true, rateLimit: true, csp: true },
+  auth: { adapter: 'nextauth', mfa: { enabled: true }, apiKeys: { enabled: true } },
+  payments: { adapter: 'stripe', mode: 'test' },
+  email: { adapter: 'resend' },
+  security: { csrf: { enabled: true }, rateLimit: { enabled: true }, csp: { enabled: true } },
   notifications: { enabled: true },
   teams: { enabled: true },
   featureFlags: { enabled: true },
@@ -197,8 +199,8 @@ fabrk CLI (orchestrates everything)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 17 packages
-pnpm test           # Run 233 tests
+pnpm build          # Build all 18 packages
+pnpm test           # Run 292 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```

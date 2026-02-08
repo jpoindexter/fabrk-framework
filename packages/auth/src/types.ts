@@ -8,6 +8,19 @@ import type { AuthStore, ApiKeyStore, Session, ApiKeyInfo } from '@fabrk/core'
 export type { AuthStore, ApiKeyStore }
 
 export interface NextAuthAdapterConfig {
+  /**
+   * User's NextAuth v5 `auth()` function.
+   * This is the function exported from your `auth.ts` file.
+   *
+   * @example
+   * ```ts
+   * import { auth } from './lib/auth'
+   * createNextAuthAdapter({ authInstance: auth })
+   * ```
+   */
+  authInstance?: () => Promise<any>
+  /** Custom API key store (defaults to InMemoryApiKeyStore) */
+  apiKeyStore?: ApiKeyStore
   /** OAuth providers to enable */
   providers?: Array<'google' | 'github' | 'credentials' | 'magic-link'>
   /** Session strategy */

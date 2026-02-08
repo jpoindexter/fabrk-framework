@@ -16,7 +16,7 @@ export interface RenderedEmail {
   html: string
 }
 
-type TemplateRenderer = (data: Record<string, unknown>) => RenderedEmail
+type TemplateRenderer = (_data: Record<string, unknown>) => RenderedEmail
 
 const templates: Record<string, TemplateRenderer> = {
   verification: verificationTemplate,

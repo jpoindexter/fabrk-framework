@@ -114,7 +114,7 @@ export function buildSchema(
  * }
  * ```
  */
-export function parseArgs<T>(args: Record<string, unknown>, schema: { parse: (data: unknown) => T }): T {
+export function parseArgs<T>(args: Record<string, unknown>, schema: { parse: (_data: unknown) => T }): T {
   try {
     return schema.parse(args)
   } catch (error: any) {

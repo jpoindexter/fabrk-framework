@@ -28,7 +28,7 @@ import type { LemonSqueezyAdapterConfig } from '../types'
 export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.lemonsqueezy.com/v1'
 
-  async function lsFetch(path: string, options?: RequestInit) {
+  async function lsFetch(path: string, options?: globalThis.RequestInit) {
     const response = await fetch(`${baseUrl}${path}`, {
       ...options,
       headers: {

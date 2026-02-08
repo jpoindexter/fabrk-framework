@@ -10,7 +10,7 @@ export type { CreateFabrkOptions } from './framework'
 
 // Auto-wiring
 export { autoWire } from './auto-wire'
-export type { AutoWireResult, FeatureModules, AdapterOverrides } from './auto-wire'
+export type { AutoWireResult, FeatureModules, AdapterOverrides, StoreOverrides } from './auto-wire'
 
 // Defaults
 export { isDev, applyDevDefaults } from './defaults'

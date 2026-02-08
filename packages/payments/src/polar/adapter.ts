@@ -27,7 +27,7 @@ import type { PolarAdapterConfig } from '../types'
 export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.polar.sh/v1'
 
-  async function polarFetch(path: string, options?: RequestInit) {
+  async function polarFetch(path: string, options?: globalThis.RequestInit) {
     const response = await fetch(`${baseUrl}${path}`, {
       ...options,
       headers: {

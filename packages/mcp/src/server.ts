@@ -9,7 +9,6 @@ import type {
   CreateMcpServerOptions,
   McpServerInstance,
   McpToolDefinition,
-  McpToolResult,
   McpResourceDefinition,
 } from './types'
 

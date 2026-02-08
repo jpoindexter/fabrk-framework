@@ -44,6 +44,9 @@
     "typescript"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
+  },
   "publishConfig": {
     "access": "public"
   },

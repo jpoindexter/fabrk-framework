@@ -1,0 +1,232 @@
+// =============================================================================
+// FABRK Framework — Example Prisma Schema
+//
+// This is a reference schema for @fabrk/store-prisma. Copy the models you need
+// into your own schema.prisma file. All models are optional — only include the
+// ones for stores you're using.
+//
+// Prerequisites:
+//   datasource db { provider = "postgresql" ... }
+//   generator client { provider = "prisma-client-js" }
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// TEAMS / ORGANIZATIONS
+// -----------------------------------------------------------------------------
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  ownerId   String
+  logoUrl   String?
+  settings  Json     @default("{}")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members OrganizationMember[]
+  invites OrganizationInvite[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String       @default("MEMBER") // OWNER, ADMIN, MEMBER
+  joinedAt       DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+model OrganizationInvite {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  role           String    @default("MEMBER")
+  token          String    @unique
+  invitedBy      String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+// -----------------------------------------------------------------------------
+// API KEYS
+// -----------------------------------------------------------------------------
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  prefix     String    // First 8 chars for identification
+  hash       String    @unique // SHA-256 hash of the full key
+  name       String
+  scopes     String[]  @default([])
+  userId     String?
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+// -----------------------------------------------------------------------------
+// AUDIT LOG
+// -----------------------------------------------------------------------------
+
+model AuditEvent {
+  id           String   @id @default(cuid())
+  actorId      String
+  action       String   // e.g. "user.create", "org.update"
+  resourceType String   // e.g. "user", "org", "apiKey"
+  resourceId   String
+  orgId        String?
+  metadata     Json     @default("{}")
+  ipAddress    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+  hash         String?  // Tamper-proof hash
+
+  @@index([orgId, timestamp])
+  @@index([actorId, timestamp])
+  @@index([resourceType, resourceId])
+}
+
+// -----------------------------------------------------------------------------
+// NOTIFICATIONS
+// -----------------------------------------------------------------------------
+
+model Notification {
+  id          String   @id @default(cuid())
+  type        String   // info, success, warning, error, system
+  title       String
+  message     String
+  priority    String   @default("normal") // low, normal, high, urgent
+  actionUrl   String?
+  actionLabel String?
+  userIds     String[] @default([])
+  metadata    Json     @default("{}")
+  read        Boolean  @default(false)
+  dismissed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// -----------------------------------------------------------------------------
+// JOB QUEUE
+// -----------------------------------------------------------------------------
+
+model Job {
+  id            String    @id @default(cuid())
+  type          String
+  payload       Json      @default("{}")
+  priority      Int       @default(0)
+  maxRetries    Int       @default(3)
+  delay         Int?      // ms
+  scheduledAt   DateTime?
+  status        String    @default("pending") // pending, running, completed, failed, retrying
+  attempts      Int       @default(0)
+  createdAt     DateTime  @default(now())
+  lastAttemptAt DateTime?
+  completedAt   DateTime?
+  error         String?
+  result        Json?
+
+  @@index([status, priority, createdAt])
+  @@index([type, status])
+}
+
+// -----------------------------------------------------------------------------
+// WEBHOOKS
+// -----------------------------------------------------------------------------
+
+model Webhook {
+  id        String   @id @default(cuid())
+  url       String
+  events    String[] @default([])
+  secret    String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  deliveries WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id          String   @id @default(cuid())
+  webhookId   String
+  event       String
+  statusCode  Int?
+  success     Boolean
+  attempts    Int      @default(1)
+  deliveredAt DateTime @default(now())
+  response    String?
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId, deliveredAt])
+}
+
+// -----------------------------------------------------------------------------
+// FEATURE FLAGS
+// -----------------------------------------------------------------------------
+
+model FeatureFlag {
+  name           String   @id
+  enabled        Boolean  @default(false)
+  rolloutPercent Int?     // 0-100
+  targetUsers    String[] @default([])
+  targetRoles    String[] @default([])
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// AI COST TRACKING
+// -----------------------------------------------------------------------------
+
+model AICostEvent {
+  id               String   @id @default(cuid())
+  timestamp        DateTime @default(now())
+  model            String
+  provider         String   // openai, anthropic, google, etc.
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  costUSD          Float
+  feature          String
+  prompt           String?
+  success          Boolean  @default(true)
+  errorMessage     String?
+  durationMs       Int
+  userId           String?
+  metadata         Json?
+
+  @@index([feature, timestamp])
+  @@index([userId, timestamp])
+  @@index([provider, timestamp])
+}
+
+// -----------------------------------------------------------------------------
+// USER (Reference — you likely already have this)
+// -----------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("user")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  organizationMembers OrganizationMember[]
+  apiKeys             ApiKey[]
+}

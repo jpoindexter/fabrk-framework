@@ -26,7 +26,7 @@ export interface McpToolDefinition {
   /** JSON Schema for input validation */
   inputSchema: JsonSchema
   /** Tool handler function */
-  handler: (args: Record<string, unknown>) => Promise<McpToolResult>
+  handler: (_args: Record<string, unknown>) => Promise<McpToolResult>
 }
 
 /** Result returned by a tool handler */
@@ -67,7 +67,7 @@ export interface CreateMcpServerOptions {
   /** Called before server starts */
   onStartup?: () => Promise<void>
   /** Called on server error */
-  onError?: (error: Error) => void
+  onError?: (_error: Error) => void
 }
 
 /** Running MCP server instance */
@@ -75,7 +75,7 @@ export interface McpServerInstance {
   /** Start the server with stdio transport */
   start: () => Promise<void>
   /** Add a tool after creation */
-  addTool: (tool: McpToolDefinition) => void
+  addTool: (_tool: McpToolDefinition) => void
   /** Add a resource after creation */
-  addResource: (resource: McpResourceDefinition) => void
+  addResource: (_resource: McpResourceDefinition) => void
 }

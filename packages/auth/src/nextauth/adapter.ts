@@ -35,8 +35,8 @@ import { InMemoryApiKeyStore } from '../types'
 export function createNextAuthAdapter(
   config: NextAuthAdapterConfig = {}
 ): AuthAdapter {
-  // Default to in-memory store for development
-  const apiKeyStore = new InMemoryApiKeyStore()
+  // Use provided store or fall back to in-memory for development
+  const apiKeyStore = config.apiKeyStore ?? new InMemoryApiKeyStore()
   const validator = createApiKeyValidator(apiKeyStore)
 
   // MFA secrets stored in memory (in production, use a database)
@@ -48,14 +48,28 @@ export function createNextAuthAdapter(
     version: '1.0.0',
 
     isConfigured(): boolean {
-      return true // NextAuth configures via auth.ts, not here
+      return !!config.authInstance
     },
 
     async getSession(_request?: Request): Promise<Session | null> {
-      // In production, this delegates to NextAuth's getServerSession()
-      // The actual NextAuth integration is handled at the app level
-      // This adapter provides the interface contract
-      return null
+      if (!config.authInstance) return null
+
+      try {
+        const session = await config.authInstance()
+        if (!session?.user) return null
+
+        return {
+          userId: session.user.id ?? session.user.email,
+          email: session.user.email,
+          name: session.user.name,
+          image: session.user.image,
+          role: session.user.role,
+          expiresAt: session.expires ? new Date(session.expires) : undefined,
+          metadata: session.user,
+        }
+      } catch {
+        return null
+      }
     },
 
     async validateApiKey(key: string): Promise<ApiKeyInfo | null> {

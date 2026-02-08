@@ -17,6 +17,14 @@ import type {
   StorageAdapter,
   RateLimitAdapter,
 } from './plugins'
+import type {
+  TeamStore,
+  NotificationStore,
+  FeatureFlagStore,
+  WebhookStore,
+  JobStore,
+  AuditStore,
+} from './plugin-types'
 import { createNotificationManager, type NotificationManager } from './notifications/manager'
 import { createTeamManager, type TeamManager } from './teams/organizations'
 import { InMemoryTeamStore } from './teams/memory-store'
@@ -68,6 +76,32 @@ export interface AdapterOverrides {
 }
 
 /**
+ * User-provided store overrides.
+ *
+ * Replace in-memory stores with persistent implementations (e.g. Prisma).
+ * Any store not provided falls back to its in-memory default.
+ *
+ * @example
+ * ```ts
+ * import { PrismaTeamStore, PrismaAuditStore } from '@fabrk/store-prisma'
+ * import { prisma } from './lib/prisma'
+ *
+ * const { features } = await autoWire(config, {}, {
+ *   team: new PrismaTeamStore(prisma),
+ *   audit: new PrismaAuditStore(prisma),
+ * })
+ * ```
+ */
+export interface StoreOverrides {
+  team?: TeamStore
+  notification?: NotificationStore
+  featureFlag?: FeatureFlagStore
+  webhook?: WebhookStore
+  job?: JobStore
+  audit?: AuditStore
+}
+
+/**
  * Auto-wire adapters and feature modules from config.
  *
  * Attempts dynamic imports of @fabrk/* packages and creates adapters
@@ -86,7 +120,8 @@ export interface AdapterOverrides {
  */
 export async function autoWire(
   config: FabrkConfig,
-  overrides?: AdapterOverrides
+  overrides?: AdapterOverrides,
+  stores?: StoreOverrides
 ): Promise<AutoWireResult> {
   const registry = new PluginRegistry()
 
@@ -111,7 +146,7 @@ export async function autoWire(
   }
 
   // Wire feature modules (sync, no external deps)
-  const features = wireFeatures(config)
+  const features = wireFeatures(config, stores)
 
   // Initialize all adapters
   await registry.initialize()
@@ -207,7 +242,7 @@ async function wireStorage(config: FabrkConfig, registry: PluginRegistry): Promi
 // FEATURE MODULE WIRING
 // ============================================================================
 
-function wireFeatures(config: FabrkConfig): FeatureModules {
+function wireFeatures(config: FabrkConfig, stores?: StoreOverrides): FeatureModules {
   const features: FeatureModules = {
     notifications: null,
     teams: null,
@@ -217,23 +252,23 @@ function wireFeatures(config: FabrkConfig): FeatureModules {
   }
 
   if (config.notifications?.enabled !== false) {
-    features.notifications = createNotificationManager()
+    features.notifications = createNotificationManager(stores?.notification)
   }
 
   if (config.teams?.enabled) {
-    features.teams = createTeamManager(new InMemoryTeamStore())
+    features.teams = createTeamManager(stores?.team ?? new InMemoryTeamStore())
   }
 
   if (config.featureFlags?.enabled) {
-    features.featureFlags = createFeatureFlagManager()
+    features.featureFlags = createFeatureFlagManager(stores?.featureFlag)
   }
 
   if (config.webhooks?.enabled) {
-    features.webhooks = createWebhookManager()
+    features.webhooks = createWebhookManager(stores?.webhook)
   }
 
   if (config.jobs?.enabled) {
-    features.jobs = createJobQueue()
+    features.jobs = createJobQueue(stores?.job)
   }
 
   return features

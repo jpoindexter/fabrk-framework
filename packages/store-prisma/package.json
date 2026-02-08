@@ -1,7 +1,7 @@
 {
-  "name": "@fabrk/ui",
+  "name": "@fabrk/store-prisma",
   "version": "0.1.0",
-  "description": "FABRK component registry — shadcn-style copy-into-project components",
+  "description": "Prisma store implementations for FABRK Framework — persistent database adapters",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -11,39 +11,36 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    },
-    "./registry.json": "./registry.json"
+    }
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@fabrk/core": "workspace:*"
   },
-  "peerDependencies": {
-    "react": "^19.0.0"
-  },
   "devDependencies": {
-    "tsup": "^8.0.0",
+    "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   },
   "files": [
     "dist",
-    "registry",
-    "registry.json"
+    "schema.example.prisma",
+    "README.md"
   ],
-  "author": "Jason Poindexter",
   "keywords": [
     "fabrk",
-    "ui",
-    "components",
-    "registry",
-    "shadcn",
-    "react",
+    "prisma",
+    "database",
+    "store",
+    "postgresql",
     "typescript"
   ],
+  "author": "Jason Poindexter",
+  "license": "MIT",
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {
     "url": "https://github.com/jpoindexter/fabrk-framework/issues"
@@ -51,10 +48,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/jpoindexter/fabrk-framework.git",
-    "directory": "packages/ui"
+    "directory": "packages/store-prisma"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "license": "MIT"
+  }
 }

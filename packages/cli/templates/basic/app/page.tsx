@@ -8,6 +8,9 @@ import {
   Input,
   Separator,
   Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
   Switch,
   Progress,
 } from '@fabrk/components'
@@ -61,13 +64,13 @@ export default function Home() {
         <h2 className="text-xl font-bold uppercase">[COMPONENTS]</h2>
 
         <Tabs defaultValue="buttons">
-          <Tabs.List>
-            <Tabs.Trigger value="buttons">&gt; BUTTONS</Tabs.Trigger>
-            <Tabs.Trigger value="inputs">&gt; INPUTS</Tabs.Trigger>
-            <Tabs.Trigger value="feedback">&gt; FEEDBACK</Tabs.Trigger>
-          </Tabs.List>
+          <TabsList>
+            <TabsTrigger value="buttons">&gt; BUTTONS</TabsTrigger>
+            <TabsTrigger value="inputs">&gt; INPUTS</TabsTrigger>
+            <TabsTrigger value="feedback">&gt; FEEDBACK</TabsTrigger>
+          </TabsList>
 
-          <Tabs.Content value="buttons" className="space-y-4 pt-4">
+          <TabsContent value="buttons" className="space-y-4 pt-4">
             <div className="flex flex-wrap gap-3">
               <Button>&gt; PRIMARY</Button>
               <Button variant="secondary">&gt; SECONDARY</Button>
@@ -80,9 +83,9 @@ export default function Home() {
               <Button size="default">&gt; DEFAULT</Button>
               <Button size="lg">&gt; LARGE</Button>
             </div>
-          </Tabs.Content>
+          </TabsContent>
 
-          <Tabs.Content value="inputs" className="space-y-4 pt-4">
+          <TabsContent value="inputs" className="space-y-4 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-lg">
               <Input placeholder="Enter command..." />
               <Input placeholder="Disabled" disabled />
@@ -93,9 +96,9 @@ export default function Home() {
                 {switchOn ? '[ENABLED]' : '[DISABLED]'}
               </span>
             </div>
-          </Tabs.Content>
+          </TabsContent>
 
-          <Tabs.Content value="feedback" className="space-y-4 pt-4">
+          <TabsContent value="feedback" className="space-y-4 pt-4">
             <div className="space-y-3 max-w-md">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">PROGRESS</span>
@@ -117,7 +120,7 @@ export default function Home() {
               <Badge variant="outline">[v0.1.0]</Badge>
               <Badge variant="destructive">[ERROR]</Badge>
             </div>
-          </Tabs.Content>
+          </TabsContent>
         </Tabs>
       </section>
 

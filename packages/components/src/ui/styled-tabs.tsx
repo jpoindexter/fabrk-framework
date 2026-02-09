@@ -58,7 +58,7 @@ export interface StyledTabsProps {
 }
 
 export function StyledTabs({
-  code,
+  code: _code,
   title,
   tabs,
   value,

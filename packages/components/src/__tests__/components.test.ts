@@ -644,7 +644,7 @@ describe('@fabrk/components', () => {
     })
 
     it('cn handles conditional classes', () => {
-      const result = AllExports.cn('base', false && 'hidden', 'visible')
+      const result = AllExports.cn('base', undefined, 'visible')
       expect(result).toContain('base')
       expect(result).toContain('visible')
       expect(result).not.toContain('hidden')

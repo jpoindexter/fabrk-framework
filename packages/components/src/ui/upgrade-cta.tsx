@@ -21,7 +21,7 @@ function DefaultLink({ href, children, className }: { href: string; children: Re
 
 export function UpgradeCTA({
   hiddenCount,
-  totalCount,
+  totalCount: _totalCount,
   contentType,
   variant = 'card',
   upgradeText,

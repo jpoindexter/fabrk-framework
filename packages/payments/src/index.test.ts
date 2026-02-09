@@ -142,6 +142,193 @@ describe('createPolarAdapter', () => {
 })
 
 // ---------------------------------------------------------------------------
+// Polar Webhook Signature Verification
+// ---------------------------------------------------------------------------
+
+describe('Polar webhook signature verification', () => {
+  const webhookSecret = 'test_polar_webhook_secret'
+
+  /** Helper: compute a valid svix-style HMAC-SHA256 signature for a Polar webhook */
+  async function computePolarSignature(
+    body: string,
+    webhookId: string,
+    timestamp: string,
+    secret: string
+  ): Promise<string> {
+    const encoder = new TextEncoder()
+    const secretBytes = secret.startsWith('whsec_')
+      ? Uint8Array.from(atob(secret.slice(6)), (c) => c.charCodeAt(0))
+      : encoder.encode(secret)
+
+    const message = `${webhookId}.${timestamp}.${body}`
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
+    const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
+    return btoa(String.fromCharCode(...new Uint8Array(signed)))
+  }
+
+  it('should verify a valid webhook signature', async () => {
+    const adapter = createPolarAdapter({
+      accessToken: 'polar_pat_abc123',
+      webhookSecret,
+    })
+
+    const payload = JSON.stringify({
+      type: 'subscription.created',
+      id: 'evt_sig_1',
+      data: { subscription_id: 'sub_xyz' },
+    })
+
+    const webhookId = 'msg_abc123'
+    const timestamp = '1700000000'
+    const sig = await computePolarSignature(payload, webhookId, timestamp, webhookSecret)
+
+    const result = await adapter.handleWebhook(payload, '', {
+      'webhook-id': webhookId,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': `v1,${sig}`,
+    })
+
+    expect(result.verified).toBe(true)
+    expect(result.event).toBeDefined()
+    expect(result.event!.type).toBe('subscription.created')
+    expect(result.event!.id).toBe('evt_sig_1')
+  })
+
+  it('should verify when signature header contains multiple signatures', async () => {
+    const adapter = createPolarAdapter({
+      accessToken: 'polar_pat_abc123',
+      webhookSecret,
+    })
+
+    const payload = JSON.stringify({
+      type: 'checkout.completed',
+      id: 'evt_multi',
+      data: { amount: 2500 },
+    })
+
+    const webhookId = 'msg_multi'
+    const timestamp = '1700000001'
+    const validSig = await computePolarSignature(payload, webhookId, timestamp, webhookSecret)
+
+    // Multiple signatures: first is wrong, second is correct
+    const signatureHeader = `v1,invalidbase64sig v1,${validSig}`
+
+    const result = await adapter.handleWebhook(payload, '', {
+      'webhook-id': webhookId,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': signatureHeader,
+    })
+
+    expect(result.verified).toBe(true)
+    expect(result.event!.type).toBe('checkout.completed')
+  })
+
+  it('should reject an invalid webhook signature', async () => {
+    const adapter = createPolarAdapter({
+      accessToken: 'polar_pat_abc123',
+      webhookSecret,
+    })
+
+    const payload = JSON.stringify({
+      type: 'subscription.created',
+      id: 'evt_bad',
+      data: { subscription_id: 'sub_abc' },
+    })
+
+    const result = await adapter.handleWebhook(payload, '', {
+      'webhook-id': 'msg_bad',
+      'webhook-timestamp': '1700000000',
+      'webhook-signature': 'v1,definitelyNotAValidSignature',
+    })
+
+    expect(result.verified).toBe(false)
+    expect(result.error).toBe('Invalid webhook signature')
+  })
+
+  it('should return error when required headers are missing', async () => {
+    const adapter = createPolarAdapter({
+      accessToken: 'polar_pat_abc123',
+      webhookSecret,
+    })
+
+    const payload = JSON.stringify({
+      type: 'subscription.created',
+      id: 'evt_no_headers',
+      data: {},
+    })
+
+    // Missing webhook-id and webhook-timestamp
+    const result = await adapter.handleWebhook(payload, '', {})
+
+    expect(result.verified).toBe(false)
+    expect(result.error).toBe('Missing required webhook headers (webhook-id, webhook-timestamp, webhook-signature)')
+  })
+
+  it('should process without verification when webhookSecret is not configured', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+    const adapter = createPolarAdapter({
+      accessToken: 'polar_pat_abc123',
+      // No webhookSecret
+    })
+
+    const payload = JSON.stringify({
+      type: 'subscription.updated',
+      id: 'evt_no_secret',
+      data: { status: 'active' },
+    })
+
+    const result = await adapter.handleWebhook(payload, 'any_sig')
+
+    expect(result.verified).toBe(true)
+    expect(result.event).toBeDefined()
+    expect(result.event!.type).toBe('subscription.updated')
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[fabrk/payments] Polar webhookSecret not configured — skipping signature verification'
+    )
+
+    warnSpy.mockRestore()
+  })
+
+  it('should support whsec_ prefixed secrets', async () => {
+    // Create a base64-encoded secret with whsec_ prefix (svix format)
+    const rawSecret = 'my-super-secret-key'
+    const base64Secret = btoa(rawSecret)
+    const whsecSecret = `whsec_${base64Secret}`
+
+    const adapter = createPolarAdapter({
+      accessToken: 'polar_pat_abc123',
+      webhookSecret: whsecSecret,
+    })
+
+    const payload = JSON.stringify({
+      type: 'subscription.created',
+      id: 'evt_whsec',
+      data: { plan: 'pro' },
+    })
+
+    const webhookId = 'msg_whsec'
+    const timestamp = '1700000002'
+    const sig = await computePolarSignature(payload, webhookId, timestamp, whsecSecret)
+
+    const result = await adapter.handleWebhook(payload, '', {
+      'webhook-id': webhookId,
+      'webhook-timestamp': timestamp,
+      'webhook-signature': `v1,${sig}`,
+    })
+
+    expect(result.verified).toBe(true)
+    expect(result.event!.id).toBe('evt_whsec')
+  })
+})
+
+// ---------------------------------------------------------------------------
 // Lemon Squeezy Adapter
 // ---------------------------------------------------------------------------
 

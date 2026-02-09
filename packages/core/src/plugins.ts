@@ -68,7 +68,7 @@ export interface PaymentAdapter extends FabrkPlugin {
   /** Create a checkout session */
   createCheckout(options: CheckoutOptions): Promise<CheckoutResult>
   /** Verify and parse a webhook event */
-  handleWebhook(payload: string | ArrayBuffer, signature: string): Promise<WebhookResult>
+  handleWebhook(payload: string | ArrayBuffer, signature: string, headers?: Record<string, string>): Promise<WebhookResult>
   /** Get customer info by ID */
   getCustomer(customerId: string): Promise<CustomerInfo | null>
   /** Get subscription info by ID */

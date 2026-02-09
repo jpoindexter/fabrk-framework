@@ -44,6 +44,57 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
     return response.json()
   }
 
+  /**
+   * Verify a Polar webhook signature (svix format).
+   *
+   * Polar uses svix under the hood. The signature is computed as:
+   *   message = `${webhookId}.${timestamp}.${body}`
+   *   signature = base64(HMAC-SHA256(webhookSecret, message))
+   *
+   * The `webhook-signature` header may contain multiple signatures
+   * separated by spaces, each prefixed with `v1,`.
+   */
+  async function verifyWebhookSignature(
+    body: string,
+    webhookId: string,
+    timestamp: string,
+    signatureHeader: string
+  ): Promise<boolean> {
+    const secret = config.webhookSecret!
+    // svix secrets may be prefixed with "whsec_"; the actual key is base64-encoded after the prefix
+    const secretBytes = secret.startsWith('whsec_')
+      ? Uint8Array.from(atob(secret.slice(6)), (c) => c.charCodeAt(0))
+      : new TextEncoder().encode(secret)
+
+    const encoder = new TextEncoder()
+    const message = `${webhookId}.${timestamp}.${body}`
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      secretBytes,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
+
+    const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
+    const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signed)))
+
+    // The header contains space-separated signatures, each prefixed with "v1,"
+    const signatures = signatureHeader.split(' ')
+    for (const sig of signatures) {
+      const parts = sig.split(',')
+      if (parts.length < 2) continue
+      // parts[0] is the version (e.g., "v1"), parts[1] is the base64 signature
+      const sigValue = parts.slice(1).join(',')
+      if (sigValue === expectedSignature) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   return {
     name: 'polar',
     version: '1.0.0',
@@ -70,13 +121,34 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
       }
     },
 
-    async handleWebhook(payload: string | ArrayBuffer, _signature: string): Promise<WebhookResult> {
+    async handleWebhook(payload: string | ArrayBuffer, signature: string, headers?: Record<string, string>): Promise<WebhookResult> {
       try {
         const payloadStr = typeof payload === 'string' ? payload : new TextDecoder().decode(payload)
+
+        // Verify signature if webhookSecret is configured
+        if (config.webhookSecret) {
+          const webhookId = headers?.['webhook-id'] ?? ''
+          const timestamp = headers?.['webhook-timestamp'] ?? ''
+          const signatureHeader = headers?.['webhook-signature'] ?? signature
+
+          if (!webhookId || !timestamp || !signatureHeader) {
+            return {
+              verified: false,
+              error: 'Missing required webhook headers (webhook-id, webhook-timestamp, webhook-signature)',
+            }
+          }
+
+          const verified = await verifyWebhookSignature(payloadStr, webhookId, timestamp, signatureHeader)
+          if (!verified) {
+            return { verified: false, error: 'Invalid webhook signature' }
+          }
+        } else {
+          // No webhookSecret configured — log a warning but still process
+          console.warn('[fabrk/payments] Polar webhookSecret not configured — skipping signature verification')
+        }
+
         const event = JSON.parse(payloadStr)
 
-        // Polar webhook verification is done via the webhook secret
-        // In production, verify the signature header
         return {
           verified: true,
           event: {

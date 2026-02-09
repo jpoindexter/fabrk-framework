@@ -77,6 +77,11 @@ export * from './ui/feedback-widget'
 export * from './ui/upgrade-cta'
 export * from './ui/cookie-consent'
 export * from './ui/onboarding-checklist'
+export * from './ui/tier-badge'
+export * from './ui/stats-grid'
+export * from './ui/dashboard-header'
+export * from './ui/page-header'
+export * from './ui/dashboard-shell'
 
 // Charts
 export * from './charts/area-chart'

@@ -4,7 +4,7 @@
 
 ## TL;DR
 
-- **Stack**: TypeScript 5.3.3
+- **Stack**: Next.js 15.1.5 + TypeScript 5.3.3
 - **Components**: 0 total — USE EXISTING, don't create new
 
 **Rules**: Use design tokens (not hardcoded colors), use `cn()` for classes, check existing components first
@@ -22,10 +22,10 @@ npm run dev
 
 | | |
 |---|---|
-| **Framework** | Unknown |
+| **Framework** | Next.js 15.1.5 (App Router) |
 | **Language** | TypeScript |
 | **Components** | 0 |
-| **Codebase** | 11 files, 1,234 lines |
+| **Codebase** | 7 files, 249 lines |
 
 ## Critical Rules
 
@@ -56,6 +56,9 @@ className="bg-primary text-primary-foreground"
 
 ### Framework-Specific
 
+- Use `'use client'` directive only when component needs interactivity
+- Prefer Server Components by default
+- Use `next/image` for images, `next/link` for navigation
 - Type all props and function parameters
 - Avoid `any` — use proper types or `unknown`
 
@@ -63,12 +66,26 @@ className="bg-primary text-primary-foreground"
 
 Most used external packages:
 
-- `fs` — 1 imports
-- `path` — 1 imports
-- `@aws-sdk/client-s3` — 1 imports
-- `@aws-sdk/s3-request-presigner` — 1 imports
+- `@fabrk/design-system` — 1 imports
+- `@fabrk/core` — 1 imports
 
 ## Additional Guidelines
+
+**Using <a> instead of Next.js Link**
+- Wrong: `<a href="/about">About</a>`
+- Right: `<Link href="/about">About</Link>`
+
+**Using <img> instead of Next.js Image**
+- Wrong: `<img src="/photo.jpg" alt="Photo" />`
+- Right: `<Image src="/photo.jpg" alt="Photo" width={400} height={300} />`
+
+**Missing 'use client' directive**
+- Wrong: `// Component with useState but no directive`
+- Right: `'use client'`
+
+**Unnecessary 'use client'**
+- Wrong: `'use client'`
+- Right: `export function StaticCard({ title }) { return <div>{title}</div> }`
 
 **Unvalidated API inputs**
 - Wrong: `const { id } = req.body; // No validation`
@@ -77,8 +94,13 @@ Most used external packages:
 ## Commands
 
 ```bash
-npm run dev          # tsup --watch
-npm run build        # tsup
-npm run lint         # eslint src
+npm run dev          # next dev
+npm run build        # next build
 npm run typecheck    # tsc --noEmit
+```
+
+### Other Commands
+
+```bash
+npm run start
 ```

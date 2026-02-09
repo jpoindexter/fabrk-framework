@@ -72,7 +72,7 @@ Templates & Examples (depend on all packages)
 fabrk-framework/
 ├── packages/
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 70+ UI components, charts, AI chat, admin, security
+│   ├── components/        # @fabrk/components - 80+ UI components, 8 charts, dashboard shell, AI chat, admin, security
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, validation, streaming, prompts)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
 │   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
@@ -389,7 +389,7 @@ Read these files for context:
 
 - **START_HERE.md** - Quick start guide for new instances
 - **HANDOFF_SUMMARY.md** - Complete setup status
-- **COMPONENT_INVENTORY.md** - List of all 70+ components to extract
+- **COMPONENT_INVENTORY.md** - List of all 80+ components to extract
 - **EXTRACTION_GUIDE.md** - Step-by-step extraction process
 - **DESIGN_SYSTEM_RULES.md** - Design rules to preserve
 - **FULL_PLAN.md** - Complete 5-6 week transformation plan
@@ -404,20 +404,34 @@ This framework exists to make YOUR job easier. Instead of generating 500 lines o
 ```typescript
 // When user says: "Build me a dashboard"
 // You generate this:
-import { BarChart, LineChart, KPICard } from '@fabrk/components'
-import { useCostTracking } from '@fabrk/core'
+import {
+  DashboardShell, DashboardHeader, StatsGrid, TierBadge,
+  BarChart, LineChart, KPICard, DataTable
+} from '@fabrk/components'
+import { mode } from '@fabrk/design-system'
 
 export default function Dashboard() {
-  const { todaysCost, weekTrend } = useCostTracking()
   return (
-    <div className="grid gap-4 p-6">
-      <KPICard title="Today" value={`$${todaysCost}`} />
+    <DashboardShell
+      sidebarItems={[
+        { id: 'overview', label: 'Overview', href: '/dashboard' },
+        { id: 'repos', label: 'Repos', href: '/dashboard/repos' },
+      ]}
+      user={{ name: 'Jason', tier: 'pro' }}
+      logo={<span className="text-accent text-xl">#</span>}
+      onSignOut={() => signOut()}
+    >
+      <DashboardHeader title="Overview" />
+      <StatsGrid items={[
+        { label: 'Files', value: 1572 },
+        { label: 'Components', value: 279, change: '+12%' },
+      ]} />
       <LineChart data={weekTrend} />
-    </div>
+    </DashboardShell>
   )
 }
 ```
 
-Result: 2 minutes, consistent design, built-in features, happy user.
+Result: Full dashboard with sidebar, responsive layout, KPIs, charts — in minutes.
 
 Each package includes `AGENTS.md` files documenting all components, props, and usage examples specifically for AI consumption.

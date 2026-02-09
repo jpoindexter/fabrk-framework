@@ -5,4 +5,5 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   external: ['react', '@fabrk/core'],
+  sourcemap: true,
 })

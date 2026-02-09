@@ -302,7 +302,7 @@ const FeaturesCard = React.forwardRef<HTMLDivElement, FeaturesCardProps>(
   (
     {
       title = 'TEMPLATE FEATURES',
-      code = '0x00',
+      code: _code = '0x00',
       features,
       note,
       featureIcon = 'arrow',

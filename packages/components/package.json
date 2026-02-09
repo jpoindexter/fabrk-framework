@@ -33,7 +33,8 @@
     "lint": "eslint src",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "generate-docs": "npx @jpoindexter/agent-smith --output AGENTS.md"
+    "generate-docs": "npx @jpoindexter/agent-smith --output AGENTS.md",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "react": "^19.0.0",

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import type { ApiKeyInfo } from '@fabrk/core'
 import { PrismaTeamStore } from '../team-store'
 import { PrismaApiKeyStore } from '../api-key-store'
 import { PrismaAuditStore } from '../audit-store'
@@ -525,8 +526,7 @@ describe('PrismaApiKeyStore', () => {
         active: true,
         createdAt,
         expiresAt,
-        userId: 'user-1',
-      })
+      } as ApiKeyInfo & { hash: string })
 
       expect(prisma.apiKey.create).toHaveBeenCalledWith({
         data: {
@@ -535,7 +535,7 @@ describe('PrismaApiKeyStore', () => {
           hash: 'sha256-hash',
           name: 'Production Key',
           scopes: ['read'],
-          userId: 'user-1',
+          userId: undefined,
           active: true,
           createdAt,
           expiresAt,

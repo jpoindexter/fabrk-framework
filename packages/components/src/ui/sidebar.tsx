@@ -94,7 +94,7 @@ export function Sidebar({ items, defaultCollapsed = false, className, onItemClic
         </button>
         {hasChildren && isExpanded && !isCollapsed && (
           <div className="mt-1 space-y-1">
-            {item.children!.map((child) => renderItem(child, depth + 1))}
+            {item.children?.map((child) => renderItem(child, depth + 1))}
           </div>
         )}
       </div>

@@ -12,7 +12,7 @@ const features = [
   },
   {
     label: 'PACKAGES',
-    value: '14',
+    value: '16',
     description: 'Modular packages for auth, payments, AI, and more',
   },
   {
@@ -22,16 +22,18 @@ const features = [
   },
   {
     label: 'TESTS',
-    value: '224',
+    value: '410',
     description: 'Comprehensive test coverage across all packages',
   },
 ]
 
 const quickLinks = [
   { label: '> GET STARTED', href: '/getting-started', description: 'Create your first FABRK app in 5 minutes' },
-  { label: '> PACKAGES', href: '/packages', description: 'Explore 14 modular packages' },
+  { label: '> PACKAGES', href: '/packages', description: 'Explore 16 modular packages' },
   { label: '> COMPONENTS', href: '/components', description: 'Browse 70+ UI components' },
-  { label: '> CLI REFERENCE', href: '/cli', description: 'fabrk and create-fabrk-app commands' },
+  { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
+  { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing Next.js app to FABRK' },
+  { label: '> CLI REFERENCE', href: '/cli', description: 'create-fabrk-app and fabrk dev CLI' },
 ]
 
 export default function HomePage() {
@@ -112,24 +114,32 @@ export default function HomePage() {
         </h2>
         <div className={cn('border border-border bg-card p-6', mode.radius)}>
           <div className="text-xs text-muted-foreground mb-3">
-            When a user says: &quot;Build me a dashboard&quot; — the AI generates:
+            When a user says: &quot;Build me a dashboard&quot; &mdash; the AI generates:
           </div>
           <pre className="text-sm leading-relaxed">
-            <code>{`import { BarChart, LineChart, KPICard } from '@fabrk/components'
-import { useCostTracking } from '@fabrk/core'
+            <code>{`import {
+  KPICard, Card, BarChart, LineChart, DataTable, Badge
+} from '@fabrk/components'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/themes'
 
 export default function Dashboard() {
-  const { todaysCost, weekTrend } = useCostTracking()
   return (
-    <div className="grid gap-4 p-6">
-      <KPICard title="TODAY" value={\`$\${todaysCost}\`} />
-      <LineChart data={weekTrend} />
+    <div className="p-6 space-y-6">
+      <div className="grid grid-cols-4 gap-4">
+        <KPICard title="REVENUE" value="$12,340" trend={12.5} />
+        <KPICard title="USERS" value="1,572" trend={8.3} />
+      </div>
+      <Card className={cn("p-6 border border-border", mode.radius)}>
+        <BarChart data={revenueData} />
+      </Card>
+      <DataTable columns={columns} data={users} />
     </div>
   )
 }`}</code>
           </pre>
           <div className="mt-4 text-xs text-primary">
-            Result: 2 minutes. Consistent design. Built-in features. Happy user.
+            Result: Full dashboard with KPIs, charts, and data table. 2 minutes. Consistent design.
           </div>
         </div>
       </div>

@@ -15,61 +15,116 @@ interface PackageInfo {
 
 const packages: PackageInfo[] = [
   {
+    id: 'config',
+    name: '@fabrk/config',
+    description: 'Type-safe configuration builder with Zod validation. 12 config sections covering every feature. Foundational package with zero dependencies.',
+    exports: [
+      'defineFabrkConfig() — Main config builder with autocomplete',
+      'fabrkConfigSchema — Complete Zod schema for validation',
+      'Individual schemas: frameworkConfigSchema, themeConfigSchema, aiConfigSchema, etc.',
+      'Types: FabrkConfig, FabrkConfigInput, FrameworkConfig, ThemeConfig, AIConfig',
+      'PaymentsConfig, AuthConfig, EmailConfig, StorageConfig, SecurityConfig',
+    ],
+    install: 'pnpm add @fabrk/config',
+    example: `import { defineFabrkConfig } from '@fabrk/config'
+
+export default defineFabrkConfig({
+  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
+  theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
+  ai: { costTracking: true, budget: { daily: 50 } },
+  notifications: { enabled: true },
+  teams: { enabled: true, maxMembers: 50 },
+})`,
+  },
+  {
+    id: 'design-system',
+    name: '@fabrk/design-system',
+    description: 'Foundational design system with 18 themes. Design tokens, CSS variables, and the mode system. Runtime-dynamic theme switching. Zero dependencies.',
+    exports: [
+      'mode — Design mode object (radius, font, shadow, color, spacing, typography)',
+      'themes — All 18 built-in themes',
+      'designTokens — Semantic color tokens (bg-primary, text-foreground, etc.)',
+      'primitives — Raw token values (colors, space, fonts)',
+      'applyTheme() — Runtime theme switching via CSS variables',
+      'getThemeNames() — List all available themes',
+    ],
+    install: 'pnpm add @fabrk/design-system',
+    example: `import { mode } from '@fabrk/design-system'
+
+// mode.radius — border radius class (e.g., 'rounded-none', 'rounded-lg')
+// mode.font   — font family class (e.g., 'font-mono')
+// mode.shadow — shadow class
+
+// Full borders ALWAYS get mode.radius
+<Card className={cn("border border-border", mode.radius)}>
+
+// Partial borders NEVER get mode.radius
+<div className="border-t border-border">`,
+  },
+  {
     id: 'core',
     name: '@fabrk/core',
-    description: 'Framework runtime — plugin system, hooks, providers, middleware, feature managers, and validation.',
+    description: 'Framework runtime — plugin system, hooks, providers, middleware, feature managers, auto-wiring, and validation. Depends on config and design-system.',
     exports: [
-      'createFabrk() / initFabrk()',
-      'FabrkProvider',
-      'useTeam(), useNotifications(), useFeatureFlag()',
-      'useWebhooks(), useJobs()',
-      'autoWire(), applyDevDefaults()',
-      'createNotificationManager()',
-      'createTeamManager(), InMemoryTeamStore',
-      'createFeatureFlagManager()',
-      'createWebhookManager()',
-      'createJobQueue()',
-      'Middleware presets (auth, rateLimit, cors, csrf)',
-      'Validation (checkHardcodedColors, validateFile, generateReport)',
-      'cn() utility',
+      'createFabrk() / initFabrk() — Initialize framework runtime',
+      'autoWire(config, adapters?, stores?) — Create adapters from config',
+      'applyDevDefaults(config) — Apply zero-config dev defaults',
+      'FabrkProvider — React context provider',
+      'useTeam(), useNotifications(), useFeatureFlag() — Feature hooks',
+      'useWebhooks(), useJobs() — System hooks',
+      'createNotificationManager(), createTeamManager() — Feature managers',
+      'createFeatureFlagManager(), createWebhookManager(), createJobQueue()',
+      'InMemoryTeamStore, InMemoryNotificationStore, InMemoryFlagStore',
+      'Middleware presets: auth, rateLimit, cors, csrf',
+      'Validation: checkHardcodedColors(), validateFile(), generateReport()',
+      'cn() — Tailwind class merge utility',
+      'StoreOverrides type — Inject Prisma stores into autoWire()',
     ],
     install: 'pnpm add @fabrk/core',
-    example: `import { createFabrk, useTeam, useFeatureFlag } from '@fabrk/core'
+    example: `import { autoWire, applyDevDefaults, cn } from '@fabrk/core'
+import config from '../fabrk.config'
 
-// Initialize framework
-const fabrk = createFabrk(config)
+// Auto-wire all adapters from config
+const fabrk = autoWire(applyDevDefaults(config))
 
-// Use in components
+// Use hooks in components
 function Dashboard() {
   const { enabled, manager } = useTeam()
   const { enabled: showBeta } = useFeatureFlag('beta-ui')
-  // ...
+  if (showBeta) return <BetaDashboard />
+  return <StandardDashboard />
 }`,
   },
   {
     id: 'components',
     name: '@fabrk/components',
-    description: '70+ pre-built UI components with terminal aesthetic — forms, charts, admin, AI chat, and more.',
+    description: '70+ pre-built UI components with terminal aesthetic. Forms, charts, data display, AI chat, admin, security, organization, feedback, SEO, and more.',
     exports: [
-      'UI: Button, Card, Input, Badge, Dialog, Sheet, Tabs, etc.',
-      'Charts: BarChart, LineChart, AreaChart, PieChart, DonutChart, Gauge, Sparkline, FunnelChart',
-      'Data: DataTable, Heatmap, KPICard, StatCard, JSONViewer',
-      'AI: ChatInput, ChatMessageList, ChatSidebar, TokenCounter, UsageBar',
-      'Admin: AuditLog, AdminMetricsCard, SystemHealthWidget',
-      'Security: MfaCard, MfaSetupDialog, BackupCodesModal',
+      'Forms: Button, Input, InputGroup, InputNumber, InputOTP, InputPassword, InputSearch, Textarea, Select, Checkbox, RadioGroup, Switch, Slider, DatePicker, Calendar, Form, Label',
+      'Layout: Card, Container, Separator, ScrollArea, Sidebar, Tabs, StyledTabs, Accordion',
+      'Charts: BarChart, LineChart, AreaChart, PieChart, DonutChart, FunnelChart, Gauge, Sparkline',
+      'Data: DataTable, Table, KPICard, StatCard, Badge, Tag, Avatar, Heatmap, JSONViewer, Pagination, EmptyState, Breadcrumb',
+      'Feedback: Alert, AlertDialog, Dialog, Sheet, Toaster, Loading, TerminalSpinner, Progress, AsciiProgressBar, StatusPulse, Typewriter, StarRating, NPSSurvey, FeedbackWidget, ErrorBoundary',
+      'Navigation: Command, DropdownMenu, Popover, Tooltip, SegmentedControl',
+      'AI: ChatInput, ChatMessageList, ChatSidebar, TokenCounter, UsageBar, LogStream',
+      'Admin: AuditLog, AdminMetricsCard, SystemHealthWidget, NotificationCenter, NotificationBadge, NotificationList',
+      'Security: MfaCard, MfaSetupDialog, BackupCodesModal, CookieConsent',
       'Org: OrgSwitcher, MemberCard, TeamActivityFeed',
-      'SEO: SchemaScript, Breadcrumbs',
-      'Feedback: StarRating, NPSSurvey, FeedbackWidget',
-      'ErrorBoundary, NotificationCenter, CookieConsent, OnboardingChecklist',
+      'Marketing: PricingCard, UpgradeCTA, OnboardingChecklist, SchemaScript, SimpleIcon',
     ],
     install: 'pnpm add @fabrk/components',
-    example: `import { Button, Card, BarChart, KPICard, Badge } from '@fabrk/components'
+    example: `import {
+  Button, Card, Badge, KPICard, BarChart,
+  DataTable, ChatInput, MfaCard, PricingCard
+} from '@fabrk/components'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/themes'
 
 function MetricsPage() {
   return (
     <div className="grid gap-4">
       <KPICard title="REVENUE" value="$12,340" trend={12.5} />
-      <Card className={cn("p-4", mode.radius)}>
+      <Card className={cn("p-4 border border-border", mode.radius)}>
         <BarChart data={chartData} />
       </Card>
       <Badge variant="default">[ACTIVE]</Badge>
@@ -81,11 +136,11 @@ function MetricsPage() {
   {
     id: 'ai',
     name: '@fabrk/ai',
-    description: 'AI toolkit — LLM providers, cost tracking, embeddings, streaming, prompt management, and testing.',
+    description: 'AI toolkit — LLM providers, cost tracking with stores, embeddings, streaming, prompt management, content moderation, and testing utilities.',
     exports: [
       'LLM: getLLMClient(), OpenAIClient, AnthropicClient, OllamaClient',
       'Chat: chatWithOpenAI(), chatWithClaude(), chat()',
-      'Cost: AICostTracker, InMemoryCostStore, MODEL_PRICING',
+      'Cost: AICostTracker, InMemoryCostStore, MODEL_PRICING, CostStore interface',
       'Embeddings: getEmbeddingProvider(), cosineSimilarity(), findNearest()',
       'Streaming: parseStreamChunks(), createTextStream(), mergeStreams()',
       'Prompts: PromptBuilder, createPromptTemplate(), composePrompts()',
@@ -94,44 +149,28 @@ function MetricsPage() {
       'Content: moderateContent(), generateImage(), textToSpeech(), speechToText()',
     ],
     install: 'pnpm add @fabrk/ai',
-    example: `import { getLLMClient, AICostTracker, createPromptTemplate } from '@fabrk/ai'
+    example: `import { getLLMClient, AICostTracker, InMemoryCostStore } from '@fabrk/ai'
 
 const client = getLLMClient({ provider: 'anthropic', model: 'claude-sonnet-4-5-20250514' })
-const tracker = new AICostTracker()
+const tracker = new AICostTracker(new InMemoryCostStore())
 
-const summarize = createPromptTemplate({
-  name: 'summarize',
-  template: 'Summarize: {{content}}',
-  variables: { content: '' },
-})`,
-  },
-  {
-    id: 'config',
-    name: '@fabrk/config',
-    description: 'Type-safe configuration builder with Zod validation. 12 config sections covering every feature.',
-    exports: [
-      'defineFabrkConfig() — Main config builder',
-      'fabrkConfigSchema — Complete Zod schema',
-      'Individual schemas: frameworkConfigSchema, themeConfigSchema, aiConfigSchema, etc.',
-      'Types: FabrkConfig, FrameworkConfig, ThemeConfig, AIConfig, PaymentsConfig, etc.',
-    ],
-    install: 'pnpm add @fabrk/config',
-    example: `import { defineFabrkConfig } from '@fabrk/config'
+const response = await client.chat([
+  { role: 'user', content: 'Explain quantum computing in 3 sentences.' },
+])
 
-export default defineFabrkConfig({
-  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
-  theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
-  ai: { costTracking: true, budget: { daily: 50 } },
-  notifications: { enabled: true },
+// Track cost automatically
+await tracker.track({
+  userId: 'user_123', model: 'claude-sonnet-4-5-20250514',
+  provider: 'anthropic', inputTokens: 12, outputTokens: 85, feature: 'chat',
 })`,
   },
   {
     id: 'themes',
     name: '@fabrk/themes',
-    description: 'Opt-in design system theming. Design tokens, themes, and the mode system. Runtime-dynamic via CSS variables.',
+    description: 'Opt-in theming layer on top of @fabrk/design-system. Provides ThemeProvider, runtime theme context, chart color utilities, and text formatters.',
     exports: [
-      'mode — Design mode object (radius, font, shadow, color, spacing, typography)',
-      'ThemeProvider, useThemeContext(), ThemeScript',
+      'mode — Re-exported design mode object (radius, font, shadow)',
+      'ThemeProvider, useThemeContext(), ThemeScript — Theme context & SSR',
       'primitives — Raw token values (colors, space, fonts)',
       'Chart colors: getChartColors(), getChartColor()',
       'Formatters: formatButtonText(), formatLabelText(), formatCardHeader()',
@@ -146,18 +185,22 @@ import { cn } from '@fabrk/core'
   <h2 className={cn("uppercase", mode.font)}>
     {mode.cardHeader('TITLE')}
   </h2>
-</Card>`,
+</Card>
+
+// Chart colors for data visualization
+import { getChartColors } from '@fabrk/themes'
+const colors = getChartColors(5) // ['#...', '#...', ...]`,
   },
   {
     id: 'payments',
     name: '@fabrk/payments',
-    description: 'Payment adapters for Stripe, Polar, and Lemon Squeezy. Provider-agnostic interface.',
+    description: 'Payment adapters for Stripe, Polar, and Lemon Squeezy. Provider-agnostic interface for checkout, webhooks, customer management, and subscriptions.',
     exports: [
       'StripePaymentAdapter — Checkout, webhooks, customer management',
       'PolarPaymentAdapter — Polar.sh integration',
       'LemonSqueezyPaymentAdapter — Lemon Squeezy integration',
       'InMemoryPaymentStore — Dev/testing store',
-      'Types: PaymentStore, CheckoutOptions, CheckoutResult',
+      'Types: PaymentStore, CheckoutOptions, CheckoutResult, SubscriptionStatus',
     ],
     install: 'pnpm add @fabrk/payments',
     example: `import { StripePaymentAdapter } from '@fabrk/payments'
@@ -166,100 +209,148 @@ const payments = new StripePaymentAdapter({
   secretKey: process.env.STRIPE_SECRET_KEY!,
 })
 
+// Create a checkout session
 const checkout = await payments.createCheckout({
   priceId: 'price_xxx',
+  customerId: user.stripeCustomerId,
   successUrl: '/success',
   cancelUrl: '/cancel',
-})`,
+})
+
+// Handle webhooks
+const event = await payments.handleWebhook(body, signature)`,
   },
   {
     id: 'auth',
     name: '@fabrk/auth',
-    description: 'Authentication — NextAuth adapter, API keys (SHA-256), MFA (TOTP RFC 6238 + backup codes).',
+    description: 'Authentication — NextAuth adapter with real session retrieval, API keys (SHA-256 hashed, fabrk_ prefix), MFA (TOTP RFC 6238 + backup codes).',
     exports: [
-      'NextAuthAdapter — Session management',
+      'NextAuthAdapter — Session management with authInstance config',
       'API Keys: generateApiKey(), hashApiKey(), validateApiKey()',
-      'MFA: generateTOTP(), verifyTOTP(), generateBackupCodes()',
+      'MFA: generateTOTP(), verifyTOTP(), generateBackupCodes(), verifyBackupCode()',
       'Middleware: authMiddleware()',
       'InMemoryAuthStore — Dev/testing store',
+      'Types: AuthStore, ApiKeyRecord, TOTPSecret',
     ],
     install: 'pnpm add @fabrk/auth',
     example: `import { generateApiKey, hashApiKey, verifyTOTP } from '@fabrk/auth'
 
 // Generate API key (fabrk_live_xxx format)
 const { key, hash } = await generateApiKey('live')
+// key = "fabrk_live_a1b2c3..." (show to user once)
+// hash = "sha256:..." (store in database)
 
-// Verify MFA token
-const valid = verifyTOTP(token, secret)`,
+// Validate API key from request
+const isValid = await validateApiKey(requestKey, storedHash)
+
+// Verify MFA TOTP token
+const valid = verifyTOTP(token, secret)  // RFC 6238 compliant`,
   },
   {
     id: 'email',
     name: '@fabrk/email',
-    description: 'Email delivery with Resend adapter. 4 built-in templates. Console adapter for development.',
+    description: 'Email delivery with Resend adapter and console adapter for development. 4 built-in templates: verification, reset, welcome, invite.',
     exports: [
-      'ResendEmailAdapter — Production email delivery',
-      'ConsoleEmailAdapter — Dev mode (logs to terminal)',
+      'ResendEmailAdapter — Production email delivery via Resend API',
+      'ConsoleEmailAdapter — Dev mode (logs to terminal instead of sending)',
       'Templates: verification, reset, welcome, invite',
+      'Types: EmailAdapter, EmailOptions, EmailTemplate',
     ],
     install: 'pnpm add @fabrk/email',
-    example: `import { ResendEmailAdapter } from '@fabrk/email'
+    example: `import { ResendEmailAdapter, ConsoleEmailAdapter } from '@fabrk/email'
 
-const email = new ResendEmailAdapter({ apiKey: process.env.RESEND_API_KEY! })
+// Production
+const email = new ResendEmailAdapter({
+  apiKey: process.env.RESEND_API_KEY!,
+  from: 'noreply@yourdomain.com',
+})
 
+// Development (logs to terminal)
+const devEmail = new ConsoleEmailAdapter()
+
+// Send a template
 await email.sendTemplate('welcome', {
   to: 'user@example.com',
-  data: { name: 'Jason' },
+  data: { name: 'Jason', loginUrl: 'https://app.example.com' },
 })`,
   },
   {
     id: 'storage',
     name: '@fabrk/storage',
-    description: 'File storage — S3, Cloudflare R2, and local filesystem adapters.',
+    description: 'File storage — S3, Cloudflare R2 (S3-compatible), and local filesystem adapters. File validation and signed URL generation.',
     exports: [
-      'S3StorageAdapter — AWS S3 uploads',
-      'R2StorageAdapter — Cloudflare R2 (S3-compatible)',
-      'LocalStorageAdapter — Filesystem storage for dev',
-      'File validation and signed URL generation',
+      'S3StorageAdapter — AWS S3 uploads and signed URLs',
+      'R2StorageAdapter — Cloudflare R2 (S3-compatible API)',
+      'LocalStorageAdapter — Filesystem storage for development',
+      'File validation: validateFileSize(), validateFileType()',
+      'Signed URL generation for secure downloads',
+      'Types: StorageAdapter, UploadOptions, StorageResult',
     ],
     install: 'pnpm add @fabrk/storage',
-    example: `import { S3StorageAdapter } from '@fabrk/storage'
+    example: `import { S3StorageAdapter, LocalStorageAdapter } from '@fabrk/storage'
 
+// Production: S3
 const storage = new S3StorageAdapter({
   bucket: process.env.S3_BUCKET!,
   region: 'us-east-1',
 })
 
-const url = await storage.upload(file, { path: 'uploads/' })`,
+// Development: local filesystem
+const devStorage = new LocalStorageAdapter({ basePath: './uploads' })
+
+// Upload a file
+const url = await storage.upload(file, {
+  path: 'uploads/',
+  maxSize: 10 * 1024 * 1024, // 10MB
+})
+
+// Generate signed download URL
+const signedUrl = await storage.getSignedUrl(key, { expiresIn: 3600 })`,
   },
   {
     id: 'security',
     name: '@fabrk/security',
-    description: 'Security — CSRF, CSP, rate limiting, audit logging, GDPR, bot protection, CORS.',
+    description: 'Security — CSRF tokens, CSP headers, rate limiting (in-memory + Upstash), audit logging with tamper-proof hashing, GDPR helpers, bot protection, CORS.',
     exports: [
       'CSRF: generateCsrfToken(), verifyCsrfToken()',
       'CSP: generateNonce(), buildCSP()',
       'Rate limiting: MemoryRateLimiter, UpstashRateLimiter',
-      'Audit: AuditLogger with tamper-proof hashing',
-      'GDPR: compliance helpers',
-      'Bot protection, CORS configuration, security headers',
+      'Audit: AuditLogger with tamper-proof chain hashing',
+      'GDPR: compliance helpers, data export, data deletion',
+      'Bot protection: detectBot(), challengeBot()',
+      'CORS: configureCors(), CorsOptions',
+      'Security headers: applySecurityHeaders()',
     ],
     install: 'pnpm add @fabrk/security',
-    example: `import { generateCsrfToken, AuditLogger, MemoryRateLimiter } from '@fabrk/security'
+    example: `import {
+  generateCsrfToken, AuditLogger, MemoryRateLimiter
+} from '@fabrk/security'
 
+// CSRF protection
 const csrf = generateCsrfToken()
-const limiter = new MemoryRateLimiter({ max: 100, window: '1m' })
-const audit = new AuditLogger()
 
-await audit.log({ action: 'user.login', userId, ip })`,
+// Rate limiting (100 requests per minute)
+const limiter = new MemoryRateLimiter({ max: 100, window: '1m' })
+const allowed = await limiter.check(ip)
+
+// Tamper-proof audit logging
+const audit = new AuditLogger()
+await audit.log({
+  action: 'user.login',
+  userId: 'user_123',
+  ip: '192.168.1.1',
+  metadata: { method: 'oauth', provider: 'google' },
+})`,
   },
   {
     id: 'mcp',
     name: '@fabrk/mcp',
-    description: 'Model Context Protocol utilities — tool helpers, schema builders, and server patterns.',
+    description: 'Model Context Protocol utilities — tool definition helpers, schema builders, and server implementation patterns for AI agent integration.',
     exports: [
-      'MCP tool definition helpers',
-      'Schema builders for tool parameters',
-      'Server implementation patterns',
+      'defineTool() — Define MCP tools with type-safe schemas',
+      'createSchema() — Build tool parameter schemas',
+      'createMCPServer() — Server implementation helpers',
+      'Types: MCPTool, MCPSchema, MCPServerConfig',
     ],
     install: 'pnpm add @fabrk/mcp',
     example: `import { defineTool, createSchema } from '@fabrk/mcp'
@@ -267,8 +358,94 @@ await audit.log({ action: 'user.login', userId, ip })`,
 const searchTool = defineTool({
   name: 'search',
   description: 'Search the knowledge base',
-  schema: createSchema({ query: 'string', limit: 'number?' }),
-  handler: async ({ query, limit }) => { /* ... */ },
+  schema: createSchema({
+    query: 'string',
+    limit: 'number?',
+    filters: 'string[]?',
+  }),
+  handler: async ({ query, limit = 10 }) => {
+    const results = await search(query, limit)
+    return { results }
+  },
+})`,
+  },
+  {
+    id: 'store-prisma',
+    name: '@fabrk/store-prisma',
+    description: '7 Prisma store adapters that implement core store interfaces. Connects FABRK features to a real PostgreSQL database via Prisma ORM.',
+    exports: [
+      'PrismaTeamStore — Team/org CRUD with member management',
+      'PrismaApiKeyStore — API key storage and validation',
+      'PrismaAuditStore — Tamper-proof audit log persistence',
+      'PrismaNotificationStore — Notification CRUD and read status',
+      'PrismaJobStore — Job queue persistence and status tracking',
+      'PrismaWebhookStore — Webhook endpoint management',
+      'PrismaFeatureFlagStore — Feature flag CRUD and evaluation',
+      'Example Prisma schema included in package',
+    ],
+    install: 'pnpm add @fabrk/store-prisma',
+    example: `import {
+  PrismaTeamStore, PrismaAuditStore,
+  PrismaApiKeyStore, PrismaFeatureFlagStore
+} from '@fabrk/store-prisma'
+import { autoWire } from '@fabrk/core'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+// Inject Prisma stores via StoreOverrides
+const fabrk = autoWire(config, undefined, {
+  teamStore: new PrismaTeamStore(prisma),
+  auditStore: new PrismaAuditStore(prisma),
+  apiKeyStore: new PrismaApiKeyStore(prisma),
+  featureFlagStore: new PrismaFeatureFlagStore(prisma),
+})`,
+  },
+  {
+    id: 'ui',
+    name: '@fabrk/ui',
+    description: 'Component registry (shadcn-style). Provides a registry of all FABRK components with metadata for tooling and code generation.',
+    exports: [
+      'componentRegistry — Registry of all components with metadata',
+      'getComponent() — Look up component by name',
+      'listComponents() — List all registered components',
+      'ComponentMeta — Component metadata type (props, category, imports)',
+    ],
+    install: 'pnpm add @fabrk/ui',
+    example: `import { componentRegistry, getComponent } from '@fabrk/ui'
+
+// Look up component metadata
+const buttonMeta = getComponent('Button')
+// { name: 'Button', category: 'forms', package: '@fabrk/components', ... }
+
+// List all components in a category
+const charts = listComponents({ category: 'charts' })
+// [{ name: 'BarChart', ... }, { name: 'LineChart', ... }, ...]`,
+  },
+  {
+    id: 'referrals',
+    name: '@fabrk/referrals',
+    description: 'Referral system with code generation, tracking, and reward management. Supports multi-tier referral programs.',
+    exports: [
+      'ReferralManager — Create and manage referral programs',
+      'generateReferralCode() — Generate unique referral codes',
+      'trackReferral() — Track referral conversions',
+      'InMemoryReferralStore — Dev/testing store',
+      'Types: ReferralStore, ReferralCode, ReferralReward',
+    ],
+    install: 'pnpm add @fabrk/referrals',
+    example: `import { ReferralManager, InMemoryReferralStore } from '@fabrk/referrals'
+
+const referrals = new ReferralManager(new InMemoryReferralStore())
+
+// Generate a referral code for a user
+const code = await referrals.generateCode({ userId: 'user_123' })
+// "FABRK-A7X2"
+
+// Track when someone signs up via referral
+await referrals.trackConversion({
+  code: 'FABRK-A7X2',
+  newUserId: 'user_456',
 })`,
   },
 ]
@@ -277,28 +454,55 @@ export default function PackagesPage() {
   return (
     <DocLayout
       title="PACKAGES"
-      description="14 modular packages covering every aspect of full-stack development."
+      description="16 modular packages covering every aspect of full-stack development. Install only what you need."
     >
+      {/* Dependency diagram */}
+      <Section title="DEPENDENCY ARCHITECTURE">
+        <p className="text-sm text-muted-foreground mb-4">
+          Dependencies flow from foundational packages outward. Install only the packages you need &mdash;
+          each is independently versioned and published to npm.
+        </p>
+        <CodeBlock title="dependency flow">{`@fabrk/config (foundational — Zod schemas, no deps)
+@fabrk/design-system (foundational — themes, no deps)
+    |
+    v
+@fabrk/core (depends on config, design-system)
+    |
+    v
+@fabrk/payments, @fabrk/auth, @fabrk/email,
+@fabrk/storage, @fabrk/security (depend on core)
+    |
+    v
+@fabrk/ai (depends on core)
+@fabrk/components (depends on core, design-system)
+@fabrk/store-prisma (depends on core)
+    |
+    v
+Templates & Examples (depend on all packages)`}</CodeBlock>
+      </Section>
+
       {/* Package index */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-12">
-        {packages.map((pkg) => (
-          <a
-            key={pkg.id}
-            href={`#${pkg.id}`}
-            className={cn(
-              'block border border-border bg-card p-3 transition-colors hover:border-primary hover:bg-primary/5',
-              mode.radius
-            )}
-          >
-            <div className={cn('text-xs font-bold text-primary', mode.font)}>
-              {pkg.name}
-            </div>
-            <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
-              {pkg.description.split(' — ')[0]}
-            </div>
-          </a>
-        ))}
-      </div>
+      <Section title="ALL PACKAGES">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+          {packages.map((pkg) => (
+            <a
+              key={pkg.id}
+              href={`#${pkg.id}`}
+              className={cn(
+                'block border border-border bg-card p-3 transition-colors hover:border-primary hover:bg-primary/5',
+                mode.radius
+              )}
+            >
+              <div className={cn('text-xs font-bold text-primary', mode.font)}>
+                {pkg.name}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                {pkg.description.split(' — ')[0]}
+              </div>
+            </a>
+          ))}
+        </div>
+      </Section>
 
       {/* Package details */}
       {packages.map((pkg) => (

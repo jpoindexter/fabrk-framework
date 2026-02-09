@@ -19,18 +19,21 @@ const navigation: NavItem[] = [
     label: 'PACKAGES',
     href: '/packages',
     children: [
+      { label: '@fabrk/config', href: '/packages#config' },
+      { label: '@fabrk/design-system', href: '/packages#design-system' },
       { label: '@fabrk/core', href: '/packages#core' },
       { label: '@fabrk/components', href: '/packages#components' },
       { label: '@fabrk/ai', href: '/packages#ai' },
-      { label: '@fabrk/config', href: '/packages#config' },
       { label: '@fabrk/themes', href: '/packages#themes' },
-      { label: '@fabrk/ui', href: '/packages#ui' },
       { label: '@fabrk/payments', href: '/packages#payments' },
       { label: '@fabrk/auth', href: '/packages#auth' },
       { label: '@fabrk/email', href: '/packages#email' },
       { label: '@fabrk/storage', href: '/packages#storage' },
       { label: '@fabrk/security', href: '/packages#security' },
       { label: '@fabrk/mcp', href: '/packages#mcp' },
+      { label: '@fabrk/store-prisma', href: '/packages#store-prisma' },
+      { label: '@fabrk/ui', href: '/packages#ui' },
+      { label: '@fabrk/referrals', href: '/packages#referrals' },
     ],
   },
   { label: 'COMPONENTS', href: '/components' },
@@ -38,12 +41,14 @@ const navigation: NavItem[] = [
     label: 'GUIDES',
     href: '/guides',
     children: [
+      { label: 'Build a Dashboard', href: '/guides#dashboard' },
       { label: 'Authentication', href: '/guides#auth' },
       { label: 'Payments', href: '/guides#payments' },
       { label: 'AI Integration', href: '/guides#ai' },
       { label: 'Deployment', href: '/guides#deployment' },
     ],
   },
+  { label: 'MIGRATION', href: '/migration' },
   { label: 'CLI REFERENCE', href: '/cli' },
 ]
 
@@ -102,9 +107,9 @@ export function Sidebar() {
       <div className="mt-8 border-t border-border pt-4">
         <div className="text-xs text-muted-foreground space-y-1">
           <div>[v0.1.0]</div>
-          <div>14 packages</div>
+          <div>16 packages</div>
           <div>70+ components</div>
-          <div>224 tests</div>
+          <div>410 tests</div>
         </div>
       </div>
     </aside>

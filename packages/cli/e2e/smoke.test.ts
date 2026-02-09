@@ -120,8 +120,8 @@ describe('fabrk create', () => {
         expect(fs.existsSync(path.join(projectDir, 'app', 'layout.tsx'))).toBe(true)
       })
 
-      it('creates tailwind.config.ts', () => {
-        expect(fs.existsSync(path.join(projectDir, 'tailwind.config.ts'))).toBe(true)
+      it('creates fabrk.config.ts', () => {
+        expect(fs.existsSync(path.join(projectDir, 'fabrk.config.ts'))).toBe(true)
       })
 
       it('creates postcss.config.js', () => {

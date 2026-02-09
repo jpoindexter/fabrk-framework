@@ -5,7 +5,7 @@
 ## TL;DR
 
 - **Stack**: Next.js 15.1.5 + TypeScript 5.3.3 + Tailwind 4.0.9
-- **Components**: 4 total — USE EXISTING, don't create new
+- **Components**: 0 total — USE EXISTING, don't create new
 
 **Rules**: Use design tokens (not hardcoded colors), use `cn()` for classes, check existing components first
 
@@ -25,15 +25,15 @@ npm run dev
 | **Framework** | Next.js 15.1.5 (App Router) |
 | **Language** | TypeScript |
 | **Styling** | Tailwind CSS |
-| **Components** | 4 |
-| **Codebase** | 18 files, 4,530 lines |
+| **Components** | 0 |
+| **Codebase** | 6 files, 509 lines |
 
 ## Critical Rules
 
 **These rules are NON-NEGOTIABLE:**
 
 ### 1. USE EXISTING COMPONENTS
-This project has 4 components. Check the list below before creating anything new.
+This project has 0 components. Check the list below before creating anything new.
 
 ```tsx
 // WRONG
@@ -65,45 +65,13 @@ className="bg-primary text-primary-foreground"
 - Type all props and function parameters
 - Avoid `any` — use proper types or `unknown`
 
-## Components
-
-4 components across 1 categories.
-
-### Components (4)
-
-- `DocLayout`, `Section`, `CodeBlock`, `InfoCard` — `@/components/doc-layout`
-  - Props: title, description
-- `Search`, `SearchTrigger` — `@/components/search`
-- `Sidebar` — `@/components/sidebar`
-- `TableOfContents` — `@/components/toc`
-
-## Component Dependencies
-
-Key imports for each component:
-
-- **DocLayout** → mode
-- **Search** → mode
-- **Sidebar** → mode
-- **Toc** → mode
-
-## ⚠️ Potentially Unused Components
-
-These component files are never imported anywhere:
-
-- `src/components/search.tsx`
-
-*Consider removing these or they may be entry points not detected.*
-
 ## Key Dependencies
 
 Most used external packages:
 
-- `@fabrk/core` — 7 imports
-- `@fabrk/themes` — 7 imports
-- `next` — 4 imports
 - `react` — 1 imports
-- `@fabrk/components` — 1 imports
-- `@fabrk/payments` — 1 imports
+- `@fabrk/core` — 1 imports
+- `@fabrk/design-system` — 1 imports
 
 ## Design Tokens
 
@@ -179,8 +147,9 @@ border-border, border-primary, border-destructive
 ## Commands
 
 ```bash
-npm run dev          # next dev --port 3001
+npm run dev          # next dev --port 3003
 npm run build        # next build
+npm run lint         # next lint
 npm run typecheck    # tsc --noEmit
 ```
 

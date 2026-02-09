@@ -72,7 +72,7 @@ Templates & Examples (depend on all packages)
 fabrk-framework/
 ├── packages/
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 80+ UI components, 8 charts, dashboard shell, AI chat, admin, security
+│   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell, AI chat, admin, security
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, validation, streaming, prompts)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
 │   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
@@ -83,7 +83,7 @@ fabrk-framework/
 │   ├── security/          # @fabrk/security - CSRF, CSP, rate limiting, audit, GDPR, CORS
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
-├── examples/              # Example applications
+├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce)
 └── docs/                  # Documentation
 ```
 
@@ -93,6 +93,7 @@ Each package uses:
 - **tsup** for building (ESM + CJS + TypeScript declarations)
 - **TypeScript** for type checking
 - Exports via `package.json` `exports` field for proper module resolution
+- Source maps enabled for debugging
 - Peer dependencies for React/Next.js to avoid version conflicts
 
 Build order is handled automatically by Turbo based on `^build` dependencies in `turbo.json`.
@@ -387,13 +388,19 @@ git push origin main
 
 Read these files for context:
 
-- **START_HERE.md** - Quick start guide for new instances
-- **HANDOFF_SUMMARY.md** - Complete setup status
-- **COMPONENT_INVENTORY.md** - List of all 80+ components to extract
-- **EXTRACTION_GUIDE.md** - Step-by-step extraction process
+- **CONTRIBUTING.md** - How to contribute (setup, adding components/adapters, design rules)
+- **CHANGELOG.md** - Release history
 - **DESIGN_SYSTEM_RULES.md** - Design rules to preserve
-- **FULL_PLAN.md** - Complete 5-6 week transformation plan
-- **IMPLEMENTATION_PLAN.md** - Current status and next steps
+- **COMPONENT_INVENTORY.md** - List of all 105+ components
+
+### Current Stats
+
+- **20/20 packages build** (18 packages + 2 examples)
+- **1,286 tests** across 38 files (unit + rendering + integration)
+- **23/23 type-check**, **18/18 lint** (0 errors, 0 warnings)
+- **105+ components**, 8 chart types, 18 themes
+- **4 examples**: basic-usage, docs site, saas-analytics, ecommerce
+- **Docs site**: 8 pages with Cmd+K search and sticky TOC
 
 ---
 

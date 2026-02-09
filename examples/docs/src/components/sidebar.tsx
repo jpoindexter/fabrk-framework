@@ -4,6 +4,7 @@ import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/themes'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Search, SearchTrigger } from './search'
 
 interface NavItem {
   label: string
@@ -57,7 +58,7 @@ export function Sidebar() {
 
   return (
     <aside className="w-64 border-r border-border bg-card min-h-screen p-4 shrink-0 overflow-y-auto">
-      <Link href="/" className="block mb-8">
+      <Link href="/" className="block mb-6">
         <div className={cn('text-primary font-bold text-lg', mode.font)}>
           {'>'} FABRK
         </div>
@@ -65,6 +66,12 @@ export function Sidebar() {
           [FRAMEWORK FOR AI AGENTS]
         </div>
       </Link>
+
+      <div className="mb-4">
+        <SearchTrigger />
+      </div>
+
+      <Search />
 
       <nav className="space-y-1">
         {navigation.map((item) => (

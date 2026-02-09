@@ -40,7 +40,7 @@
     "@types/node": "^22.0.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
-    "zod": "^3.22.0"
+    "zod": "^4.3.6"
   },
   "author": "Jason Poindexter",
   "keywords": [

@@ -58,7 +58,7 @@
     }
   },
   "dependencies": {
-    "zod": "^3.22.4"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@ai-sdk/google": "^1.0.8",

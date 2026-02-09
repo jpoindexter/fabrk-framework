@@ -113,6 +113,15 @@ export type {
 } from './providers';
 
 // =============================================================================
+// PRESET EXPORTS
+// =============================================================================
+
+export {
+  hashmarkVariables,
+  generateHashmarkCss,
+} from './presets';
+
+// =============================================================================
 // BACKWARDS COMPATIBILITY LAYER
 // =============================================================================
 // The following exports maintain compatibility with the 100+ components

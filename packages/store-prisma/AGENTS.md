@@ -25,7 +25,7 @@ npm run dev
 | **Framework** | Unknown |
 | **Language** | TypeScript |
 | **Components** | 0 |
-| **Codebase** | 11 files, 1,234 lines |
+| **Codebase** | 12 files, 868 lines |
 
 ## Critical Rules
 
@@ -59,14 +59,6 @@ className="bg-primary text-primary-foreground"
 - Type all props and function parameters
 - Avoid `any` — use proper types or `unknown`
 
-## Key Dependencies
-
-Most used external packages:
-
-- `fs` — 1 imports
-- `path` — 1 imports
-- `@aws-sdk/client-s3` — 1 imports
-- `@aws-sdk/s3-request-presigner` — 1 imports
 
 ## Additional Guidelines
 
@@ -79,6 +71,5 @@ Most used external packages:
 ```bash
 npm run dev          # tsup --watch
 npm run build        # tsup
-npm run lint         # eslint src
 npm run typecheck    # tsc --noEmit
 ```

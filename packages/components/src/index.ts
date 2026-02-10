@@ -133,5 +133,8 @@ export type { SchemaScriptProps } from './seo/schema-script'
 export { Breadcrumbs } from './seo/breadcrumbs'
 export type { BreadcrumbsProps, BreadcrumbItem as SeoBreadcrumbItem } from './seo/breadcrumbs'
 
+// Hooks
+export * from './hooks'
+
 // Utilities
 export { cn } from './lib/utils'

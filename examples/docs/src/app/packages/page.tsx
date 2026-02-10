@@ -98,7 +98,7 @@ function Dashboard() {
   {
     id: 'components',
     name: '@fabrk/components',
-    description: '70+ pre-built UI components with terminal aesthetic. Forms, charts, data display, AI chat, admin, security, organization, feedback, SEO, and more.',
+    description: '105+ pre-built UI components with terminal aesthetic. Forms, charts, data display, AI chat, admin, security, organization, feedback, SEO, and more.',
     exports: [
       'Forms: Button, Input, InputGroup, InputNumber, InputOTP, InputPassword, InputSearch, Textarea, Select, Checkbox, RadioGroup, Switch, Slider, DatePicker, Calendar, Form, Label',
       'Layout: Card, Container, Separator, ScrollArea, Sidebar, Tabs, StyledTabs, Accordion',

@@ -7,6 +7,10 @@ on:
     paths:
       - 'packages/**'
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   canary:
     name: Publish Canary
@@ -79,3 +83,4 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true

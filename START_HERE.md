@@ -8,7 +8,7 @@ FABRK Framework is designed to be the first UI framework built FOR AI coding age
 
 **Current Status:** Day 5 Complete ✅
 - ✅ Monorepo foundation is set up
-- ✅ Component extraction complete (70+ components)
+- ✅ Component extraction complete (105+ components)
 - ✅ Design system extraction complete (18 terminal themes)
 - ✅ AI toolkit extraction complete (cost tracking, validation, integrations)
 - ✅ @fabrk/core framework runtime implemented
@@ -21,7 +21,7 @@ FABRK Framework is designed to be the first UI framework built FOR AI coding age
 fabrk-framework/
 ├── packages/
 │   ├── core/              # @fabrk/core - Framework runtime (✅ DONE)
-│   ├── components/        # @fabrk/components - 70+ UI components (✅ DONE)
+│   ├── components/        # @fabrk/components - 105+ UI components (✅ DONE)
 │   ├── ai/                # @fabrk/ai - AI toolkit (✅ DONE)
 │   ├── design-system/     # @fabrk/design-system - Design tokens (✅ DONE)
 │   ├── config/            # @fabrk/config - Config builder (✅ DONE)
@@ -38,7 +38,7 @@ All code will be extracted from the existing FABRK boilerplate at:
 **`/Users/jasonpoindexter/Documents/GitHub/_active/fabrk-dev`**
 
 This boilerplate has:
-- 70+ components in `src/components/ui/` and `src/components/charts/`
+- 105+ components in `src/components/ui/` and `src/components/charts/`
 - AI toolkit in `src/lib/ai/`
 - Design system in `src/design-system/`
 - 18 terminal themes with full design tokens
@@ -112,7 +112,7 @@ pnpm clean
 ## Completed Milestones
 
 **Week 1-2:** Extract all code from fabrk-dev into packages ✅
-- ✅ Day 3: Extract components (70+ UI components)
+- ✅ Day 3: Extract components (105+ UI components)
 - ✅ Day 4: Test component builds and exports
 - ✅ Day 5: Extract AI toolkit (cost tracking, validation, integrations)
 - ✅ Day 5: Extract design system (18 terminal themes, tokens, providers)

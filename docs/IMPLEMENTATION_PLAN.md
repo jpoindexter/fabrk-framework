@@ -22,7 +22,7 @@ This document contains the complete implementation plan. See the full plan at:
 ## Next Steps
 
 ### Day 3: Extract Components Package
-1. Copy all 70+ components from fabrk-dev
+1. Copy all 105+ components from fabrk-dev
 2. Move to `packages/components/src/ui/` and `packages/components/src/charts/`
 3. Set up build system
 4. Test builds
@@ -59,7 +59,7 @@ pnpm clean
 ## Package Overview
 
 - **@fabrk/core** - Framework runtime and configuration
-- **@fabrk/components** - 70+ UI components (to be extracted)
+- **@fabrk/components** - 105+ UI components (to be extracted)
 - **@fabrk/ai** - AI toolkit (to be extracted)
 - **@fabrk/design-system** - Design tokens and themes (to be extracted)
 - **@fabrk/config** - Type-safe config builder

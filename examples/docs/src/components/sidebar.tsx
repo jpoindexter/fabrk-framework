@@ -49,6 +49,17 @@ const navigation: NavItem[] = [
       { label: 'Deployment', href: '/guides#deployment' },
     ],
   },
+  {
+    label: 'PHILOSOPHY',
+    href: '/philosophy',
+    children: [
+      { label: 'Internationalization', href: '/philosophy#i18n' },
+      { label: 'Data Fetching', href: '/philosophy#data-fetching' },
+      { label: 'No CSS-in-JS', href: '/philosophy#no-css-in-js' },
+      { label: 'Adapter Pattern', href: '/philosophy#adapter-pattern' },
+      { label: 'Store Pattern', href: '/philosophy#store-pattern' },
+    ],
+  },
   { label: 'MIGRATION', href: '/migration' },
   { label: 'CLI REFERENCE', href: '/cli' },
 ]
@@ -115,8 +126,8 @@ export function Sidebar() {
         <div className="text-xs text-muted-foreground space-y-1">
           <div>[v0.1.0]</div>
           <div>16 packages</div>
-          <div>70+ components</div>
-          <div>410 tests</div>
+          <div>105+ components</div>
+          <div>1,286 tests</div>
         </div>
       </div>
     </aside>

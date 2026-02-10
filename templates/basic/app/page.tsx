@@ -9,7 +9,7 @@ export default function Home() {
             Welcome to FABRK
           </h1>
           <p className="text-muted-foreground text-lg">
-            Start building your application with 70+ components
+            Start building your application with 105+ components
           </p>
         </div>
 
@@ -17,7 +17,7 @@ export default function Home() {
           <Card className="p-6">
             <h3 className="font-semibold mb-2">Components</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              70+ production-ready UI components with terminal aesthetic
+              105+ production-ready UI components with terminal aesthetic
             </p>
             <Button className="w-full">
               Explore Components

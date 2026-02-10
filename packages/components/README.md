@@ -1,6 +1,6 @@
 # @fabrk/components
 
-70+ production-ready UI components for FABRK framework.
+105+ production-ready UI components for FABRK framework.
 
 ## Installation
 

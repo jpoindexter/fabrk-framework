@@ -7,10 +7,11 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-16-green" alt="Packages" />
-  <img src="https://img.shields.io/badge/components-70%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-410-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/components-105%2B-green" alt="Components" />
+  <img src="https://img.shields.io/badge/tests-1286-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Storybook-20%20stories-ff4785" alt="Storybook" />
 </p>
 
 ---
@@ -79,7 +80,7 @@ FABRK is a modular monorepo — install only what you need.
 | Package | Description |
 |---------|-------------|
 | [`@fabrk/themes`](packages/themes) | 18 themes, design tokens, `mode` object, runtime switching via CSS variables |
-| [`@fabrk/components`](packages/components) | 70+ pre-built UI components, 8 chart types, AI chat, admin, security |
+| [`@fabrk/components`](packages/components) | 105+ pre-built UI components, 8 chart types, AI chat, admin, security |
 | [`@fabrk/ui`](packages/ui) | Component registry (shadcn-style copy-into-project) |
 
 ### CLI
@@ -200,10 +201,37 @@ fabrk CLI (orchestrates everything)
 
 pnpm install        # Install dependencies
 pnpm build          # Build all 18 packages
-pnpm test           # Run 410 tests
+pnpm test           # Run 1,286 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```
+
+## Docs Site
+
+The documentation lives in `examples/docs/` and dogfoods FABRK packages.
+
+```bash
+cd examples/docs
+pnpm dev    # Local development at localhost:3000
+```
+
+### Deploy to Vercel
+
+1. Import the repo on [vercel.com](https://vercel.com)
+2. Set Root Directory to `examples/docs`
+3. Framework Preset: Next.js
+4. Deploy
+
+## Component Explorer
+
+Browse all 105+ components in [Storybook](https://storybook.js.org/) with 20 interactive stories:
+
+```bash
+pnpm storybook          # Launch at localhost:6006
+pnpm build-storybook    # Build static site
+```
+
+Categories: UI, Data Display, Charts, Feedback, AI, Terminal, Dashboard — all with autodocs and arg controls.
 
 ## Contributing
 

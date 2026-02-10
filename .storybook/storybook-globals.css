@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+:root {
+  --background: 0 0% 3%;
+  --foreground: 120 100% 65%;
+  --card: 0 0% 5%;
+  --card-foreground: 120 100% 65%;
+  --popover: 0 0% 5%;
+  --popover-foreground: 120 100% 65%;
+  --primary: 120 100% 65%;
+  --primary-foreground: 0 0% 3%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 120 100% 65%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 120 40% 45%;
+  --accent: 120 100% 65%;
+  --accent-foreground: 0 0% 3%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 98%;
+  --success: 120 100% 50%;
+  --success-foreground: 0 0% 3%;
+  --border: 120 40% 20%;
+  --input: 120 40% 20%;
+  --ring: 120 100% 65%;
+  --radius: 0rem;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

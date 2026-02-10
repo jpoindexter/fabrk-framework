@@ -19,7 +19,7 @@ import { cn } from '@fabrk/core'
 import { ThemeSwitcher } from './theme-switcher'
 
 const SAMPLE_STATS = [
-  { label: 'COMPONENTS', value: '70+' },
+  { label: 'COMPONENTS', value: '105+' },
   { label: 'THEMES', value: '18' },
   { label: 'PACKAGES', value: '16' },
   { label: 'ZERO CONFIG', value: 'YES' },

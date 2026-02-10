@@ -365,7 +365,7 @@ export default function PricingPage() {
 | Aspect | Next.js | shadcn/ui | FABRK Framework |
 |--------|---------|-----------|-----------------|
 | **Target User** | Human developers | Human developers | **AI coding agents** |
-| **Components** | None (bring your own) | Copy/paste | ✅ **70+ importable** |
+| **Components** | None (bring your own) | Copy/paste | ✅ **105+ importable** |
 | **Design System** | None | Minimal | ✅ **18 themes, strict rules** |
 | **AI Context** | None | None | ✅ **AGENTS.md auto-generated** |
 | **Auth** | Manual | None | ✅ **Pre-built forms + hooks** |
@@ -468,7 +468,7 @@ import { BarChart, LineChart } from '@fabrk/components'
 Based on codebase exploration:
 
 ### ✅ Strong Foundation
-- **70+ Components** ready to extract
+- **105+ Components** ready to extract
 - **AI Toolkit** (cost tracking, validation, testing)
 - **Design System** (18 themes, tokens, mode object)
 - **Multi-Provider Payments** (Stripe, Polar, Lemonsqueezy)
@@ -1408,7 +1408,7 @@ export default function RootLayout({ children }) {
 npx @jpoindexter/agent-smith --output AGENTS.md
 
 # This scans packages/ and generates:
-# - All 70+ components with props
+# - All 105+ components with props
 # - All hooks with signatures
 # - Design system rules
 # - Usage patterns
@@ -1789,7 +1789,7 @@ fabrk-framework/examples/
 4. Test first build
 
 **Day 4: Test Component Extraction**
-1. Verify all 70+ components build correctly
+1. Verify all 105+ components build correctly
 2. Create barrel exports (index.ts)
 3. Test imports work
 

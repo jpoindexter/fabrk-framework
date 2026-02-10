@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## RULE #1: USE THE EXISTING COMPONENTS
 
-**This boilerplate has 70+ pre-built components (62 UI + 8 charts). You MUST use them.**
+**This boilerplate has 105+ pre-built components (97 UI + 8 charts). You MUST use them.**
 
 ```tsx
 // UI Primitives (62+ components)

@@ -8,10 +8,11 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-16-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-105%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-1286-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-1%2C723-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Storybook-20%20stories-ff4785" alt="Storybook" />
+  <img src="https://img.shields.io/badge/Storybook-40%20stories-ff4785" alt="Storybook" />
+  <img src="https://img.shields.io/badge/hooks-16-green" alt="Hooks" />
 </p>
 
 ---
@@ -63,7 +64,7 @@ FABRK is a modular monorepo — install only what you need.
 
 | Package | Description |
 |---------|-------------|
-| [`@fabrk/core`](packages/core) | Runtime, plugins, middleware, hooks, teams, jobs, feature flags, auto-wiring |
+| [`@fabrk/core`](packages/core) | Runtime, plugins, middleware, 14 hooks, teams, jobs, feature flags, auto-wiring |
 | [`@fabrk/config`](packages/config) | Type-safe config builder with Zod validation (14 sections) |
 | [`@fabrk/ai`](packages/ai) | LLM providers, cost tracking, embeddings, streaming, prompts, budget enforcement |
 | [`@fabrk/auth`](packages/auth) | NextAuth adapter, API keys (SHA-256), MFA (TOTP + backup codes) |
@@ -80,7 +81,7 @@ FABRK is a modular monorepo — install only what you need.
 | Package | Description |
 |---------|-------------|
 | [`@fabrk/themes`](packages/themes) | 18 themes, design tokens, `mode` object, runtime switching via CSS variables |
-| [`@fabrk/components`](packages/components) | 105+ pre-built UI components, 8 chart types, AI chat, admin, security |
+| [`@fabrk/components`](packages/components) | 105+ UI components, 12 hooks, 8 chart types, AI chat, admin, security |
 | [`@fabrk/ui`](packages/ui) | Component registry (shadcn-style copy-into-project) |
 
 ### CLI
@@ -200,8 +201,8 @@ fabrk CLI (orchestrates everything)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 18 packages
-pnpm test           # Run 1,286 tests
+pnpm build          # Build all 20 packages
+pnpm test           # Run 1,723 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```
@@ -224,7 +225,7 @@ pnpm dev    # Local development at localhost:3000
 
 ## Component Explorer
 
-Browse all 105+ components in [Storybook](https://storybook.js.org/) with 20 interactive stories:
+Browse all 105+ components in [Storybook](https://storybook.js.org/) with 40 interactive stories:
 
 ```bash
 pnpm storybook          # Launch at localhost:6006

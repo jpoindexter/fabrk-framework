@@ -120,12 +120,11 @@ export function costTrackingMiddleware(): MiddlewareFunction<RequestContext & { 
     await next()
     const duration = Date.now() - start
 
-    if (ctx.cost !== undefined) {
-      // Log to console in development
-      if (typeof globalThis !== 'undefined' && (globalThis as any).process?.env?.NODE_ENV !== 'production') {
-        console.log(
-          `[COST] ${ctx.feature ?? 'unknown'}: $${ctx.cost.toFixed(4)} (${duration}ms)`
-        )
+    if (ctx.cost !== undefined && typeof globalThis !== 'undefined') {
+      const env = (globalThis as Record<string, unknown>).process as { env?: { NODE_ENV?: string } } | undefined
+      if (env?.env?.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.log(`[COST] ${ctx.feature ?? 'unknown'}: $${ctx.cost.toFixed(4)} (${duration}ms)`)
       }
     }
   }

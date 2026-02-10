@@ -30,10 +30,16 @@ First release of the FABRK Framework -- the first UI framework designed for AI c
 - **105+ UI components** including charts, dashboard shell, data tables, AI chat, and admin views
 - **8 chart types** powered by Recharts (bar, line, area, pie, donut, radar, scatter, funnel)
 - **18 themes** with runtime switching via CSS variables
-- **1,286 tests** across 38 test files, all passing
+- **1,723 tests** across 57 test files, all passing (including axe accessibility scans)
 - **16 packages** publish-ready for npm
 - **Adapter pattern** for all external services (payments, auth, email, storage, security)
 - **In-memory defaults** for every store, enabling zero-config development
 - **Auto-wiring** via `fabrk.config.ts` convention -- one config file creates all adapters
 - **AI agent optimized** -- each package includes `AGENTS.md` with component props and usage examples
+- **16 React hooks** -- useMediaQuery, useDebounce, useLocalStorage, useToast, useKeyboardShortcut, useEditLock, and more
+- **40 Storybook stories** across 7 categories with autodocs
+- **Accessibility** -- All custom interactive components pass axe scans with keyboard navigation
+- **TypeDoc API reference** -- `pnpm docs:api` generates full API docs for all 14 packages
+- **Tree-shakeable** -- `sideEffects: false` on all 15 publishable packages
+- **JSDoc** -- 27 top components documented with @example blocks
 - **Dual module support** -- ESM + CJS builds with TypeScript declarations for every package

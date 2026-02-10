@@ -1,3 +1,20 @@
+/**
+ * AiChatInput - Chat message input with auto-resize, file attachments, model selector, and stop button.
+ * Sends on Enter (Shift+Enter for newline). Integrates with AI chat flow via onSend/onStop callbacks.
+ *
+ * @example
+ * ```tsx
+ * <AiChatInput
+ *   onSend={(message, attachments) => sendMessage(message, attachments)}
+ *   onStop={() => abortStream()}
+ *   isLoading={isStreaming}
+ *   models={[{ id: 'gpt-4', name: 'GPT-4' }]}
+ *   selectedModelId="gpt-4"
+ *   onModelChange={setModelId}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

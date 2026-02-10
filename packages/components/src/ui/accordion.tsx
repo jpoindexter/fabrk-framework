@@ -1,3 +1,22 @@
+/**
+ * Accordion - Collapsible content sections for FAQs, settings, and grouped information.
+ * Built on Radix UI Accordion with animated expand/collapse transitions.
+ *
+ * @example
+ * ```tsx
+ * <Accordion type="single" collapsible>
+ *   <AccordionItem value="item-1">
+ *     <AccordionTrigger>WHAT IS FABRK?</AccordionTrigger>
+ *     <AccordionContent>A UI framework for AI coding agents.</AccordionContent>
+ *   </AccordionItem>
+ *   <AccordionItem value="item-2">
+ *     <AccordionTrigger>HOW DO I INSTALL?</AccordionTrigger>
+ *     <AccordionContent>Run pnpm add @fabrk/components</AccordionContent>
+ *   </AccordionItem>
+ * </Accordion>
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

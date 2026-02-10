@@ -1,3 +1,25 @@
+/**
+ * DataTable - Full-featured data table with sorting, filtering, pagination, and row selection.
+ * Powered by TanStack Table with built-in toolbar and zebra-striped rows.
+ *
+ * @param searchKey - Column key to enable search filtering on
+ * @param onRowClick - Callback when a row is clicked, receives the row data
+ *
+ * @example
+ * ```tsx
+ * <DataTable
+ *   columns={[
+ *     { accessorKey: 'name', header: 'NAME' },
+ *     { accessorKey: 'status', header: 'STATUS' },
+ *   ]}
+ *   data={users}
+ *   searchKey="name"
+ *   searchPlaceholder="Search users..."
+ *   onRowClick={(user) => router.push(`/users/${user.id}`)}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

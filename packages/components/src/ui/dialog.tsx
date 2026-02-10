@@ -1,13 +1,24 @@
 /**
- * ✅ FABRK COMPONENT
- * - Component under 150 lines ✓
- * - No hardcoded styles ✓
- * - Design tokens only ✓
- * - Uses Visual Mode System for aesthetic switching
+ * Dialog - Modal overlay for confirmations, forms, and focused interactions.
+ * Built on Radix UI Dialog with theme-aware backdrop and animations.
  *
  * @example
  * ```tsx
- * <dialog>Content</dialog>
+ * <Dialog>
+ *   <DialogTrigger asChild>
+ *     <Button>> OPEN DIALOG</Button>
+ *   </DialogTrigger>
+ *   <DialogContent>
+ *     <DialogHeader>
+ *       <DialogTitle>CONFIRM ACTION</DialogTitle>
+ *       <DialogDescription>Are you sure you want to proceed?</DialogDescription>
+ *     </DialogHeader>
+ *     <DialogFooter>
+ *       <Button variant="outline">CANCEL</Button>
+ *       <Button>> CONFIRM</Button>
+ *     </DialogFooter>
+ *   </DialogContent>
+ * </Dialog>
  * ```
  */
 

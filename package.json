@@ -17,8 +17,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "test": "vitest run",
-    "test:ci": "vitest run --reporter=verbose --coverage",
+    "test": "vitest run && cd packages/components && vitest run",
+    "test:ci": "vitest run --reporter=verbose --coverage && cd packages/components && vitest run --reporter=verbose",
     "test:watch": "vitest",
     "type-check": "turbo run type-check",
     "clean": "turbo run clean && rm -rf node_modules",
@@ -27,7 +27,8 @@
     "version-packages": "changeset version",
     "release": "turbo run build && changeset publish",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "docs:api": "typedoc"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
@@ -52,8 +53,11 @@
     "prettier": "^3.2.5",
     "storybook": "8.6.15",
     "turbo": "^1.12.4",
+    "typedoc": "^0.28.16",
+    "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "^5.3.3",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "vitest-axe": "^0.1.0"
   },
   "engines": {
     "node": ">=22.0.0",

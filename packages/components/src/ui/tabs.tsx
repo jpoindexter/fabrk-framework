@@ -1,3 +1,20 @@
+/**
+ * Tabs - Organize content into switchable panels with an underline-style tab bar.
+ * Built on Radix UI Tabs with theme-aware styling and keyboard navigation.
+ *
+ * @example
+ * ```tsx
+ * <Tabs defaultValue="overview">
+ *   <TabsList>
+ *     <TabsTrigger value="overview">OVERVIEW</TabsTrigger>
+ *     <TabsTrigger value="settings">SETTINGS</TabsTrigger>
+ *   </TabsList>
+ *   <TabsContent value="overview">Overview content here</TabsContent>
+ *   <TabsContent value="settings">Settings content here</TabsContent>
+ * </Tabs>
+ * ```
+ */
+
 'use client';
 
 import * as TabsPrimitive from '@radix-ui/react-tabs';

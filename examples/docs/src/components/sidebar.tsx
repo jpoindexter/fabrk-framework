@@ -62,6 +62,8 @@ const navigation: NavItem[] = [
   },
   { label: 'MIGRATION', href: '/migration' },
   { label: 'CLI REFERENCE', href: '/cli' },
+  { label: 'API REFERENCE', href: '/api' },
+  { label: 'STORYBOOK', href: '/storybook' },
 ]
 
 export function Sidebar() {
@@ -127,7 +129,7 @@ export function Sidebar() {
           <div>[v0.1.0]</div>
           <div>16 packages</div>
           <div>105+ components</div>
-          <div>1,286 tests</div>
+          <div>1,400+ tests</div>
         </div>
       </div>
     </aside>

@@ -106,6 +106,7 @@ export function OnboardingChecklist({
           <button
             type="button"
             onClick={() => setMinimized(true)}
+            aria-label="Minimize checklist"
             className="text-xs text-muted-foreground hover:text-foreground"
           >
             [-]
@@ -114,6 +115,7 @@ export function OnboardingChecklist({
             <button
               type="button"
               onClick={onDismiss}
+              aria-label="Dismiss checklist"
               className="text-xs text-muted-foreground hover:text-foreground"
             >
               x

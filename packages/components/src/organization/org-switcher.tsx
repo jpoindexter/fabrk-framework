@@ -1,3 +1,21 @@
+/**
+ * OrgSwitcher - Dropdown for switching between organizations with role display and create option.
+ * Handles loading and empty states automatically.
+ *
+ * @example
+ * ```tsx
+ * <OrgSwitcher
+ *   organizations={[
+ *     { id: 'org-1', name: 'Acme Corp', slug: 'acme', role: 'owner' },
+ *     { id: 'org-2', name: 'Startup Inc', slug: 'startup', role: 'member' },
+ *   ]}
+ *   currentOrgId="org-1"
+ *   onSwitchOrg={(orgId) => switchOrg(orgId)}
+ *   onCreateOrg={() => openCreateOrgModal()}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

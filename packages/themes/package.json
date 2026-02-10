@@ -56,5 +56,6 @@
     "url": "https://github.com/jpoindexter/fabrk-framework.git",
     "directory": "packages/themes"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "sideEffects": false
 }

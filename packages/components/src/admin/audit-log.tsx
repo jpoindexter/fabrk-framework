@@ -1,3 +1,19 @@
+/**
+ * AuditLog - Filterable, searchable audit log timeline for tracking user actions.
+ * Displays entries with avatars, action badges, timestamps, and IP addresses.
+ * Includes a detail sheet panel and CSV export support.
+ *
+ * @example
+ * ```tsx
+ * <AuditLog
+ *   initialLogs={[
+ *     { id: '1', userId: 'u1', userName: 'Jason', userEmail: 'jason@example.com', action: 'user.login', resource: '/dashboard', ipAddress: '192.168.1.1', userAgent: 'Chrome', metadata: {}, timestamp: new Date() },
+ *   ]}
+ *   onExport={async () => downloadCSV()}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

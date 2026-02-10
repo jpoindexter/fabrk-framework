@@ -42,6 +42,7 @@
   ],
   "author": "Jason Poindexter",
   "license": "MIT",
+  "sideEffects": false,
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {
     "url": "https://github.com/jpoindexter/fabrk-framework/issues"

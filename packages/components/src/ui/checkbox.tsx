@@ -1,3 +1,13 @@
+/**
+ * Checkbox - Toggleable checkbox input with check icon indicator.
+ * Built on Radix UI Checkbox with theme-aware accent color when checked.
+ *
+ * @example
+ * ```tsx
+ * <Checkbox checked={accepted} onCheckedChange={setAccepted} />
+ * ```
+ */
+
 'use client';
 
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';

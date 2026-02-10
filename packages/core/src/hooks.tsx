@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useOptionalFabrk } from './context';
 
 // ============================================================================
@@ -541,4 +541,297 @@ export function useJobs() {
     enabled: !!manager,
     manager,
   };
+}
+
+// ============================================================================
+// HOOK: useKeyboardShortcut
+// ============================================================================
+
+export interface KeyboardShortcutOptions {
+  /** Keyboard key (e.g. 'k', 'Escape', '/') */
+  key: string;
+  /** Modifier keys required */
+  meta?: boolean;
+  ctrl?: boolean;
+  shift?: boolean;
+  alt?: boolean;
+  /** Callback when shortcut fires */
+  handler: (e: KeyboardEvent) => void;
+  /** Disable the shortcut (default: false) */
+  disabled?: boolean;
+}
+
+/**
+ * Register a global keyboard shortcut. Ignores input/textarea focus.
+ *
+ * @example
+ * ```tsx
+ * useKeyboardShortcut({
+ *   key: 'k',
+ *   meta: true,
+ *   handler: () => setCommandPaletteOpen(true),
+ * })
+ * ```
+ */
+export function useKeyboardShortcut({
+  key,
+  meta,
+  ctrl,
+  shift,
+  alt,
+  handler,
+  disabled = false,
+}: KeyboardShortcutOptions): void {
+  useEffect(() => {
+    if (disabled) return;
+
+    const listener = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
+        // Allow meta/ctrl combos even in inputs (e.g. Cmd+K)
+        if (!meta && !ctrl) return;
+      }
+
+      if (meta && !e.metaKey) return;
+      if (ctrl && !e.ctrlKey) return;
+      if (shift && !e.shiftKey) return;
+      if (alt && !e.altKey) return;
+
+      if (e.key.toLowerCase() === key.toLowerCase()) {
+        e.preventDefault();
+        handler(e);
+      }
+    };
+
+    document.addEventListener('keydown', listener);
+    return () => document.removeEventListener('keydown', listener);
+  }, [key, meta, ctrl, shift, alt, handler, disabled]);
+}
+
+// ============================================================================
+// HOOK: useToast
+// ============================================================================
+
+export type ToastVariant = 'success' | 'error' | 'info' | 'warning';
+
+export interface Toast {
+  id: string;
+  variant: ToastVariant;
+  title: string;
+  description?: string;
+}
+
+export interface UseToastReturn {
+  toasts: Toast[];
+  success: (title: string, description?: string) => void;
+  error: (title: string, description?: string) => void;
+  info: (title: string, description?: string) => void;
+  warning: (title: string, description?: string) => void;
+  dismiss: (id: string) => void;
+  dismissAll: () => void;
+}
+
+/**
+ * Framework-agnostic toast state management.
+ * Pair with your own Toaster component or <Toaster /> from @fabrk/components.
+ *
+ * @param options.duration - Auto-dismiss delay in ms (default 4000, 0 to disable)
+ *
+ * @example
+ * ```tsx
+ * const { toasts, success, error, dismiss } = useToast()
+ * success('Saved', 'Changes saved successfully')
+ * ```
+ */
+export function useToast(options?: { duration?: number }): UseToastReturn {
+  const { duration = 4000 } = options ?? {};
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  const dismiss = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+    const timer = timersRef.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timersRef.current.delete(id);
+    }
+  }, []);
+
+  const add = useCallback(
+    (variant: ToastVariant, title: string, description?: string) => {
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      setToasts((prev) => [...prev, { id, variant, title, description }]);
+      if (duration > 0) {
+        timersRef.current.set(id, setTimeout(() => dismiss(id), duration));
+      }
+    },
+    [duration, dismiss]
+  );
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    const timers = timersRef.current;
+    return () => timers.forEach((t) => clearTimeout(t));
+  }, []);
+
+  return useMemo(
+    () => ({
+      toasts,
+      success: (title: string, desc?: string) => add('success', title, desc),
+      error: (title: string, desc?: string) => add('error', title, desc),
+      info: (title: string, desc?: string) => add('info', title, desc),
+      warning: (title: string, desc?: string) => add('warning', title, desc),
+      dismiss,
+      dismissAll: () => setToasts([]),
+    }),
+    [toasts, add, dismiss]
+  );
+}
+
+// ============================================================================
+// HOOK: useCsrfToken
+// ============================================================================
+
+/**
+ * Read a CSRF token from a cookie and provide a fetch wrapper that attaches it.
+ *
+ * @param cookieName - Cookie to read (default 'csrf-token')
+ * @param headerName - Header to send (default 'x-csrf-token')
+ *
+ * @example
+ * ```tsx
+ * const { token, csrfFetch } = useCsrfToken()
+ * await csrfFetch('/api/users', { method: 'POST', body: JSON.stringify(data) })
+ * ```
+ */
+export function useCsrfToken(
+  cookieName = 'csrf-token',
+  headerName = 'x-csrf-token'
+) {
+  const [token] = useState<string | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie
+      .split(';')
+      .find((c) => c.trim().startsWith(`${cookieName}=`));
+    return match ? match.split('=')[1] : null;
+  });
+
+  const csrfFetch = useCallback(
+    (url: string, options: RequestInit = {}) => {
+      const headers = new Headers(options.headers);
+      const method = options.method?.toUpperCase() || 'GET';
+      if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && token) {
+        headers.set(headerName, token);
+      }
+      if (options.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+      }
+      return fetch(url, { ...options, headers });
+    },
+    [token, headerName]
+  );
+
+  return { token, csrfFetch };
+}
+
+// ============================================================================
+// HOOK: useEditLock
+// ============================================================================
+
+export interface EditLockConflict {
+  userId: string;
+  userName: string;
+}
+
+export interface UseEditLockOptions {
+  /** Callback to acquire/refresh the lock. Return true if acquired. */
+  onAcquire: () => Promise<boolean | EditLockConflict>;
+  /** Callback to release the lock. */
+  onRelease: () => Promise<void>;
+  /** Heartbeat interval in ms (default 10000) */
+  heartbeatInterval?: number;
+}
+
+/**
+ * Heartbeat-based edit lock with conflict detection.
+ * Provide your own acquire/release callbacks — keeps the hook API-agnostic.
+ *
+ * @example
+ * ```tsx
+ * const lock = useEditLock({
+ *   onAcquire: async () => {
+ *     const res = await fetch('/api/locks', { method: 'POST', body: JSON.stringify({ resourceId }) })
+ *     if (res.status === 409) return (await res.json()).lockedBy
+ *     return res.ok
+ *   },
+ *   onRelease: () => fetch('/api/locks', { method: 'DELETE', body: JSON.stringify({ resourceId }) }),
+ * })
+ *
+ * <button onClick={lock.acquire}> EDIT</button>
+ * ```
+ */
+export function useEditLock({
+  onAcquire,
+  onRelease,
+  heartbeatInterval = 10_000,
+}: UseEditLockOptions) {
+  const [isLocked, setIsLocked] = useState(false);
+  const [conflict, setConflict] = useState<EditLockConflict | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isLockedRef = useRef(false);
+
+  useEffect(() => {
+    isLockedRef.current = isLocked;
+  }, [isLocked]);
+
+  const sendHeartbeat = useCallback(async () => {
+    const result = await onAcquire();
+    if (typeof result === 'object') {
+      setConflict(result);
+      setIsLocked(false);
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+      return false;
+    }
+    if (result) {
+      setConflict(null);
+      setIsLocked(true);
+    }
+    return !!result;
+  }, [onAcquire]);
+
+  const acquire = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const ok = await sendHeartbeat();
+      if (ok) {
+        heartbeatRef.current = setInterval(sendHeartbeat, heartbeatInterval);
+      }
+      return ok;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [sendHeartbeat, heartbeatInterval]);
+
+  const release = useCallback(async () => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    }
+    if (isLockedRef.current) await onRelease();
+    setIsLocked(false);
+    setConflict(null);
+  }, [onRelease]);
+
+  useEffect(() => {
+    return () => {
+      if (heartbeatRef.current) clearInterval(heartbeatRef.current);
+    };
+  }, []);
+
+  return { isLocked, conflict, isLoading, acquire, release };
 }

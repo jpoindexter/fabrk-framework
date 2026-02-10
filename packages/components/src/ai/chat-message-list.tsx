@@ -98,8 +98,8 @@ function MessageItem({ message }: { message: Message }) {
 
           {!isUser && (
              <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100 flex gap-1">
-               <button onClick={copyToClipboard} className={cn('p-1', mode.state.hover.card)}>
-                 {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
+               <button type="button" onClick={copyToClipboard} className={cn('p-1', mode.state.hover.card)} aria-label={copied ? "Copied to clipboard" : "Copy message to clipboard"}>
+                 {copied ? <Check className="size-3" aria-hidden="true" /> : <Copy className="size-3" aria-hidden="true" />}
                </button>
              </div>
           )}

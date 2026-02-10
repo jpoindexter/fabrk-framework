@@ -161,7 +161,7 @@ function LogFilters({
           value={actionFilter}
           onValueChange={(value) => onActionFilterChange(value as AuditAction | 'all')}
         >
-          <SelectTrigger className={cn('w-full sm:w-52', mode.radius, mode.font)}>
+          <SelectTrigger aria-label="Filter audit log by action" className={cn('w-full sm:w-52', mode.radius, mode.font)}>
             <SelectValue placeholder="Filter by action" />
           </SelectTrigger>
           <SelectContent className={cn(mode.radius)}>

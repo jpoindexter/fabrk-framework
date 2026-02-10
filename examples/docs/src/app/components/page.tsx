@@ -2,7 +2,9 @@
 
 import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/themes'
+import Link from 'next/link'
 import { DocLayout, Section, CodeBlock, InfoCard, PropsTable } from '@/components/doc-layout'
+import { COMPONENT_SLUGS } from '@/data/component-docs'
 
 interface ComponentCategory {
   name: string
@@ -664,18 +666,38 @@ function AIChat({ messages, conversations, onSend, onSelectConversation }) {
         >
           <p className="text-sm text-muted-foreground mb-4">{cat.description}</p>
           <div className={cn('border border-border divide-y divide-border', mode.radius)}>
-            {cat.items.map((item) => (
-              <div key={item.name} className="flex items-center justify-between px-4 py-3">
-                <div>
-                  <span className={cn('text-sm font-bold text-foreground', mode.font)}>
-                    {item.name}
-                  </span>
+            {cat.items.map((item) => {
+              const slug = item.name.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase()
+              const hasDocPage = COMPONENT_SLUGS.includes(slug)
+              const inner = (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className={cn('text-sm font-bold text-foreground', mode.font)}>
+                      {item.name}
+                    </span>
+                    {hasDocPage && (
+                      <span className="text-xs text-primary">[DOCS]</span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground text-right max-w-xs">
+                    {item.description}
+                  </div>
+                </>
+              )
+              const cls = cn(
+                'flex items-center justify-between px-4 py-3',
+                hasDocPage && 'hover:bg-secondary/50 transition-colors cursor-pointer'
+              )
+              return hasDocPage ? (
+                <Link key={item.name} href={`/components/${slug}`} className={cls}>
+                  {inner}
+                </Link>
+              ) : (
+                <div key={item.name} className={cls}>
+                  {inner}
                 </div>
-                <div className="text-xs text-muted-foreground text-right max-w-xs">
-                  {item.description}
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </Section>
       ))}

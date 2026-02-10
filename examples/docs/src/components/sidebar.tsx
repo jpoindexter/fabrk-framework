@@ -37,7 +37,29 @@ const navigation: NavItem[] = [
       { label: '@fabrk/referrals', href: '/packages#referrals' },
     ],
   },
-  { label: 'COMPONENTS', href: '/components' },
+  {
+    label: 'COMPONENTS',
+    href: '/components',
+    children: [
+      { label: 'Button', href: '/components/button' },
+      { label: 'Card', href: '/components/card' },
+      { label: 'Input', href: '/components/input' },
+      { label: 'Dialog', href: '/components/dialog' },
+      { label: 'Tabs', href: '/components/tabs' },
+      { label: 'Badge', href: '/components/badge' },
+      { label: 'BarChart', href: '/components/bar-chart' },
+      { label: 'KPICard', href: '/components/kpi-card' },
+      { label: 'DataTable', href: '/components/data-table' },
+      { label: 'StarRating', href: '/components/star-rating' },
+    ],
+  },
+  {
+    label: 'TUTORIALS',
+    href: '/tutorials/dashboard',
+    children: [
+      { label: 'Build a Dashboard', href: '/tutorials/dashboard' },
+    ],
+  },
   {
     label: 'GUIDES',
     href: '/guides',
@@ -94,7 +116,7 @@ export function Sidebar() {
               className={cn(
                 'block px-3 py-2 text-xs transition-colors',
                 mode.font,
-                pathname === item.href
+                pathname === item.href || pathname?.startsWith(item.href + '/')
                   ? 'text-primary bg-primary/10 border-l-2 border-primary'
                   : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
               )}
@@ -129,7 +151,7 @@ export function Sidebar() {
           <div>[v0.1.0]</div>
           <div>16 packages</div>
           <div>105+ components</div>
-          <div>1,400+ tests</div>
+          <div>1,689+ tests</div>
         </div>
       </div>
     </aside>

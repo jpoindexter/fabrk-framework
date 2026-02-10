@@ -1,3 +1,20 @@
+/**
+ * DonutChart - Ring chart with optional center content, built on PieChart.
+ * Also exports MetricDonutChart (with center metric display) and ProgressDonutChart (single-value progress ring).
+ *
+ * @example
+ * ```tsx
+ * <DonutChart
+ *   data={[
+ *     { label: 'Desktop', value: 65, color: 'var(--color-chart-1)' },
+ *     { label: 'Mobile', value: 35, color: 'var(--color-chart-2)' },
+ *   ]}
+ *   thickness={60}
+ *   centerContent={<span className="text-2xl font-bold">100</span>}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

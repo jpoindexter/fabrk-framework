@@ -70,3 +70,37 @@ export function InfoCard({ title, children }: { title: string; children: React.R
     </div>
   )
 }
+
+export interface PropDef {
+  name: string
+  type: string
+  default?: string
+  description: string
+}
+
+export function PropsTable({ props }: { props: PropDef[] }) {
+  return (
+    <div className={cn('border border-border overflow-x-auto my-4', mode.radius)}>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="border-b border-border bg-muted">
+            <th className={cn('text-left px-3 py-2 text-muted-foreground uppercase', mode.font)}>PROP</th>
+            <th className={cn('text-left px-3 py-2 text-muted-foreground uppercase', mode.font)}>TYPE</th>
+            <th className={cn('text-left px-3 py-2 text-muted-foreground uppercase', mode.font)}>DEFAULT</th>
+            <th className={cn('text-left px-3 py-2 text-muted-foreground uppercase', mode.font)}>DESCRIPTION</th>
+          </tr>
+        </thead>
+        <tbody>
+          {props.map((prop) => (
+            <tr key={prop.name} className="border-b border-border last:border-b-0">
+              <td className="px-3 py-2 text-primary font-bold whitespace-nowrap">{prop.name}</td>
+              <td className="px-3 py-2 text-foreground whitespace-nowrap"><code>{prop.type}</code></td>
+              <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{prop.default ?? '—'}</td>
+              <td className="px-3 py-2 text-muted-foreground">{prop.description}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}

@@ -1,3 +1,17 @@
+/**
+ * NPSSurvey - Net Promoter Score survey widget with 0-10 scale and optional feedback.
+ * Shows a thank-you state after submission. Follows terminal text casing conventions.
+ *
+ * @example
+ * ```tsx
+ * <NPSSurvey
+ *   onSubmit={(score, feedback) => trackNPS(score, feedback)}
+ *   onDismiss={() => setShowSurvey(false)}
+ *   title="How likely are you to recommend us?"
+ * />
+ * ```
+ */
+
 'use client'
 
 import { useState } from 'react'
@@ -57,6 +71,7 @@ export function NPSSurvey({
           <button
             type="button"
             onClick={onDismiss}
+            aria-label="Dismiss survey"
             className="text-muted-foreground text-xs hover:text-foreground"
           >
             DISMISS
@@ -64,11 +79,18 @@ export function NPSSurvey({
         )}
       </div>
 
-      <div className="flex items-center justify-between gap-[var(--grid-1)]">
+      <div
+        className="flex items-center justify-between gap-[var(--grid-1)]"
+        role="radiogroup"
+        aria-label="Score from 0 to 10"
+      >
         {Array.from({ length: 11 }, (_, i) => (
           <button
             key={i}
             type="button"
+            role="radio"
+            aria-checked={i === score}
+            aria-label={`Score ${i}`}
             onClick={() => setScore(i)}
             className={cn(
               'flex h-8 w-8 items-center justify-center border text-xs transition-colors',

@@ -60,5 +60,6 @@
     "url": "https://github.com/jpoindexter/fabrk-framework.git",
     "directory": "packages/design-system"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "sideEffects": false
 }

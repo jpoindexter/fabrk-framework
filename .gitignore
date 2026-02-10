@@ -102,3 +102,6 @@ storybook-static/
 *.seed
 *.pid
 *.pid.lock
+
+# Generated API docs
+docs/api/

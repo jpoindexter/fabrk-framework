@@ -1,3 +1,24 @@
+/**
+ * LineChart - Multi-series line chart with configurable stroke styles, dots, and dashed lines.
+ * Built on Recharts with theme-aware tooltip and grid styling via CSS custom properties.
+ * Also exports LineChartCard wrapped in a terminal-style card header.
+ *
+ * @example
+ * ```tsx
+ * <LineChart
+ *   data={[
+ *     { date: 'Mon', users: 120, sessions: 340 },
+ *     { date: 'Tue', users: 180, sessions: 420 },
+ *   ]}
+ *   xAxisKey="date"
+ *   series={[
+ *     { dataKey: 'users', name: 'Users', color: 'var(--color-chart-1)' },
+ *     { dataKey: 'sessions', name: 'Sessions', dashed: true },
+ *   ]}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

@@ -1,3 +1,18 @@
+/**
+ * FeedbackWidget - Floating feedback button that expands into a categorized feedback form.
+ * Supports bug reports, feature requests, improvements, and general feedback with optional email.
+ *
+ * @param position - Screen corner placement: "bottom-right" (default) or "bottom-left"
+ *
+ * @example
+ * ```tsx
+ * <FeedbackWidget
+ *   onSubmit={({ type, message, email }) => submitFeedback(type, message, email)}
+ *   position="bottom-right"
+ * />
+ * ```
+ */
+
 'use client'
 
 import { useState } from 'react'
@@ -71,6 +86,8 @@ export function FeedbackWidget({
 
   return (
     <div
+      role="dialog"
+      aria-label="Send feedback"
       className={cn(
         'fixed z-50 w-80 border border-border bg-background shadow-lg',
         mode.radius,
@@ -84,6 +101,7 @@ export function FeedbackWidget({
         <button
           type="button"
           onClick={() => setIsOpen(false)}
+          aria-label="Close feedback"
           className="text-muted-foreground text-xs hover:text-foreground"
         >
           x
@@ -96,11 +114,13 @@ export function FeedbackWidget({
         </div>
       ) : (
         <div className="space-y-[var(--grid-4)] p-[var(--grid-4)]">
-          <div className="flex gap-[var(--grid-2)]">
+          <div className="flex gap-[var(--grid-2)]" role="radiogroup" aria-label="Feedback type">
             {feedbackTypes.map((ft) => (
               <button
                 key={ft.value}
                 type="button"
+                role="radio"
+                aria-checked={type === ft.value}
                 onClick={() => setType(ft.value)}
                 className={cn(
                   'border px-[1ch] py-[var(--grid-1)] text-xs transition-colors',

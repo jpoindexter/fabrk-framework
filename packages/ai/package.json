@@ -95,5 +95,6 @@
     "url": "https://github.com/jpoindexter/fabrk-framework.git",
     "directory": "packages/ai"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "sideEffects": false
 }

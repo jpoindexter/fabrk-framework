@@ -1,3 +1,13 @@
+/**
+ * Switch - Toggle control for binary on/off settings.
+ * Always renders as a pill shape (rounded-full) regardless of theme mode.radius.
+ *
+ * @example
+ * ```tsx
+ * <Switch checked={enabled} onCheckedChange={setEnabled} />
+ * ```
+ */
+
 'use client';
 
 import * as SwitchPrimitive from '@radix-ui/react-switch';

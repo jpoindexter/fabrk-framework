@@ -1,3 +1,15 @@
+/**
+ * Gauge - SVG arc gauge with needle indicator for displaying a value within a range.
+ * Supports segments, min/max labels, and custom angle ranges.
+ * Also exports ScoreGauge with automatic color grading based on percentage.
+ *
+ * @example
+ * ```tsx
+ * <Gauge value={72} max={100} label="CPU USAGE" unit="%" />
+ * <ScoreGauge score={85} maxScore={100} label="HEALTH SCORE" />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

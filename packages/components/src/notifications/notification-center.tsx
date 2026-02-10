@@ -1,3 +1,21 @@
+/**
+ * NotificationCenter - Bell icon dropdown with grouped notifications, read/unread states, and actions.
+ * Supports date grouping, mark-as-read, delete, clear-all, and per-notification action buttons.
+ *
+ * @example
+ * ```tsx
+ * <NotificationCenter
+ *   notifications={[
+ *     { id: '1', type: 'info', title: 'Deploy complete', message: 'v2.1.0 is live', timestamp: new Date(), read: false },
+ *     { id: '2', type: 'warning', title: 'Rate limit', message: 'API nearing quota', timestamp: new Date(), read: true },
+ *   ]}
+ *   onMarkAsRead={(id) => markRead(id)}
+ *   onMarkAllAsRead={() => markAllRead()}
+ *   onDelete={(id) => deleteNotification(id)}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

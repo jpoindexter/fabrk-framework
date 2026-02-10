@@ -2,7 +2,7 @@
 
 import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/themes'
-import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
+import { DocLayout, Section, CodeBlock, InfoCard, PropsTable } from '@/components/doc-layout'
 
 interface ComponentCategory {
   name: string
@@ -498,6 +498,138 @@ function AIChat({ messages, conversations, onSend, onSelectConversation }) {
 >
   <App />
 </ErrorBoundary>`}</CodeBlock>
+      </Section>
+
+      {/* Props reference */}
+      <Section title="PROPS REFERENCE">
+        <p className="text-sm text-muted-foreground mb-6">
+          Prop definitions for the most commonly used components. For the full API, run <code className="text-primary">pnpm docs:api</code>.
+        </p>
+
+        <h3 id="props-button" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>BUTTON</h3>
+        <PropsTable props={[
+          { name: 'variant', type: '"default" | "destructive" | "outline" | "secondary" | "ghost" | "link"', default: '"default"', description: 'Visual style variant' },
+          { name: 'size', type: '"default" | "sm" | "lg" | "icon"', default: '"default"', description: 'Button size' },
+          { name: 'loading', type: 'boolean', default: 'false', description: 'Show loading spinner and disable button' },
+          { name: 'loadingText', type: 'string', description: 'Accessible label shown during loading' },
+          { name: 'asChild', type: 'boolean', default: 'false', description: 'Render as child element (Slot)' },
+        ]} />
+
+        <h3 id="props-card" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>CARD</h3>
+        <PropsTable props={[
+          { name: 'className', type: 'string', description: 'Additional CSS classes. Always add mode.radius for border radius.' },
+          { name: 'children', type: 'ReactNode', description: 'Card content. Use CardHeader, CardContent, CardFooter for structure.' },
+        ]} />
+
+        <h3 id="props-kpicard" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>KPICARD</h3>
+        <PropsTable props={[
+          { name: 'title', type: 'string', description: 'KPI label (renders UPPERCASE)' },
+          { name: 'value', type: 'string | number', description: 'Display value' },
+          { name: 'trend', type: 'number', description: 'Percentage change. Positive = green arrow up, negative = red arrow down.' },
+          { name: 'icon', type: 'ReactNode', description: 'Optional icon beside the title' },
+        ]} />
+
+        <h3 id="props-datatable" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>DATATABLE</h3>
+        <PropsTable props={[
+          { name: 'columns', type: 'ColumnDef[]', description: 'TanStack Table column definitions' },
+          { name: 'data', type: 'T[]', description: 'Row data array' },
+          { name: 'searchKey', type: 'string', description: 'Column key to enable search filtering' },
+          { name: 'onRowClick', type: '(row: T) => void', description: 'Callback when a row is clicked' },
+          { name: 'pageSize', type: 'number', default: '10', description: 'Rows per page' },
+        ]} />
+
+        <h3 id="props-barchart" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>BARCHART</h3>
+        <PropsTable props={[
+          { name: 'data', type: '{ label: string; value: number }[]', description: 'Chart data points' },
+          { name: 'height', type: 'number', default: '300', description: 'Chart height in pixels' },
+          { name: 'horizontal', type: 'boolean', default: 'false', description: 'Render as horizontal bar chart' },
+          { name: 'stacked', type: 'boolean', default: 'false', description: 'Stack bars (for multi-series data)' },
+          { name: 'colorByIndex', type: 'boolean', default: 'false', description: 'Use different colors per bar' },
+        ]} />
+
+        <h3 id="props-starrating" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>STARRATING</h3>
+        <PropsTable props={[
+          { name: 'value', type: 'number', description: 'Current rating value' },
+          { name: 'max', type: 'number', default: '5', description: 'Maximum number of stars' },
+          { name: 'onChange', type: '(value: number) => void', description: 'Callback when a star is clicked' },
+          { name: 'readonly', type: 'boolean', default: 'false', description: 'Display-only mode, disables interaction' },
+          { name: 'size', type: '"sm" | "md" | "lg"', default: '"md"', description: 'Star size' },
+        ]} />
+
+        <h3 id="props-npssurvey" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>NPSSURVEY</h3>
+        <PropsTable props={[
+          { name: 'onSubmit', type: '(score: number, feedback?: string) => void', description: 'Callback with score (0-10) and optional feedback text' },
+          { name: 'onDismiss', type: '() => void', description: 'Callback when dismiss button is clicked' },
+          { name: 'title', type: 'string', default: '"How likely..."', description: 'Survey question text' },
+        ]} />
+
+        <h3 id="props-gauge" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>GAUGE</h3>
+        <PropsTable props={[
+          { name: 'value', type: 'number', description: 'Current value' },
+          { name: 'max', type: 'number', default: '100', description: 'Maximum value' },
+          { name: 'label', type: 'string', description: 'Label below the gauge' },
+          { name: 'unit', type: 'string', description: 'Unit suffix (e.g., "%")' },
+          { name: 'segments', type: '{ color: string; end: number }[]', description: 'Color segments for the arc' },
+        ]} />
+
+        <h3 id="props-dialog" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>DIALOG</h3>
+        <PropsTable props={[
+          { name: 'open', type: 'boolean', description: 'Controlled open state' },
+          { name: 'onOpenChange', type: '(open: boolean) => void', description: 'Callback when open state changes' },
+          { name: 'children', type: 'ReactNode', description: 'Use DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription' },
+        ]} />
+
+        <h3 id="props-select" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>SELECT</h3>
+        <PropsTable props={[
+          { name: 'value', type: 'string', description: 'Controlled selected value' },
+          { name: 'onValueChange', type: '(value: string) => void', description: 'Callback when selection changes' },
+          { name: 'placeholder', type: 'string', description: 'Placeholder text when no value is selected' },
+          { name: 'disabled', type: 'boolean', default: 'false', description: 'Disable the select' },
+        ]} />
+
+        <h3 id="props-chatinput" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>CHATINPUT</h3>
+        <PropsTable props={[
+          { name: 'onSend', type: '(message: string, attachments?: File[]) => void', description: 'Callback when message is sent (Enter key or button)' },
+          { name: 'onStop', type: '() => void', description: 'Callback when stop button is clicked during streaming' },
+          { name: 'isLoading', type: 'boolean', default: 'false', description: 'Show stop button instead of send button' },
+          { name: 'models', type: '{ id: string; name: string }[]', description: 'Available AI models for the model selector' },
+          { name: 'selectedModelId', type: 'string', description: 'Currently selected model ID' },
+          { name: 'onModelChange', type: '(modelId: string) => void', description: 'Callback when model selection changes' },
+        ]} />
+
+        <h3 id="props-mfacard" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>MFACARD</h3>
+        <PropsTable props={[
+          { name: 'twoFactorEnabled', type: 'boolean', description: 'Current 2FA status' },
+          { name: 'onEnable2FA', type: '() => void', description: 'Callback to start MFA setup' },
+          { name: 'onDisable2FA', type: '() => void', description: 'Callback to disable MFA' },
+          { name: 'onViewBackupCodes', type: '() => void', description: 'Callback to view backup codes' },
+          { name: 'isEnabling2FA', type: 'boolean', description: 'Loading state for enable action' },
+          { name: 'isDisabling2FA', type: 'boolean', description: 'Loading state for disable action' },
+        ]} />
+
+        <h3 id="props-cookieconsent" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>COOKIECONSENT</h3>
+        <PropsTable props={[
+          { name: 'onAcceptAll', type: '(prefs: CookiePreferences) => void', description: 'Callback when all cookies are accepted' },
+          { name: 'onAcceptSelected', type: '(prefs: CookiePreferences) => void', description: 'Callback when selected cookies are accepted' },
+          { name: 'onRejectAll', type: '(prefs: CookiePreferences) => void', description: 'Callback when all non-essential cookies are rejected' },
+          { name: 'cookieKey', type: 'string', default: '"cookie-consent"', description: 'localStorage key for persisting preferences' },
+        ]} />
+
+        <h3 id="props-segmentedcontrol" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>SEGMENTEDCONTROL</h3>
+        <PropsTable props={[
+          { name: 'options', type: '{ value: T; label: string; disabled?: boolean }[]', description: 'Segment options' },
+          { name: 'value', type: 'T', description: 'Currently selected value' },
+          { name: 'onChange', type: '(value: T) => void', description: 'Callback when selection changes' },
+          { name: 'size', type: '"sm" | "md" | "lg"', default: '"md"', description: 'Control size' },
+        ]} />
+
+        <h3 id="props-progress" className={cn('text-sm font-semibold text-foreground uppercase mt-8 mb-3', mode.font)}>PROGRESS</h3>
+        <PropsTable props={[
+          { name: 'value', type: 'number', description: 'Progress value (0-100)' },
+          { name: 'label', type: 'string', description: 'Label text above the bar' },
+          { name: 'showPercentage', type: 'boolean', default: 'true', description: 'Show percentage text' },
+          { name: 'size', type: '"sm" | "md" | "lg"', default: '"md"', description: 'Bar height' },
+        ]} />
       </Section>
 
       {/* Category index */}

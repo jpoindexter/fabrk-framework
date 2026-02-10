@@ -1,3 +1,16 @@
+/**
+ * CookieConsent - GDPR-compliant cookie consent banner with granular preference controls.
+ * Persists user choices to localStorage. Also exports `useCookieConsent` hook for programmatic access.
+ *
+ * @example
+ * ```tsx
+ * <CookieConsent
+ *   onAcceptAll={(prefs) => initAnalytics(prefs)}
+ *   onRejectAll={(prefs) => console.log('rejected', prefs)}
+ * />
+ * ```
+ */
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -104,6 +117,8 @@ export function CookieConsent({
 
   return (
     <div
+      role="dialog"
+      aria-label="Cookie preferences"
       className={cn(
         'fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background p-[var(--grid-6)]',
         mode.font,

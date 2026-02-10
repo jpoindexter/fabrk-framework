@@ -1,3 +1,25 @@
+/**
+ * BarChart - Configurable bar chart with support for stacked, horizontal, and color-by-index modes.
+ * Built on Recharts with theme-aware tooltip and grid styling via CSS custom properties.
+ * Also exports BarChartCard (wrapped in a terminal-style card) and StackedBarChart.
+ *
+ * @example
+ * ```tsx
+ * <BarChart
+ *   data={[
+ *     { month: 'Jan', revenue: 4000, costs: 2400 },
+ *     { month: 'Feb', revenue: 3000, costs: 1398 },
+ *   ]}
+ *   xAxisKey="month"
+ *   series={[
+ *     { dataKey: 'revenue', name: 'Revenue' },
+ *     { dataKey: 'costs', name: 'Costs' },
+ *   ]}
+ *   showLegend
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

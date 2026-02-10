@@ -1,3 +1,20 @@
+/**
+ * MfaCard - Two-factor authentication management card with enable/disable controls.
+ * Shows current 2FA status with a badge and provides access to backup codes when enabled.
+ *
+ * @example
+ * ```tsx
+ * <MfaCard
+ *   twoFactorEnabled={user.mfaEnabled}
+ *   isEnabling2FA={isPending}
+ *   isDisabling2FA={false}
+ *   onEnable2FA={() => startMfaSetup()}
+ *   onDisable2FA={() => disableMfa()}
+ *   onViewBackupCodes={() => openBackupCodesDialog()}
+ * />
+ * ```
+ */
+
 'use client';
 
 import * as React from 'react';

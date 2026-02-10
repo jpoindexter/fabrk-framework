@@ -1,0 +1,68 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/config",
+    "packages/design-system",
+    "packages/core",
+    "packages/ai",
+    "packages/auth",
+    "packages/components",
+    "packages/email",
+    "packages/mcp",
+    "packages/payments",
+    "packages/referrals",
+    "packages/security",
+    "packages/storage",
+    "packages/store-prisma",
+    "packages/themes"
+  ],
+  "out": "docs/api",
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
+  "name": "FABRK Framework API Reference",
+  "readme": "none",
+  "packageOptions": {
+    "skipErrorChecking": true,
+    "excludeExternals": true,
+    "excludePrivate": true,
+    "excludeProtected": false,
+    "exclude": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "**/*.test.tsx",
+      "**/*.spec.ts",
+      "**/*.spec.tsx",
+      "**/*.stories.ts",
+      "**/*.stories.tsx"
+    ],
+    "validation": {
+      "notExported": false,
+      "invalidLink": false,
+      "notDocumented": false
+    }
+  },
+  "skipErrorChecking": true,
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.stories.ts",
+    "**/*.stories.tsx"
+  ],
+  "validation": {
+    "notExported": false,
+    "invalidLink": false,
+    "notDocumented": false
+  }
+}

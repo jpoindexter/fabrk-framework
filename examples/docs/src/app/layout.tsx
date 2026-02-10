@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import { Sidebar } from '@/components/sidebar'
+import { MobileNav } from '@/components/mobile-nav'
 import { TableOfContents } from '@/components/toc'
+import { ThemeWrapper } from '@/components/theme-wrapper'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -14,17 +16,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto min-h-screen">
-          <div className="flex">
-            <div className="flex-1 min-w-0">
-              {children}
+        <ThemeWrapper>
+          <Sidebar />
+          <MobileNav />
+          <main className="flex-1 overflow-y-auto min-h-screen">
+            <div className="flex">
+              <div className="flex-1 min-w-0 pt-16 md:pt-0">
+                {children}
+              </div>
+              <TableOfContents />
             </div>
-            <TableOfContents />
-          </div>
-        </main>
+          </main>
+        </ThemeWrapper>
       </body>
     </html>
   )

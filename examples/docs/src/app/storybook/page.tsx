@@ -3,13 +3,14 @@
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
 
 const categories = [
-  { name: 'UI', count: 8, examples: 'Button, Card, Badge, Tabs, Accordion, Dialog, Select, Input' },
-  { name: 'Data Display', count: 6, examples: 'DataTable, EmptyState, Progress, StarRating, SegmentedControl' },
-  { name: 'Charts', count: 6, examples: 'BarChart, LineChart, DonutChart, Gauge, Sparkline, AreaChart' },
-  { name: 'Feedback', count: 4, examples: 'FeedbackWidget, NPSSurvey, CookieConsent, TerminalSpinner' },
-  { name: 'AI', count: 3, examples: 'AiChatInput, TokenCounter, LogStream' },
-  { name: 'Admin/Security', count: 4, examples: 'AuditLog, MfaCard, OnboardingChecklist, OrgSwitcher' },
-  { name: 'Dashboard', count: 5, examples: 'DashboardShell, StatsGrid, KPICard, StatusPulse, TierBadge' },
+  { name: 'UI Controls', count: 15, examples: 'Button, Card, Input, Select, Switch, Checkbox, Tabs, Dialog, Alert, Accordion, Badge, CodeBlock, Breadcrumb, PageHeader, Sidebar' },
+  { name: 'Data Display', count: 13, examples: 'KPICard, StatsGrid, DataTable, Tag, EmptyState, Progress, JsonViewer, AsciiProgressBar, StarRating, SegmentedControl, StatusPulse, TokenCounter, TierBadge' },
+  { name: 'Layout', count: 7, examples: 'DashboardShell, DashboardHeader, TerminalCard, PricingCard, UsageBar, UpgradeCta, NotificationList' },
+  { name: 'Charts', count: 8, examples: 'BarChart, LineChart, DonutChart, AreaChart, PieChart, FunnelChart, Gauge, Sparkline' },
+  { name: 'Feedback', count: 6, examples: 'FeedbackWidget, NPSSurvey, CookieConsent, TerminalSpinner, OnboardingChecklist, LogStream' },
+  { name: 'Organization', count: 3, examples: 'OrgSwitcher, MemberCard, TeamActivityFeed' },
+  { name: 'Admin/Security', count: 6, examples: 'AuditLog, SystemHealth, NotificationCenter, MfaCard, BackupCodesModal, MfaSetupDialog' },
+  { name: 'AI', count: 1, examples: 'ChatInput' },
 ]
 
 export default function StorybookPage() {

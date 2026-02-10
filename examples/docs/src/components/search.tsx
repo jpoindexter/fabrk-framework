@@ -85,6 +85,11 @@ const SEARCH_INDEX: SearchEntry[] = [
   { title: 'Payments Guide', href: '/guides#payments', keywords: ['payments', 'stripe', 'checkout', 'webhooks', 'pricing', 'subscription'], category: 'GUIDES' },
   { title: 'AI Integration Guide', href: '/guides#ai', keywords: ['ai', 'llm', 'cost tracking', 'chat', 'prompts', 'streaming', 'budget'], category: 'GUIDES' },
   { title: 'Deployment Guide', href: '/guides#deployment', keywords: ['deploy', 'vercel', 'production', 'database', 'environment', 'checklist'], category: 'GUIDES' },
+
+  // Tutorials
+  { title: 'Dashboard Tutorial', href: '/tutorials/dashboard', keywords: ['dashboard', 'tutorial', 'kpi', 'charts', 'tables', 'sidebar', 'step by step'], category: 'TUTORIALS' },
+  { title: 'Authentication Tutorial', href: '/tutorials/auth', keywords: ['auth', 'tutorial', 'nextauth', 'api keys', 'mfa', 'totp', 'backup codes', 'middleware', 'step by step'], category: 'TUTORIALS' },
+  { title: 'Payments Tutorial', href: '/tutorials/payments', keywords: ['payments', 'tutorial', 'stripe', 'checkout', 'webhooks', 'pricing', 'subscription', 'step by step'], category: 'TUTORIALS' },
 ]
 
 function highlightMatch(text: string, query: string): React.ReactNode {

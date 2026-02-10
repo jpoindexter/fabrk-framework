@@ -8,10 +8,10 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-16-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-105%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-1%2C723-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-1%2C689-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Storybook-40%20stories-ff4785" alt="Storybook" />
+  <img src="https://img.shields.io/badge/Storybook-59%20stories-ff4785" alt="Storybook" />
   <img src="https://img.shields.io/badge/hooks-16-green" alt="Hooks" />
 </p>
 
@@ -40,6 +40,9 @@ export default function Dashboard() {
 ```
 
 **Result:** 2 minutes. Consistent design. Built-in features. Happy user.
+
+<!-- Add a screenshot of your dashboard or docs site here -->
+<!-- <p align="center"><img src="docs/assets/screenshot.png" alt="FABRK Dashboard" width="720" /></p> -->
 
 ## Quick Start
 
@@ -202,7 +205,7 @@ fabrk CLI (orchestrates everything)
 
 pnpm install        # Install dependencies
 pnpm build          # Build all 20 packages
-pnpm test           # Run 1,723 tests
+pnpm test           # Run 1,689 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```
@@ -225,14 +228,14 @@ pnpm dev    # Local development at localhost:3000
 
 ## Component Explorer
 
-Browse all 105+ components in [Storybook](https://storybook.js.org/) with 40 interactive stories:
+Browse all 105+ components in [Storybook](https://storybook.js.org/) with 59 interactive stories:
 
 ```bash
 pnpm storybook          # Launch at localhost:6006
 pnpm build-storybook    # Build static site
 ```
 
-Categories: UI, Data Display, Charts, Feedback, AI, Terminal, Dashboard — all with autodocs and arg controls.
+Categories: UI Controls, Data Display, Layout, Charts, Feedback, Organization, Admin/Security, AI — all with autodocs and arg controls.
 
 ## Contributing
 

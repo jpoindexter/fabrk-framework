@@ -1,6 +1,6 @@
-# FABRK App
+# FABRK Dashboard
 
-A modern web application built with [FABRK Framework](https://github.com/jpoindexter/fabrk-framework).
+A production-ready admin dashboard built with [FABRK Framework](https://github.com/jpoindexter/fabrk-framework).
 
 ## Getting Started
 
@@ -19,21 +19,50 @@ A modern web application built with [FABRK Framework](https://github.com/jpoinde
 
 ## What's Included
 
-- ✅ **Next.js 15** with App Router
-- ✅ **105+ UI Components** from `@fabrk/components`
+- ✅ **DashboardShell** with responsive sidebar navigation
+- ✅ **KPI Cards & Stats Grids** for metrics visualization
+- ✅ **8+ Chart Components** (bar, line, area, pie, donut, funnel)
+- ✅ **DataTable** with sorting, filtering, and pagination
 - ✅ **Terminal Design System** with 18 themes
+- ✅ **105+ UI Components** from `@fabrk/components`
+- ✅ **Next.js 15** with App Router
 - ✅ **TypeScript** for type safety
-- ✅ **Tailwind CSS** for styling
-- ✅ **React 19** with latest features
 
-## Project Structure
+## Dashboard Components
 
-```
-├── app/              # Next.js app router
-│   ├── layout.tsx    # Root layout with FABRK providers
-│   └── page.tsx      # Home page
-├── public/           # Static assets
-└── package.json      # Dependencies
+```tsx
+import {
+  DashboardShell,
+  DashboardHeader,
+  StatsGrid,
+  BarChart,
+  LineChart,
+  DataTable,
+} from '@fabrk/components'
+
+export default function Dashboard() {
+  return (
+    <DashboardShell
+      sidebarItems={[
+        { id: 'overview', label: 'Overview', href: '/dashboard' },
+        { id: 'analytics', label: 'Analytics', href: '/dashboard/analytics' },
+      ]}
+      user={{ name: 'Jason', tier: 'pro' }}
+      logo={<span className="text-accent text-xl">#</span>}
+      onSignOut={() => signOut()}
+    >
+      <DashboardHeader title="Overview" subtitle="Last 30 days" />
+      <StatsGrid items={[
+        { label: 'Revenue', value: 45200, change: '+12%' },
+        { label: 'Users', value: 1234, change: '+8%' },
+      ]} />
+      <div className="p-4">
+        <LineChart data={chartData} />
+        <DataTable columns={columns} data={tableData} />
+      </div>
+    </DashboardShell>
+  )
+}
 ```
 
 ## Available Scripts
@@ -47,8 +76,8 @@ A modern web application built with [FABRK Framework](https://github.com/jpoinde
 ## Learn More
 
 - [FABRK Documentation](https://github.com/jpoindexter/fabrk-framework)
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Component Examples](https://github.com/jpoindexter/fabrk-framework/tree/main/packages/components)
+- [Dashboard Components](https://github.com/jpoindexter/fabrk-framework/tree/main/packages/components)
+- [Chart Examples](https://github.com/jpoindexter/fabrk-framework/tree/main/packages/components/src/charts)
 
 ## Deploy
 

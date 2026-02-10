@@ -11,7 +11,7 @@ First release of the FABRK Framework -- the first UI framework designed for AI c
 - **`@fabrk/config` v0.1.0** -- Type-safe configuration builder with 12 sections and Zod validation
 - **`@fabrk/design-system` v0.1.0** -- Terminal-inspired design system with 18 themes and design tokens
 - **`@fabrk/core` v0.1.0** -- Framework runtime with plugins, middleware, teams, jobs, feature flags, and auto-wiring
-- **`@fabrk/components` v0.1.0** -- 70+ production-ready UI components, 8 charts, dashboard shell, AI chat, admin, and security views
+- **`@fabrk/components` v0.1.0** -- 105+ production-ready UI components, 8 charts, dashboard shell, AI chat, admin, and security views
 - **`@fabrk/ai` v0.1.0** -- AI development toolkit with cost tracking, validation, streaming, prompt builder, and LLM provider support
 - **`@fabrk/payments` v0.1.0** -- Payment adapters for Stripe, Polar, and Lemon Squeezy
 - **`@fabrk/auth` v0.1.0** -- Authentication adapters for NextAuth, API keys (SHA-256), and MFA (TOTP + backup codes)
@@ -27,10 +27,10 @@ First release of the FABRK Framework -- the first UI framework designed for AI c
 
 #### Highlights
 
-- **70+ UI components** including charts, dashboard shell, data tables, AI chat, and admin views
+- **105+ UI components** including charts, dashboard shell, data tables, AI chat, and admin views
 - **8 chart types** powered by Recharts (bar, line, area, pie, donut, radar, scatter, funnel)
 - **18 themes** with runtime switching via CSS variables
-- **410 tests** across 24 test files, all passing
+- **1,286 tests** across 38 test files, all passing
 - **16 packages** publish-ready for npm
 - **Adapter pattern** for all external services (payments, auth, email, storage, security)
 - **In-memory defaults** for every store, enabling zero-config development

@@ -7,7 +7,7 @@
 | **Framework** | Next.js 15 (App Router) + React 19 |
 | **Language** | TypeScript (strict) |
 | **Styling** | Tailwind CSS 4 + FABRK Design System |
-| **UI Library** | @fabrk/components (70+ components, 8 chart types) |
+| **UI Library** | @fabrk/components (105+ components, 8 chart types) |
 | **Config** | @fabrk/config (fabrk.config.ts) |
 
 ## Quick Start

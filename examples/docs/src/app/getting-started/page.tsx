@@ -318,7 +318,7 @@ fabrk info`}</CodeBlock>
             Explore the 16 packages &mdash; payments, auth, email, storage, security, and more.
           </InfoCard>
           <InfoCard title="COMPONENTS">
-            Browse 70+ components &mdash; charts, forms, admin panels, AI chat, and more.
+            Browse 105+ components &mdash; charts, forms, admin panels, AI chat, and more.
           </InfoCard>
           <InfoCard title="GUIDES">
             Step-by-step guides: build a dashboard, add auth, integrate payments, deploy.

@@ -1,0 +1,17 @@
+title: ""
+labels: ["show-and-tell"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share what you've built with FABRK.
+  - type: textarea
+    attributes:
+      label: What did you build?
+      description: Tell us about your project.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Link or Screenshot
+      description: Optional link or screenshot of your project.

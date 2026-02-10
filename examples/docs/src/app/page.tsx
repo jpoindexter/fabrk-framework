@@ -7,7 +7,7 @@ import Link from 'next/link'
 const features = [
   {
     label: 'COMPONENTS',
-    value: '70+',
+    value: '105+',
     description: 'Pre-built UI components with terminal aesthetic',
   },
   {
@@ -22,7 +22,7 @@ const features = [
   },
   {
     label: 'TESTS',
-    value: '410',
+    value: '1,286',
     description: 'Comprehensive test coverage across all packages',
   },
 ]
@@ -30,7 +30,7 @@ const features = [
 const quickLinks = [
   { label: '> GET STARTED', href: '/getting-started', description: 'Create your first FABRK app in 5 minutes' },
   { label: '> PACKAGES', href: '/packages', description: 'Explore 16 modular packages' },
-  { label: '> COMPONENTS', href: '/components', description: 'Browse 70+ UI components' },
+  { label: '> COMPONENTS', href: '/components', description: 'Browse 105+ UI components' },
   { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
   { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing Next.js app to FABRK' },
   { label: '> CLI REFERENCE', href: '/cli', description: 'create-fabrk-app and fabrk dev CLI' },

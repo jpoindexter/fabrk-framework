@@ -115,4 +115,4 @@ Extract from `src/design-system/` → `packages/design-system/src/`:
 - **AI Toolkit:** 8 files
 - **Design System:** Multiple directories
 
-**Total:** 70+ components + AI toolkit + design system
+**Total:** 105+ components + AI toolkit + design system

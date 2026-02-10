@@ -94,6 +94,9 @@ templates/*/package-lock.json
 *.tsbuildinfo
 .tsbuildinfo
 
+# Storybook
+storybook-static/
+
 # Misc
 .eslintcache
 *.seed

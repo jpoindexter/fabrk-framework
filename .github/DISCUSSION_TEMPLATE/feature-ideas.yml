@@ -1,0 +1,19 @@
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your idea for FABRK Framework.
+  - type: textarea
+    attributes:
+      label: Description
+      description: What feature would you like to see?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Use Case
+      description: How would you use this feature?
+    validations:
+      required: true

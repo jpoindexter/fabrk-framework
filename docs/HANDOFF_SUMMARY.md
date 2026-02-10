@@ -12,7 +12,7 @@ This document lists everything prepared for the new Claude Code instance.
 
 ### Priority 1: Read These First
 1. **START_HERE.md** ⭐ - Quick start guide (READ THIS FIRST!)
-2. **COMPONENT_INVENTORY.md** - List of all 70+ components to extract
+2. **COMPONENT_INVENTORY.md** - List of all 105+ components to extract
 3. **EXTRACTION_GUIDE.md** - Step-by-step how to extract components
 
 ### Priority 2: Reference Documentation
@@ -50,7 +50,7 @@ This document lists everything prepared for the new Claude Code instance.
 - ✅ package.json configured
 - ✅ TypeScript config
 - ✅ Dependencies installed (lucide-react, recharts, radix-ui)
-- 📋 **Next:** Extract 70+ components from fabrk-dev
+- 📋 **Next:** Extract 105+ components from fabrk-dev
 - **Files to Extract:** See COMPONENT_INVENTORY.md
 
 ### 3. @fabrk/ai
@@ -215,7 +215,7 @@ If stuck:
 
 ## What You Need to Do
 
-📋 Extract 70+ components from fabrk-dev
+📋 Extract 105+ components from fabrk-dev
 📋 Update all imports
 📋 Create barrel exports
 📋 Test builds

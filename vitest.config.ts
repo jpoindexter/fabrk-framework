@@ -5,8 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['packages/*/src/**/*.test.{ts,tsx}', 'packages/*/e2e/**/*.test.{ts,tsx}'],
-    // Component behavioral tests (ui/, ai/) need jsdom — they run via packages/components/vitest.config.ts
-    exclude: ['**/node_modules/**', '**/dist/**', 'packages/components/src/__tests__/ui/**', 'packages/components/src/__tests__/ai/**'],
+    // Component tests need jsdom — they run via packages/components/vitest.config.ts
+    exclude: ['**/node_modules/**', '**/dist/**', 'packages/components/src/__tests__/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

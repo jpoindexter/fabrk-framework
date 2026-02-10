@@ -1,0 +1,9 @@
+[
+  { "path": "packages/core/dist/index.mjs", "limit": "38 kB" },
+  { "path": "packages/components/dist/index.mjs", "limit": "335 kB" },
+  { "path": "packages/ai/dist/index.mjs", "limit": "190 kB" },
+  { "path": "packages/config/dist/index.mjs", "limit": "18 kB" },
+  { "path": "packages/design-system/dist/index.mjs", "limit": "12 kB" },
+  { "path": "packages/auth/dist/index.mjs", "limit": "3 kB" },
+  { "path": "packages/themes/dist/index.mjs", "limit": "11 kB" }
+]

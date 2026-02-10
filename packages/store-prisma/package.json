@@ -30,7 +30,8 @@
   "files": [
     "dist",
     "schema.example.prisma",
-    "README.md"
+    "README.md",
+    "AGENTS.md"
   ],
   "keywords": [
     "fabrk",

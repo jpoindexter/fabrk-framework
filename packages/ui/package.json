@@ -33,7 +33,9 @@
   "files": [
     "dist",
     "registry",
-    "registry.json"
+    "registry.json",
+    "AGENTS.md",
+    "README.md"
   ],
   "author": "Jason Poindexter",
   "keywords": [

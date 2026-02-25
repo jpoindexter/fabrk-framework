@@ -14,5 +14,11 @@ coverage/
 .idea/
 .vscode/
 
+# Test files (compiled to dist but not needed by consumers)
+dist/__tests__/
+dist/**/*.test.js
+dist/**/*.test.d.ts
+dist/**/*.test.d.ts.map
+
 # Packed tarballs
 *.tgz

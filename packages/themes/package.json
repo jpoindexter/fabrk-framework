@@ -57,5 +57,8 @@
     "directory": "packages/themes"
   },
   "license": "MIT",
-  "sideEffects": false
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }

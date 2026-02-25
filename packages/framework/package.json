@@ -52,12 +52,44 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "AGENTS.md"
   ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "type-check": "tsc --noEmit",
     "test": "vitest run"
+  },
+  "author": "Jason Poindexter",
+  "keywords": [
+    "fabrk",
+    "framework",
+    "ai",
+    "agents",
+    "react",
+    "vite",
+    "nextjs",
+    "typescript",
+    "mcp",
+    "llm"
+  ],
+  "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpoindexter/fabrk-framework.git",
+    "directory": "packages/framework"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.0.0"
   },
   "peerDependencies": {
     "react": ">=19.2.0",

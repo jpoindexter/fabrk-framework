@@ -45,7 +45,7 @@ export function Gauge({
   thickness = 20,
   startAngle = -135,
   endAngle = 135,
-  color = 'var(--color-primary)',
+  color = 'hsl(var(--primary))',
   backgroundColor = 'var(--color-muted)',
   showValue = true,
   showMinMax = false,
@@ -149,7 +149,7 @@ export function Gauge({
         {/* Needle */}
         <polygon
           points={getNeedlePoints()}
-          fill="var(--color-foreground)"
+          fill="hsl(var(--foreground))"
           className="gauge-needle transition-all"
         />
 
@@ -158,7 +158,7 @@ export function Gauge({
           cx={center}
           cy={center}
           r={thickness * 0.6}
-          fill="var(--color-foreground)"
+          fill="hsl(var(--foreground))"
           stroke="var(--color-background)"
           strokeWidth={2}
           className="gauge-center"

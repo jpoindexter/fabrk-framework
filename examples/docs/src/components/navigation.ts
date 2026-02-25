@@ -80,5 +80,4 @@ export const navigation: NavItem[] = [
   { label: 'MIGRATION', href: '/migration' },
   { label: 'CLI REFERENCE', href: '/cli' },
   { label: 'API REFERENCE', href: '/api' },
-  { label: 'STORYBOOK', href: '/storybook' },
 ]

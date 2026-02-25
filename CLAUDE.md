@@ -81,6 +81,7 @@ fabrk-framework/
 ├── packages/
 │   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
+│   ├── framework/          # fabrk - AI-first React framework on Vite (agents, tools, prompts, deploy)
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
 │   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, streaming, LLM providers, embeddings)
@@ -495,10 +496,11 @@ Read these files for context:
 
 ### Current Stats
 
-- **20/20 packages build** (16 packages + 4 examples)
-- **1,689 tests** across 82 test files (unit + rendering + integration + SSR)
-- **25/25 type-check**, **20/20 lint** (0 errors, 0 warnings)
+- **21/21 packages build** (17 packages + 4 examples)
+- **1,755 tests** across 97 test files (unit + rendering + integration + SSR + framework)
+- **29/29 type-check**, **21/21 lint** (0 errors, 0 warnings)
 - **105+ components**, 8 chart types, 18 themes, 59 Storybook stories
+- **fabrk framework**: agents, tools, prompts, SSE streaming, auth guard, /__ai dashboard, multi-target deploy
 - **4 examples**: basic-usage, docs site, saas-analytics, ecommerce
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher
 - **Bundle size tracking**: 7 packages tracked via size-limit, all within limits

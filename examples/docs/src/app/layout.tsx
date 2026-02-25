@@ -3,6 +3,7 @@ import { Sidebar } from '@/components/sidebar'
 import { MobileNav } from '@/components/mobile-nav'
 import { TableOfContents } from '@/components/toc'
 import { ThemeWrapper } from '@/components/theme-wrapper'
+import { ThemeScript } from '@fabrk/themes'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -17,6 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <ThemeScript storageKey="fabrk-docs-theme" defaultColorTheme="green" />
+      </head>
       <body className="flex min-h-screen">
         <ThemeWrapper>
           <Sidebar />

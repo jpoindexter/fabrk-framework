@@ -18,6 +18,13 @@ export type { AgentHandlerOptions } from "./agents/route-handler.js";
 export { createLLMBridge } from "./agents/llm-bridge.js";
 export type { LLMBridge, LLMProvider } from "./agents/llm-bridge.js";
 
+// LLM calling + fallback
+export { callLLM, callWithFallback } from "./agents/llm-caller.js";
+export type { LLMCallResult } from "./agents/llm-caller.js";
+
+// Budget enforcement
+export { checkBudget, recordCost } from "./agents/budget-guard.js";
+
 // SSE streaming
 export { formatSSEEvent, createSSEStream, createSSEResponse } from "./agents/sse-stream.js";
 export type { SSEEvent } from "./agents/sse-stream.js";

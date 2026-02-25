@@ -12,6 +12,7 @@ export const navigation: NavItem[] = [
     label: 'PACKAGES',
     href: '/packages',
     children: [
+      { label: 'fabrk', href: '/packages#fabrk' },
       { label: '@fabrk/config', href: '/packages#config' },
       { label: '@fabrk/design-system', href: '/packages#design-system' },
       { label: '@fabrk/core', href: '/packages#core' },

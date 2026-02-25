@@ -71,9 +71,9 @@ export function Sidebar() {
       <div className="mt-4 border-t border-border pt-4">
         <div className="text-xs text-muted-foreground space-y-1">
           <div>[v0.1.0]</div>
-          <div>16 packages</div>
+          <div>17 packages</div>
           <div>105+ components</div>
-          <div>1,689+ tests</div>
+          <div>1,755+ tests</div>
         </div>
       </div>
     </aside>

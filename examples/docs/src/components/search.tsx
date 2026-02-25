@@ -24,6 +24,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   { title: 'Migration', href: '/migration', keywords: ['migration', 'migrate', 'upgrade', 'transform', 'imports', 'existing project', 'convert'], category: 'PAGES' },
 
   // Packages
+  { title: 'fabrk', href: '/packages#fabrk', category: 'PACKAGES', keywords: ['framework', 'vite', 'agents', 'tools', 'prompts', 'sse', 'deploy', 'ai-first'] },
   { title: '@fabrk/core', href: '/packages#core', keywords: ['core', 'runtime', 'plugins', 'middleware', 'auto-wiring', 'autoWire', 'cn', 'hooks', 'providers', 'FabrkProvider'], category: 'PACKAGES' },
   { title: '@fabrk/config', href: '/packages#config', keywords: ['config', 'zod', 'schema', 'validation', 'defineFabrkConfig', 'type-safe'], category: 'PACKAGES' },
   { title: '@fabrk/design-system', href: '/packages#design-system', keywords: ['design system', 'themes', 'mode', 'tokens', 'css variables', 'applyTheme', 'radius', 'font'], category: 'PACKAGES' },
@@ -78,6 +79,8 @@ const SEARCH_INDEX: SearchEntry[] = [
   { title: 'Terminal Aesthetic', href: '/components#design-rules', keywords: ['terminal', 'monospace', 'uppercase', 'brackets', 'aesthetic', 'casing'], category: 'CONCEPTS' },
   { title: 'Callback Props', href: '/migration#step-4:-component-extraction-pattern', keywords: ['callback', 'props', 'pattern', 'portable', 'testable', 'no api calls'], category: 'CONCEPTS' },
   { title: 'Zero-config Development', href: '/getting-started#step-3:-configure-fabrk', keywords: ['zero-config', 'dev defaults', 'applyDevDefaults', 'console email', 'in-memory'], category: 'CONCEPTS' },
+  { title: 'AI Agents', href: '/packages#fabrk', category: 'CONCEPTS', keywords: ['defineAgent', 'agents', 'llm', 'model', 'streaming'] },
+  { title: 'AI Tools', href: '/packages#fabrk', category: 'CONCEPTS', keywords: ['defineTool', 'tools', 'mcp', 'tool definition'] },
 
   // Guides
   { title: 'Build a Dashboard', href: '/guides#dashboard', keywords: ['dashboard', 'kpi', 'charts', 'tables', 'sidebar', 'admin'], category: 'GUIDES' },

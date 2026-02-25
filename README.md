@@ -6,9 +6,9 @@
 <p align="center">
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
-  <img src="https://img.shields.io/badge/packages-16-green" alt="Packages" />
+  <img src="https://img.shields.io/badge/packages-17-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-105%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-1%2C689-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-1%2C755-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Storybook-59%20stories-ff4785" alt="Storybook" />
@@ -78,6 +78,12 @@ FABRK is a modular monorepo — install only what you need.
 | [`@fabrk/mcp`](packages/mcp) | Model Context Protocol server toolkit |
 | [`@fabrk/store-prisma`](packages/store-prisma) | Prisma store adapters for teams, API keys, audit, notifications, jobs, webhooks, feature flags |
 | [`@fabrk/referrals`](packages/referrals) | Referral system |
+
+### AI-First Framework
+
+| Package | Description |
+|---------|-------------|
+| [`fabrk`](packages/framework) | AI-first React framework on Vite 7 — agents, tools, prompts, SSE streaming, multi-target deploy |
 
 ### Design System (opt-in, shadcn-style)
 
@@ -189,7 +195,9 @@ Works with **Claude Code**, **Cursor**, **GitHub Copilot**, **v0.dev**, **Windsu
     |
 @fabrk/components, @fabrk/ui (design system consumers)
     |
-fabrk CLI (orchestrates everything)
+fabrk (AI-first framework — agents, tools, prompts, deploy)
+    |
+create-fabrk-app CLI (scaffolding)
 ```
 
 **Key patterns:**
@@ -204,8 +212,8 @@ fabrk CLI (orchestrates everything)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 20 packages
-pnpm test           # Run 1,689 tests
+pnpm build          # Build all 21 packages
+pnpm test           # Run 1,755 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```

@@ -15,6 +15,35 @@ interface PackageInfo {
 
 const packages: PackageInfo[] = [
   {
+    id: 'fabrk',
+    name: 'fabrk',
+    description: 'AI-first React framework on Vite 7 — defineAgent, defineTool, loadPrompt, SSE streaming, multi-target deploy',
+    exports: [
+      'defineAgent() — Declare an AI agent with model, tools, and system prompt',
+      'defineTool() — Create MCP-compatible tool definitions',
+      'loadPrompt() — Load prompt templates with partials and variables',
+      'createSSEStream() — Server-sent event streaming for real-time AI responses',
+      'deploy() — Multi-target deploy (Workers, Node, Vercel)',
+      'Dev dashboard at /__ai — Inspect agents, tools, and prompts',
+    ],
+    install: 'pnpm add fabrk',
+    example: `import { defineAgent, defineTool, loadPrompt } from 'fabrk'
+
+const agent = defineAgent({
+  model: 'claude-sonnet-4-5-20250514',
+  tools: [searchTool, analyzeTool],
+  system: loadPrompt('assistant'),
+})
+
+const searchTool = defineTool({
+  name: 'search',
+  description: 'Search the knowledge base',
+  handler: async ({ query }) => {
+    return await search(query)
+  },
+})`,
+  },
+  {
     id: 'config',
     name: '@fabrk/config',
     description: 'Type-safe configuration builder with Zod validation. 12 config sections covering every feature. Foundational package with zero dependencies.',
@@ -454,7 +483,7 @@ export default function PackagesPage() {
   return (
     <DocLayout
       title="PACKAGES"
-      description="16 modular packages covering every aspect of full-stack development. Install only what you need."
+      description="17 modular packages covering every aspect of full-stack development. Install only what you need."
     >
       {/* Dependency diagram */}
       <Section title="DEPENDENCY ARCHITECTURE">

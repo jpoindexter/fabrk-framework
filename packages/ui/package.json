@@ -18,7 +18,8 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "type-check": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@fabrk/core": "workspace:*"
@@ -60,5 +61,8 @@
     "access": "public"
   },
   "license": "MIT",
-  "sideEffects": false
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }

@@ -12,7 +12,7 @@ const features = [
   },
   {
     label: 'PACKAGES',
-    value: '16',
+    value: '17',
     description: 'Modular packages for auth, payments, AI, and more',
   },
   {
@@ -22,14 +22,14 @@ const features = [
   },
   {
     label: 'TESTS',
-    value: '1,286',
+    value: '1,755',
     description: 'Comprehensive test coverage across all packages',
   },
 ]
 
 const quickLinks = [
   { label: '> GET STARTED', href: '/getting-started', description: 'Create your first FABRK app in 5 minutes' },
-  { label: '> PACKAGES', href: '/packages', description: 'Explore 16 modular packages' },
+  { label: '> PACKAGES', href: '/packages', description: 'Explore 17 modular packages' },
   { label: '> COMPONENTS', href: '/components', description: 'Browse 105+ UI components' },
   { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
   { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing Next.js app to FABRK' },

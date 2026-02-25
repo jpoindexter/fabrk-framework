@@ -54,5 +54,8 @@
     "url": "https://github.com/jpoindexter/fabrk-framework.git",
     "directory": "packages/cli"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  }
 }

@@ -198,6 +198,21 @@ async function dev() {
 
   console.log(`\n  fabrk dev  (Vite ${getViteVersion()})\n`);
 
+  // Start MCP dev server if tools/ exists
+  try {
+    const { startMcpDevServer } = await import("./tools/mcp-dev-server.js");
+    const { scanTools } = await import("./tools/scanner.js");
+    const { loadToolDefinitions } = await import("./tools/loader.js");
+    const scanned = scanTools(process.cwd());
+    if (scanned.length > 0) {
+      const toolDefs = await loadToolDefinitions(scanned);
+      await startMcpDevServer(toolDefs);
+      console.log(`  MCP server started with ${scanned.length} tool(s)\n`);
+    }
+  } catch {
+    // MCP server is optional — @fabrk/mcp may not be installed
+  }
+
   const config = buildViteConfig({
     server: { port, host },
   });
@@ -256,6 +271,42 @@ async function buildApp() {
         },
       },
     });
+  }
+
+  // Generate AGENTS.md after build
+  try {
+    const { scanAgents } = await import("./agents/scanner.js");
+    const { scanTools } = await import("./tools/scanner.js");
+    const { generateAgentsMd } = await import("./build/agents-md.js");
+
+    const scannedAgents = scanAgents(process.cwd());
+    const scannedTools = scanTools(process.cwd());
+
+    if (scannedAgents.length > 0 || scannedTools.length > 0) {
+      // Map scanned results to the AgentEntry/ToolEntry format
+      const agentEntries = scannedAgents.map((a) => ({
+        name: a.name,
+        route: a.routePattern,
+        model: "default",
+        auth: "none",
+        tools: [] as string[],
+      }));
+      const toolEntries = scannedTools.map((t) => ({
+        name: t.name,
+        description: `Tool: ${t.name}`,
+      }));
+
+      const md = generateAgentsMd({
+        agents: agentEntries,
+        tools: toolEntries,
+        prompts: [],
+      });
+      const outPath = path.join(process.cwd(), "AGENTS.md");
+      fs.writeFileSync(outPath, md);
+      console.log(`  Generated AGENTS.md (${scannedAgents.length} agents, ${scannedTools.length} tools)`);
+    }
+  } catch {
+    // Agent/tool scanning is optional
   }
 
   console.log("\n  Build complete. Run `fabrk start` to start the production server.\n");
@@ -409,6 +460,37 @@ async function check() {
 
   const result = runCheck(root);
   console.log(formatReport(result));
+}
+
+async function info() {
+  const root = process.cwd();
+  console.log(`\n  fabrk info\n`);
+
+  // Scan project
+  const { scanAgents } = await import("./agents/scanner.js");
+  const { scanTools } = await import("./tools/scanner.js");
+
+  const agents = scanAgents(root);
+  const tools = scanTools(root);
+
+  // Check for prompts
+  const promptsDir = path.join(root, "prompts");
+  const hasPrompts = fs.existsSync(promptsDir);
+  const promptCount = hasPrompts
+    ? fs.readdirSync(promptsDir).filter((f) => f.endsWith(".md")).length
+    : 0;
+
+  // Check for config
+  const hasConfig =
+    fs.existsSync(path.join(root, "fabrk.config.ts")) ||
+    fs.existsSync(path.join(root, "fabrk.config.js"));
+
+  console.log(`  Config:   ${hasConfig ? "fabrk.config.ts" : "none (using defaults)"}`);
+  console.log(`  Agents:   ${agents.length}${agents.length > 0 ? ` (${agents.map((a) => a.name).join(", ")})` : ""}`);
+  console.log(`  Tools:    ${tools.length}${tools.length > 0 ? ` (${tools.map((t) => t.name).join(", ")})` : ""}`);
+  console.log(`  Prompts:  ${promptCount}`);
+  console.log(`  App dir:  ${hasAppDir() ? "yes" : "no"}`);
+  console.log();
 }
 
 async function initCommand() {
@@ -583,6 +665,7 @@ function printHelp(cmd?: string) {
     build    Build for production (+ AGENTS.md generation)
     start    Start production server
     deploy   Deploy to Workers / Node.js / Vercel
+    info     Show project info (agents, tools, prompts, budget)
     init     Migrate a Next.js project to fabrk
     check    Scan Next.js app for compatibility
     lint     Run linter
@@ -657,6 +740,13 @@ switch (command) {
 
   case "check":
     check().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+    break;
+
+  case "info":
+    info().catch((e) => {
       console.error(e);
       process.exit(1);
     });

@@ -2,9 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import type { AuthAdapter, Session, ApiKeyInfo } from '@fabrk/core'
 import { withAuth, withApiKey, withAuthOrApiKey } from './middleware'
 
-// ============================================================================
 // Mock Adapter Factory
-// ============================================================================
 
 function createMockAdapter(overrides: Partial<AuthAdapter> = {}): AuthAdapter {
   return {
@@ -23,9 +21,7 @@ function createRequest(headers: Record<string, string> = {}): Request {
   return new Request('https://example.com/api/test', { method: 'GET', headers })
 }
 
-// ============================================================================
 // withAuth
-// ============================================================================
 
 describe('withAuth', () => {
   it('should return 401 when no session exists', async () => {
@@ -49,9 +45,7 @@ describe('withAuth', () => {
   })
 })
 
-// ============================================================================
 // withApiKey
-// ============================================================================
 
 describe('withApiKey', () => {
   it('should return 401 when no API key header is present', async () => {
@@ -116,9 +110,7 @@ describe('withApiKey', () => {
   })
 })
 
-// ============================================================================
 // withAuthOrApiKey
-// ============================================================================
 
 describe('withAuthOrApiKey', () => {
   it('should authenticate with session when available, preferring it over API key', async () => {

@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -24,21 +24,18 @@ const SEARCH_INDEX: SearchEntry[] = [
   { title: 'Migration', href: '/migration', keywords: ['migration', 'migrate', 'upgrade', 'transform', 'imports', 'existing project', 'convert'], category: 'PAGES' },
 
   // Packages
-  { title: 'fabrk', href: '/packages#fabrk', category: 'PACKAGES', keywords: ['framework', 'vite', 'agents', 'tools', 'prompts', 'sse', 'deploy', 'ai-first'] },
+
   { title: '@fabrk/core', href: '/packages#core', keywords: ['core', 'runtime', 'plugins', 'middleware', 'auto-wiring', 'autoWire', 'cn', 'hooks', 'providers', 'FabrkProvider'], category: 'PACKAGES' },
   { title: '@fabrk/config', href: '/packages#config', keywords: ['config', 'zod', 'schema', 'validation', 'defineFabrkConfig', 'type-safe'], category: 'PACKAGES' },
   { title: '@fabrk/design-system', href: '/packages#design-system', keywords: ['design system', 'themes', 'mode', 'tokens', 'css variables', 'applyTheme', 'radius', 'font'], category: 'PACKAGES' },
   { title: '@fabrk/components', href: '/packages#components', keywords: ['components', 'ui', 'button', 'card', 'input', 'chart', 'table', 'form', 'badge'], category: 'PACKAGES' },
   { title: '@fabrk/ai', href: '/packages#ai', keywords: ['ai', 'llm', 'openai', 'claude', 'anthropic', 'cost tracking', 'streaming', 'embeddings', 'prompts'], category: 'PACKAGES' },
-  { title: '@fabrk/themes', href: '/packages#themes', keywords: ['themes', 'ThemeProvider', 'chart colors', 'formatters', 'mode'], category: 'PACKAGES' },
   { title: '@fabrk/payments', href: '/packages#payments', keywords: ['payments', 'stripe', 'polar', 'lemon squeezy', 'checkout', 'subscriptions', 'webhooks'], category: 'PACKAGES' },
   { title: '@fabrk/auth', href: '/packages#auth', keywords: ['auth', 'authentication', 'nextauth', 'api keys', 'mfa', 'totp', 'backup codes', 'session'], category: 'PACKAGES' },
   { title: '@fabrk/email', href: '/packages#email', keywords: ['email', 'resend', 'console', 'templates', 'verification', 'welcome', 'invite'], category: 'PACKAGES' },
   { title: '@fabrk/storage', href: '/packages#storage', keywords: ['storage', 's3', 'r2', 'cloudflare', 'filesystem', 'upload', 'signed url'], category: 'PACKAGES' },
   { title: '@fabrk/security', href: '/packages#security', keywords: ['security', 'csrf', 'csp', 'rate limiting', 'audit', 'gdpr', 'cors', 'bot protection', 'headers'], category: 'PACKAGES' },
-  { title: '@fabrk/mcp', href: '/packages#mcp', keywords: ['mcp', 'model context protocol', 'tools', 'schema', 'server'], category: 'PACKAGES' },
   { title: '@fabrk/store-prisma', href: '/packages#store-prisma', keywords: ['prisma', 'database', 'store', 'postgresql', 'team store', 'audit store', 'adapters'], category: 'PACKAGES' },
-  { title: '@fabrk/ui', href: '/packages#ui', keywords: ['ui', 'registry', 'shadcn', 'component registry', 'metadata'], category: 'PACKAGES' },
   { title: '@fabrk/referrals', href: '/packages#referrals', keywords: ['referrals', 'referral codes', 'tracking', 'rewards', 'multi-tier'], category: 'PACKAGES' },
 
   // Key Components
@@ -79,8 +76,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   { title: 'Terminal Aesthetic', href: '/components#design-rules', keywords: ['terminal', 'monospace', 'uppercase', 'brackets', 'aesthetic', 'casing'], category: 'CONCEPTS' },
   { title: 'Callback Props', href: '/migration#step-4:-component-extraction-pattern', keywords: ['callback', 'props', 'pattern', 'portable', 'testable', 'no api calls'], category: 'CONCEPTS' },
   { title: 'Zero-config Development', href: '/getting-started#step-3:-configure-fabrk', keywords: ['zero-config', 'dev defaults', 'applyDevDefaults', 'console email', 'in-memory'], category: 'CONCEPTS' },
-  { title: 'AI Agents', href: '/packages#fabrk', category: 'CONCEPTS', keywords: ['defineAgent', 'agents', 'llm', 'model', 'streaming'] },
-  { title: 'AI Tools', href: '/packages#fabrk', category: 'CONCEPTS', keywords: ['defineTool', 'tools', 'mcp', 'tool definition'] },
+  { title: 'AI Toolkit', href: '/packages#ai', category: 'CONCEPTS', keywords: ['ai', 'llm', 'model', 'streaming', 'cost tracking', 'embeddings'] },
 
   // Guides
   { title: 'Build a Dashboard', href: '/guides#dashboard', keywords: ['dashboard', 'kpi', 'charts', 'tables', 'sidebar', 'admin'], category: 'GUIDES' },

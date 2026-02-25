@@ -1,8 +1,7 @@
 {
   "name": "@fabrk/store-prisma",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Prisma store implementations for FABRK Framework — persistent database adapters",
-  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -39,8 +38,11 @@
     "prisma",
     "database",
     "store",
+    "orm",
+    "adapter",
     "postgresql",
-    "typescript"
+    "typescript",
+    "ai-coding"
   ],
   "author": "Jason Poindexter",
   "license": "MIT",

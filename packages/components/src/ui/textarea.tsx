@@ -1,29 +1,6 @@
-/**
- * ✅ FABRK COMPONENT
- * Component: textarea
- * - Under 150 lines ✓
- * - No hardcoded colors ✓
- * - Semantic tokens only ✓
- * - Error/loading states ✓
- * - TypeScript interfaces ✓
- * - Production ready ✓
- *
- * @example
- * ```tsx
- * <textarea />
- * ```
- */
-
-/**
- * ✅ COMPONENT
- * - File Size: ✓ (< 50 lines)
- * - Type Safety: ✓
- * - Alias Imports: ✓
- */
-
 import * as React from 'react';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {

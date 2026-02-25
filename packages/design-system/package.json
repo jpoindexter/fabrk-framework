@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/design-system",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Terminal-inspired design system with 18 themes and design tokens",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -45,6 +45,9 @@
     "themes",
     "terminal",
     "design-tokens",
+    "css-variables",
+    "tailwind",
+    "dark-mode",
     "react",
     "typescript"
   ],

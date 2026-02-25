@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { getComponentDoc, COMPONENT_SLUGS } from '@/data/component-docs'

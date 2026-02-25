@@ -22,7 +22,7 @@ describe('DonutChart', () => {
 
   it('handles empty data gracefully', () => {
     const { container } = render(<DonutChart data={[]} />)
-    expect(container.querySelector('svg')).toBeInTheDocument()
+    expect(container.querySelector('svg')).not.toBeInTheDocument()
   })
 
   it('renders center content when provided', () => {

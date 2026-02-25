@@ -21,17 +21,37 @@
 import { timingSafeEqual } from '../crypto-utils'
 
 /**
- * Generate a random TOTP secret (base32 encoded)
+ * TOTP replay protection: recently used codes are cached to prevent reuse
+ * within the same time window. Each entry stores the expiry timestamp.
+ *
+ * Key format: "secretHash:code" to scope per-secret without exposing raw secret material.
+ * Cleanup runs on each verification to prevent unbounded growth.
+ *
+ * @remarks **Serverless warning:** This in-process replay-protection store provides
+ * NO protection across cold starts on serverless platforms (Vercel, AWS Lambda, etc.).
+ * Each cold start gets a fresh empty map. For production serverless deployments,
+ * inject a persistent store for replay tracking (Redis, database).
+ *
+ * In-process protection works for long-running servers (traditional Node.js).
  */
+const usedCodes = new Map<string, number>()
+const USED_CODE_MAX_ENTRIES = 10_000
+
+function pruneUsedCodes(): void {
+  const now = Date.now()
+  for (const [key, expiresAt] of usedCodes) {
+    if (expiresAt < now) {
+      usedCodes.delete(key)
+    }
+  }
+}
+
 export function generateTotpSecret(length: number = 20): string {
   const bytes = new Uint8Array(length)
   crypto.getRandomValues(bytes)
   return base32Encode(bytes)
 }
 
-/**
- * Generate a TOTP URI for QR code display
- */
 export function generateTotpUri(
   secret: string,
   email: string,
@@ -53,14 +73,36 @@ export async function verifyTotp(
   code: string,
   options?: { window?: number }
 ): Promise<boolean> {
-  const window = options?.window ?? 1
+  // Cap window to prevent excessively large search ranges that weaken TOTP security
+  const safeWindow = Math.min(options?.window ?? 1, 5)
   const now = Math.floor(Date.now() / 1000)
   const timeStep = 30
 
-  for (let i = -window; i <= window; i++) {
+  pruneUsedCodes()
+
+  // Hash the secret to avoid exposing raw secret material in replay-detection Map keys.
+  // Use the full 64-character SHA-256 hex digest — truncating to 16 chars (64-bit) would
+  // create birthday-attack risk at scale (~2^32 operations for a 50% collision probability).
+  const digestBytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret)))
+  const secretHash = Array.from(digestBytes).map(b => b.toString(16).padStart(2, '0')).join('')
+  const replayKey = `${secretHash}:${code}`
+  if (usedCodes.has(replayKey)) {
+    return false
+  }
+
+  for (let i = -safeWindow; i <= safeWindow; i++) {
     const counter = Math.floor((now + i * timeStep) / timeStep)
     const expected = await generateHotp(secret, counter)
-    if (timingSafeEqual(expected, code)) {
+    if (await timingSafeEqual(expected, code)) {
+      // Record code as used. Expire after the full window span to prevent reuse.
+      // The code is valid for (2 * safeWindow + 1) * timeStep seconds.
+      const expiresInMs = (2 * safeWindow + 1) * timeStep * 1000
+      usedCodes.set(replayKey, Date.now() + expiresInMs)
+
+      if (usedCodes.size > USED_CODE_MAX_ENTRIES) {
+        pruneUsedCodes()
+      }
+
       return true
     }
   }
@@ -68,13 +110,9 @@ export async function verifyTotp(
   return false
 }
 
-/**
- * Generate an HOTP code from a secret and counter
- */
 async function generateHotp(secret: string, counter: number): Promise<string> {
   const secretBytes = base32Decode(secret)
 
-  // Import key for HMAC-SHA1
   const key = await crypto.subtle.importKey(
     'raw',
     secretBytes.buffer as ArrayBuffer,
@@ -83,12 +121,10 @@ async function generateHotp(secret: string, counter: number): Promise<string> {
     ['sign']
   )
 
-  // Convert counter to 8-byte big-endian buffer
   const counterBytes = new ArrayBuffer(8)
   const view = new DataView(counterBytes)
   view.setBigUint64(0, BigInt(counter))
 
-  // HMAC-SHA1
   const hmac = await crypto.subtle.sign('HMAC', key, counterBytes)
   const hmacBytes = new Uint8Array(hmac)
 
@@ -100,13 +136,10 @@ async function generateHotp(secret: string, counter: number): Promise<string> {
     ((hmacBytes[offset + 2] & 0xff) << 8) |
     (hmacBytes[offset + 3] & 0xff)
 
-  // 6-digit code
   return (code % 1_000_000).toString().padStart(6, '0')
 }
 
-// ============================================================================
 // BASE32 ENCODING/DECODING
-// ============================================================================
 
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 

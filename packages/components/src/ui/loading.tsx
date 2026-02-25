@@ -1,17 +1,6 @@
-/**
- * ✅ FABRK COMPONENT
- * Terminal-style ASCII loading components
- *
- * @example
- * ```tsx
- * <Spinner /> // ASCII spinner
- * <Skeleton variant="text" /> // Terminal skeleton
- * ```
- */
-
 'use client';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -36,12 +25,17 @@ export const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
 
     const frames = variant === 'line' ? LINE_FRAMES : variant === 'block' ? BLOCK_FRAMES : SPINNER_FRAMES;
 
+    // Keep a ref to the current frames array so the interval callback always
+    // uses the up-to-date frame count even if variant changes between renders.
+    const framesRef = React.useRef(frames);
+    useEffect(() => { framesRef.current = frames; });
+
     useEffect(() => {
       const interval = setInterval(() => {
-        setFrame((prev) => (prev + 1) % frames.length);
+        setFrame((prev) => (prev + 1) % framesRef.current.length);
       }, 80);
       return () => clearInterval(interval);
-    }, [frames.length]);
+    }, []); // Interval never needs to re-register; framesRef always current
 
     const sizeClasses = {
       sm: 'text-sm',
@@ -90,12 +84,10 @@ Spinner.displayName = 'Spinner';
 // Skeleton Component
 export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'text' | 'circular' | 'rectangular';
-  width?: string | number;
-  height?: string | number;
 }
 
 export const Skeleton = React.forwardRef<HTMLDivElement, SkeletonProps>(
-  ({ className, variant = 'text', width: _width, height: _height, ...props }, ref) => {
+  ({ className, variant = 'text', ...props }, ref) => {
     const variantClasses = {
       text: 'h-4 w-full',
       circular: '',

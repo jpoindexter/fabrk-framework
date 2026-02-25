@@ -3,7 +3,7 @@ import { Sidebar } from '@/components/sidebar'
 import { MobileNav } from '@/components/mobile-nav'
 import { TableOfContents } from '@/components/toc'
 import { ThemeWrapper } from '@/components/theme-wrapper'
-import { ThemeScript } from '@fabrk/themes'
+import { ThemeScript } from '@fabrk/design-system'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default function RootLayout({
         <ThemeWrapper>
           <Sidebar />
           <MobileNav />
-          <main className="flex-1 overflow-y-auto min-h-screen">
+          <main className="flex-1 min-w-0">
             <div className="flex">
               <div className="flex-1 min-w-0 pt-16 md:pt-0">
                 {children}

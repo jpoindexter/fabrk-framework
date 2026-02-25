@@ -4,7 +4,7 @@ import * as React from 'react';
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 const Sheet = SheetPrimitive.Root;
@@ -19,7 +19,7 @@ const SheetOverlay = React.forwardRef<
   <SheetPrimitive.Overlay
     className={cn(
       'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 backdrop-blur-sm',
-      `${mode.color.bg.base}/80`,
+      'bg-background/80',
       className
     )}
     {...props}
@@ -71,8 +71,9 @@ const SheetContent = React.forwardRef<
       {children}
       <SheetPrimitive.Close
         className={cn(
-          `absolute top-4 right-4 ${mode.state.secondary.opacity} transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed`,
-          `data-[state=open]:${mode.color.bg.muted}`,
+          'absolute top-4 right-4 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed',
+          mode.state.secondary.opacity,
+          'data-[state=open]:bg-muted',
           mode.state.focus.ring,
           mode.radius
         )}

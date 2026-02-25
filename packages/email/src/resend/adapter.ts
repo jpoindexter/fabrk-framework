@@ -27,8 +27,10 @@ import type { EmailAdapter } from '@fabrk/core'
 import type { EmailOptions, EmailResult, EmailTemplateData } from '@fabrk/core'
 import type { ResendAdapterConfig } from '../types'
 import { renderTemplate } from '../templates/render'
+import { sanitizeSubject } from '../utils'
 
 export function createResendAdapter(config: ResendAdapterConfig): EmailAdapter {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let resend: any = null
 
   function getResend() {
@@ -64,7 +66,7 @@ export function createResendAdapter(config: ResendAdapterConfig): EmailAdapter {
         const result = await r.emails.send({
           from: config.from,
           to: Array.isArray(options.to) ? options.to : [options.to],
-          subject: options.subject,
+          subject: sanitizeSubject(options.subject),
           html: options.html,
           text: options.text,
           reply_to: options.replyTo ?? config.replyTo,

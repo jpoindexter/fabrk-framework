@@ -49,7 +49,6 @@ export {
   type Severity,
   type ValidationIssue,
   type ValidationReport,
-  type ValidatorOptions,
   type ComponentMeta,
   type ComponentRegistry,
   // Validators

@@ -1,11 +1,11 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createNextAuthAdapter } from '../nextauth/adapter'
-import { withApiKey, withAuth, withAuthOrApiKey } from '../middleware'
+import { withApiKey, withAuth } from '../middleware'
 import type { AuthAdapter } from '@fabrk/core'
 
-// ============================================================================
 // Helper: generate a valid TOTP code from a secret at the current time step
-// ============================================================================
 
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 
@@ -55,9 +55,7 @@ async function generateCurrentTotp(secret: string): Promise<string> {
   return generateHotp(secret, Math.floor(Math.floor(Date.now() / 1000) / 30))
 }
 
-// ============================================================================
 // API Key + Middleware Integration
-// ============================================================================
 
 describe('Auth + Middleware Integration', () => {
   let adapter: AuthAdapter
@@ -138,9 +136,7 @@ describe('Auth + Middleware Integration', () => {
     })
   })
 
-  // ============================================================================
   // Session Auth
-  // ============================================================================
 
   describe('Session Auth Middleware', () => {
     it('should allow authenticated and reject unauthenticated', async () => {
@@ -171,9 +167,7 @@ describe('Auth + Middleware Integration', () => {
     })
   })
 
-  // ============================================================================
   // MFA Flow
-  // ============================================================================
 
   describe('MFA Flow', () => {
     let mfaAdapter: AuthAdapter

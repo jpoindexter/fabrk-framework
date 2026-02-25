@@ -16,7 +16,7 @@
 export { getLLMClient } from './factory'
 export { OpenAIClient } from './openai-client'
 export { AnthropicClient } from './anthropic-client'
-export { OllamaClient } from './ollama-client'
+export { OllamaClient, validateOllamaUrl } from './ollama-client'
 export type {
   LLMClient,
   LLMOpts,

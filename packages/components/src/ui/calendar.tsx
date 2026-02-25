@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { DayPicker, DayPickerProps, useDayPicker } from 'react-day-picker';
 import { format, addMonths, subMonths } from 'date-fns';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from './button';
 
@@ -100,7 +100,7 @@ function Calendar({
             'h-9 w-9 p-0 text-xs font-normal',
             mode.radius,
             mode.font,
-            `hover:${mode.color.bg.muted} hover:${mode.color.text.primary}`,
+            'hover:bg-muted hover:text-foreground',
             'focus-visible:outline-2 focus-visible:outline-ring',
             'disabled:pointer-events-none disabled:opacity-50'
           ),
@@ -109,7 +109,7 @@ function Calendar({
           selected: cn(
             mode.color.bg.accent,
             mode.color.text.inverse,
-            `hover:${mode.color.bg.accent} hover:${mode.color.text.inverse}`
+            'hover:bg-accent hover:text-accent-foreground'
           ),
           today: cn(mode.color.bg.muted, mode.color.text.primary, 'font-semibold'),
           outside: cn(mode.color.text.muted, mode.state.muted.opacity),

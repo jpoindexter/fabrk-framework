@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/auth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Authentication adapters for FABRK framework (NextAuth, API keys, MFA)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -52,6 +52,9 @@
     "nextauth",
     "api-keys",
     "mfa",
+    "totp",
+    "two-factor",
+    "authentication",
     "ai-coding"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",

@@ -8,26 +8,23 @@ export const navigation: NavItem[] = [
   { label: 'HOME', href: '/' },
   { label: 'GETTING STARTED', href: '/getting-started' },
   { label: 'CONFIGURATION', href: '/configuration' },
+  { label: 'DESIGN SYSTEM', href: '/design-system' },
   {
     label: 'PACKAGES',
     href: '/packages',
     children: [
-      { label: 'fabrk', href: '/packages#fabrk' },
+
       { label: '@fabrk/config', href: '/packages#config' },
       { label: '@fabrk/design-system', href: '/packages#design-system' },
       { label: '@fabrk/core', href: '/packages#core' },
       { label: '@fabrk/components', href: '/packages#components' },
       { label: '@fabrk/ai', href: '/packages#ai' },
-      { label: '@fabrk/themes', href: '/packages#themes' },
       { label: '@fabrk/payments', href: '/packages#payments' },
       { label: '@fabrk/auth', href: '/packages#auth' },
       { label: '@fabrk/email', href: '/packages#email' },
       { label: '@fabrk/storage', href: '/packages#storage' },
       { label: '@fabrk/security', href: '/packages#security' },
-      { label: '@fabrk/mcp', href: '/packages#mcp' },
       { label: '@fabrk/store-prisma', href: '/packages#store-prisma' },
-      { label: '@fabrk/ui', href: '/packages#ui' },
-      { label: '@fabrk/referrals', href: '/packages#referrals' },
     ],
   },
   {

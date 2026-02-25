@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Copy, Check, Terminal } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Badge } from '../ui/badge';
@@ -50,9 +50,12 @@ function MessageItem({ message }: { message: Message }) {
   const [copied, setCopied] = React.useState(false);
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(message.content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(message.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // Clipboard access denied or unavailable
+    });
   };
 
   return (

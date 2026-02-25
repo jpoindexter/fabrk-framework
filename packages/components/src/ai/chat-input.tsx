@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { Paperclip, Square, ArrowUp, ChevronDown } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';

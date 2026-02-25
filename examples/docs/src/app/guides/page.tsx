@@ -55,7 +55,7 @@ pnpm install`}</CodeBlock>
         <CodeBlock title="src/app/dashboard/layout.tsx">{`'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -106,7 +106,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 import { KPICard, Card, Badge, BarChart, LineChart, DataTable } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 const stats = [
   { title: 'REVENUE', value: '$48,290', trend: 12.5 },

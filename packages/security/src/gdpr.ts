@@ -13,18 +13,12 @@
  * ```
  */
 
-/**
- * Anonymize an email address for display
- */
 export function anonymizeEmail(email: string): string {
   const [local, domain] = email.split('@')
   if (!local || !domain) return '***@***'
   return `${local[0]}${'*'.repeat(Math.min(local.length - 1, 5))}@${domain}`
 }
 
-/**
- * Anonymize an IP address (zero last octet for IPv4)
- */
 export function anonymizeIp(ip: string): string {
   if (ip.includes(':')) {
     // IPv6 — zero last 80 bits
@@ -39,25 +33,19 @@ export function anonymizeIp(ip: string): string {
   return parts.join('.')
 }
 
-/**
- * Redact sensitive fields from an object
- */
 export function redactFields<T extends Record<string, unknown>>(
   obj: T,
   fields: string[]
 ): T {
-  const result = { ...obj }
+  const result = { ...obj } as Record<string, unknown>
   for (const field of fields) {
     if (field in result) {
-      (result as any)[field] = '[REDACTED]'
+      result[field] = '[REDACTED]'
     }
   }
-  return result
+  return result as T
 }
 
-/**
- * Consent purposes
- */
 export type ConsentPurpose =
   | 'necessary'
   | 'analytics'
@@ -73,19 +61,15 @@ export interface ConsentRecord {
   version: string
 }
 
-/**
- * Create a consent manager for tracking user consent
- */
 export function createConsentManager(options: {
   version: string
   defaultConsent?: Partial<Record<ConsentPurpose, boolean>>
+  maxEntries?: number
 }) {
   const consents = new Map<string, ConsentRecord>()
+  const maxEntries = options.maxEntries ?? 10_000
 
   return {
-    /**
-     * Record user consent
-     */
     setConsent(
       userId: string,
       purposes: Partial<Record<ConsentPurpose, boolean>>,
@@ -107,38 +91,28 @@ export function createConsentManager(options: {
         version: options.version,
       }
 
+      // Evict oldest entry (FIFO via Map insertion order) to prevent unbounded growth
+      if (consents.size >= maxEntries && !consents.has(userId)) {
+        const oldest = consents.keys().next().value
+        if (oldest !== undefined) consents.delete(oldest)
+      }
+
       consents.set(userId, record)
       return record
     },
 
-    /**
-     * Get user consent record
-     */
     getConsent(userId: string): ConsentRecord | null {
       return consents.get(userId) ?? null
     },
 
-    /**
-     * Check if user has consented to a specific purpose
-     */
     hasConsent(userId: string, purpose: ConsentPurpose): boolean {
       const record = consents.get(userId)
       if (!record) return purpose === 'necessary'
       return record.purposes[purpose] ?? false
     },
 
-    /**
-     * Revoke all consent for a user
-     */
     revokeConsent(userId: string): void {
       consents.delete(userId)
-    },
-
-    /**
-     * Export all consent records for a user (data subject request)
-     */
-    exportConsent(userId: string): ConsentRecord | null {
-      return consents.get(userId) ?? null
     },
   }
 }

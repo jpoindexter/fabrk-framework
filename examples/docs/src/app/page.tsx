@@ -1,36 +1,37 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import Link from 'next/link'
+import { STATS } from '@/data/stats'
 
 const features = [
   {
     label: 'COMPONENTS',
-    value: '105+',
+    value: STATS.components,
     description: 'Pre-built UI components with terminal aesthetic',
   },
   {
     label: 'PACKAGES',
-    value: '17',
+    value: String(STATS.packages),
     description: 'Modular packages for auth, payments, AI, and more',
   },
   {
     label: 'THEMES',
-    value: '18',
+    value: String(STATS.themes),
     description: 'Design system themes with runtime switching',
   },
   {
     label: 'TESTS',
-    value: '1,755',
+    value: String(STATS.tests),
     description: 'Comprehensive test coverage across all packages',
   },
 ]
 
 const quickLinks = [
   { label: '> GET STARTED', href: '/getting-started', description: 'Create your first FABRK app in 5 minutes' },
-  { label: '> PACKAGES', href: '/packages', description: 'Explore 17 modular packages' },
-  { label: '> COMPONENTS', href: '/components', description: 'Browse 105+ UI components' },
+  { label: '> PACKAGES', href: '/packages', description: `Explore ${STATS.packages} modular packages` },
+  { label: '> COMPONENTS', href: '/components', description: `Browse ${STATS.components} UI components` },
   { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
   { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing Next.js app to FABRK' },
   { label: '> CLI REFERENCE', href: '/cli', description: 'create-fabrk-app and fabrk dev CLI' },
@@ -41,7 +42,7 @@ export default function HomePage() {
     <div className="max-w-4xl mx-auto py-16 px-8">
       {/* Hero */}
       <div className="mb-16">
-        <div className="text-muted-foreground text-xs mb-2">[FRAMEWORK v0.1.0]</div>
+        <div className="text-muted-foreground text-xs mb-2">[FRAMEWORK v{STATS.version}]</div>
         <h1 className={cn('text-4xl font-bold text-foreground uppercase leading-tight', mode.font)}>
           THE FIRST UI FRAMEWORK<br />
           DESIGNED FOR AI CODING AGENTS
@@ -121,7 +122,7 @@ export default function HomePage() {
   KPICard, Card, BarChart, LineChart, DataTable, Badge
 } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 export default function Dashboard() {
   return (

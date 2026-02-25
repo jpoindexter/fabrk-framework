@@ -18,9 +18,8 @@
 
 import type { ApiKeyGeneratorConfig } from '../types'
 
-/**
- * Generate a cryptographically secure API key
- */
+const MIN_KEY_LENGTH = 16
+
 export async function generateApiKey(
   config: ApiKeyGeneratorConfig = {}
 ): Promise<{ key: string; prefix: string; hash: string }> {
@@ -30,34 +29,26 @@ export async function generateApiKey(
     keyLength = 32,
   } = config
 
-  // Generate random bytes
+  if (keyLength < MIN_KEY_LENGTH) {
+    throw new Error(
+      `API key length must be at least ${MIN_KEY_LENGTH} bytes, got ${keyLength}`
+    )
+  }
+
   const bytes = new Uint8Array(keyLength)
   crypto.getRandomValues(bytes)
 
-  // Encode as base62 (alphanumeric)
   const randomPart = base62Encode(bytes)
-
-  // Build the full key
   const key = `${prefix}_${environment}_${randomPart}`
-
-  // Create display prefix (first 6 chars of random part)
   const displayPrefix = `${prefix}_${environment}_${randomPart.slice(0, 6)}`
-
-  // Hash for storage
   const hash = await hashApiKey(key)
 
   return { key, prefix: displayPrefix, hash }
 }
 
-/**
- * Hash an API key using SHA-256
- */
 export async function hashApiKey(key: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(key)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+  const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('')
   return `sha256:${hashHex}`
 }
 

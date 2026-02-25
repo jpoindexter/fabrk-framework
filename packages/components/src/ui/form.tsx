@@ -13,7 +13,7 @@ import {
 } from 'react-hook-form';
 import * as React from 'react';
 import { Label } from './label';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 const Form = FormProvider;

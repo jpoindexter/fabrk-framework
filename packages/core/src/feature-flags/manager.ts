@@ -48,14 +48,19 @@ export function createFeatureFlagManager(
 ): FeatureFlagManager {
   const flagStore = store ?? new InMemoryFeatureFlagStore()
 
+  /**
+   * FNV-1a hash — better distribution than djb2 for rollout bucketing.
+   * Uses the standard 32-bit FNV parameters (offset basis and prime).
+   * This is NOT for cryptographic purposes; it is used solely for
+   * deterministic feature-flag percentage bucketing.
+   */
   function hashString(str: string): number {
-    let hash = 0
+    let hash = 0x811c9dc5 // FNV offset basis
     for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32-bit integer
+      hash ^= str.charCodeAt(i)
+      hash = Math.imul(hash, 0x01000193) // FNV prime
     }
-    return Math.abs(hash)
+    return hash >>> 0 // Convert to unsigned 32-bit integer
   }
 
   return {
@@ -70,17 +75,17 @@ export function createFeatureFlagManager(
       }
 
       // Check role targeting
-      if (flag.targetRoles?.length && context?.role) {
-        if (flag.targetRoles.includes(context.role)) return true
-        // If targeting specific roles and user doesn't match, skip rollout
-        if (!flag.targetUsers?.length) return false
+      if (flag.targetRoles?.length) {
+        if (!context?.role || !flag.targetRoles.includes(context.role)) return false
       }
 
       // Check rollout percentage
       if (flag.rolloutPercent !== undefined && flag.rolloutPercent < 100) {
         if (!context?.userId) {
-          // No user context — use random
-          return Math.random() * 100 < flag.rolloutPercent
+          // No user context — use cryptographically secure random
+          const buf = new Uint32Array(1)
+          crypto.getRandomValues(buf)
+          return (buf[0] / 0x100000000) * 100 < flag.rolloutPercent
         }
         // Deterministic hash for consistent experience
         const bucket = hashString(`${name}:${context.userId}`) % 100

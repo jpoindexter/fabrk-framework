@@ -1,23 +1,6 @@
-/**
- * ✅ FABRK COMPONENT
- * Input component with validation states and loading indicator.
- * Uses Visual Mode System for aesthetic switching.
- *
- * Design System Integration:
- * - Imports from @/design-system for static mode (server components)
- * - Radius and font from visual mode config
- * - Focus ring using design tokens (focus-visible:ring-primary)
- * - Height follows 8-point grid: h-8 (32px)
- *
- * @example
- * ```tsx
- * <Input placeholder="Enter email" error={hasError} />
- * ```
- */
-
 'use client';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -31,8 +14,6 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, error, success, disabled, loading, loadingText, type, ...props }, ref) => {
-    // UX Heuristic #1: Visibility of System Status
-    // UX Heuristic #4: Consistency & Standards
     return (
       <div data-slot="input" className="relative">
         <input

@@ -21,6 +21,7 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
   }
 
   async embedBatch(texts: string[]): Promise<number[][]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let OpenAI: any
     try {
       const mod = await import('openai')
@@ -31,7 +32,9 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
 
     const client = new OpenAI({ apiKey: this.config.apiKey })
     const maxLen = this.config.maxLength || EMBEDDING_DEFAULTS.maxLength
-    const truncated = texts.map((t) => (t.length > maxLen ? t.substring(0, maxLen) + '...' : t))
+    // Truncate by characters (approximation: ~4 chars per token for English text)
+    // For accurate token counting use tiktoken. Remove '...' suffix to avoid exceeding limit.
+    const truncated = texts.map((t) => (t.length > maxLen ? t.substring(0, maxLen) : t))
 
     const response = await client.embeddings.create({
       model: this.config.model || EMBEDDING_DEFAULTS.model,

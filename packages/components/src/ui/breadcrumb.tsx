@@ -2,8 +2,9 @@ import * as React from 'react';
 import { ChevronRightIcon, DotsHorizontalIcon } from '@radix-ui/react-icons';
 import { Slot } from '@radix-ui/react-slot';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
+import { sanitizeHref } from '../utils';
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,
@@ -41,13 +42,15 @@ const BreadcrumbLink = React.forwardRef<
   React.ComponentPropsWithoutRef<'a'> & {
     asChild?: boolean;
   }
->(({ asChild, className, ...props }, ref) => {
+>(({ asChild, className, href, ...props }, ref) => {
   const Comp = asChild ? Slot : 'a';
+  const safeHref = href ? sanitizeHref(href) : href;
 
   return (
     <Comp
       ref={ref}
       className={cn('font-medium transition-colors hover:text-foreground', className)}
+      href={safeHref}
       {...props}
     />
   );

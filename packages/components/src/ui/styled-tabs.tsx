@@ -28,7 +28,7 @@
 import * as React from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs';
 import { Card, CardHeader } from './card';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { LucideIcon } from 'lucide-react';
 
@@ -39,8 +39,6 @@ export interface StyledTab {
 }
 
 export interface StyledTabsProps {
-  /** Header code (e.g., "0x00") - optional */
-  code?: string;
   /** Header title (e.g., "NAVIGATION") - optional */
   title?: string;
   /** Array of tab definitions */

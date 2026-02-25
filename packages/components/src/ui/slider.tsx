@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import * as SliderPrimitive from '@radix-ui/react-slider';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 const Slider = React.forwardRef<

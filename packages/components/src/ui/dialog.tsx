@@ -28,7 +28,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 const Dialog = DialogPrimitive.Root;
@@ -49,7 +49,7 @@ const DialogOverlay = React.forwardRef<
     ref={ref}
     className={cn(
       'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 backdrop-blur-sm',
-      `${mode.color.bg.base}/80`,
+      'bg-background/80',
       className
     )}
     {...props}
@@ -79,9 +79,10 @@ const DialogContent = React.forwardRef<
       {children}
       <DialogPrimitive.Close
         className={cn(
-          `absolute top-4 right-4 ${mode.state.secondary.opacity} transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed`,
+          'absolute top-4 right-4 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed',
+          mode.state.secondary.opacity,
           mode.state.focus.ring,
-          `data-[state=open]:${mode.color.bg.accent} data-[state=open]:${mode.color.text.muted}`,
+          'data-[state=open]:bg-accent data-[state=open]:text-muted-foreground',
           mode.radius
         )}
       >
@@ -95,7 +96,7 @@ DialogContent.displayName = 'DialogContent';
 
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    data-slot="dialog-overlay"
+    data-slot="dialog-header"
     className={cn('flex flex-col gap-2 text-center sm:text-left', className)}
     {...props}
   />
@@ -103,7 +104,7 @@ const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('flex flex-col sm:flex-row sm:justify-between sm:space-x-2', className, '')}
+    className={cn('flex flex-col sm:flex-row sm:justify-between sm:space-x-2', className)}
     {...props}
   />
 );

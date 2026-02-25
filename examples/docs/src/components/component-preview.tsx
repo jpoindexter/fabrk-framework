@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { useState } from 'react'
 
 interface ComponentPreviewProps {

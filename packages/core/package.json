@@ -1,7 +1,7 @@
 {
   "name": "@fabrk/core",
-  "version": "0.1.0",
-  "description": "FABRK framework runtime and core utilities",
+  "version": "0.2.0",
+  "description": "FABRK framework runtime — plugins, middleware, feature flags, teams, jobs, and webhooks",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -48,6 +48,11 @@
     "framework",
     "ai",
     "ai-coding",
+    "feature-flags",
+    "webhooks",
+    "jobs",
+    "plugins",
+    "middleware",
     "react",
     "nextjs",
     "typescript"

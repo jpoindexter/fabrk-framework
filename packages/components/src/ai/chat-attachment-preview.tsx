@@ -22,6 +22,8 @@ export function AiChatAttachmentPreview({ attachments, onRemove }: AiChatAttachm
         >
           <span className="truncate max-w-24">{att.name}</span>
           <button
+            type="button"
+            aria-label={`Remove ${att.name}`}
             onClick={() => onRemove(i)}
             className="hover:text-destructive transition-colors"
           >

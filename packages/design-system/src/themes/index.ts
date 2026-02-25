@@ -14,9 +14,7 @@ import terminalTheme, {
 
 import type { SemanticTokens } from '../tokens/semantic';
 
-// =============================================================================
 // THEME CONFIGURATION
-// =============================================================================
 
 export type ThemeName = 'terminal';
 
@@ -26,9 +24,7 @@ export const DEFAULT_THEME: ThemeName = 'terminal';
 
 export const CURRENT_THEME: ThemeName = 'terminal';
 
-// =============================================================================
 // THEME REGISTRY
-// =============================================================================
 
 export const themes: Record<ThemeName, SemanticTokens> = {
   terminal: terminalTheme,
@@ -38,9 +34,7 @@ export const themeClasses = {
   terminal: terminalClasses,
 };
 
-// =============================================================================
 // THEME ACCESS
-// =============================================================================
 
 /**
  * Get the active theme tokens (always terminal)
@@ -56,9 +50,7 @@ export function getActiveThemeClasses() {
   return terminalClasses;
 }
 
-// =============================================================================
 // THEME UTILITIES
-// =============================================================================
 
 export interface ThemeUtils {
   formatButtonText: (text: string) => string;
@@ -83,9 +75,7 @@ export function getActiveThemeUtils(): ThemeUtils {
   return themeUtils.terminal;
 }
 
-// =============================================================================
 // RE-EXPORTS
-// =============================================================================
 
 export { terminalTheme, terminalClasses };
 export { formatButtonText, formatLabelText, formatCardHeader, formatStatusText };

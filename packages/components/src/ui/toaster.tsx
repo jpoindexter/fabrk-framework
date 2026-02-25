@@ -1,29 +1,10 @@
-/**
- * ✅ FABRK COMPONENT
- * - Component under 150 lines ✓
- * - No hardcoded styles ✓
- * - Design tokens only ✓
- * - UX heuristics applied ✓
- *
- * @example
- * ```tsx
- * <Toaster>Content</Toaster>
- * ```
- */
-
 'use client';
 
 import { Toast, ToastProvider } from './toast';
 import * as React from 'react';
-import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { useToast } from '@fabrk/core';
 
 // Types
-interface ToastItem {
-  id: string;
-  [key: string]: unknown;
-}
-
 interface ToastActionInnerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
   altText?: string;
@@ -41,14 +22,23 @@ export type ToastViewportProps = React.ComponentProps<'div'>;
 
 export type ToasterProps = React.HTMLAttributes<HTMLDivElement>;
 
+function toastVariant(variant: string): 'default' | 'destructive' {
+  return variant === 'error' ? 'destructive' : 'default';
+}
+
 export const Toaster = React.forwardRef<HTMLDivElement, ToasterProps>(({ ...props }, ref) => {
-  const toasts: ToastItem[] = [];
+  const { toasts } = useToast();
 
   return (
     <div data-slot="toaster" ref={ref} {...props}>
       <ToastProvider>
-        {toasts.map(function ({ id, ...props }: ToastItem) {
-          return <Toast key={id} id={id} {...props} />;
+        {toasts.map(function ({ id, variant, title, description }) {
+          return (
+            <Toast key={id} id={id} variant={toastVariant(variant)}>
+              {title && <div className="font-medium">{title}</div>}
+              {description && <div className="text-sm text-muted-foreground">{description}</div>}
+            </Toast>
+          );
         })}
       </ToastProvider>
     </div>
@@ -71,7 +61,7 @@ export const ToastTitle = ({ children }: ToastContentProps) => (
 );
 ToastTitle.displayName = 'ToastTitle';
 export const ToastDescription = ({ children }: ToastContentProps) => (
-  <div data-slot="toast-description" className={cn('text-sm text-muted-foreground', mode.state.hover.opacity)}>
+  <div data-slot="toast-description" className="text-sm text-muted-foreground">
     {children}
   </div>
 );

@@ -1,13 +1,3 @@
-/**
- * ✅ FABRK COMPONENT
- * Add icons, buttons, and more to your inputs.
- *
- * @example
- * ```tsx
- * <input-group size="md" />
- * ```
- */
-
 'use client';
 
 import { Slot } from '@radix-ui/react-slot';
@@ -18,7 +8,7 @@ import { Button } from './button';
 import { Input } from './input';
 import { Separator } from './separator';
 import { Textarea } from './textarea';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export type InputGroupProps = React.ComponentProps<'div'> & {
@@ -56,7 +46,7 @@ function InputGroup({ className, size, ...props }: InputGroupProps) {
         'has-[[data-slot=input-group-control]:focus-visible]:ring-ring has-[[data-slot=input-group-control]:focus-visible]:ring-1',
 
         // Error state.
-        `has-[[data-slot][aria-invalid=true]]:${mode.color.border.danger} has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40`,
+        'has-[[data-slot][aria-invalid=true]]:border-destructive has-[[data-slot][aria-invalid=true]]:ring-destructive/20 dark:has-[[data-slot][aria-invalid=true]]:ring-destructive/40',
 
         className
       )}
@@ -70,7 +60,7 @@ const inputGroupAddonVariants = cva(
   cn(
     "flex h-auto cursor-text select-none items-center justify-center gap-2 py-2 text-xs font-medium text-muted-foreground group-data-[disabled=true]/input-group:opacity-50 [&>svg:not([class*='size-'])]:size-4",
     mode.font,
-    `[&>kbd]:${mode.radius}`
+    '[&>kbd]:rounded-dynamic'
   ),
   {
     variants: {

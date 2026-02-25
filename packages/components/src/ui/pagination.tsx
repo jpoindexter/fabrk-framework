@@ -9,9 +9,10 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { ButtonProps, buttonVariants } from './button';
+import { sanitizeHref } from '../utils';
 
 const Pagination = ({ className, ...props }: React.ComponentProps<'nav'>) => (
   <nav
@@ -44,7 +45,7 @@ type PaginationLinkProps = {
 } & Pick<ButtonProps, 'size'> &
   React.ComponentProps<'a'>;
 
-const PaginationLink = ({ className, isActive, size = 'icon', ...props }: PaginationLinkProps) => (
+const PaginationLink = ({ className, isActive, size = 'icon', href, ...props }: PaginationLinkProps) => (
   <a
     aria-current={isActive ? 'page' : undefined}
     className={cn(
@@ -57,6 +58,7 @@ const PaginationLink = ({ className, isActive, size = 'icon', ...props }: Pagina
       'cursor-pointer',
       className
     )}
+    href={href ? sanitizeHref(href) : href}
     {...props}
   />
 );

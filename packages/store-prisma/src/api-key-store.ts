@@ -1,24 +1,25 @@
-/**
- * Prisma-based API Key Store
- *
- * Persists API keys with SHA-256 hashes to the database.
- */
-
 import type { ApiKeyStore, ApiKeyInfo } from '@fabrk/core'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
-type PrismaClient = any
+import type { PrismaClient } from './types'
 
 export class PrismaApiKeyStore implements ApiKeyStore {
   constructor(private prisma: PrismaClient) {}
 
   async getByHash(hash: string): Promise<ApiKeyInfo | null> {
+    const now = new Date()
     const key = await this.prisma.apiKey.findFirst({
-      where: { hash, active: true },
+      where: {
+        hash,
+        active: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: now } },
+        ],
+      },
     })
     return key ? mapKey(key) : null
   }
 
+  /** @security No authorization check — caller must verify the requesting user has permission to create API keys. */
   async create(key: ApiKeyInfo & { hash: string }): Promise<void> {
     await this.prisma.apiKey.create({
       data: {
@@ -35,6 +36,7 @@ export class PrismaApiKeyStore implements ApiKeyStore {
     })
   }
 
+  /** @security No ownership check — caller must verify the key belongs to the requesting user. */
   async revoke(id: string): Promise<void> {
     await this.prisma.apiKey.update({
       where: { id },
@@ -42,10 +44,11 @@ export class PrismaApiKeyStore implements ApiKeyStore {
     })
   }
 
-  async listByUser(userId: string): Promise<ApiKeyInfo[]> {
+  async listByUser(userId: string, limit = 100): Promise<ApiKeyInfo[]> {
     const keys = await this.prisma.apiKey.findMany({
       where: { userId, active: true },
       orderBy: { createdAt: 'desc' },
+      take: limit,
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return keys.map((k: any) => mapKey(k))

@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { cn } from '../lib/utils'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
+import { sanitizeHref } from '../utils'
 
 export interface OnboardingTask {
   id: string
@@ -182,7 +183,7 @@ export function OnboardingChecklist({
                           </p>
                           {task.link && (
                             <a
-                              href={task.link.href}
+                              href={sanitizeHref(task.link.href)}
                               className="mt-[var(--grid-2)] inline-block text-xs text-primary hover:underline"
                             >
                               {task.link.text}

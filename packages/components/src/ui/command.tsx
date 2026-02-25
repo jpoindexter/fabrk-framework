@@ -5,7 +5,7 @@ import { type DialogProps } from '@radix-ui/react-dialog';
 import { MagnifyingGlassIcon } from '@radix-ui/react-icons';
 import { Command as CommandPrimitive } from 'cmdk';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Dialog, DialogContent } from './dialog';
 
@@ -37,7 +37,7 @@ const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
         <Command
           className={cn(
             '[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-4 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5',
-            `[&_[cmdk-group-heading]]:${mode.color.text.muted}`
+            '[&_[cmdk-group-heading]]:text-muted-foreground'
           )}
         >
           {children}
@@ -60,7 +60,7 @@ const CommandInput = React.forwardRef<
       ref={ref}
       className={cn(
         'flex h-10 w-full bg-transparent py-4 text-xs focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        `placeholder:${mode.color.text.muted}`,
+        'placeholder:text-muted-foreground',
         mode.font,
         className
       )}
@@ -106,7 +106,7 @@ const CommandGroup = React.forwardRef<
     className={cn(
       'overflow-hidden p-2 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold',
       mode.color.text.primary,
-      `[&_[cmdk-group-heading]]:${mode.color.text.muted}`,
+      '[&_[cmdk-group-heading]]:text-muted-foreground',
       className
     )}
     {...props}
@@ -135,7 +135,7 @@ const CommandItem = React.forwardRef<
     ref={ref}
     className={cn(
       'relative flex h-12 cursor-default items-center px-2 py-2 text-xs select-none focus-visible:outline-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 sm:h-auto',
-      `aria-selected:${mode.color.bg.accent} aria-selected:${mode.color.text.inverse}`,
+      'aria-selected:bg-accent aria-selected:text-accent-foreground',
       mode.radius,
       mode.font,
       className

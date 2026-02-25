@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { ChevronDown, ChevronRight, Menu, X } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from './button';
 

@@ -12,9 +12,7 @@ import { PluginRegistry } from './plugins'
 import type { FabrkConfig } from './types'
 import type { FeatureModules } from './auto-wire'
 
-// ============================================================================
 // CONTEXT
-// ============================================================================
 
 export interface FabrkContextValue {
   /** Framework configuration */
@@ -27,9 +25,7 @@ export interface FabrkContextValue {
 
 const FabrkContext = createContext<FabrkContextValue | null>(null)
 
-// ============================================================================
 // HOOKS
-// ============================================================================
 
 /**
  * Access the FABRK framework context
@@ -70,9 +66,7 @@ export function useOptionalFabrk(): FabrkContextValue | null {
   return useContext(FabrkContext)
 }
 
-// ============================================================================
 // PROVIDER
-// ============================================================================
 
 export interface FabrkContextProviderProps {
   children: ReactNode

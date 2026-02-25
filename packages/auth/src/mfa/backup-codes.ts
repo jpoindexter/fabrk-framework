@@ -22,9 +22,6 @@
 
 import { timingSafeEqual } from '../crypto-utils'
 
-/**
- * Generate a set of backup codes
- */
 export function generateBackupCodes(count: number = 10): string[] {
   const codes: string[] = []
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // No I, O, 0, 1 to avoid confusion
@@ -38,18 +35,19 @@ export function generateBackupCodes(count: number = 10): string[] {
       code += chars[bytes[j] % chars.length]
     }
 
-    // Format as XXXX-XXXX for readability
     codes.push(`${code.slice(0, 4)}-${code.slice(4, 8)}`)
   }
 
   return codes
 }
 
-/**
- * Hash backup codes for storage using SHA-256
- */
 export async function hashBackupCodes(codes: string[]): Promise<string[]> {
-  return Promise.all(codes.map(hashCode))
+  // Normalize each code (strip dashes + whitespace, uppercase) before hashing
+  // so that stored hashes are consistent with the normalization applied during
+  // verification. This ensures "ABCD-EFGH" and "ABCDEFGH" hash identically.
+  return Promise.all(
+    codes.map((c) => hashCode(c.toUpperCase().replace(/[-\s]/g, '')))
+  )
 }
 
 /**
@@ -62,13 +60,22 @@ export async function verifyBackupCode(
   code: string,
   hashedCodes: string[]
 ): Promise<{ valid: boolean; matchedIndex: number }> {
-  const normalizedCode = code.toUpperCase().replace(/\s/g, '')
+  // Validate backup code format before expensive hash comparison.
+  // Backup codes are 9-char strings in "XXXX-XXXX" format (8 alphanum + 1 dash).
+  // Reject clearly invalid inputs as a DoS prevention measure.
+  if (!code || code.length > 32) {
+    return { valid: false, matchedIndex: -1 }
+  }
+
+  // Normalize: uppercase, strip whitespace AND dashes so that both
+  // "ABCD-EFGH" and "ABCDEFGH" hash to the same value.
+  const normalizedCode = code.toUpperCase().replace(/[-\s]/g, '')
   const codeHash = await hashCode(normalizedCode)
 
   // Use constant-time comparison to prevent timing attacks on hash lookup
   let matchedIndex = -1
   for (let i = 0; i < hashedCodes.length; i++) {
-    if (timingSafeEqual(codeHash, hashedCodes[i])) {
+    if (await timingSafeEqual(codeHash, hashedCodes[i])) {
       matchedIndex = i
     }
   }

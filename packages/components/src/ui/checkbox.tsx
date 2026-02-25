@@ -13,7 +13,7 @@
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import { Check } from 'lucide-react';
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
@@ -27,8 +27,8 @@ function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxP
         mode.state.focus.ring,
         mode.state.disabled.cursor,
         mode.state.disabled.opacity,
-        `data-[state=checked]:${mode.color.bg.accent} data-[state=checked]:${mode.color.text.inverse}`,
-        `hover:${mode.color.border.accent}`,
+        'data-[state=checked]:bg-accent data-[state=checked]:text-accent-foreground',
+        'hover:border-primary',
         mode.radius,
         className
       )}

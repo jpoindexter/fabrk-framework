@@ -1,7 +1,6 @@
 'use client';
 
 /**
- * ✅ FABRK COMPONENT
  * Search input component with icon.
  *
  * @example
@@ -11,7 +10,7 @@
  */
 
 import { Button } from './button';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Loader2, Search, X } from 'lucide-react';
 import * as React from 'react';

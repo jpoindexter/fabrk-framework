@@ -23,13 +23,9 @@ import type { CsrfConfig } from './types'
 import { timingSafeEqual } from './crypto-utils'
 
 export interface CsrfProtection {
-  /** Generate a new CSRF token */
   generateToken(): Promise<string>
-  /** Create a Set-Cookie header for the CSRF token */
   createCookie(token: string): string
-  /** Verify a request has a valid CSRF token */
   verify(request: Request): Promise<boolean>
-  /** Get the token from a request's cookies */
   getTokenFromCookie(request: Request): string | null
 }
 
@@ -42,6 +38,15 @@ export function createCsrfProtection(config: CsrfConfig = {}): CsrfProtection {
     sameSite = 'strict',
   } = config
 
+  // Use __Host- prefix when secure to prevent subdomain cookie tossing.
+  // __Host- enforces Secure, Path=/, and no Domain attribute (browser-enforced).
+  // Guard against double-prefixing if the caller already supplied a prefixed name.
+  const effectiveName = secure
+    ? cookieName.startsWith('__Host-') || cookieName.startsWith('__Secure-')
+      ? cookieName
+      : `__Host-${cookieName}`
+    : cookieName
+
   return {
     async generateToken(): Promise<string> {
       const bytes = new Uint8Array(tokenLength)
@@ -52,33 +57,50 @@ export function createCsrfProtection(config: CsrfConfig = {}): CsrfProtection {
     },
 
     createCookie(token: string): string {
+      // Validate token contains only hex characters to prevent header injection
+      if (!/^[a-f0-9]+$/i.test(token)) {
+        throw new Error('CSRF token must be a hex string')
+      }
+
+      // SameSite=None is insecure for CSRF cookies because it allows cross-origin requests,
+      // which is exactly what CSRF protection is meant to prevent.
+      if (sameSite === 'none') {
+        throw new Error(
+          'CSRF cookies must not use SameSite=None. ' +
+          'This would allow cross-origin requests to include the cookie, defeating CSRF protection. ' +
+          'Use "strict" (recommended) or "lax" instead.'
+        )
+      }
+
       const parts = [
-        `${cookieName}=${token}`,
+        `${effectiveName}=${token}`,
         'Path=/',
         'HttpOnly',
         `SameSite=${sameSite}`,
       ]
-      if (secure) parts.push('Secure')
+
+      // Only set Secure flag when configured (typically production over HTTPS).
+      // In development over HTTP, the Secure flag prevents the cookie from being set.
+      if (secure) {
+        parts.push('Secure')
+      }
+
       return parts.join('; ')
     },
 
     async verify(request: Request): Promise<boolean> {
-      // Skip verification for safe methods
       const method = request.method.toUpperCase()
       if (['GET', 'HEAD', 'OPTIONS'].includes(method)) {
         return true
       }
 
-      // Get token from cookie
       const cookieToken = this.getTokenFromCookie(request)
       if (!cookieToken) return false
 
-      // Get token from header
       const headerToken = request.headers.get(headerName)
       if (!headerToken) return false
 
-      // Constant-time comparison
-      return timingSafeEqual(cookieToken, headerToken)
+      return await timingSafeEqual(cookieToken, headerToken)
     },
 
     getTokenFromCookie(request: Request): string | null {
@@ -86,10 +108,11 @@ export function createCsrfProtection(config: CsrfConfig = {}): CsrfProtection {
       if (!cookieHeader) return null
 
       const cookies = cookieHeader.split(';').map((c) => c.trim())
-      const csrfCookie = cookies.find((c) => c.startsWith(`${cookieName}=`))
+      const csrfCookie = cookies.find((c) => c.startsWith(`${effectiveName}=`))
       if (!csrfCookie) return null
 
-      return csrfCookie.split('=')[1] ?? null
+      const eqIndex = csrfCookie.indexOf('=')
+      return eqIndex === -1 ? null : csrfCookie.slice(eqIndex + 1) || null
     },
   }
 }

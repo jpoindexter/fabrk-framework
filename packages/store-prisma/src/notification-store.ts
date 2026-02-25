@@ -1,13 +1,5 @@
-/**
- * Prisma-based Notification Store
- *
- * Persists user notifications to the database.
- */
-
 import type { NotificationStore, Notification } from '@fabrk/core'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
-type PrismaClient = any
+import type { PrismaClient } from './types'
 
 export class PrismaNotificationStore implements NotificationStore {
   constructor(private prisma: PrismaClient) {}
@@ -46,13 +38,14 @@ export class PrismaNotificationStore implements NotificationStore {
     const notifications = await this.prisma.notification.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: options?.limit,
+      take: options?.limit ?? 200,
     })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return notifications.map((n: any) => mapNotification(n))
   }
 
+  /** @security No ownership check — caller must verify the notification belongs to the requesting user. */
   async markRead(id: string): Promise<void> {
     await this.prisma.notification.update({
       where: { id },
@@ -70,6 +63,7 @@ export class PrismaNotificationStore implements NotificationStore {
     })
   }
 
+  /** @security No ownership check — caller must verify the notification belongs to the requesting user. */
   async dismiss(id: string): Promise<void> {
     await this.prisma.notification.update({
       where: { id },

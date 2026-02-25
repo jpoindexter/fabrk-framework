@@ -1,14 +1,4 @@
-/**
- * ✅ FABRK COMPONENT
- * Container component for page layout.
- *
- * @example
- * ```tsx
- * <container size="md" />
- * ```
- */
-
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 

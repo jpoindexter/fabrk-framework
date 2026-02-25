@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Menu } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from '../ui/button';
 import { AiChatSidebar } from './chat-sidebar';
@@ -15,9 +15,10 @@ export interface AiChatProps {
   models?: Model[];
   defaultModelId?: string;
   conversations?: Conversation[];
-  onSendMessage?: (message: string, attachments: Attachment[], modelId: string) => Promise<void>;
+  onSendMessage?: (message: string, attachments: Attachment[], modelId: string) => Promise<Message | void>;
   onNewConversation?: () => void;
   onSelectConversation?: (id: string) => void;
+  onError?: (error: unknown) => void;
   className?: string;
 }
 
@@ -41,6 +42,7 @@ export function AiChat({
   onSendMessage,
   onNewConversation,
   onSelectConversation,
+  onError,
   className,
 }: AiChatProps) {
   const [messages, setMessages] = React.useState<Message[]>(initialMessages);
@@ -63,7 +65,10 @@ export function AiChat({
 
     try {
       if (onSendMessage) {
-        await onSendMessage(content, attachments, selectedModelId);
+        const response = await onSendMessage(content, attachments, selectedModelId);
+        if (response && typeof response === 'object' && 'role' in response) {
+          setMessages(prev => [...prev, response as Message]);
+        }
       } else {
         // Mock simulation
         await new Promise(resolve => setTimeout(resolve, 1500));
@@ -82,7 +87,7 @@ export function AiChat({
         setMessages(prev => [...prev, aiMsg]);
       }
     } catch (err) {
-      console.error(err);
+      onError?.(err);
     } finally {
       setIsLoading(false);
     }

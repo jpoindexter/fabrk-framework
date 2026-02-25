@@ -12,3 +12,13 @@ export function timingSafeEqual(a: string, b: string): boolean {
 
   return result === 0
 }
+
+/**
+ * SHA-256 hash a string payload and return the hex digest.
+ * Used for deriving deterministic event IDs when webhooks lack a native ID.
+ */
+export async function hashPayload(payload: string): Promise<string> {
+  const data = new TextEncoder().encode(payload)
+  const hash = await crypto.subtle.digest('SHA-256', data)
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+}

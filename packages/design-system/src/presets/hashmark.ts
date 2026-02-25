@@ -8,9 +8,7 @@
  * hashmarkVariables for programmatic access.
  */
 
-// =============================================================================
 // CSS VARIABLE VALUES
-// =============================================================================
 
 export const hashmarkVariables = {
   // Base
@@ -73,9 +71,7 @@ export const hashmarkVariables = {
   '--chart-5': '#ef4444',
 } as const;
 
-// =============================================================================
 // CSS GENERATOR
-// =============================================================================
 
 /**
  * Generate the full CSS for the Hashmark preset.

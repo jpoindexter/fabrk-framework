@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { cn } from '../lib/utils'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'debug' | 'success'

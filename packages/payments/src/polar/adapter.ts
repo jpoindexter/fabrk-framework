@@ -23,8 +23,20 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { PolarAdapterConfig } from '../types'
-import { timingSafeEqual } from '../crypto-utils'
+import { timingSafeEqual, hashPayload } from '../crypto-utils'
+import { createIdempotencyCache } from '../idempotency'
 
+// Shared idempotency cache to reject duplicate webhook events
+const polarCache = createIdempotencyCache(10_000)
+
+/**
+ * @remarks **Serverless warning:** The built-in idempotency cache is process-scoped
+ * and does NOT survive cold starts on serverless platforms (Vercel, AWS Lambda, etc.).
+ * For production serverless deployments, inject a persistent idempotency store
+ * (Redis, database) to prevent webhook replay attacks across function invocations.
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.polar.sh/v1'
 
@@ -139,13 +151,10 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
             }
           }
 
-          // Reject timestamps older than 5 minutes to prevent replay attacks
-          const timestampAge = Math.abs(Date.now() / 1000 - Number(timestamp))
-          if (isNaN(timestampAge) || timestampAge > 300) {
-            return {
-              verified: false,
-              error: 'Webhook timestamp too old or invalid (replay protection)',
-            }
+          // Allow up to 30s clock skew forward; reject anything older than 5min
+          const timestampAge = Date.now() / 1000 - Number(timestamp)
+          if (isNaN(timestampAge) || timestampAge < -30 || timestampAge > 300) {
+            return { verified: false, error: 'Webhook timestamp out of range (replay protection)' }
           }
 
           const verified = await verifyWebhookSignature(payloadStr, webhookId, timestamp, signatureHeader)
@@ -161,11 +170,27 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
 
         const event = JSON.parse(payloadStr)
 
+        // Idempotency: reject duplicate event IDs
+        // Derive a deterministic ID from payload hash when event has no ID
+        const eventId = event.id ?? `derived:${await hashPayload(payloadStr)}`
+        if (!polarCache.markProcessed(eventId)) {
+          return {
+            verified: true,
+            duplicate: true,
+            event: {
+              type: event.type,
+              id: eventId,
+              data: event.data as Record<string, unknown>,
+              raw: event,
+            },
+          }
+        }
+
         return {
           verified: true,
           event: {
             type: event.type,
-            id: event.id ?? crypto.randomUUID(),
+            id: eventId,
             data: event.data as Record<string, unknown>,
             raw: event,
           },
@@ -180,7 +205,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
 
     async getCustomer(customerId: string): Promise<CustomerInfo | null> {
       try {
-        const data = await polarFetch(`/customers/${customerId}`)
+        const data = await polarFetch(`/customers/${encodeURIComponent(customerId)}`)
 
         return {
           id: data.id,
@@ -196,7 +221,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
 
     async getSubscription(subscriptionId: string): Promise<SubscriptionInfo | null> {
       try {
-        const data = await polarFetch(`/subscriptions/${subscriptionId}`)
+        const data = await polarFetch(`/subscriptions/${encodeURIComponent(subscriptionId)}`)
 
         return {
           id: data.id,
@@ -215,7 +240,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
       subscriptionId: string,
       options?: { atPeriodEnd?: boolean }
     ): Promise<void> {
-      await polarFetch(`/subscriptions/${subscriptionId}`, {
+      await polarFetch(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
         method: 'DELETE',
         body: JSON.stringify({
           cancel_at_period_end: options?.atPeriodEnd ?? true,

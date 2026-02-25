@@ -21,18 +21,14 @@ import type { ApiKeyInfo, ApiKeyStore } from '@fabrk/core'
 import { hashApiKey } from './generator'
 
 export interface ApiKeyValidator {
-  /** Validate a key and return its info (or null if invalid) */
   validate(key: string): Promise<ApiKeyInfo | null>
-  /** Check if a key has a specific scope */
   hasScope(keyInfo: ApiKeyInfo, scope: string): boolean
-  /** Check if a key has all specified scopes */
   hasAllScopes(keyInfo: ApiKeyInfo, scopes: string[]): boolean
 }
 
 export function createApiKeyValidator(store: ApiKeyStore): ApiKeyValidator {
   return {
     async validate(key: string): Promise<ApiKeyInfo | null> {
-      // Validate key format
       if (!key || !key.includes('_')) {
         return null
       }
@@ -41,16 +37,11 @@ export function createApiKeyValidator(store: ApiKeyStore): ApiKeyValidator {
       const keyInfo = await store.getByHash(hash)
 
       if (!keyInfo) return null
-
-      // Check if key is active
       if (!keyInfo.active) return null
-
-      // Check if key is expired
       if (keyInfo.expiresAt && keyInfo.expiresAt < new Date()) {
         return null
       }
 
-      // Update last used timestamp
       await store.updateLastUsed(keyInfo.id)
 
       return keyInfo

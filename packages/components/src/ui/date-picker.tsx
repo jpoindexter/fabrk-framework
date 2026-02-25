@@ -5,7 +5,7 @@ import { format, setMonth, setYear, subDays, subMonths, startOfMonth, endOfMonth
 import { CalendarIcon, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode as visualMode } from '@fabrk/design-system';
 import { Button } from './button';
 import { Calendar } from './calendar';

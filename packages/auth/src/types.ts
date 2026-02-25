@@ -1,10 +1,6 @@
-/**
- * Auth package types
- */
-
 import type { AuthStore, ApiKeyStore, Session, ApiKeyInfo } from '@fabrk/core'
+import { timingSafeEqual } from './crypto-utils'
 
-// Re-export store interfaces for convenience
 export type { AuthStore, ApiKeyStore }
 
 export interface NextAuthAdapterConfig {
@@ -18,6 +14,7 @@ export interface NextAuthAdapterConfig {
    * createNextAuthAdapter({ authInstance: auth })
    * ```
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   authInstance?: () => Promise<any>
   /** Custom API key store (defaults to InMemoryApiKeyStore) */
   apiKeyStore?: ApiKeyStore
@@ -45,18 +42,6 @@ export interface ApiKeyGeneratorConfig {
   keyLength?: number
 }
 
-export interface MfaConfig {
-  /** App name shown in authenticator */
-  appName: string
-  /** Issuer name */
-  issuer?: string
-  /** Number of backup codes to generate (default: 10) */
-  backupCodeCount?: number
-}
-
-/**
- * In-memory auth store for development/testing
- */
 export class InMemoryAuthStore implements AuthStore {
   private sessions = new Map<string, Session & { token: string }>()
 
@@ -79,17 +64,18 @@ export class InMemoryAuthStore implements AuthStore {
   }
 }
 
-/**
- * In-memory API key store for development/testing
- */
 export class InMemoryApiKeyStore implements ApiKeyStore {
   private keys = new Map<string, ApiKeyInfo & { hash: string; userId?: string }>()
 
   async getByHash(hash: string): Promise<ApiKeyInfo | null> {
+    // Iterate ALL keys to maintain constant time — do not return early on match
+    let matched: (ApiKeyInfo & { hash: string; userId?: string }) | null = null
     for (const key of this.keys.values()) {
-      if (key.hash === hash) return key
+      if (await timingSafeEqual(key.hash, hash)) {
+        matched = key
+      }
     }
-    return null
+    return matched
   }
 
   async create(key: ApiKeyInfo & { hash: string }): Promise<void> {

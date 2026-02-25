@@ -13,7 +13,7 @@ import {
 import { Alert, AlertDescription } from '../ui/alert';
 import { AlertTriangle, Copy, Check, RefreshCw, Download } from 'lucide-react';
 import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 export interface BackupCodesModalProps {
   open: boolean;

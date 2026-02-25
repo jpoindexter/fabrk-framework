@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
@@ -54,8 +54,8 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
       ref={ref}
       className={cn(
         'border-b transition-colors',
-        `hover:${mode.color.bg.muted}`,
-        `data-[state=selected]:${mode.color.bg.muted}`,
+        'hover:bg-muted',
+        'data-[state=selected]:bg-muted',
         mode.color.border.default,
         className
       )}

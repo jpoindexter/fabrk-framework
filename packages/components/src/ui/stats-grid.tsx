@@ -1,5 +1,4 @@
 /**
- * FABRK COMPONENT
  * StatsGrid - Responsive grid of stat items with optional change indicators
  *
  * @example
@@ -18,7 +17,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface StatsGridItem {

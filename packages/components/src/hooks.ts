@@ -9,10 +9,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 
-// ============================================================================
-// useMediaQuery
-// ============================================================================
-
 /**
  * Reactive media query detection.
  * @param query - CSS media query string
@@ -54,10 +50,6 @@ export function useIsDesktop(): boolean {
   return useMediaQuery('(min-width: 1024px)')
 }
 
-// ============================================================================
-// useDebounce
-// ============================================================================
-
 /**
  * Debounce a value by a given delay.
  * @param value - The value to debounce
@@ -78,10 +70,6 @@ export function useDebounce<T>(value: T, delay = 300): T {
 
   return debounced
 }
-
-// ============================================================================
-// useLocalStorage
-// ============================================================================
 
 /**
  * Type-safe localStorage with SSR guard and JSON serialization.
@@ -122,10 +110,6 @@ export function useLocalStorage<T>(
   return [stored, setValue]
 }
 
-// ============================================================================
-// useClickOutside
-// ============================================================================
-
 /**
  * Detect clicks outside a ref element.
  * @param ref - React ref to the container element
@@ -140,10 +124,15 @@ export function useClickOutside<T extends HTMLElement>(
   ref: React.RefObject<T | null>,
   handler: (event: MouseEvent | TouchEvent) => void
 ): void {
+  // Store handler in a ref so the event listener is never re-registered when
+  // the caller passes a new function reference on every render.
+  const handlerRef = useRef(handler)
+  useEffect(() => { handlerRef.current = handler })
+
   useEffect(() => {
     const listener = (event: MouseEvent | TouchEvent) => {
       if (!ref.current || ref.current.contains(event.target as Node)) return
-      handler(event)
+      handlerRef.current(event)
     }
     document.addEventListener('mousedown', listener)
     document.addEventListener('touchstart', listener)
@@ -151,12 +140,8 @@ export function useClickOutside<T extends HTMLElement>(
       document.removeEventListener('mousedown', listener)
       document.removeEventListener('touchstart', listener)
     }
-  }, [ref, handler])
+  }, [ref]) // Only re-register if the ref object itself changes (it won't)
 }
-
-// ============================================================================
-// useCopyToClipboard
-// ============================================================================
 
 /**
  * Copy text to clipboard with a timed success state.
@@ -193,10 +178,6 @@ export function useCopyToClipboard(resetDelay = 2000) {
 
   return { copy, copied }
 }
-
-// ============================================================================
-// useBodyScrollLock
-// ============================================================================
 
 /**
  * Lock body scroll (for modals/drawers). Compensates for scrollbar width.
@@ -237,10 +218,6 @@ export function useBodyScrollLock(isLocked: boolean): void {
   }, [isLocked])
 }
 
-// ============================================================================
-// useIntersectionObserver
-// ============================================================================
-
 /**
  * Observe an element's intersection with the viewport.
  * Useful for lazy loading, infinite scroll, and scroll-triggered animations.
@@ -278,10 +255,6 @@ export function useIntersectionObserver(
   return { ref, isIntersecting: entry?.isIntersecting ?? false, entry }
 }
 
-// ============================================================================
-// useWindowSize
-// ============================================================================
-
 /**
  * Track window dimensions reactively.
  * @example
@@ -304,10 +277,6 @@ export function useWindowSize(): { width: number; height: number } {
   return size
 }
 
-// ============================================================================
-// usePrevious
-// ============================================================================
-
 /**
  * Track the previous value of a variable across renders.
  * @param value - The value to track
@@ -324,10 +293,6 @@ export function usePrevious<T>(value: T): T | undefined {
   })
   return ref.current
 }
-
-// ============================================================================
-// useListKeyboardNav
-// ============================================================================
 
 export interface UseListKeyboardNavOptions<T> {
   /** Array of items in display order */
@@ -425,10 +390,6 @@ export function useListKeyboardNav<T>({
     return () => document.removeEventListener('keydown', handler)
   }, [enabled, onSelect, onClear, onConfirm, keyFn, vimKeys])
 }
-
-// ============================================================================
-// useViewHistory
-// ============================================================================
 
 export interface ViewHistoryItem {
   id: string

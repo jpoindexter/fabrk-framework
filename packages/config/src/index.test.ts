@@ -165,6 +165,7 @@ describe('defineFabrkConfig', () => {
   it('should throw on invalid config', () => {
     expect(() =>
       defineFabrkConfig({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         payments: { adapter: 'nope' as any },
       })
     ).toThrow()

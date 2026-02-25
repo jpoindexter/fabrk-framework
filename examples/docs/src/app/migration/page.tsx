@@ -35,7 +35,7 @@ pnpm add @fabrk/core @fabrk/config @fabrk/design-system
 pnpm add @fabrk/components
 
 # Theming (optional — adds ThemeProvider, chart colors, formatters)
-pnpm add @fabrk/themes
+pnpm add @fabrk/design-system
 
 # Feature packages (install as needed)
 pnpm add @fabrk/auth          # NextAuth, API keys, MFA
@@ -102,7 +102,7 @@ import { themes } from '@/config/themes'
 // AFTER: FABRK design system
 import { mode } from '@fabrk/design-system'
 // OR (if using the themes package with ThemeProvider):
-import { mode } from '@fabrk/themes'`}</CodeBlock>
+import { mode } from '@fabrk/design-system'`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           COMPONENT IMPORTS
@@ -424,7 +424,7 @@ const fabrk = autoWire(config, undefined, {
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { Button, Card } from '@fabrk/components'
 
 function InteractiveComponent() {

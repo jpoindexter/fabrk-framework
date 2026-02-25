@@ -3,7 +3,7 @@ import {
   streamToString,
   parseStreamChunks,
   createTextStream,
-  mergeStreams,
+  concatStreams,
   transformStream,
 } from './stream-text'
 
@@ -89,13 +89,13 @@ describe('createTextStream', () => {
   })
 })
 
-describe('mergeStreams', () => {
-  it('should merge multiple streams sequentially', async () => {
+describe('concatStreams', () => {
+  it('should concatenate multiple streams sequentially', async () => {
     const s1 = createTextStream('Hello', { chunkSize: 5 })
     const s2 = createTextStream(' World', { chunkSize: 6 })
 
     let result = ''
-    for await (const chunk of mergeStreams(s1, s2)) {
+    for await (const chunk of concatStreams(s1, s2)) {
       result += chunk
     }
 

@@ -14,7 +14,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { cn } from '../lib/utils'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export interface CookiePreferences {
@@ -61,8 +61,23 @@ export function useCookieConsent(cookieKey = 'cookie-consent') {
     try {
       const stored = localStorage.getItem(cookieKey)
       if (stored) {
-        setPreferences(JSON.parse(stored))
-        setHasConsented(true)
+        const parsed = JSON.parse(stored)
+        // Validate that parsed value is an object with expected boolean properties
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          !Array.isArray(parsed) &&
+          typeof parsed.necessary === 'boolean' &&
+          typeof parsed.preferences === 'boolean' &&
+          typeof parsed.statistics === 'boolean' &&
+          typeof parsed.marketing === 'boolean'
+        ) {
+          setPreferences(parsed as CookiePreferences)
+          setHasConsented(true)
+        } else {
+          // Invalid shape — treat as no consent
+          setHasConsented(false)
+        }
       } else {
         setHasConsented(false)
       }

@@ -44,10 +44,12 @@ export type { CorsHandler } from './cors'
 export { timingSafeEqual } from './crypto-utils'
 
 // Input Validation
+// Note: sanitizeSqlInput is intentionally NOT exported — it is a deprecated
+// blocklist-based helper that provides false security. Use parameterized
+// queries / prepared statements instead. See validation.ts for the warning.
 export {
   escapeHtml,
   stripHtml,
-  sanitizeSqlInput,
   sanitizeUrl,
   sanitizeRedirectUrl,
 } from './validation'

@@ -4,8 +4,8 @@
 
 ## TL;DR
 
-- **What**: AI-first React UI framework — 16 packages, 105+ components, 18 themes
-- **Stack**: TypeScript 5.x • React 19 • Next.js 15 • pnpm workspaces • Turbo • Vite
+- **What**: AI-first React UI framework — 12 packages, 105+ components, 18 themes
+- **Stack**: TypeScript 5.x • React 19 • Next.js 16 • pnpm workspaces • Turbo
 - **Package manager**: pnpm (NOT npm, NOT yarn)
 - **Rule #1**: USE EXISTING COMPONENTS — don't rebuild what's already here
 
@@ -13,10 +13,10 @@
 
 ```bash
 pnpm install          # Install all dependencies
-pnpm build            # Build all 20 packages
+pnpm build            # Build all 16 packages (12 libs + 4 examples)
 pnpm dev              # Watch mode
-pnpm test             # Run 1,689 tests
-pnpm type-check       # TypeScript validation (25 packages)
+pnpm test             # Run 763 tests
+pnpm type-check       # TypeScript validation
 pnpm lint             # Lint all packages
 pnpm size             # Bundle size tracking
 ```
@@ -26,7 +26,7 @@ pnpm size             # Bundle size tracking
 | Package | Purpose | Key Exports |
 |---------|---------|-------------|
 | `@fabrk/core` | Runtime, plugins, middleware, teams, jobs, flags | `cn()`, `createPlugin()`, `defineMiddleware()` |
-| `@fabrk/components` | 105+ UI components, 8 charts, dashboard shell | `DashboardShell`, `KPICard`, `DataTable`, `LineChart` |
+| `@fabrk/components` | 105+ UI components, 8 charts, dashboard shell, component registry | `DashboardShell`, `KPICard`, `DataTable`, `LineChart` |
 | `@fabrk/design-system` | 18 themes, design tokens | `mode` (radius, font, etc.), theme CSS vars |
 | `@fabrk/config` | Type-safe config (12 sections, Zod) | `defineFabrkConfig()`, section schemas |
 | `@fabrk/ai` | AI toolkit: LLM providers, streaming, cost tracking | `chatWithClaude()`, `AICostTracker`, `PromptBuilder` |
@@ -35,11 +35,7 @@ pnpm size             # Bundle size tracking
 | `@fabrk/security` | CSRF, CSP, rate limiting, audit, GDPR, CORS | `csrfProtection()`, `rateLimiter()`, `auditLog()` |
 | `@fabrk/email` | Resend adapter + templates | `sendEmail()`, email templates |
 | `@fabrk/storage` | S3, R2, local filesystem adapters | `createStorageAdapter()`, `uploadFile()` |
-| `@fabrk/mcp` | MCP server toolkit | `createMcpServer()`, `defineTool()`, `textResult()` |
 | `@fabrk/store-prisma` | 7 Prisma store adapters | `createPrismaStore()` |
-| `@fabrk/themes` | Opt-in theming layer | `ThemeProvider`, `useThemeContext()` |
-| `@fabrk/ui` | Component registry (shadcn-style) | Component definitions |
-| `@fabrk/referrals` | Referral system | `createReferral()`, `trackReferral()` |
 | `create-fabrk-app` | CLI scaffolding tool | `fabrk dev`, `fabrk build` |
 
 ## Component Categories

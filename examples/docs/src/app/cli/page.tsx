@@ -1,4 +1,5 @@
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
+import { STATS } from '@/data/stats'
 
 export default function CLIPage() {
   return (
@@ -27,7 +28,7 @@ Examples:
         </h3>
 
         <InfoCard title="BASIC">
-          Clean starting point with <code>@fabrk/core</code> and optional <code>@fabrk/themes</code>.
+          Clean starting point with <code>@fabrk/core</code> and optional <code>@fabrk/design-system</code>.
           <ul className="space-y-1 mt-2">
             <li>Prisma schema: User, Account, Session models</li>
             <li>Minimal <code>fabrk.config.ts</code> with framework and theme sections</li>
@@ -180,7 +181,7 @@ Examples:
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { Card } from '@fabrk/components'
 
 interface MetricsCardProps {
@@ -210,17 +211,17 @@ export function MetricsCard({ title, children, className }: MetricsCardProps) {
         <CodeBlock>{`fabrk info
 
 Output:
-  Project: my-app v0.1.0
+  Project: my-app v${STATS.version}
   Runtime: nextjs
   Config:  fabrk.config.ts (valid)
 
   Packages:
-    @fabrk/core         0.1.0
-    @fabrk/components   0.1.0
-    @fabrk/themes       0.1.0
-    @fabrk/auth         0.1.0
-    @fabrk/payments     0.1.0
-    @fabrk/ai           0.1.0
+    @fabrk/core         ${STATS.version}
+    @fabrk/components   ${STATS.version}
+    @fabrk/design-system       ${STATS.version}
+    @fabrk/auth         ${STATS.version}
+    @fabrk/payments     ${STATS.version}
+    @fabrk/ai           ${STATS.version}
 
   Features:
     teams:          enabled

@@ -19,12 +19,8 @@
  * ```
  */
 
-import type { CostStore, AICostEvent } from './cost'
-import { InMemoryCostStore } from './cost'
-
-// ============================================================================
-// TYPES
-// ============================================================================
+import type { CostStore, AICostEvent } from './cost-types'
+import { getCostTracker } from './tracker'
 
 export interface AIRequestContext {
   /** The prompt or messages to send */
@@ -57,10 +53,6 @@ export interface AIMiddleware {
   run: (context: AIRequestContext) => Promise<AIRequestContext>
 }
 
-// ============================================================================
-// MIDDLEWARE CHAIN
-// ============================================================================
-
 /**
  * Create an AI-specific middleware chain
  */
@@ -89,10 +81,6 @@ export function createAIMiddleware(): AIMiddleware {
     },
   }
 }
-
-// ============================================================================
-// BUDGET ENFORCEMENT MIDDLEWARE
-// ============================================================================
 
 export interface BudgetConfig {
   /** Daily budget in USD */
@@ -129,7 +117,7 @@ export interface BudgetConfig {
  * ```
  */
 export function budgetEnforcement(config: BudgetConfig): AIMiddlewareFunction {
-  const store = config.store ?? new InMemoryCostStore()
+  const store = config.store ?? getCostTracker().getStore()
   const alertThreshold = config.alertThreshold ?? 0.8
 
   return async (context: AIRequestContext, next: () => Promise<void>) => {
@@ -176,10 +164,6 @@ export function budgetEnforcement(config: BudgetConfig): AIMiddlewareFunction {
     await next()
   }
 }
-
-// ============================================================================
-// PROVIDER FALLBACK MIDDLEWARE
-// ============================================================================
 
 export type ProviderName = 'claude' | 'openai' | 'ollama'
 

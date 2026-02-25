@@ -1,7 +1,3 @@
-/**
- * Storage package types
- */
-
 export interface S3AdapterConfig {
   /** S3 bucket name */
   bucket: string
@@ -41,6 +37,12 @@ export interface LocalAdapterConfig {
   baseUrl?: string
   /** Max file size in bytes (default: 10MB) */
   maxFileSize?: number
+  /**
+   * HMAC secret used to sign local URLs (prevents expiry tampering).
+   * If not provided, a random secret is generated per adapter instance
+   * (URLs will not survive restarts). Provide a stable secret in production.
+   */
+  signingSecret?: string
 }
 
 export interface FileValidationOptions {

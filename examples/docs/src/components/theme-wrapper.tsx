@@ -1,6 +1,6 @@
 'use client'
 
-import { ThemeProvider } from '@fabrk/themes'
+import { ThemeProvider } from '@fabrk/design-system'
 
 export function ThemeWrapper({ children }: { children: React.ReactNode }) {
   return (

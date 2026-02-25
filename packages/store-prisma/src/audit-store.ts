@@ -1,13 +1,8 @@
-/**
- * Prisma-based Audit Store
- *
- * Persists tamper-proof audit events to the database.
- */
-
 import type { AuditStore, AuditEvent } from '@fabrk/core'
+import type { PrismaClient } from './types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
-type PrismaClient = any
+const DEFAULT_AUDIT_LIMIT = 1000
+const MAX_AUDIT_LIMIT = 10_000
 
 export class PrismaAuditStore implements AuditStore {
   constructor(private prisma: PrismaClient) {}
@@ -30,6 +25,7 @@ export class PrismaAuditStore implements AuditStore {
     })
   }
 
+  /** @security No authorization check — caller must verify the requesting user has permission to view audit logs for the specified scope. */
   async query(options: {
     orgId?: string
     actorId?: string
@@ -54,7 +50,7 @@ export class PrismaAuditStore implements AuditStore {
         },
       },
       orderBy: { timestamp: 'desc' },
-      take: options.limit,
+      take: Math.min(options.limit ?? DEFAULT_AUDIT_LIMIT, MAX_AUDIT_LIMIT),
       skip: options.offset,
     })
 

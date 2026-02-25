@@ -20,5 +20,3 @@ export {
   hashmarkVariables,
   generateHashmarkCss,
 } from './hashmark';
-
-export type { } from './hashmark';

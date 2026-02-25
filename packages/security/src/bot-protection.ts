@@ -48,16 +48,12 @@ const KNOWN_GOOD_BOTS = [
   /linkedinbot/i,
 ]
 
-/**
- * Detect if a request is from a bot
- */
 export function detectBot(request: Request): BotDetectionResult {
   const userAgent = request.headers.get('User-Agent') ?? ''
   let confidence = 0
   let reason: string | undefined
   let category: BotDetectionResult['category']
 
-  // No User-Agent header
   if (!userAgent) {
     return {
       isBot: true,
@@ -67,7 +63,6 @@ export function detectBot(request: Request): BotDetectionResult {
     }
   }
 
-  // Check known good bots (allow these)
   for (const pattern of KNOWN_GOOD_BOTS) {
     if (pattern.test(userAgent)) {
       return {
@@ -79,7 +74,6 @@ export function detectBot(request: Request): BotDetectionResult {
     }
   }
 
-  // Check known bot patterns
   for (const pattern of KNOWN_BOT_PATTERNS) {
     if (pattern.test(userAgent)) {
       confidence = Math.max(confidence, 0.7)
@@ -88,7 +82,6 @@ export function detectBot(request: Request): BotDetectionResult {
     }
   }
 
-  // Check for missing common headers
   if (!request.headers.get('Accept-Language')) {
     confidence = Math.max(confidence, 0.3)
     if (!reason) reason = 'Missing Accept-Language header'

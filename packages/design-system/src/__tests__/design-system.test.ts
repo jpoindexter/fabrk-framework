@@ -19,9 +19,7 @@ import {
   generateHashmarkCss,
 } from '../index'
 
-// =============================================================================
 // TERMINAL THEME UTILITY FUNCTIONS
-// =============================================================================
 
 describe('terminal theme utility functions', () => {
   it('formatButtonText should prepend "> " and uppercase', () => {
@@ -59,9 +57,7 @@ describe('terminal theme utility functions', () => {
   })
 })
 
-// =============================================================================
 // BACKWARDS COMPATIBILITY ALIASES
-// =============================================================================
 
 describe('backwards compatibility aliases', () => {
   it('formatLabel and formatCardTitle should be same references', () => {
@@ -75,9 +71,7 @@ describe('backwards compatibility aliases', () => {
   })
 })
 
-// =============================================================================
 // HASHMARK PRESET
-// =============================================================================
 
 describe('hashmark preset', () => {
   it('should have all required CSS variable keys', () => {
@@ -136,9 +130,7 @@ describe('hashmark preset', () => {
   })
 })
 
-// =============================================================================
 // CHART COLORS
-// =============================================================================
 
 describe('chart colors', () => {
   it('getChartColors should return 9 fallback colors in Node (no window)', () => {

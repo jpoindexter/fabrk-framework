@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
 
 export default function AuthTutorialPage() {
@@ -207,7 +207,7 @@ export const PUT = withAuthOrApiKey(authAdapter, async (req, { session, apiKey }
 
 import { useState, useEffect } from 'react'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { MfaCard, MfaSetupDialog, BackupCodesModal } from '@fabrk/components'
 
 export default function SecurityPage() {

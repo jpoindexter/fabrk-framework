@@ -7,7 +7,7 @@ function createIssue(file: string, line: number | string, issue: string, severit
 /** Check for hardcoded color classes (e.g. bg-red-500) */
 export function checkHardcodedColors(file: string, content: string): ValidationIssue[] {
   const issues: ValidationIssue[] = []
-  const pattern = /(?:bg|text|border|ring|from|to|via)-(?:red|blue|green|yellow|purple|pink|orange|indigo|teal|cyan|emerald|violet|fuchsia|rose|amber|lime|sky|stone|zinc|gray|slate|neutral)-\d{2,3}/g
+  const pattern = /(?:bg|text|border|ring|from|to|via)-(?:red|blue|green|yellow|purple|pink|orange|indigo|teal|cyan|emerald|violet|fuchsia|rose|amber|lime|sky|stone|zinc|gray|slate|neutral)-\d{1,3}/g
   const lines = content.split('\n')
   lines.forEach((line, i) => {
     // Skip comments and design-system-ignore
@@ -30,8 +30,8 @@ export function checkInlineStyles(file: string, content: string): ValidationIssu
     const styleMatch = line.match(/style=\{\{([^}]+)\}\}/)
     if (styleMatch) {
       const styleContent = styleMatch[1]
-      // Allow if all values use CSS variables
-      if (!styleContent.includes('var(--') && !styleContent.includes('width:') && !styleContent.includes('height:')) {
+      // Allow only if all values use CSS variables
+      if (!styleContent.includes('var(--')) {
         issues.push(createIssue(file, i + 1, 'Inline style without CSS variables detected', 'low'))
       }
     }
@@ -94,13 +94,15 @@ export function checkHardcodedSecrets(file: string, content: string): Validation
 /** Check for missing alt text on images */
 export function checkAccessibility(file: string, content: string): ValidationIssue[] {
   const issues: ValidationIssue[] = []
-  const lines = content.split('\n')
-  lines.forEach((line, i) => {
-    // Check img without alt
-    if (/<img\b/.test(line) && !/alt=/.test(line) && !content.slice(0, content.indexOf(line) + line.length + 200).match(/alt=/)) {
-      issues.push(createIssue(file, i + 1, 'Image missing alt attribute (WCAG 1.1.1)', 'high'))
+  // Use full-file regex to handle multi-line img tags correctly
+  const imgTagRegex = /<img\b[^>]*>/gis
+  let imgMatch
+  while ((imgMatch = imgTagRegex.exec(content)) !== null) {
+    if (!imgMatch[0].includes('alt=')) {
+      const lineNum = content.slice(0, imgMatch.index).split('\n').length
+      issues.push(createIssue(file, lineNum, 'Image missing alt attribute (WCAG 1.1.1)', 'high'))
     }
-  })
+  }
   return issues
 }
 

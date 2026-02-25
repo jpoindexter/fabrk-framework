@@ -1,19 +1,7 @@
 'use client';
 
-/**
- * ✅ FABRK COMPONENT
- * Terminal-style ASCII progress bar
- *
- * @example
- * ```tsx
- * <Progress value={66} /> // Default block style
- * <Progress value={66} variant="hash" showPercentage />
- * <Progress value={66} variant="arrow" label="Downloading..." />
- * ```
- */
-
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 // ASCII character sets for different variants
@@ -134,9 +122,10 @@ function AnimatedProgress({
   ...props
 }: AnimatedProgressProps) {
   const [value, setValue] = React.useState(from);
+  const frameIdRef = React.useRef<number>(0);
 
   React.useEffect(() => {
-    const startTime = Date.now();
+    let startTime = Date.now();
     const animate = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
@@ -145,15 +134,16 @@ function AnimatedProgress({
       setValue(currentValue);
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        frameIdRef.current = requestAnimationFrame(animate);
       } else if (loop) {
+        startTime = Date.now(); // reset for next cycle
         setValue(from);
-        requestAnimationFrame(animate);
+        frameIdRef.current = requestAnimationFrame(animate);
       }
     };
 
-    const frameId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameId);
+    frameIdRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frameIdRef.current);
   }, [duration, from, to, loop]);
 
   return <Progress value={value} {...props} />;
@@ -314,6 +304,8 @@ function AnimatedSolidProgress({
     return () => observer.disconnect();
   }, []);
 
+  const solidFrameIdRef = React.useRef<number>(0);
+
   React.useEffect(() => {
     if (!isVisible) return;
 
@@ -324,13 +316,14 @@ function AnimatedSolidProgress({
       setProgress(newProgress);
 
       if (newProgress < 100) {
-        requestAnimationFrame(animate);
+        solidFrameIdRef.current = requestAnimationFrame(animate);
       } else {
         onComplete?.();
       }
     };
 
-    requestAnimationFrame(animate);
+    solidFrameIdRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(solidFrameIdRef.current);
   }, [isVisible, duration, onComplete]);
 
   return (

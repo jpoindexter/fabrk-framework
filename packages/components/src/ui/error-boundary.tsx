@@ -4,7 +4,7 @@ import React, { Component, ReactNode } from 'react';
 import { Button } from './button';
 import { AlertCircle } from 'lucide-react';
 import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -57,7 +57,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p className="text-muted-foreground mb-6">
             We're sorry for the inconvenience. Please try refreshing the page.
           </p>
-          {this.state.error && (
+          {this.state.error && process.env.NODE_ENV !== 'production' && (
             <details className={cn('mb-4 max-w-2xl border p-4 text-left', mode.radius)}>
               <summary className="cursor-pointer font-semibold">Error Details</summary>
               <pre className={cn('mt-2 overflow-auto text-xs', mode.font)}>
@@ -67,9 +67,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </pre>
             </details>
           )}
+          {this.state.error && process.env.NODE_ENV === 'production' && (
+            <p className="text-muted-foreground mb-4 text-sm">An error occurred.</p>
+          )}
           <Button
             onClick={() => {
-              this.setState({ hasError: false, error: undefined });
               window.location.reload();
             }}
           >

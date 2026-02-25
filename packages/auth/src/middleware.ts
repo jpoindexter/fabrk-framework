@@ -31,9 +31,19 @@ type ApiKeyHandler = (
   keyInfo: ApiKeyInfo
 ) => Promise<Response>
 
-/**
- * Wrap a handler to require session authentication
- */
+function extractApiKey(request: Request): string | null {
+  const authHeader = request.headers.get('Authorization')
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7)
+  return request.headers.get('X-API-Key')
+}
+
+function checkScopes(keyInfo: ApiKeyInfo, requiredScopes?: string[]): boolean {
+  if (!requiredScopes?.length) return true
+  return requiredScopes.every(
+    (scope) => keyInfo.scopes.includes('*') || keyInfo.scopes.includes(scope)
+  )
+}
+
 export function withAuth(
   adapter: AuthAdapter,
   handler: AuthenticatedHandler
@@ -52,29 +62,13 @@ export function withAuth(
   }
 }
 
-/**
- * Wrap a handler to require API key authentication
- *
- * Looks for the key in the Authorization header (Bearer token)
- * or X-API-Key header.
- */
 export function withApiKey(
   adapter: AuthAdapter,
   handler: ApiKeyHandler,
   options?: { requiredScopes?: string[] }
 ): (request: Request) => Promise<Response> {
   return async (request: Request) => {
-    // Extract API key from headers
-    const authHeader = request.headers.get('Authorization')
-    const apiKeyHeader = request.headers.get('X-API-Key')
-
-    let key: string | null = null
-
-    if (authHeader?.startsWith('Bearer ')) {
-      key = authHeader.slice(7)
-    } else if (apiKeyHeader) {
-      key = apiKeyHeader
-    }
+    const key = extractApiKey(request)
 
     if (!key) {
       return new Response(
@@ -98,21 +92,14 @@ export function withApiKey(
       )
     }
 
-    // Check required scopes
-    if (options?.requiredScopes?.length) {
-      const hasAllScopes = options.requiredScopes.every(
-        (scope) => keyInfo.scopes.includes('*') || keyInfo.scopes.includes(scope)
+    if (!checkScopes(keyInfo, options?.requiredScopes)) {
+      return new Response(
+        JSON.stringify({ error: 'Insufficient permissions' }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
       )
-
-      if (!hasAllScopes) {
-        return new Response(
-          JSON.stringify({ error: 'Insufficient permissions' }),
-          {
-            status: 403,
-            headers: { 'Content-Type': 'application/json' },
-          }
-        )
-      }
     }
 
     return handler(request, keyInfo)
@@ -120,33 +107,34 @@ export function withApiKey(
 }
 
 /**
- * Wrap a handler to accept either session or API key auth
+ * @security Session auth bypasses requiredScopes — scopes only apply to API key auth.
+ * To enforce role-based access for sessions, check session.role in your handler.
  */
 export function withAuthOrApiKey(
   adapter: AuthAdapter,
-  handler: (request: Request, auth: { session?: Session; apiKey?: ApiKeyInfo }) => Promise<Response>
+  handler: (request: Request, auth: { session?: Session; apiKey?: ApiKeyInfo }) => Promise<Response>,
+  options?: { requiredScopes?: string[] }
 ): (request: Request) => Promise<Response> {
   return async (request: Request) => {
-    // Try session first
     const session = await adapter.getSession(request)
     if (session) {
       return handler(request, { session })
     }
 
-    // Try API key
-    const authHeader = request.headers.get('Authorization')
-    const apiKeyHeader = request.headers.get('X-API-Key')
-    let key: string | null = null
-
-    if (authHeader?.startsWith('Bearer ')) {
-      key = authHeader.slice(7)
-    } else if (apiKeyHeader) {
-      key = apiKeyHeader
-    }
-
+    const key = extractApiKey(request)
     if (key) {
       const keyInfo = await adapter.validateApiKey(key)
       if (keyInfo) {
+        if (!checkScopes(keyInfo, options?.requiredScopes)) {
+          return new Response(
+            JSON.stringify({ error: 'Insufficient API key scope' }),
+            {
+              status: 403,
+              headers: { 'Content-Type': 'application/json' },
+            }
+          )
+        }
+
         return handler(request, { apiKey: keyInfo })
       }
     }

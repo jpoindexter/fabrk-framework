@@ -1,15 +1,6 @@
-/**
- * ✅ FABRK COMPONENT
- *
- * @example
- * ```tsx
- * <toast variant="default" />
- * ```
- */
-
 'use client';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import * as ToastPrimitives from '@radix-ui/react-toast';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -34,13 +25,17 @@ const ToastViewport = React.forwardRef<
 ));
 ToastViewport.displayName = 'ToastViewport';
 
+// Pre-compute static class strings so Tailwind JIT can scan them
+const toastVariantDefault = [mode.color.border.default, mode.color.bg.base, mode.color.text.primary].join(' ');
+const toastVariantDestructive = ['destructive', mode.color.border.danger, mode.color.bg.danger, mode.color.text.dangerOnColor].join(' ');
+
 const toastVariants = cva(
   'data-[swipe=end]:translate-x- data-[swipe=move]:translate-x- group pointer-events-auto relative flex w-full items-center justify-between space-x-6 overflow-hidden border p-6 pr-8 transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full',
   {
     variants: {
       variant: {
-        default: `${mode.color.border.default} ${mode.color.bg.base} ${mode.color.text.primary}`,
-        destructive: `destructive ${mode.color.border.danger} ${mode.color.bg.danger} ${mode.color.text.dangerOnColor}`,
+        default: toastVariantDefault,
+        destructive: toastVariantDestructive,
       },
     },
     defaultVariants: {
@@ -73,12 +68,12 @@ const ToastAction = React.forwardRef<
     className={cn(
       'inline-flex h-8 shrink-0 items-center justify-center border px-4 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
       mode.color.bg.base,
-      `hover:${mode.color.bg.secondary}`,
+      'hover:bg-secondary',
       mode.state.focus.ring,
-      `group-[.destructive]:${mode.color.border.danger}/40`,
-      `group-[.destructive]:hover:${mode.color.border.danger}/30`,
-      `group-[.destructive]:hover:${mode.color.bg.danger}`,
-      `group-[.destructive]:hover:${mode.color.text.dangerOnColor}`,
+      'group-[.destructive]:border-destructive/40',
+      'group-[.destructive]:hover:border-destructive/30',
+      'group-[.destructive]:hover:bg-destructive',
+      'group-[.destructive]:hover:text-destructive-foreground',
       mode.state.disabled.cursor,
       mode.state.disabled.opacity,
       mode.radius,
@@ -97,11 +92,11 @@ const ToastClose = React.forwardRef<
     ref={ref}
     className={cn(
       'absolute top-2 right-2 p-2 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:outline-none',
-      `${mode.color.text.primary}/50`,
-      `hover:${mode.color.text.primary}`,
+      'text-foreground/50',
+      'hover:text-foreground',
       mode.state.focus.ring,
-      `group-[.destructive]:${mode.color.text.danger}`,
-      `group-[.destructive]:hover:${mode.color.text.danger}`,
+      'group-[.destructive]:text-destructive',
+      'group-[.destructive]:hover:text-destructive',
       mode.radius,
       className
     )}

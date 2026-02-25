@@ -10,6 +10,14 @@ import type {
   TeamStore,
 } from '../plugin-types'
 
+const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+function validateKey(key: string): void {
+  if (POISONED_KEYS.has(key)) {
+    throw new Error(`Invalid key: "${key}" is a restricted property name`)
+  }
+}
+
 export class InMemoryTeamStore implements TeamStore {
   private orgs = new Map<string, Organization>()
   private members = new Map<string, OrgMember[]>()
@@ -27,14 +35,20 @@ export class InMemoryTeamStore implements TeamStore {
   }
 
   async createOrg(org: Organization): Promise<void> {
+    validateKey(org.id)
     this.orgs.set(org.id, org)
     this.members.set(org.id, [])
   }
 
   async updateOrg(id: string, updates: Partial<Organization>): Promise<void> {
+    validateKey(id)
     const org = this.orgs.get(id)
     if (org) {
-      Object.assign(org, updates)
+      // Only copy own, non-prototype-polluting properties
+      for (const key of Object.keys(updates)) {
+        if (POISONED_KEYS.has(key)) continue
+        ;(org as unknown as Record<string, unknown>)[key] = (updates as unknown as Record<string, unknown>)[key]
+      }
     }
   }
 
@@ -66,6 +80,7 @@ export class InMemoryTeamStore implements TeamStore {
   }
 
   async createInvite(invite: OrgInvite): Promise<void> {
+    validateKey(invite.token)
     this.invites.set(invite.token, invite)
   }
 
@@ -73,8 +88,12 @@ export class InMemoryTeamStore implements TeamStore {
     return this.invites.get(token) ?? null
   }
 
-  async acceptInvite(token: string): Promise<void> {
+  async acceptInvite(token: string): Promise<OrgInvite | null> {
     const invite = this.invites.get(token)
-    if (invite) invite.accepted = true
+    if (!invite) return null
+    if (invite.accepted) return null
+    if (invite.expiresAt < new Date()) return null
+    invite.accepted = true
+    return invite
   }
 }

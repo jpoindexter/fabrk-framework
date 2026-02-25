@@ -392,38 +392,6 @@ if (!budget.withinBudget) {
 }
 ```
 
-### Code Validation
-
-```typescript
-import { validateCode, isCodeSafe, getSecurityIssues } from '@/lib/ai/validation';
-
-// Validate AI-generated code
-const result = validateCode(generatedCode);
-if (!result.valid) {
-  console.error('Issues:', result.issues);
-}
-
-// Quick security check
-if (!isCodeSafe(code)) {
-  throw new AppError('UNSAFE_CODE', 'Generated code failed security check');
-}
-```
-
-### AI Testing
-
-```typescript
-import { AITest, commonSchemas } from '@/lib/ai/testing';
-
-// Test AI-generated functions
-await new AITest(generatedFunction)
-  .isAsync()
-  .shouldNotThrow(['valid-input'])
-  .shouldReturnType(userSchema, ['valid-input'])
-  .shouldHandleNull()
-  .shouldCompleteInMs(5000, ['valid-input'])
-  .verifyOrThrow();
-```
-
 ### Cost Widgets (React)
 
 ```typescript

@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import Link from 'next/link'
 import { DocLayout, Section, CodeBlock, InfoCard, PropsTable } from '@/components/doc-layout'
 import { COMPONENT_SLUGS } from '@/data/component-docs'
@@ -186,7 +186,7 @@ export default function ComponentsPage() {
         </p>
         <CodeBlock title="import pattern">{`import { Button, Card, Badge, BarChart, KPICard } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'`}</CodeBlock>
+import { mode } from '@fabrk/design-system'`}</CodeBlock>
 
         <CodeBlock title="critical design rules">{`// RULE 1: Full borders — ALWAYS add mode.radius
 <Card className={cn("border border-border", mode.radius)}>
@@ -278,7 +278,7 @@ const data = [
         </p>
         <CodeBlock title="BarChart + LineChart">{`import { BarChart, LineChart, Card } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 const revenueData = [
   { label: 'Jan', value: 4200 },

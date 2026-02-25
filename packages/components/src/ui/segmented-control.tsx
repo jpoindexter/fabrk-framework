@@ -18,7 +18,8 @@
 
 'use client'
 
-import { cn } from '../lib/utils'
+import * as React from 'react'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export interface SegmentedControlOption<T extends string = string> {

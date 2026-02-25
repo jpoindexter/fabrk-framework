@@ -1,18 +1,8 @@
 'use client';
 
-/**
- * ✅ FABRK COMPONENT
- * Password input component with visibility toggle.
- *
- * @example
- * ```tsx
- * <input-password />
- * ```
- */
-
 import { Button } from './button';
 import { Input } from './input';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { Eye, EyeOff } from 'lucide-react';
 import * as React from 'react';
 

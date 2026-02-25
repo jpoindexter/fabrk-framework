@@ -35,7 +35,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { cn } from '../../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 import {
@@ -96,8 +96,7 @@ export function DataTable<TData, TValue>({
         className={cn(
           mode.color.border.default,
           'bg-card overflow-x-auto scroll-smooth border [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-muted [&::-webkit-scrollbar-thumb]:bg-border',
-          mode.radius,
-          `[&::-webkit-scrollbar-thumb]:${mode.radius}`
+          mode.radius
         )}
       >
         <Table className="w-full">

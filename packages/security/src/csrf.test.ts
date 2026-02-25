@@ -33,20 +33,24 @@ describe('CsrfProtection', () => {
     })
 
     it('should not include Secure flag when secure is false', () => {
-      const cookie = csrf.createCookie('token')
+      const cookie = csrf.createCookie('abcdef0123456789')
       expect(cookie).not.toContain('Secure')
     })
 
-    it('should include Secure flag when configured', () => {
+    it('should include Secure flag when secure is true', () => {
       const secureCsrf = createCsrfProtection({ secure: true })
-      const cookie = secureCsrf.createCookie('token')
+      const cookie = secureCsrf.createCookie('abcdef0123456789')
       expect(cookie).toContain('Secure')
     })
 
     it('should use custom cookie name', () => {
       const custom = createCsrfProtection({ cookieName: 'my_csrf', secure: false })
-      const cookie = custom.createCookie('val')
-      expect(cookie).toContain('my_csrf=val')
+      const cookie = custom.createCookie('aabbccdd')
+      expect(cookie).toContain('my_csrf=aabbccdd')
+    })
+
+    it('should reject non-hex tokens', () => {
+      expect(() => csrf.createCookie('not-hex!')).toThrow('CSRF token must be a hex string')
     })
   })
 

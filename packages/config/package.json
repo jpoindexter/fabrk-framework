@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/config",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Type-safe configuration builder for FABRK framework",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -38,8 +38,11 @@
     "config",
     "configuration",
     "type-safe",
+    "env-vars",
+    "environment",
     "zod",
-    "typescript"
+    "typescript",
+    "saas"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

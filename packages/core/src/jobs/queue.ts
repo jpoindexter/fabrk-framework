@@ -27,6 +27,15 @@
 
 import type { Job, JobOptions, JobStatus, JobStore } from '../plugin-types'
 
+const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+function safeAssign<T extends Record<string, unknown>>(target: T, updates: Partial<T>): void {
+  for (const key of Object.keys(updates)) {
+    if (POISONED_KEYS.has(key)) continue
+    ;(target as Record<string, unknown>)[key] = (updates as Record<string, unknown>)[key]
+  }
+}
+
 export interface JobQueue {
   /** Enqueue a job */
   enqueue(options: JobOptions): Promise<Job>
@@ -47,6 +56,8 @@ export interface JobQueue {
  */
 class InMemoryJobStore implements JobStore {
   private jobs = new Map<string, Job>()
+  /** Tracks jobs that have been dequeued but not yet completed/failed, preventing double-dispatch. */
+  private inFlight = new Set<string>()
 
   async enqueue(job: Job) {
     this.jobs.set(job.id, job)
@@ -56,16 +67,26 @@ class InMemoryJobStore implements JobStore {
     const now = new Date()
     const pending = Array.from(this.jobs.values())
       .filter((j) => j.status === 'pending')
+      .filter((j) => !this.inFlight.has(j.id))
       .filter((j) => !types?.length || types.includes(j.type))
       .filter((j) => !j.scheduledAt || j.scheduledAt <= now)
       .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
 
-    return pending[0] ?? null
+    const job = pending[0] ?? null
+    if (job) this.inFlight.add(job.id)
+    return job
   }
 
   async update(id: string, updates: Partial<Job>) {
     const job = this.jobs.get(id)
-    if (job) Object.assign(job, updates)
+    if (job) {
+      safeAssign(job as unknown as Record<string, unknown>, updates as unknown as Record<string, unknown>)
+      // Remove from inFlight once the job reaches a terminal or error-retry state
+      const terminalStatuses: Array<Job['status']> = ['completed', 'failed', 'pending']
+      if (updates.status && terminalStatuses.includes(updates.status)) {
+        this.inFlight.delete(id)
+      }
+    }
   }
 
   async getById(id: string) {
@@ -83,6 +104,7 @@ export function createJobQueue(store?: JobStore): JobQueue {
   const jobStore = store ?? new InMemoryJobStore()
   const handlers = new Map<string, (job: Job) => Promise<void>>()
   let running = false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let pollTimer: any = null
 
   async function processNext(): Promise<boolean> {
@@ -95,11 +117,17 @@ export function createJobQueue(store?: JobStore): JobQueue {
     const handler = handlers.get(job.type)
     if (!handler) return false
 
-    await jobStore.update(job.id, {
-      status: 'running' as JobStatus,
-      lastAttemptAt: new Date(),
-      attempts: job.attempts + 1,
-    })
+    const nextAttempts = job.attempts + 1
+    try {
+      await jobStore.update(job.id, {
+        status: 'running' as JobStatus,
+        lastAttemptAt: new Date(),
+        attempts: nextAttempts,
+      })
+    } catch (updateErr) {
+      console.error('Failed to lock job', job.id, updateErr)
+      return false
+    }
 
     try {
       await handler(job)
@@ -109,8 +137,7 @@ export function createJobQueue(store?: JobStore): JobQueue {
       })
     } catch (err) {
       const maxRetries = job.maxRetries ?? 3
-      const newStatus: JobStatus =
-        job.attempts + 1 >= maxRetries ? 'failed' : 'pending'
+      const newStatus: JobStatus = nextAttempts >= maxRetries ? 'failed' : 'pending'
 
       await jobStore.update(job.id, {
         status: newStatus,

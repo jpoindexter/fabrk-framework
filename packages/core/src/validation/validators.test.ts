@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { checkHardcodedColors, checkInlineStyles, checkEvalUsage, checkDangerousHTML, checkHardcodedSecrets, checkAccessibility, validateFile } from './validators'
+import { checkHardcodedColors, checkEvalUsage, checkDangerousHTML, checkHardcodedSecrets, validateFile } from './validators'
 import { generateReport, formatReport } from './report'
 import { createComponentRegistry } from './registry'
 

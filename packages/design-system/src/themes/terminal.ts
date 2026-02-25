@@ -235,9 +235,7 @@ export const terminalTheme: SemanticTokens = {
   },
 };
 
-// =============================================================================
 // TERMINAL THEME UTILITIES
-// =============================================================================
 
 /**
  * Format text for terminal style buttons
@@ -272,9 +270,7 @@ export function formatStatusText(status: string): string {
   return `[${status.toUpperCase()}]`;
 }
 
-// =============================================================================
 // TERMINAL TAILWIND CLASSES
-// =============================================================================
 
 export const terminalClasses = {
   radius: 'rounded-dynamic',

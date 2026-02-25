@@ -1,12 +1,3 @@
-/**
- * Input Sanitization
- *
- * Utilities for sanitizing user input to prevent XSS and injection attacks.
- */
-
-/**
- * Sanitize a string by escaping HTML entities
- */
 export function escapeHtml(input: string): string {
   return input
     .replace(/&/g, '&amp;')
@@ -16,25 +7,33 @@ export function escapeHtml(input: string): string {
     .replace(/'/g, '&#x27;')
 }
 
-/**
- * Strip all HTML tags from a string
- */
 export function stripHtml(input: string): string {
-  return input.replace(/<[^>]*>/g, '')
+  // Match complete tags AND unclosed tags (no closing >) at end of string
+  // to prevent bypass via partial tags like `<script` with no closing `>`.
+  return input.replace(/<[^>]*(>|$)/gm, '')
 }
 
 /**
- * @deprecated Use parameterized queries instead. This blocklist approach does not
- * protect against Unicode escapes, double-encoding, or DB-specific injection vectors.
- * Will be removed in a future major version.
+ * @deprecated **SECURITY WARNING**: Do NOT rely on this function for SQL injection
+ * protection. This blocklist approach does not protect against Unicode escapes,
+ * double-encoding, nested quoting, or database-specific injection vectors.
+ *
+ * **Use parameterized queries / prepared statements instead.**
+ *
+ * This function will be removed in a future major version. It is retained only
+ * to avoid a breaking change for existing consumers.
+ *
+ * @see https://cheatsheetseries.owasp.org/cheatsheets/Query_Parameterization_Cheat_Sheet.html
  */
 export function sanitizeSqlInput(input: string): string {
+  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+    console.warn(
+      '[@fabrk/security] sanitizeSqlInput is deprecated and insecure. Use parameterized queries instead.'
+    )
+  }
   return input.replace(/['";\\]/g, '')
 }
 
-/**
- * Validate and sanitize a URL
- */
 export function sanitizeUrl(input: string): string | null {
   try {
     const url = new URL(input)
@@ -48,16 +47,29 @@ export function sanitizeUrl(input: string): string | null {
   }
 }
 
-/**
- * Validate and sanitize a redirect URL (prevent open redirect)
- */
 export function sanitizeRedirectUrl(
   input: string,
   allowedHosts: string[]
 ): string | null {
-  // Allow relative URLs
+  if (!input || typeof input !== 'string') return null
+
+  // Decode URL encoding before validation to catch bypass attempts such as
+  // /%2F which passes the raw startsWith('/') + !startsWith('//') checks but
+  // decodes to //evil.com — an open redirect.
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(input)
+  } catch {
+    // Invalid percent-encoding — reject
+    return null
+  }
+
+  // Allow relative URLs — validate both the decoded and raw forms (belt-and-suspenders),
+  // then strip CR/LF from the raw value to prevent HTTP response splitting.
   if (input.startsWith('/') && !input.startsWith('//')) {
-    return input
+    // Decoded form must also be a safe relative path
+    if (!decoded.startsWith('/') || decoded.startsWith('//')) return null
+    return input.replace(/[\r\n]/g, '')
   }
 
   try {

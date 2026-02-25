@@ -8,7 +8,7 @@
  * and everything wires up automatically.
  */
 
-import type { FabrkConfig, FabrkConfigInput } from './types'
+import type { FabrkConfigInput } from './types'
 import { PluginRegistry } from './plugins'
 import type {
   PaymentAdapter,
@@ -39,6 +39,15 @@ function env(key: string, fallback = ''): string {
     return (globalThis as any).process?.env?.[key] ?? fallback
   } catch {
     return fallback
+  }
+}
+
+function isDev(): boolean {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (globalThis as any).process?.env?.NODE_ENV !== 'production'
+  } catch {
+    return false
   }
 }
 
@@ -154,12 +163,9 @@ export async function autoWire(
   return { registry, features }
 }
 
-// ============================================================================
-// ADAPTER WIRING (dynamic imports)
-//
-// Dynamic imports use string variables so TypeScript doesn't try to resolve
-// the modules at build time. The packages are optional peer dependencies.
-// ============================================================================
+// ADAPTER WIRING
+// Dynamic imports use string variables so TypeScript doesn't resolve them at build time.
+// The packages are optional peer dependencies.
 
 async function wirePayment(config: FabrkConfigInput, registry: PluginRegistry): Promise<void> {
   const pkgName = '@fabrk/payments'
@@ -169,20 +175,23 @@ async function wirePayment(config: FabrkConfigInput, registry: PluginRegistry): 
     const adapter = config.payments?.adapter
 
     if (adapter === 'stripe' && payments.createStripeAdapter) {
-      registry.register('payment', payments.createStripeAdapter({
-        secretKey: env('STRIPE_SECRET_KEY'),
-        webhookSecret: env('STRIPE_WEBHOOK_SECRET'),
-      }))
+      const secretKey = env('STRIPE_SECRET_KEY')
+      const webhookSecret = env('STRIPE_WEBHOOK_SECRET')
+      if (!secretKey && isDev()) console.warn('[FABRK] STRIPE_SECRET_KEY is not set — Stripe adapter will not function')
+      if (!webhookSecret && isDev()) console.warn('[FABRK] STRIPE_WEBHOOK_SECRET is not set — Stripe webhook verification will not function')
+      registry.register('payment', payments.createStripeAdapter({ secretKey, webhookSecret }))
     } else if (adapter === 'polar' && payments.createPolarAdapter) {
-      registry.register('payment', payments.createPolarAdapter({
-        accessToken: env('POLAR_ACCESS_TOKEN'),
-      }))
+      const accessToken = env('POLAR_ACCESS_TOKEN')
+      if (!accessToken && isDev()) console.warn('[FABRK] POLAR_ACCESS_TOKEN is not set — Polar adapter will not function')
+      registry.register('payment', payments.createPolarAdapter({ accessToken }))
     } else if (adapter === 'lemonsqueezy' && payments.createLemonSqueezyAdapter) {
-      registry.register('payment', payments.createLemonSqueezyAdapter({
-        apiKey: env('LEMONSQUEEZY_API_KEY'),
-        storeId: env('LEMONSQUEEZY_STORE_ID'),
-        webhookSecret: env('LEMONSQUEEZY_WEBHOOK_SECRET'),
-      }))
+      const apiKey = env('LEMONSQUEEZY_API_KEY')
+      const storeId = env('LEMONSQUEEZY_STORE_ID')
+      const webhookSecret = env('LEMONSQUEEZY_WEBHOOK_SECRET')
+      if (!apiKey && isDev()) console.warn('[FABRK] LEMONSQUEEZY_API_KEY is not set — Lemon Squeezy adapter will not function')
+      if (!storeId && isDev()) console.warn('[FABRK] LEMONSQUEEZY_STORE_ID is not set — Lemon Squeezy adapter will not function')
+      if (!webhookSecret && isDev()) console.warn('[FABRK] LEMONSQUEEZY_WEBHOOK_SECRET is not set — Lemon Squeezy webhook verification will not function')
+      registry.register('payment', payments.createLemonSqueezyAdapter({ apiKey, storeId, webhookSecret }))
     }
   } catch {
     // @fabrk/payments not installed — skip
@@ -197,8 +206,10 @@ async function wireEmail(config: FabrkConfigInput, registry: PluginRegistry): Pr
     const adapter = config.email?.adapter
 
     if (adapter === 'resend' && email.createResendAdapter) {
+      const apiKey = env('RESEND_API_KEY')
+      if (!apiKey && isDev()) console.warn('[FABRK] RESEND_API_KEY is not set — Resend adapter will not function')
       registry.register('email', email.createResendAdapter({
-        apiKey: env('RESEND_API_KEY'),
+        apiKey,
         from: config.email?.from ?? 'noreply@example.com',
       }))
     } else if (adapter === 'console' && email.createConsoleAdapter) {
@@ -219,15 +230,20 @@ async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): 
     const adapter = config.storage?.adapter
 
     if (adapter === 's3' && storage.createS3Adapter) {
+      const accessKeyId = env('AWS_ACCESS_KEY_ID')
+      const bucket = env('S3_BUCKET')
+      if (!accessKeyId && isDev()) console.warn('[FABRK] AWS_ACCESS_KEY_ID is not set — S3 adapter will not function')
+      if (!bucket && isDev()) console.warn('[FABRK] S3_BUCKET is not set — S3 adapter will not function')
       registry.register('storage', storage.createS3Adapter({
-        bucket: env('S3_BUCKET'),
+        bucket,
         region: env('AWS_REGION', 'us-east-1'),
       }))
     } else if (adapter === 'r2' && storage.createR2Adapter) {
-      registry.register('storage', storage.createR2Adapter({
-        bucket: env('R2_BUCKET'),
-        accountId: env('R2_ACCOUNT_ID'),
-      }))
+      const bucket = env('R2_BUCKET')
+      const accountId = env('R2_ACCOUNT_ID')
+      if (!bucket && isDev()) console.warn('[FABRK] R2_BUCKET is not set — R2 adapter will not function')
+      if (!accountId && isDev()) console.warn('[FABRK] R2_ACCOUNT_ID is not set — R2 adapter will not function')
+      registry.register('storage', storage.createR2Adapter({ bucket, accountId }))
     } else if (adapter === 'local' && storage.createLocalAdapter) {
       registry.register('storage', storage.createLocalAdapter({
         basePath: env('STORAGE_PATH', './uploads'),
@@ -238,9 +254,7 @@ async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): 
   }
 }
 
-// ============================================================================
 // FEATURE MODULE WIRING
-// ============================================================================
 
 function wireFeatures(config: FabrkConfigInput, stores?: StoreOverrides): FeatureModules {
   const features: FeatureModules = {

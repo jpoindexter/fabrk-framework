@@ -123,7 +123,7 @@ function DataTable() {
 }`}</CodeBlock>
 
         <CodeBlock title="components use tokens, not colors">{`import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 // Design tokens resolve to CSS variables at zero runtime cost
 <Card className={cn("bg-card border border-border", mode.radius)}>

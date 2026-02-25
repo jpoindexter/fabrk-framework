@@ -1,6 +1,6 @@
 {
   "name": "create-fabrk-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "CLI tool to scaffold new FABRK applications",
   "bin": {
     "create-fabrk-app": "./dist/index.js",
@@ -39,8 +39,12 @@
     "scaffold",
     "generator",
     "create-app",
+    "boilerplate",
+    "starter",
+    "template",
     "ai-framework",
-    "nextjs"
+    "nextjs",
+    "typescript"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

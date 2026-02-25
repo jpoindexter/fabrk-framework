@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
 
 export default function DashboardTutorialPage() {
@@ -76,7 +76,7 @@ export default defineFabrkConfig({
         <CodeBlock title="src/app/dashboard/layout.tsx">{`'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -137,7 +137,7 @@ export default function DashboardLayout({
 
 import { KPICard } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 const stats = [
   { title: 'REVENUE', value: '$48,290', trend: 12.5 },
@@ -357,7 +357,7 @@ export default defineFabrkConfig({
 
 import { KPICard, Card, Badge, BarChart, LineChart, DataTable } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 const stats = [
   { title: 'REVENUE', value: '$48,290', trend: 12.5 },

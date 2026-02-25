@@ -1,13 +1,5 @@
-/**
- * Prisma-based Job Store
- *
- * Persists background jobs to the database for durable processing.
- */
-
 import type { JobStore, Job, JobStatus } from '@fabrk/core'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
-type PrismaClient = any
+import type { PrismaClient } from './types'
 
 export class PrismaJobStore implements JobStore {
   constructor(private prisma: PrismaClient) {}
@@ -30,47 +22,74 @@ export class PrismaJobStore implements JobStore {
   }
 
   async dequeue(types?: string[]): Promise<Job | null> {
-    // Atomically claim next available job using updateMany + findFirst pattern
     const now = new Date()
 
-    const where: Record<string, unknown> = {
-      status: 'pending',
-      OR: [
-        { scheduledAt: null },
-        { scheduledAt: { lte: now } },
-      ],
-    }
+    // Use $queryRaw with tagged template literals (Prisma's safe SQL API).
+    // When types are provided they are passed as parameters via the IN list;
+    // we build separate positional slots so no value is ever string-interpolated.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let rows: any[]
     if (types?.length) {
-      where.type = { in: types }
+      // Build a safe parameterized query using Prisma's $queryRaw tagged-template
+      // calling convention without importing @prisma/client. $queryRaw accepts the
+      // same (TemplateStringsArray, ...values) signature used by tagged templates.
+      // We construct the parts array manually so that every value — including each
+      // type string — is passed as a bound parameter, never string-interpolated.
+      //
+      // For N interpolated values you need exactly N+1 string parts.
+      // Values passed: now (x2), ...types  →  2 + types.length values
+      //   → need 3 + types.length string parts
+      //
+      // Parts layout:
+      //   parts[0]              : SQL before first `now`
+      //   parts[1]              : SQL between first and second `now`
+      //   parts[2]              : SQL between second `now` and types[0]
+      //   parts[3..N]           : ', ' between each pair of type values
+      //   parts[2+types.length] : SQL closing the IN list and the rest of the query
+      const prefix = `UPDATE "Job"
+         SET "status" = 'running',
+             "lastAttemptAt" = `
+      const middle1 = `,
+             "attempts" = "attempts" + 1
+         WHERE "id" = (
+           SELECT "id" FROM "Job"
+           WHERE "status" = 'pending'
+             AND ("scheduledAt" IS NULL OR "scheduledAt" <= `
+      const middle2 = `)
+             AND "type" IN (`
+      const suffix = `)
+           ORDER BY "priority" DESC, "createdAt" ASC
+           LIMIT 1
+           FOR UPDATE SKIP LOCKED
+         )
+         RETURNING *`
+      // Separators between type values: N-1 ', ' parts, then the suffix as the last part
+      const innerSeparators = types.slice(0, -1).map(() => ', ')
+      const rawParts: string[] = [prefix, middle1, middle2, ...innerSeparators, suffix]
+      const templateObj = Object.assign(rawParts, { raw: rawParts }) as TemplateStringsArray
+      rows = await this.prisma.$queryRaw(templateObj, now, now, ...types)
+    } else {
+      rows = await this.prisma.$queryRaw`
+        UPDATE "Job"
+        SET "status" = 'running',
+            "lastAttemptAt" = ${now},
+            "attempts" = "attempts" + 1
+        WHERE "id" = (
+          SELECT "id" FROM "Job"
+          WHERE "status" = 'pending'
+            AND ("scheduledAt" IS NULL OR "scheduledAt" <= ${now})
+          ORDER BY "priority" DESC, "createdAt" ASC
+          LIMIT 1
+          FOR UPDATE SKIP LOCKED
+        )
+        RETURNING *`
     }
 
-    // Find and claim in a transaction
-    const job = await this.prisma.$transaction(async (tx: PrismaClient) => {
-      const pending = await tx.job.findFirst({
-        where,
-        orderBy: [
-          { priority: 'desc' },
-          { createdAt: 'asc' },
-        ],
-      })
-
-      if (!pending) return null
-
-      await tx.job.update({
-        where: { id: pending.id },
-        data: {
-          status: 'running',
-          lastAttemptAt: now,
-          attempts: { increment: 1 },
-        },
-      })
-
-      return { ...pending, status: 'running' as const, lastAttemptAt: now, attempts: pending.attempts + 1 }
-    })
-
-    return job ? mapJob(job) : null
+    if (!rows || rows.length === 0) return null
+    return mapJob(rows[0])
   }
 
+  /** @security No tenant isolation — caller must verify the job belongs to the requesting user/org. */
   async update(id: string, updates: Partial<Job>): Promise<void> {
     await this.prisma.job.update({
       where: { id },
@@ -94,29 +113,56 @@ export class PrismaJobStore implements JobStore {
     const jobs = await this.prisma.job.findMany({
       where: { status },
       orderBy: { createdAt: 'desc' },
-      take: limit,
+      take: limit ?? 100,
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return jobs.map((j: any) => mapJob(j))
   }
 }
 
+/**
+ * Normalize a raw DB row to camelCase field names.
+ * `$queryRaw` returns snake_case column names from PostgreSQL; ORM calls
+ * return camelCase. This mapper handles both so `mapJob` works for both
+ * code paths.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapJob(raw: any): Job {
+function normalizeJobRow(raw: any): any {
   return {
     id: raw.id,
     type: raw.type,
-    payload: raw.payload ?? {},
-    priority: raw.priority ?? 0,
-    maxRetries: raw.maxRetries ?? 3,
-    delay: raw.delay ?? undefined,
-    scheduledAt: raw.scheduledAt ?? undefined,
-    status: raw.status as JobStatus,
+    payload: raw.payload,
+    priority: raw.priority,
+    maxRetries: raw.maxRetries ?? raw.max_retries,
+    delay: raw.delay,
+    scheduledAt: raw.scheduledAt ?? raw.scheduled_at,
+    status: raw.status,
     attempts: raw.attempts,
-    createdAt: raw.createdAt,
-    lastAttemptAt: raw.lastAttemptAt ?? undefined,
-    completedAt: raw.completedAt ?? undefined,
-    error: raw.error ?? undefined,
-    result: raw.result ?? undefined,
+    createdAt: raw.createdAt ?? raw.created_at,
+    lastAttemptAt: raw.lastAttemptAt ?? raw.last_attempt_at,
+    completedAt: raw.completedAt ?? raw.completed_at,
+    error: raw.error,
+    result: raw.result,
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapJob(raw: any): Job {
+  const r = normalizeJobRow(raw)
+  return {
+    id: r.id,
+    type: r.type,
+    payload: r.payload ?? {},
+    priority: r.priority ?? 0,
+    maxRetries: r.maxRetries ?? 3,
+    delay: r.delay ?? undefined,
+    scheduledAt: r.scheduledAt ?? undefined,
+    status: r.status as JobStatus,
+    attempts: r.attempts,
+    createdAt: r.createdAt,
+    lastAttemptAt: r.lastAttemptAt ?? undefined,
+    completedAt: r.completedAt ?? undefined,
+    error: r.error ?? undefined,
+    result: r.result ?? undefined,
   }
 }

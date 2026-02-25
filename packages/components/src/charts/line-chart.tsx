@@ -32,7 +32,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 // Theme colors using CSS custom properties directly
@@ -126,7 +126,6 @@ export function LineChart({
                 {xAxisFormatter ? xAxisFormatter(String(label ?? '')) : label}
               </p>
               <div className="space-y-1">
-                { }
                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {payload.map((entry: any, index: number) => (
                   <p key={index} className={cn('text-muted-foreground text-xs', mode.font)}>
@@ -140,7 +139,6 @@ export function LineChart({
                     </span>
                   </p>
                 ))}
-                { }
               </div>
             </div>
           );

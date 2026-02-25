@@ -3,6 +3,7 @@
  *
  * Composable middleware system for chaining request/response handlers.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type MiddlewareFunction<TContext = any> = (
   context: TContext,
@@ -50,7 +51,12 @@ export function createMiddleware<TContext = any>(): Middleware<TContext> {
         if (index >= middlewares.length) return;
 
         const middleware = middlewares[index++];
-        await middleware(context, dispatch);
+        let called = false;
+        await middleware(context, () => {
+          if (called) throw new Error('next() called multiple times');
+          called = true;
+          return dispatch();
+        });
       }
 
       await dispatch();
@@ -79,7 +85,12 @@ export function compose<TContext = any>(
       }
 
       const middleware = middlewares[index++];
-      await middleware(context, dispatch);
+      let called = false;
+      await middleware(context, () => {
+        if (called) throw new Error('next() called multiple times');
+        called = true;
+        return dispatch();
+      });
     }
 
     await dispatch();

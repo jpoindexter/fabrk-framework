@@ -28,7 +28,7 @@
 
 import * as React from 'react';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 /**
@@ -78,18 +78,11 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       ref={ref}
       data-slot="card"
       className={cn(
-        // Base styles - ONE card shell + CRT scanlines in Terminal mode
         'crt-scanlines relative flex flex-col border overflow-hidden',
         mode.color.bg.surface,
         mode.radius,
-
-        // Tone (border color)
         toneStyles[tone],
-
-        // Size behavior
         sizeStyles[size],
-
-        // Interactive states
         interactive && cn('group transition-colors', mode.state.hover.card),
 
         className
@@ -195,7 +188,6 @@ const CardFooter = React.forwardRef<HTMLDivElement, CardFooterProps>(
 );
 CardFooter.displayName = 'CardFooter';
 
-// Export core components
 export { Card, CardHeader, CardContent, CardFooter };
 
 // Re-export marketing components for convenience (also available from './terminal-card')

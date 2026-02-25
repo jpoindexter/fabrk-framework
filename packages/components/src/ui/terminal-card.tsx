@@ -6,9 +6,10 @@
 
 import * as React from 'react';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Card, CardHeader, CardContent } from './card';
+import { sanitizeHref } from '../utils';
 
 /**
  * Stat - Key-value pair with label and highlighted value
@@ -600,7 +601,7 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
         {ctaLabel && ctaHref && (
           <div className="p-6 pt-0 mt-auto">
             <a
-              href={ctaHref}
+              href={sanitizeHref(ctaHref)}
               className={cn(
                 'flex items-center justify-center gap-2 w-full h-10 border text-xs font-medium',
                 'bg-transparent transition-all duration-200',

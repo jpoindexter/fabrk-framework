@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { PieChart, PieChartDataItem } from './pie-chart';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 interface DonutChartProps {
   data: PieChartDataItem[];
@@ -46,7 +46,6 @@ export function DonutChart({
 }: DonutChartProps) {
   const radius = size / 2 - 10;
   const innerRadius = radius - thickness;
-  const _total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className={cn('relative', className)}>

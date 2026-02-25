@@ -70,7 +70,7 @@ export const { email, storage, payments, auth, security } = fabrk`}</CodeBlock>
   radius: 'sharp',        // Border radius: 'sharp' | 'rounded' | 'pill'
 }
 
-// The 'mode' object from @fabrk/design-system or @fabrk/themes
+// The 'mode' object from @fabrk/design-system or @fabrk/design-system
 // provides runtime access to theme values:
 //   mode.radius  → 'rounded-none' | 'rounded-lg' | 'rounded-full'
 //   mode.font    → 'font-mono' | 'font-sans'

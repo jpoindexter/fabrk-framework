@@ -47,7 +47,7 @@ describe('budgetEnforcement', () => {
   })
 
   it('should block requests when daily budget is exceeded', async () => {
-    const { InMemoryCostStore } = await import('./cost')
+    const { InMemoryCostStore } = await import('./tracker')
     const store = new InMemoryCostStore()
 
     // Add cost events that exceed budget
@@ -80,7 +80,7 @@ describe('budgetEnforcement', () => {
   })
 
   it('should fire alert when approaching threshold', async () => {
-    const { InMemoryCostStore } = await import('./cost')
+    const { InMemoryCostStore } = await import('./tracker')
     const store = new InMemoryCostStore()
 
     await store.save({

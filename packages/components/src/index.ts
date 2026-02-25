@@ -62,7 +62,7 @@ export * from './ui/toaster'
 export * from './ui/tooltip'
 export * from './ui/typewriter'
 
-// New UI Components (extracted from indx)
+// New UI Components (extracted from index)
 export * from './ui/tag'
 export * from './ui/segmented-control'
 export * from './ui/status-pulse'
@@ -137,4 +137,8 @@ export type { BreadcrumbsProps, BreadcrumbItem as SeoBreadcrumbItem } from './se
 export * from './hooks'
 
 // Utilities
-export { cn } from './lib/utils'
+export { cn } from '@fabrk/core'
+export { sanitizeHref } from './utils'
+
+// Component Registry
+export * from './registry'

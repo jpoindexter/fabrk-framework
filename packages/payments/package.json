@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/payments",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Payment adapters for FABRK framework (Stripe, Polar, Lemon Squeezy)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -46,9 +46,13 @@
   "keywords": [
     "fabrk",
     "payments",
+    "billing",
+    "subscriptions",
+    "saas",
     "stripe",
     "polar",
     "lemonsqueezy",
+    "typescript",
     "ai-coding"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",

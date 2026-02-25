@@ -212,7 +212,9 @@ export {
   jobsConfigSchema,
 }
 
-// Backwards compatibility aliases
+/**
+ * @deprecated Use `themeConfigSchema` instead. This alias will be removed in a future major version.
+ */
 export { themeConfigSchema as designConfigSchema }
 
 // Inferred types for each section
@@ -230,7 +232,9 @@ export type FeatureFlagsConfig = z.infer<typeof featureFlagsConfigSchema>
 export type WebhooksConfig = z.infer<typeof webhooksConfigSchema>
 export type JobsConfig = z.infer<typeof jobsConfigSchema>
 
-// Backwards compatibility alias
+/**
+ * @deprecated Use `ThemeConfig` instead. This alias will be removed in a future major version.
+ */
 export type DesignConfig = ThemeConfig
 
 /**

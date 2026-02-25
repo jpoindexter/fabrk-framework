@@ -13,7 +13,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 interface GaugeProps {
   value: number;
@@ -220,10 +220,9 @@ export function ScoreGauge({
 }: ScoreGaugeProps) {
   const getColor = (score: number, max: number) => {
     const percentage = (score / max) * 100;
-    if (percentage >= 80) return 'oklch(70% 0.15 160)'; // Green
-    if (percentage >= 60) return 'oklch(70% 0.15 60)'; // Yellow
-    if (percentage >= 40) return 'oklch(70% 0.15 30)'; // Orange
-    return 'oklch(60% 0.20 25)'; // Red
+    if (percentage >= 80) return 'hsl(var(--success))';
+    if (percentage >= 60) return 'hsl(var(--chart-4))';
+    return 'hsl(var(--destructive))';
   };
 
   return (

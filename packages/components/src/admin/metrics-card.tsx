@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '../ui/card';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface AdminMetricsCardProps {

@@ -19,7 +19,7 @@
 
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 function Tabs({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Root>) {
@@ -38,7 +38,8 @@ function TabsList({ className, ...props }: React.ComponentProps<typeof TabsPrimi
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        `flex h-auto w-full items-center justify-evenly border-b p-0 ${mode.color.border.default}`,
+        'flex h-auto w-full items-center justify-evenly border-b p-0',
+        mode.color.border.default,
         mode.color.text.primary,
         // Note: No border-radius on TabsList - it only has border-bottom, radius would curl the underline
         mode.font,

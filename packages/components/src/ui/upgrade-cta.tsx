@@ -1,7 +1,8 @@
 'use client'
 
-import { cn } from '../lib/utils'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
+import { sanitizeHref } from '../utils'
 
 export interface UpgradeCTAProps {
   hiddenCount: number
@@ -16,7 +17,7 @@ export interface UpgradeCTAProps {
 }
 
 function DefaultLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
-  return <a href={href} className={className}>{children}</a>
+  return <a href={sanitizeHref(href)} className={className}>{children}</a>
 }
 
 export function UpgradeCTA({
@@ -25,10 +26,11 @@ export function UpgradeCTA({
   variant = 'card',
   upgradeText,
   onUpgrade,
-  upgradeHref = '/pricing',
+  upgradeHref: rawUpgradeHref = '/pricing',
   linkComponent: LinkComp = DefaultLink,
   className,
 }: UpgradeCTAProps) {
+  const upgradeHref = sanitizeHref(rawUpgradeHref)
   if (hiddenCount <= 0) return null
 
   const displayType = contentType
@@ -164,10 +166,11 @@ export function ContentLimitBadge({
   visibleCount,
   totalCount,
   onUpgrade,
-  upgradeHref = '/pricing',
+  upgradeHref: rawUpgradeHref = '/pricing',
   linkComponent: LinkComp = DefaultLink,
   className,
 }: ContentLimitBadgeProps) {
+  const upgradeHref = sanitizeHref(rawUpgradeHref)
   if (visibleCount >= totalCount) return null
 
   const locked = totalCount - visibleCount

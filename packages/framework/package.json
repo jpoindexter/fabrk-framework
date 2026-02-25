@@ -33,6 +33,22 @@
     "./server/app-router-entry": {
       "import": "./dist/server/app-router-entry.js",
       "types": "./dist/server/app-router-entry.d.ts"
+    },
+    "./components": {
+      "import": "./dist/components.js",
+      "types": "./dist/components.d.ts"
+    },
+    "./themes": {
+      "import": "./dist/themes.js",
+      "types": "./dist/themes.d.ts"
+    },
+    "./client/use-agent": {
+      "import": "./dist/client/use-agent.js",
+      "types": "./dist/client/use-agent.d.ts"
+    },
+    "./fabrk": {
+      "import": "./dist/fabrk.js",
+      "types": "./dist/fabrk.d.ts"
     }
   },
   "files": [

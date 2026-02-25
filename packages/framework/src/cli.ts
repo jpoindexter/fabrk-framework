@@ -354,6 +354,33 @@ async function deployCommand() {
     if (nameEq) name = nameEq.split("=")[1];
   }
 
+  // Parse --target flag (workers | node | vercel)
+  let target: string = "workers";
+  const targetIdx = rawArgs.indexOf("--target");
+  if (targetIdx !== -1 && rawArgs[targetIdx + 1]) {
+    target = rawArgs[targetIdx + 1];
+  } else {
+    const targetEq = rawArgs.find((a) => a.startsWith("--target="));
+    if (targetEq) target = targetEq.split("=")[1];
+  }
+
+  if (target === "node") {
+    const { generateNodeStandalone } = await import("./deploy/node.js");
+    const outDir = generateNodeStandalone(process.cwd(), "dist");
+    console.log(`  Node.js standalone generated at: ${outDir}`);
+    console.log(`  Start with: cd ${outDir} && node server.mjs`);
+    return;
+  }
+
+  if (target === "vercel") {
+    const { generateVercelOutput } = await import("./deploy/vercel.js");
+    const outDir = generateVercelOutput(process.cwd(), ".");
+    console.log(`  Vercel output generated at: ${outDir}`);
+    console.log(`  Deploy with: vercel deploy --prebuilt`);
+    return;
+  }
+
+  // Default: workers (original vinext deploy)
   // Parse TPR flags
   const tprCoverage = parseNumericFlag(rawArgs, "--tpr-coverage");
   const tprLimit = parseNumericFlag(rawArgs, "--tpr-limit");

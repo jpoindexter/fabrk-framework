@@ -22,6 +22,8 @@ import { findInstrumentationFile, runInstrumentation } from "./server/instrument
 import { safeRegExp, isExternalUrl, proxyExternalRequest } from "./config/config-matchers.js";
 import { scanMetadataFiles } from "./server/metadata-routes.js";
 import { staticExportPages } from "./build/static-export.js";
+import { agentPlugin } from "./agents/vite-plugin.js";
+import { dashboardPlugin } from "./dashboard/vite-plugin.js";
 import tsconfigPaths from "vite-tsconfig-paths";
 import MagicString from "magic-string";
 import path from "node:path";
@@ -1695,6 +1697,10 @@ hydrate();
     // Resolve tsconfig paths/baseUrl aliases so real-world Next.js repos
     // that use @/*, #/*, or baseUrl imports work out of the box.
     tsconfigPaths(),
+    // Scan agents/ directory and register /api/agents/* dev middleware
+    agentPlugin(),
+    // Serve /__ai dev dashboard
+    dashboardPlugin(),
     {
       name: "fabrk:config",
       enforce: "pre",

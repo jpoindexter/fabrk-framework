@@ -53,7 +53,7 @@ export function CodeBlock({ children, title }: { children: string; title?: strin
           {title}
         </div>
       )}
-      <pre className={cn('border border-border bg-card p-4 overflow-x-auto text-sm')}>
+      <pre className={cn('border border-border bg-card text-card-foreground p-4 overflow-x-auto text-sm')}>
         <code>{children}</code>
       </pre>
     </div>

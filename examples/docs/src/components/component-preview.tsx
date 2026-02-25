@@ -55,7 +55,7 @@ export function ComponentPreview({ children, code, title }: ComponentPreviewProp
           <div className="w-full max-w-xl">{children}</div>
         </div>
       ) : (
-        <pre className="p-4 bg-card overflow-x-auto text-sm text-foreground">
+        <pre className="p-4 bg-card overflow-x-auto text-sm text-card-foreground">
           <code>{code}</code>
         </pre>
       )}

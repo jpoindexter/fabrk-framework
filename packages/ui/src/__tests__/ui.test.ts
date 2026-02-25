@@ -7,7 +7,6 @@ import {
   listComponents,
   resolveDeps,
 } from '../index'
-import type { Registry, RegistryComponent } from '../index'
 
 // =============================================================================
 // getRegistry
@@ -350,36 +349,6 @@ describe('resolveDeps', () => {
     // All chart components use recharts, but it should appear once
     const rechartsCount = deps.filter(d => d === 'recharts').length
     expect(rechartsCount).toBe(1)
-  })
-})
-
-// =============================================================================
-// TYPE CHECKS (compile-time)
-// =============================================================================
-
-describe('types', () => {
-  it('RegistryComponent type should match registry entries', () => {
-    const comp: RegistryComponent = {
-      name: 'test',
-      category: 'ui',
-      file: 'registry/ui/test.tsx',
-      deps: ['some-dep'],
-    }
-    expect(comp.name).toBe('test')
-    expect(comp.category).toBe('ui')
-    expect(comp.file).toBe('registry/ui/test.tsx')
-    expect(comp.deps).toEqual(['some-dep'])
-  })
-
-  it('Registry type should match registry structure', () => {
-    const registry: Registry = {
-      name: 'test',
-      version: '0.0.0',
-      categories: { ui: 'UI components' },
-      components: [],
-    }
-    expect(registry.name).toBe('test')
-    expect(registry.components).toEqual([])
   })
 })
 

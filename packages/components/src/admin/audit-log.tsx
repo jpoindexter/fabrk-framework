@@ -17,7 +17,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Card } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -26,6 +26,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../ui/sheet';
+import { getInitials, sanitizeSrc } from '../utils';
 import {
   Search,
   Download,
@@ -69,7 +70,6 @@ export interface AuditLogEntry {
 export interface AuditLogProps {
   className?: string;
   onExport?: () => Promise<void>;
-  onRefresh?: () => Promise<void>;
   initialLogs?: AuditLogEntry[];
 }
 
@@ -96,15 +96,6 @@ const getActionBadgeVariant = (action: AuditAction) => {
 
 const getActionLabel = (action: AuditAction) => {
   return action.toUpperCase().replace(/\./g, '_');
-};
-
-const getUserInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 };
 
 /* ----- Sub-Components ----- */
@@ -190,9 +181,9 @@ function LogEntryItem({ log, isLast, onShowDetails }: { log: AuditLogEntry; isLa
 
       <div className="flex items-start gap-4">
         <Avatar className="border-border h-10 w-10 border-2">
-          <AvatarImage src={log.userAvatar} alt={log.userName} />
+          <AvatarImage src={sanitizeSrc(log.userAvatar)} alt={log.userName} />
           <AvatarFallback className={cn('text-xs', mode.font)}>
-            {getUserInitials(log.userName)}
+            {getInitials(log.userName)}
           </AvatarFallback>
         </Avatar>
 
@@ -253,9 +244,9 @@ function LogDetailsSheet({ log, onClose }: { log: AuditLogEntry | null; onClose:
                 <p className={cn('text-xs font-semibold', mode.font)}>[USER]:</p>
                 <div className="flex items-center gap-4">
                   <Avatar className="border-border h-12 w-12 border-2">
-                    <AvatarImage src={log.userAvatar} alt={log.userName} />
+                    <AvatarImage src={sanitizeSrc(log.userAvatar)} alt={log.userName} />
                     <AvatarFallback className={cn('text-sm', mode.font)}>
-                      {getUserInitials(log.userName)}
+                      {getInitials(log.userName)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
@@ -329,7 +320,11 @@ export function AuditLog({
   onExport,
   initialLogs = [],
 }: AuditLogProps) {
-  const [logs] = React.useState<AuditLogEntry[]>(initialLogs);
+  const [logs, setLogs] = React.useState<AuditLogEntry[]>(initialLogs);
+
+  React.useEffect(() => {
+    setLogs(initialLogs);
+  }, [initialLogs]);
   const [filteredLogs, setFilteredLogs] = React.useState<AuditLogEntry[]>(initialLogs);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [actionFilter, setActionFilter] = React.useState<AuditAction | 'all'>('all');

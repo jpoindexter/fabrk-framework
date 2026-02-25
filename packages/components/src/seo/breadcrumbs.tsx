@@ -4,7 +4,8 @@ import * as React from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import { SchemaScript } from './schema-script';
 import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
+import { sanitizeHref } from '../utils';
 
 export interface BreadcrumbItem {
   name: string;
@@ -58,9 +59,13 @@ export function Breadcrumbs({
   const allItems = showHome ? [{ name: 'Home', url: '/' }, ...items] : items;
   const schema = generateBreadcrumbSchema(allItems, baseUrl);
 
-  const Link = LinkComponent || (({ href, className: cls, children }: { href: string; className?: string; children: React.ReactNode }) => (
-    <a href={href} className={cls}>{children}</a>
-  ));
+  const Link = LinkComponent
+    ? ({ href, ...rest }: { href: string; className?: string; children: React.ReactNode }) => (
+        <LinkComponent href={sanitizeHref(href)} {...rest} />
+      )
+    : ({ href, className: cls, children }: { href: string; className?: string; children: React.ReactNode }) => (
+        <a href={sanitizeHref(href)} className={cls}>{children}</a>
+      );
 
   return (
     <>
@@ -71,7 +76,7 @@ export function Breadcrumbs({
           const isLast = index === allItems.length - 1;
 
           return (
-            <div key={item.url} className="flex items-center">
+            <div key={`${item.url}-${index}`} className="flex items-center">
               {index > 0 && <ChevronRight className={cn('mx-2 h-4 w-4', mode.color.text.muted)} />}
 
               {isLast ? (

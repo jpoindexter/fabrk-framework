@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 interface TypeWriterProps {
   text: string;

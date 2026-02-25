@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { Bell, Check, X, Info, AlertTriangle, CheckCircle, XCircle, AtSign } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from '../ui/button';
 import {
@@ -30,6 +30,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { ScrollArea } from '../ui/scroll-area';
+import { sanitizeSrc } from '../utils';
 
 export interface NotificationCenterItem {
   id: string;
@@ -190,9 +191,9 @@ const NotificationItem = React.forwardRef<HTMLDivElement, NotificationItemProps>
 
         {/* Avatar or icon */}
         <div className="ml-4 flex-shrink-0">
-          {notification.avatar ? (
+          {notification.avatar && sanitizeSrc(notification.avatar) ? (
             <Avatar className="h-10 w-10">
-              <AvatarImage src={notification.avatar} alt={notification.title} />
+              <AvatarImage src={sanitizeSrc(notification.avatar)} alt={notification.title} />
               <AvatarFallback>{notification.title.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           ) : (

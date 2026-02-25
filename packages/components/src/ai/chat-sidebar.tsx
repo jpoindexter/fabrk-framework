@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { MessageSquare, Plus, MoreHorizontal } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from '../ui/button';
 import type { Conversation } from './chat-types';

@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI development toolkit with cost tracking, validation, and testing",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -70,18 +70,22 @@
     "openai": "^4.28.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
-    "vitest": "^1.2.2"
+    "vitest": "^3.0.0"
   },
   "author": "Jason Poindexter",
   "keywords": [
     "fabrk",
     "ai",
+    "llm",
     "cost-tracking",
     "validation",
+    "streaming",
+    "embeddings",
     "openai",
     "anthropic",
     "google-ai",
-    "ai-sdk"
+    "ai-sdk",
+    "typescript"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

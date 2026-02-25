@@ -1,19 +1,7 @@
-/**
- * ✅ FABRK COMPONENT
- * Notification Badge component for displaying counts on elements.
- *
- * @example
- * ```tsx
- * <NotificationBadge count={5}>
- *   <Button>&gt; NOTIFICATIONS</Button>
- * </NotificationBadge>
- * ```
- */
-
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface NotificationBadgeProps {

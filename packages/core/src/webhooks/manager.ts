@@ -21,6 +21,114 @@
 
 import type { WebhookConfig, WebhookDelivery, WebhookStore } from '../plugin-types'
 
+const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
+function safeAssign<T extends Record<string, unknown>>(target: T, updates: Partial<T>): void {
+  for (const key of Object.keys(updates)) {
+    if (POISONED_KEYS.has(key)) continue
+    ;(target as Record<string, unknown>)[key] = (updates as Record<string, unknown>)[key]
+  }
+}
+
+/**
+ * Check whether four IPv4 octets fall into a private or reserved range.
+ */
+function isPrivateIPv4(a: number, b: number, _c: number, _d: number): boolean {
+  if (a === 10) return true                         // 10.0.0.0/8
+  if (a === 172 && b >= 16 && b <= 31) return true  // 172.16.0.0/12
+  if (a === 192 && b === 168) return true            // 192.168.0.0/16
+  if (a === 127) return true                         // 127.0.0.0/8
+  if (a === 0) return true                           // 0.0.0.0/8
+  if (a === 169 && b === 254) return true            // 169.254.0.0/16
+  if (a === 100 && b >= 64 && b <= 127) return true  // 100.64.0.0/10 CGNAT
+  if (a === 198 && (b === 18 || b === 19)) return true // 198.18.0.0/15 benchmarking
+  if (a >= 240) return true                           // 240.0.0.0/4 reserved + 255.255.255.255 broadcast
+  return false
+}
+
+/**
+ * Validate that a URL is safe for webhook dispatch (not targeting private/internal networks).
+ * Rejects private IPs (including decimal, octal, hex representations), loopback,
+ * link-local, IPv6, and non-http(s) schemes.
+ */
+function isPrivateOrReservedHost(hostname: string): boolean {
+  // Normalize hostname (strip brackets from IPv6)
+  const h = hostname.replace(/^\[|\]$/g, '').toLowerCase()
+
+  if (h === 'localhost' || h === '0.0.0.0') return true
+
+  // Block ALL IPv6 addresses (including ::1, ::ffff:x.x.x.x, expanded forms).
+  // Valid webhook targets should use DNS hostnames, not raw IPv6 literals.
+  if (h.includes(':')) return true
+
+  // Single integer IP (e.g., 2130706433 = 127.0.0.1)
+  if (/^\d+$/.test(h)) {
+    const num = Number(h)
+    if (num >= 0 && num <= 0xFFFFFFFF) {
+      return isPrivateIPv4(
+        (num >>> 24) & 0xFF,
+        (num >>> 16) & 0xFF,
+        (num >>> 8) & 0xFF,
+        num & 0xFF
+      )
+    }
+  }
+
+  // Dotted notation with possible octal/hex octets (e.g., 0177.0.0.1, 0x7f.0.0.1)
+  const parts = h.split('.')
+  if (parts.length === 4 && parts.every(p => /^(0x[\da-f]+|0[0-7]*|\d+)$/i.test(p))) {
+    const octets = parts.map(p => {
+      if (p.startsWith('0x') || p.startsWith('0X')) return parseInt(p, 16)
+      if (p.startsWith('0') && p.length > 1) return parseInt(p, 8)
+      return parseInt(p, 10)
+    })
+    if (octets.every(o => o >= 0 && o <= 255)) {
+      return isPrivateIPv4(octets[0], octets[1], octets[2], octets[3])
+    }
+  }
+
+  return false
+}
+
+/** @security DNS rebinding: hostname validation is pre-connect only. In production, use a custom DNS resolver or network-level firewall to block connections to private IPs after DNS resolution. */
+function validateWebhookUrl(url: string): void {
+  let parsed: URL
+  try {
+    parsed = new URL(url)
+  } catch {
+    throw new Error('Invalid webhook URL: malformed URL')
+  }
+
+  // Only allow http and https schemes
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error(
+      `Invalid webhook URL scheme. Only http: and https: are allowed.`
+    )
+  }
+
+  // Reject private/internal network targets
+  if (isPrivateOrReservedHost(parsed.hostname)) {
+    throw new Error(
+      `Webhook URL targets a private or reserved network address. This is not allowed to prevent SSRF attacks.`
+    )
+  }
+}
+
+/**
+ * Constant-time string comparison for webhook signatures.
+ * Always iterates over the maximum length to avoid leaking length info.
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  const maxLen = Math.max(a.length, b.length)
+  let result = a.length ^ b.length
+
+  for (let i = 0; i < maxLen; i++) {
+    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
+  }
+
+  return result === 0
+}
+
 export interface WebhookManager {
   /** Register a new webhook endpoint */
   register(options: { url: string; events: string[] }): Promise<WebhookConfig>
@@ -38,6 +146,7 @@ export interface WebhookManager {
  * In-memory webhook store
  */
 class InMemoryWebhookStore implements WebhookStore {
+  private static readonly MAX_DELIVERIES = 10_000
   private webhooks = new Map<string, WebhookConfig>()
   private deliveries: WebhookDelivery[] = []
 
@@ -48,12 +157,18 @@ class InMemoryWebhookStore implements WebhookStore {
       (w) => w.active && w.events.includes(event)
     )
   }
+  async listAll() { return Array.from(this.webhooks.values()) }
   async update(id: string, updates: Partial<WebhookConfig>) {
     const w = this.webhooks.get(id)
-    if (w) Object.assign(w, updates)
+    if (w) safeAssign(w as unknown as Record<string, unknown>, updates as unknown as Record<string, unknown>)
   }
   async delete(id: string) { this.webhooks.delete(id) }
-  async recordDelivery(delivery: WebhookDelivery) { this.deliveries.push(delivery) }
+  async recordDelivery(delivery: WebhookDelivery) {
+    if (this.deliveries.length >= InMemoryWebhookStore.MAX_DELIVERIES) {
+      this.deliveries.shift()
+    }
+    this.deliveries.push(delivery)
+  }
 }
 
 export function createWebhookManager(
@@ -77,7 +192,22 @@ export function createWebhookManager(
   }
 
   return {
+    /**
+     * Register a new webhook endpoint.
+     *
+     * **Security Warning:** The returned `WebhookConfig` includes the HMAC signing
+     * `secret` in plaintext. This secret should be:
+     * - Displayed to the user **only once** at registration time (similar to API keys)
+     * - Stored securely by the caller (e.g., encrypted at rest)
+     * - **Never** logged, cached, or included in API list/get responses after creation
+     *
+     * The secret cannot be recovered after this call; if lost, the webhook must
+     * be re-registered with a new secret.
+     */
     async register(options): Promise<WebhookConfig> {
+      // Validate webhook URL against SSRF
+      validateWebhookUrl(options.url)
+
       // Generate secret
       const secretBytes = new Uint8Array(32)
       crypto.getRandomValues(secretBytes)
@@ -107,6 +237,24 @@ export function createWebhookManager(
       const deliveries: WebhookDelivery[] = []
 
       for (const webhook of webhooks) {
+        // Re-validate URL at dispatch time to guard against store-level manipulation
+        try {
+          validateWebhookUrl(webhook.url)
+        } catch {
+          const delivery: WebhookDelivery = {
+            id: crypto.randomUUID(),
+            webhookId: webhook.id,
+            event,
+            success: false,
+            attempts: 1,
+            deliveredAt: new Date(),
+            response: `Blocked: webhook URL failed SSRF validation`,
+          }
+          await webhookStore.recordDelivery(delivery)
+          deliveries.push(delivery)
+          continue
+        }
+
         const payload = JSON.stringify({
           event,
           data,
@@ -135,6 +283,8 @@ export function createWebhookManager(
               'X-Webhook-Id': delivery.id,
             },
             body: payload,
+            // Do not follow redirects to prevent redirect-based SSRF
+            redirect: 'error',
           })
 
           delivery.statusCode = response.status
@@ -154,22 +304,16 @@ export function createWebhookManager(
 
     async verify(payload: string, signature: string, secret: string): Promise<boolean> {
       const expected = await sign(payload, secret)
-      // Constant-time comparison
-      if (expected.length !== signature.length) return false
-      let result = 0
-      for (let i = 0; i < expected.length; i++) {
-        result |= expected.charCodeAt(i) ^ signature.charCodeAt(i)
-      }
-      return result === 0
+      return timingSafeEqual(expected, signature)
     },
 
     async list(): Promise<WebhookConfig[]> {
-      // Return all webhooks by listing all possible events
-      const all = new Map<string, WebhookConfig>()
-      // Use a wildcard query
-      const wildcardResults = await webhookStore.listByEvent('*')
-      for (const w of wildcardResults) all.set(w.id, w)
-      return Array.from(all.values())
+      const all = await webhookStore.listAll()
+      // Omit secret — it is only returned once at registration time
+      return all.map(({ secret: _secret, ...rest }) => ({
+        ...rest,
+        secret: '***',
+      }))
     },
   }
 }

@@ -27,9 +27,7 @@
  * @see ./spec/themes.md for theme system
  */
 
-// =============================================================================
 // TOKEN EXPORTS
-// =============================================================================
 
 export {
   primitives,
@@ -70,9 +68,7 @@ export {
   getChartColorVars,
 } from './tokens/chart-colors';
 
-// =============================================================================
 // THEME EXPORTS
-// =============================================================================
 
 export {
   themes,
@@ -94,9 +90,7 @@ export {
 
 export type { ThemeName, ThemeUtils } from './themes';
 
-// =============================================================================
 // PROVIDER EXPORTS
-// =============================================================================
 
 export {
   ThemeProvider,
@@ -112,18 +106,14 @@ export type {
   ColorThemeName,
 } from './providers';
 
-// =============================================================================
 // PRESET EXPORTS
-// =============================================================================
 
 export {
   hashmarkVariables,
   generateHashmarkCss,
 } from './presets';
 
-// =============================================================================
 // BACKWARDS COMPATIBILITY LAYER
-// =============================================================================
 // The following exports maintain compatibility with the 100+ components
 // that import from @/design-system using the old API.
 
@@ -531,9 +521,7 @@ export const mode: ModeConfig = {
   },
 };
 
-// =============================================================================
 // BACKWARDS COMPATIBILITY ALIASES
-// =============================================================================
 // These alias the terminal theme functions for backwards compatibility
 
 /**
@@ -554,15 +542,16 @@ export function isSharpMode(): boolean {
 }
 
 /**
- * Check if current mode uses rounded corners (always false - terminal only)
+ * @deprecated Always returns false. Theme corner radius is now controlled by the
+ * `mode.radius` token (see `@fabrk/design-system`). This function is a no-op
+ * stub retained for source compatibility only.
+ * @internal
  */
 export function hasRoundedCorners(): boolean {
   return false;
 }
 
-// =============================================================================
 // DEFAULT EXPORT
-// =============================================================================
 
 const designSystem = {
   mode,

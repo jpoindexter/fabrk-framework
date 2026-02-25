@@ -27,6 +27,9 @@ export interface NotificationManager {
   subscribe(callback: (notification: Notification) => void): () => void
 }
 
+/** Maximum number of notifications held in the in-memory fallback store. */
+const MAX_MEMORY_NOTIFICATIONS = 1000
+
 export function createNotificationManager(
   store?: NotificationStore
 ): NotificationManager {
@@ -49,29 +52,48 @@ export function createNotificationManager(
         duration: options.duration ?? (options.type === 'error' ? 0 : 5000),
       }
 
-      // Persist if store is available and persistence is requested
       const s = getStore()
-      if (s && options.persist) {
-        await s.create(notification)
+      if (s) {
+        // Always use the store when available, regardless of persist flag
+        // For non-persistent notifications, callers use subscribers (fire-and-forget)
+        if (options.persist) {
+          await s.create(notification)
+        }
       } else {
+        // No store configured — use in-memory as fallback
         memoryStore.push(notification)
+        // Evict oldest notifications when the in-memory store exceeds the cap
+        while (memoryStore.length > MAX_MEMORY_NOTIFICATIONS) {
+          memoryStore.shift()
+        }
       }
 
-      // Notify subscribers
+      // Always notify subscribers — errors in one subscriber are isolated so
+      // remaining subscribers still receive the notification.
       for (const cb of subscribers) {
-        cb(notification)
+        try {
+          cb(notification)
+        } catch {
+          // Subscriber errors are intentionally swallowed to protect other subscribers
+        }
       }
 
       return notification
     },
 
+    /**
+     * @security Broadcast notifications (those without `userIds`) are visible to all users by design.
+     * This allows system-wide announcements to reach every user. If you need to restrict
+     * visibility, always populate the `userIds` array when creating the notification.
+     */
     async getForUser(userId: string, options?: { unreadOnly?: boolean; limit?: number }): Promise<Notification[]> {
       const s = getStore()
       if (s) {
         return s.getByUser(userId, options)
       }
-      // Memory fallback
-      let filtered = memoryStore
+      // Memory fallback — filter by userId to prevent cross-user data leakage
+      // Notifications without userIds are broadcast (visible to all users)
+      let filtered = memoryStore.filter((n) => !n.userIds || n.userIds.includes(userId))
       if (options?.unreadOnly) {
         filtered = filtered.filter((n) => !n.read)
       }
@@ -94,7 +116,7 @@ export function createNotificationManager(
         await s.markAllRead(userId)
         return
       }
-      memoryStore.forEach((n) => { n.read = true })
+      memoryStore.forEach((n) => { if (!n.userIds || n.userIds.includes(userId)) n.read = true })
     },
 
     async dismiss(id: string): Promise<void> {
@@ -110,7 +132,7 @@ export function createNotificationManager(
     async getUnreadCount(userId: string): Promise<number> {
       const s = getStore()
       if (s) return s.getUnreadCount(userId)
-      return memoryStore.filter((n) => !n.read && !n.dismissed).length
+      return memoryStore.filter((n) => (!n.userIds || n.userIds.includes(userId)) && !n.read && !n.dismissed).length
     },
 
     subscribe(callback: (notification: Notification) => void): () => void {

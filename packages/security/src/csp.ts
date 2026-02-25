@@ -17,77 +17,83 @@
 
 import type { CspConfig } from './types'
 
-/**
- * Generate a cryptographic nonce for CSP
- */
 export function generateNonce(): string {
   const bytes = new Uint8Array(16)
   crypto.getRandomValues(bytes)
-  // Base64 encode
   const binary = String.fromCharCode(...bytes)
   return btoa(binary)
 }
 
 /**
- * Generate a CSP header string
+ * Validate a CSP directive value to prevent header injection.
+ * Rejects values containing semicolons, carriage returns, or newlines
+ * which could be used to inject additional directives or headers.
  */
+function validateDirectiveValue(value: string): string {
+  if (/[;\r\n]/.test(value)) {
+    throw new Error(
+      `Invalid CSP directive value: "${value}". Values must not contain semicolons, carriage returns, or newlines.`
+    )
+  }
+  return value
+}
+
+function sanitizeDirectiveValues(values: string[]): string[] {
+  return values.map(validateDirectiveValue)
+}
+
 export function generateCspHeader(config: CspConfig = {}): string {
   const directives: string[] = []
 
-  // Default-src is always 'self'
   directives.push("default-src 'self'")
 
   if (config.scriptSrc?.length) {
-    directives.push(`script-src ${config.scriptSrc.join(' ')}`)
+    directives.push(`script-src ${sanitizeDirectiveValues(config.scriptSrc).join(' ')}`)
   } else {
     directives.push("script-src 'self'")
   }
 
   if (config.styleSrc?.length) {
-    directives.push(`style-src ${config.styleSrc.join(' ')}`)
+    directives.push(`style-src ${sanitizeDirectiveValues(config.styleSrc).join(' ')}`)
   } else {
     directives.push("style-src 'self' 'unsafe-inline'")
   }
 
   if (config.imgSrc?.length) {
-    directives.push(`img-src ${config.imgSrc.join(' ')}`)
+    directives.push(`img-src ${sanitizeDirectiveValues(config.imgSrc).join(' ')}`)
   } else {
     directives.push("img-src 'self' data: blob:")
   }
 
   if (config.connectSrc?.length) {
-    directives.push(`connect-src ${config.connectSrc.join(' ')}`)
+    directives.push(`connect-src ${sanitizeDirectiveValues(config.connectSrc).join(' ')}`)
   } else {
     directives.push("connect-src 'self'")
   }
 
   if (config.fontSrc?.length) {
-    directives.push(`font-src ${config.fontSrc.join(' ')}`)
+    directives.push(`font-src ${sanitizeDirectiveValues(config.fontSrc).join(' ')}`)
   } else {
     directives.push("font-src 'self'")
   }
 
   if (config.frameSrc?.length) {
-    directives.push(`frame-src ${config.frameSrc.join(' ')}`)
+    directives.push(`frame-src ${sanitizeDirectiveValues(config.frameSrc).join(' ')}`)
   } else {
     directives.push("frame-src 'none'")
   }
 
-  // Always include these security directives
   directives.push("base-uri 'self'")
   directives.push("form-action 'self'")
   directives.push('upgrade-insecure-requests')
 
   if (config.reportUri) {
-    directives.push(`report-uri ${config.reportUri}`)
+    directives.push(`report-uri ${validateDirectiveValue(config.reportUri)}`)
   }
 
   return directives.join('; ')
 }
 
-/**
- * Get the CSP header name based on config
- */
 export function getCspHeaderName(config: CspConfig = {}): string {
   return config.reportOnly
     ? 'Content-Security-Policy-Report-Only'

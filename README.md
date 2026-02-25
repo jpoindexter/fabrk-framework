@@ -6,9 +6,9 @@
 <p align="center">
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
-  <img src="https://img.shields.io/badge/packages-17-green" alt="Packages" />
+  <img src="https://img.shields.io/badge/packages-12-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-105%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-1%2C755-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-764-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
   <img src="https://img.shields.io/badge/hooks-16-green" alt="Hooks" />
@@ -24,7 +24,7 @@ Stop generating 500 lines of custom components from scratch. Import pre-built, t
 import { BarChart, KPICard, DataTable } from '@fabrk/components'
 import { AICostTracker } from '@fabrk/ai'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 export default function Dashboard() {
   return (
@@ -55,42 +55,33 @@ pnpm dev
 Or add to an existing project:
 
 ```bash
-pnpm add @fabrk/core @fabrk/components @fabrk/themes
+pnpm add @fabrk/core @fabrk/components @fabrk/design-system
 ```
 
 ## Packages
 
 FABRK is a modular monorepo — install only what you need.
 
-### Framework (core product)
+### Core
 
 | Package | Description |
 |---------|-------------|
 | [`@fabrk/core`](packages/core) | Runtime, plugins, middleware, 14 hooks, teams, jobs, feature flags, auto-wiring |
 | [`@fabrk/config`](packages/config) | Type-safe config builder with Zod validation (14 sections) |
+| [`@fabrk/design-system`](packages/design-system) | 18 themes, design tokens, `mode` object, runtime switching via CSS variables |
+| [`@fabrk/components`](packages/components) | 105+ UI components, 12 hooks, 8 chart types, AI chat, admin, security, component registry |
+
+### Adapters & Services
+
+| Package | Description |
+|---------|-------------|
 | [`@fabrk/ai`](packages/ai) | LLM providers, cost tracking, embeddings, streaming, prompts, budget enforcement |
 | [`@fabrk/auth`](packages/auth) | NextAuth adapter, API keys (SHA-256), MFA (TOTP + backup codes) |
 | [`@fabrk/payments`](packages/payments) | Stripe, Polar, Lemon Squeezy adapters |
 | [`@fabrk/email`](packages/email) | Resend adapter, console adapter, 4 templates |
 | [`@fabrk/storage`](packages/storage) | S3, Cloudflare R2, local filesystem adapters |
 | [`@fabrk/security`](packages/security) | CSRF, CSP, rate limiting, audit logging, GDPR, bot protection, CORS |
-| [`@fabrk/mcp`](packages/mcp) | Model Context Protocol server toolkit |
 | [`@fabrk/store-prisma`](packages/store-prisma) | Prisma store adapters for teams, API keys, audit, notifications, jobs, webhooks, feature flags |
-| [`@fabrk/referrals`](packages/referrals) | Referral system |
-
-### AI-First Framework
-
-| Package | Description |
-|---------|-------------|
-| [`fabrk`](packages/framework) | AI-first React framework on Vite 7 — agents, tools, prompts, SSE streaming, multi-target deploy |
-
-### Design System (opt-in, shadcn-style)
-
-| Package | Description |
-|---------|-------------|
-| [`@fabrk/themes`](packages/themes) | 18 themes, design tokens, `mode` object, runtime switching via CSS variables |
-| [`@fabrk/components`](packages/components) | 105+ UI components, 12 hooks, 8 chart types, AI chat, admin, security |
-| [`@fabrk/ui`](packages/ui) | Component registry (shadcn-style copy-into-project) |
 
 ### CLI
 
@@ -145,7 +136,7 @@ fabrk info                         # Project info + installed packages
 
 | Template | What you get |
 |----------|-------------|
-| **basic** | Clean starting point with `@fabrk/core` and `@fabrk/themes` |
+| **basic** | Clean starting point with `@fabrk/core` and `@fabrk/design-system` |
 | **ai-saas** | AI-powered SaaS with cost tracking, API keys, streaming |
 | **dashboard** | Admin dashboard with teams, feature flags, webhooks, audit logging |
 
@@ -155,7 +146,7 @@ Terminal-inspired aesthetic with runtime theme switching. 18 themes, design toke
 
 ```tsx
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 // Full borders — always add mode.radius
 <Card className={cn("border border-border", mode.radius)}>
@@ -186,15 +177,14 @@ Works with **Claude Code**, **Cursor**, **GitHub Copilot**, **v0.dev**, **Windsu
 
 ```
 @fabrk/config (foundational — Zod schemas, zero deps)
-@fabrk/themes (standalone — design tokens, CSS vars, no core dep)
+@fabrk/design-system (foundational — 18 themes, design tokens, CSS vars)
     |
 @fabrk/core (runtime — plugins, middleware, hooks)
     |
-@fabrk/auth, payments, email, storage, security, ai, mcp
+@fabrk/auth, payments, email, storage, security, ai
     |
-@fabrk/components, @fabrk/ui (design system consumers)
-    |
-fabrk (AI-first framework — agents, tools, prompts, deploy)
+@fabrk/components (105+ UI components, charts, dashboard)
+@fabrk/store-prisma (Prisma database adapters)
     |
 create-fabrk-app CLI (scaffolding)
 ```
@@ -211,8 +201,8 @@ create-fabrk-app CLI (scaffolding)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 21 packages
-pnpm test           # Run 1,755 tests
+pnpm build          # Build all 16 packages (12 libs + 4 examples)
+pnpm test           # Run 763 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```

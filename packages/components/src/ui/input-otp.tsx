@@ -1,15 +1,6 @@
-/**
- * ✅ FABRK COMPONENT
- *
- * @example
- * ```tsx
- * <input-otp />
- * ```
- */
-
 'use client';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { OTPInput, OTPInputContext } from 'input-otp';
 import { Dot } from 'lucide-react';

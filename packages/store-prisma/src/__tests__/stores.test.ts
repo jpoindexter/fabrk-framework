@@ -8,10 +8,6 @@ import { PrismaJobStore } from '../job-store'
 import { PrismaWebhookStore } from '../webhook-store'
 import { PrismaFeatureFlagStore } from '../feature-flag-store'
 
-// ---------------------------------------------------------------------------
-// Mock PrismaClient factory
-// ---------------------------------------------------------------------------
-
 function createMockPrisma() {
   return {
     organization: {
@@ -72,12 +68,10 @@ function createMockPrisma() {
       delete: vi.fn(),
     },
     $transaction: vi.fn(),
+    $queryRawUnsafe: vi.fn(),
+    $queryRaw: vi.fn(),
   }
 }
-
-// ---------------------------------------------------------------------------
-// PrismaTeamStore
-// ---------------------------------------------------------------------------
 
 describe('PrismaTeamStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
@@ -143,10 +137,6 @@ describe('PrismaTeamStore', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// PrismaApiKeyStore
-// ---------------------------------------------------------------------------
-
 describe('PrismaApiKeyStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
   let store: PrismaApiKeyStore
@@ -196,13 +186,10 @@ describe('PrismaApiKeyStore', () => {
     expect(prisma.apiKey.findMany).toHaveBeenCalledWith({
       where: { userId: 'user-1', active: true },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     })
   })
 })
-
-// ---------------------------------------------------------------------------
-// PrismaAuditStore
-// ---------------------------------------------------------------------------
 
 describe('PrismaAuditStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
@@ -230,10 +217,6 @@ describe('PrismaAuditStore', () => {
     expect(prisma.auditEvent.findMany).toHaveBeenCalledWith(expect.objectContaining({ take: 50, skip: 10 }))
   })
 })
-
-// ---------------------------------------------------------------------------
-// PrismaNotificationStore
-// ---------------------------------------------------------------------------
 
 describe('PrismaNotificationStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
@@ -285,10 +268,6 @@ describe('PrismaNotificationStore', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// PrismaJobStore
-// ---------------------------------------------------------------------------
-
 describe('PrismaJobStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
   let store: PrismaJobStore
@@ -306,20 +285,12 @@ describe('PrismaJobStore', () => {
     expect(data.maxRetries).toBe(3)
   })
 
-  it('should dequeue atomically via transaction', async () => {
-    prisma.$transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
-      const txClient = {
-        job: {
-          findFirst: vi.fn().mockResolvedValue({
-            id: 'j1', type: 'email.send', payload: {}, priority: 0, maxRetries: 3,
-            delay: null, scheduledAt: null, status: 'pending', attempts: 0,
-            createdAt: new Date(), lastAttemptAt: null, completedAt: null, error: null, result: null,
-          }),
-          update: vi.fn().mockResolvedValue({}),
-        },
-      }
-      return cb(txClient)
-    })
+  it('should dequeue atomically via FOR UPDATE SKIP LOCKED', async () => {
+    prisma.$queryRaw.mockResolvedValue([{
+      id: 'j1', type: 'email.send', payload: {}, priority: 0, max_retries: 3,
+      delay: null, scheduled_at: null, status: 'running', attempts: 1,
+      created_at: new Date(), last_attempt_at: new Date(), completed_at: null, error: null, result: null,
+    }])
     const result = await store.dequeue()
     expect(result).not.toBeNull()
     expect(result?.status).toBe('running')
@@ -327,9 +298,7 @@ describe('PrismaJobStore', () => {
   })
 
   it('should return null when no pending jobs', async () => {
-    prisma.$transaction.mockImplementation(async (cb: (tx: unknown) => Promise<unknown>) => {
-      return cb({ job: { findFirst: vi.fn().mockResolvedValue(null), update: vi.fn() } })
-    })
+    prisma.$queryRaw.mockResolvedValue([])
     expect(await store.dequeue()).toBeNull()
   })
 
@@ -346,10 +315,6 @@ describe('PrismaJobStore', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// PrismaWebhookStore
-// ---------------------------------------------------------------------------
-
 describe('PrismaWebhookStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
   let store: PrismaWebhookStore
@@ -361,7 +326,7 @@ describe('PrismaWebhookStore', () => {
 
   it('should create, getById, and map null events to empty array', async () => {
     prisma.webhook.create.mockResolvedValue({})
-    await store.create({ id: 'wh-1', url: 'https://example.com/hook', events: ['user.created'], secret: 'sec', active: true, createdAt: new Date() })
+    await store.create({ id: 'wh-1', url: 'https://example.com/hook', events: ['user.created'], secret: 'a-very-long-secret-key-for-security-min-32-chars', active: true, createdAt: new Date() })
     expect(prisma.webhook.create).toHaveBeenCalled()
 
     prisma.webhook.findUnique.mockResolvedValue({
@@ -382,6 +347,7 @@ describe('PrismaWebhookStore', () => {
     expect(result).toHaveLength(1)
     expect(prisma.webhook.findMany).toHaveBeenCalledWith({
       where: { active: true, events: { has: 'user.created' } },
+      take: 100,
     })
   })
 
@@ -394,10 +360,6 @@ describe('PrismaWebhookStore', () => {
     expect(prisma.webhookDelivery.create).toHaveBeenCalled()
   })
 })
-
-// ---------------------------------------------------------------------------
-// PrismaFeatureFlagStore
-// ---------------------------------------------------------------------------
 
 describe('PrismaFeatureFlagStore', () => {
   let prisma: ReturnType<typeof createMockPrisma>
@@ -436,6 +398,6 @@ describe('PrismaFeatureFlagStore', () => {
     ])
     const result = await store.getAll()
     expect(result).toHaveLength(1)
-    expect(prisma.featureFlag.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' } })
+    expect(prisma.featureFlag.findMany).toHaveBeenCalledWith({ orderBy: { name: 'asc' }, take: 1000 })
   })
 })

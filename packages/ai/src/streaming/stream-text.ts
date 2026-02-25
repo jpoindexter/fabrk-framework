@@ -78,9 +78,14 @@ export function createTextStream(
 }
 
 /**
- * Merge multiple async iterable streams into one
+ * Concatenate multiple async iterable streams into one (sequential, not concurrent).
+ * Each stream is fully exhausted before the next one begins.
+ *
+ * Note: despite the name "merge" being common parlance, this function concatenates
+ * streams in order. True merging (interleaved concurrent consumption) is not
+ * implemented here.
  */
-export async function* mergeStreams(
+export async function* concatStreams(
   ...streams: AsyncIterable<string>[]
 ): AsyncIterable<string> {
   for (const stream of streams) {

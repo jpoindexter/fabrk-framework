@@ -5,6 +5,9 @@
 import type { LLMClient, LLMOpts, LLMConfig } from './types'
 import { LLM_DEFAULTS } from './types'
 
+/** Hard cap on tokens per request to prevent runaway cost from untrusted input */
+const MAX_TOKENS_LIMIT = 100_000
+
 export class AnthropicClient implements LLMClient {
   private config: LLMConfig
 
@@ -16,6 +19,7 @@ export class AnthropicClient implements LLMClient {
   }
 
   async generate(opts: LLMOpts): Promise<string> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let Anthropic: any
     try {
       const mod = await import('@anthropic-ai/sdk')
@@ -29,7 +33,7 @@ export class AnthropicClient implements LLMClient {
     const response = await client.messages.create(
       {
         model: this.config.anthropicModel || LLM_DEFAULTS.anthropicModel,
-        max_tokens: opts.maxTokens ?? this.config.maxTokens ?? 1024,
+        max_tokens: Math.min(opts.maxTokens ?? this.config.maxTokens ?? 1024, MAX_TOKENS_LIMIT),
         temperature: opts.temperature ?? this.config.temperature,
         system: opts.system,
         messages: [{ role: 'user', content: opts.prompt }],
@@ -37,6 +41,7 @@ export class AnthropicClient implements LLMClient {
       { timeout: this.config.timeoutMs }
     )
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const textBlock = response.content.find((block: any) => block.type === 'text')
     return textBlock?.text || ''
   }

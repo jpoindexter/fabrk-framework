@@ -7,14 +7,13 @@
  * The primary CLI is now `fabrk` (see fabrk.ts).
  */
 
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import path from 'path';
 
 const fabrkBin = path.resolve(__dirname, 'fabrk.js');
-const args = process.argv.slice(2).join(' ');
 
 try {
-  execSync(`node ${fabrkBin} create ${args}`, {
+  execFileSync('node', [fabrkBin, 'create', ...process.argv.slice(2)], {
     cwd: process.cwd(),
     stdio: 'inherit',
   });

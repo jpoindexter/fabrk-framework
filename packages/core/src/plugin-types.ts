@@ -6,9 +6,7 @@
  * the framework needing to know which provider is being used.
  */
 
-// ============================================================================
 // PAYMENTS
-// ============================================================================
 
 export interface CheckoutOptions {
   /** Price ID from payment provider */
@@ -56,6 +54,8 @@ export interface WebhookResult {
   event?: WebhookEvent
   /** Error message, if verification failed */
   error?: string
+  /** Whether this event was already processed (idempotency) */
+  duplicate?: boolean
 }
 
 export interface CustomerInfo {
@@ -86,9 +86,7 @@ export interface SubscriptionInfo {
   cancelAtPeriodEnd: boolean
 }
 
-// ============================================================================
 // AUTH
-// ============================================================================
 
 export interface Session {
   /** User ID */
@@ -151,9 +149,7 @@ export interface MfaVerifyResult {
   usedBackupCode?: boolean
 }
 
-// ============================================================================
 // EMAIL
-// ============================================================================
 
 export interface EmailOptions {
   /** Recipient email(s) */
@@ -192,9 +188,7 @@ export interface EmailTemplateData {
   data: Record<string, unknown>
 }
 
-// ============================================================================
 // STORAGE
-// ============================================================================
 
 export interface UploadOptions {
   /** File data (ArrayBuffer, Blob, or ReadableStream) */
@@ -242,9 +236,7 @@ export interface SignedUrlResult {
   expiresAt: Date
 }
 
-// ============================================================================
 // RATE LIMITING
-// ============================================================================
 
 export interface RateLimitOptions {
   /** Identifier (e.g. IP address, user ID) */
@@ -270,9 +262,7 @@ export interface RateLimitResult {
   retryAfter?: number
 }
 
-// ============================================================================
 // NOTIFICATIONS
-// ============================================================================
 
 export type NotificationType =
   | 'info'
@@ -320,9 +310,7 @@ export interface Notification extends NotificationOptions {
   dismissed: boolean
 }
 
-// ============================================================================
 // FEATURE FLAGS
-// ============================================================================
 
 export interface FeatureFlagOptions {
   /** Flag name */
@@ -348,9 +336,7 @@ export interface FeatureFlagResult {
   variant?: string
 }
 
-// ============================================================================
 // JOB QUEUE
-// ============================================================================
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'retrying'
 
@@ -388,9 +374,7 @@ export interface Job extends JobOptions {
   result?: unknown
 }
 
-// ============================================================================
 // WEBHOOKS
-// ============================================================================
 
 export interface WebhookConfig {
   /** Webhook ID */
@@ -426,9 +410,7 @@ export interface WebhookDelivery {
   response?: string
 }
 
-// ============================================================================
 // TEAMS / ORGANIZATIONS
-// ============================================================================
 
 export type OrgRole = 'owner' | 'admin' | 'member' | 'guest'
 
@@ -485,9 +467,7 @@ export interface OrgInvite {
   accepted: boolean
 }
 
-// ============================================================================
 // AUDIT LOG
-// ============================================================================
 
 export interface AuditEvent {
   /** Event ID */
@@ -510,13 +490,13 @@ export interface AuditEvent {
   userAgent?: string
   /** Timestamp */
   timestamp: Date
+  /** Monotonic sequence number for deterministic ordering within the hash chain */
+  sequence?: number
   /** Tamper-proof hash */
   hash?: string
 }
 
-// ============================================================================
 // STORE INTERFACES
-// ============================================================================
 
 /**
  * Base store interface pattern.
@@ -573,9 +553,13 @@ export interface WebhookStore {
   create(webhook: WebhookConfig): Promise<void>
   getById(id: string): Promise<WebhookConfig | null>
   listByEvent(event: string): Promise<WebhookConfig[]>
+  /** List all registered webhooks regardless of event subscription. */
+  listAll(): Promise<WebhookConfig[]>
   update(id: string, updates: Partial<WebhookConfig>): Promise<void>
   delete(id: string): Promise<void>
   recordDelivery(delivery: WebhookDelivery): Promise<void>
+  /** Retrieve the raw secret for a webhook (for signature verification). */
+  getSecret?(id: string): Promise<string | null>
 }
 
 export interface TeamStore {
@@ -590,7 +574,7 @@ export interface TeamStore {
   removeMember(orgId: string, userId: string): Promise<void>
   createInvite(invite: OrgInvite): Promise<void>
   getInviteByToken(token: string): Promise<OrgInvite | null>
-  acceptInvite(token: string): Promise<void>
+  acceptInvite(token: string): Promise<OrgInvite | null>
 }
 
 export interface AuditStore {

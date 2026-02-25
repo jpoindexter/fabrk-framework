@@ -1,16 +1,6 @@
-/**
- * ✅ FABRK COMPONENT
- * KPI Card - Key Performance Indicator card with optional trend
- *
- * @example
- * ```tsx
- * <KpiCard title="Revenue" value="$45,231" change={12} trend="up" />
- * ```
- */
-
 'use client';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { ArrowDown, ArrowUp, Minus } from 'lucide-react';
 import * as React from 'react';

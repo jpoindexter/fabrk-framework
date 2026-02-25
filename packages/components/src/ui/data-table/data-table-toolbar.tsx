@@ -4,7 +4,7 @@ import { Table } from '@tanstack/react-table';
 import { X } from 'lucide-react';
 import { Input } from '../input';
 import { Button } from '../button';
-import { cn } from '../../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 interface DataTableToolbarProps<TData> {

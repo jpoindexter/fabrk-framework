@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { describe, it, expect } from 'vitest'
 import { createTeamManager } from './organizations'
 import { InMemoryTeamStore } from './memory-store'
@@ -16,6 +17,7 @@ describe('TeamManager', () => {
         name: 'Acme Corp',
         slug: 'acme',
         ownerId: 'user_1',
+        ownerEmail: 'owner@acme.com',
       })
 
       expect(org.id).toBeDefined()
@@ -31,6 +33,7 @@ describe('TeamManager', () => {
         name: 'Acme',
         slug: 'acme',
         ownerId: 'user_1',
+        ownerEmail: 'owner@acme.com',
       })
 
       const members = await manager.getMembers(org.id)
@@ -45,6 +48,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       const fetched = await manager.getOrg(org.id)
@@ -58,6 +62,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'my-org',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       const fetched = await manager.getOrgBySlug('my-org')
@@ -77,6 +82,7 @@ describe('TeamManager', () => {
         name: 'Old Name',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       await manager.updateOrg(org.id, { name: 'New Name' })
@@ -90,6 +96,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       await manager.deleteOrg(org.id)
@@ -104,6 +111,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       await manager.addMember(org.id, 'user_2', 'member', {
@@ -121,6 +129,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       await manager.addMember(org.id, 'user_2', 'member', {
@@ -140,6 +149,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       await manager.addMember(org.id, 'user_2', 'member', {
@@ -160,6 +170,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       const invite = await manager.createInvite(
@@ -184,6 +195,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       const invite = await manager.createInvite(
@@ -193,9 +205,10 @@ describe('TeamManager', () => {
         'user_1'
       )
 
-      const result = await manager.acceptInvite(invite.token)
+      const result = await manager.acceptInvite(invite.token, 'user_2')
       expect(result).toBeDefined()
       expect(result!.email).toBe('new@test.com')
+      expect(result!.userId).toBe('user_2')
     })
 
     it('should return null for already accepted invite', async () => {
@@ -204,6 +217,7 @@ describe('TeamManager', () => {
         name: 'Test',
         slug: 'test',
         ownerId: 'user_1',
+        ownerEmail: 'owner@test.com',
       })
 
       const invite = await manager.createInvite(
@@ -213,14 +227,14 @@ describe('TeamManager', () => {
         'user_1'
       )
 
-      await manager.acceptInvite(invite.token)
-      const result = await manager.acceptInvite(invite.token)
+      await manager.acceptInvite(invite.token, 'user_2')
+      const result = await manager.acceptInvite(invite.token, 'user_2')
       expect(result).toBeNull()
     })
 
     it('should return null for invalid token', async () => {
       const { manager } = setup()
-      const result = await manager.acceptInvite('invalid-token')
+      const result = await manager.acceptInvite('invalid-token', 'user_x')
       expect(result).toBeNull()
     })
   })

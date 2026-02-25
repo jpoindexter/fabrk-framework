@@ -3,7 +3,7 @@
 import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { Check, ChevronRight, Square } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
@@ -24,9 +24,9 @@ const DropdownMenuSubTrigger = React.forwardRef<
     className={cn(
       // WCAG 2.1 AA: h-12 ensures adequate touch target on mobile
       'flex h-12 cursor-default items-center px-2 text-xs transition-colors select-none focus-visible:outline-none sm:h-auto sm:py-2',
-      `hover:${mode.color.bg.accent} hover:${mode.color.text.inverse}`,
-      `focus:${mode.color.bg.accent} focus:${mode.color.text.inverse}`,
-      `data-[state=open]:${mode.color.bg.accent} data-[state=open]:${mode.color.text.inverse}`,
+      'hover:bg-accent hover:text-accent-foreground',
+      'focus:bg-accent focus:text-accent-foreground',
+      'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
       mode.radius,
       mode.font,
       inset && 'pl-8',
@@ -172,8 +172,8 @@ const DropdownMenuItem = React.forwardRef<
     className={cn(
       // WCAG 2.1 AA: h-12 ensures adequate touch target on mobile (accounts for subpixel rendering)
       'relative flex h-12 cursor-default items-center px-2 text-xs transition-colors select-none focus-visible:outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 sm:h-auto sm:py-2',
-      `hover:${mode.color.bg.accent} hover:${mode.color.text.inverse}`,
-      `focus:${mode.color.bg.accent} focus:${mode.color.text.inverse}`,
+      'hover:bg-accent hover:text-accent-foreground',
+      'focus:bg-accent focus:text-accent-foreground',
       mode.radius,
       mode.font,
       inset && 'pl-8',
@@ -193,8 +193,8 @@ const DropdownMenuCheckboxItem = React.forwardRef<
     className={cn(
       // WCAG 2.1 AA: h-12 ensures adequate touch target on mobile
       'relative flex h-12 cursor-default items-center pr-2 pl-8 text-xs transition-colors select-none focus-visible:outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 sm:h-auto sm:py-2',
-      `hover:${mode.color.bg.accent} hover:${mode.color.text.inverse}`,
-      `focus:${mode.color.bg.accent} focus:${mode.color.text.inverse}`,
+      'hover:bg-accent hover:text-accent-foreground',
+      'focus:bg-accent focus:text-accent-foreground',
       mode.radius,
       mode.font,
       className
@@ -221,8 +221,8 @@ const DropdownMenuRadioItem = React.forwardRef<
     className={cn(
       // WCAG 2.1 AA: h-12 ensures adequate touch target on mobile
       'relative flex h-12 cursor-default items-center pr-2 pl-8 text-xs transition-colors select-none focus-visible:outline-none data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 sm:h-auto sm:py-2',
-      `hover:${mode.color.bg.accent} hover:${mode.color.text.inverse}`,
-      `focus:${mode.color.bg.accent} focus:${mode.color.text.inverse}`,
+      'hover:bg-accent hover:text-accent-foreground',
+      'focus:bg-accent focus:text-accent-foreground',
       mode.radius,
       mode.font,
       className

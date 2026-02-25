@@ -29,7 +29,7 @@ describe('PieChart', () => {
 
   it('handles empty data gracefully', () => {
     const { container } = render(<PieChart data={[]} />)
-    expect(container.querySelector('svg')).toBeInTheDocument()
+    expect(container.querySelector('svg')).not.toBeInTheDocument()
   })
 
   it('renders legend when showLegend is true', () => {

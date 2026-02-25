@@ -60,16 +60,47 @@ export function authMiddleware(
 
 /**
  * Rate limit middleware
+ *
+ * **IP Header Configuration:** The `ipHeader` option controls which header is
+ * used to identify unauthenticated clients. The correct header depends on your
+ * deployment platform:
+ *
+ * - **Cloudflare:** `'CF-Connecting-IP'`
+ * - **AWS ALB / CloudFront:** `'X-Forwarded-For'` (default chain includes this)
+ * - **Nginx (proxy_protocol):** `'X-Real-IP'`
+ * - **Vercel:** `'X-Real-IP'`
+ * - **Fly.io:** `'Fly-Client-IP'`
+ *
+ * If no trusted header is available, the identifier falls back to `'anonymous'`,
+ * which means all unauthenticated traffic shares a single rate-limit bucket.
+ * Always configure `ipHeader` to match your reverse proxy for per-IP limiting.
  */
 export function rateLimitMiddleware(
   adapter: RateLimitAdapter,
-  options?: { limit?: string; max?: number; windowSeconds?: number }
+  options?: { limit?: string; max?: number; windowSeconds?: number; ipHeader?: string }
 ): MiddlewareFunction<RequestContext> {
   return async (ctx, next) => {
+    let ipIdentifier: string | null = null
+    if (options?.ipHeader) {
+      // Use the explicitly configured header (most reliable)
+      ipIdentifier = ctx.request.headers.get(options.ipHeader)
+    } else {
+      // Default chain: X-Real-IP (set by most reverse proxies as a single IP),
+      // then first IP from X-Forwarded-For (may contain a chain of proxies)
+      ipIdentifier = ctx.request.headers.get('X-Real-IP')
+      if (!ipIdentifier) {
+        const xff = ctx.request.headers.get('X-Forwarded-For')
+        if (xff) {
+          // Take only the first (leftmost) IP — the original client IP
+          ipIdentifier = xff.split(',')[0].trim() || null
+        }
+      }
+    }
+
     const identifier =
       ctx.session?.userId ??
       ctx.apiKey?.id ??
-      ctx.request.headers.get('X-Forwarded-For') ??
+      ipIdentifier ??
       'anonymous'
 
     const result = await adapter.check({
@@ -98,13 +129,21 @@ export function corsMiddleware(
 ): MiddlewareFunction<RequestContext & { response?: Response }> {
   return async (ctx, next) => {
     const origin = ctx.request.headers.get('Origin') ?? ''
-    const isAllowed = allowedOrigins.includes('*') || allowedOrigins.includes(origin)
+    const isWildcard = allowedOrigins.includes('*')
+    const isAllowed = isWildcard || allowedOrigins.includes(origin)
 
     await next()
 
     if (isAllowed && ctx.response) {
       const r = ctx.response
-      r.headers.set('Access-Control-Allow-Origin', origin || '*')
+      if (isWildcard) {
+        // Wildcard mode: use literal '*' instead of reflecting the request origin
+        r.headers.set('Access-Control-Allow-Origin', '*')
+      } else {
+        // Specific origin match: reflect the matched origin and add Vary header
+        r.headers.set('Access-Control-Allow-Origin', origin)
+        r.headers.append('Vary', 'Origin')
+      }
       r.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
       r.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key')
     }
@@ -112,26 +151,23 @@ export function corsMiddleware(
 }
 
 /**
- * Cost tracking middleware — logs AI request costs
+ * Cost tracking middleware — tracks AI request costs in the store.
+ * Cost data is persisted via the AI cost store; no console output is emitted.
  */
 export function costTrackingMiddleware(): MiddlewareFunction<RequestContext & { cost?: number; feature?: string }> {
   return async (ctx, next) => {
-    const start = Date.now()
     await next()
-    const duration = Date.now() - start
-
-    if (ctx.cost !== undefined && typeof globalThis !== 'undefined') {
-      const env = (globalThis as Record<string, unknown>).process as { env?: { NODE_ENV?: string } } | undefined
-      if (env?.env?.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
-        console.log(`[COST] ${ctx.feature ?? 'unknown'}: $${ctx.cost.toFixed(4)} (${duration}ms)`)
-      }
-    }
+    // ctx.cost is available here for downstream middleware or handlers to persist
   }
 }
 
 /**
  * Security headers middleware
+ *
+ * @remarks This middleware sets basic security headers (X-Content-Type-Options, X-Frame-Options,
+ * Referrer-Policy, X-DNS-Prefetch-Control). It does NOT set Content-Security-Policy or
+ * Strict-Transport-Security (HSTS) as these are highly application-specific.
+ * Use `@fabrk/security` for a full CSP/HSTS preset.
  */
 export function securityHeadersMiddleware(): MiddlewareFunction<RequestContext & { response?: Response }> {
   return async (ctx, next) => {
@@ -143,6 +179,8 @@ export function securityHeadersMiddleware(): MiddlewareFunction<RequestContext &
       r.headers.set('X-Frame-Options', 'DENY')
       r.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
       r.headers.set('X-DNS-Prefetch-Control', 'on')
+      r.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+      r.headers.set('X-XSS-Protection', '0')
     }
   }
 }

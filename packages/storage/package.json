@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/storage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Storage adapters for FABRK framework (S3, R2, local)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -51,7 +51,10 @@
     "storage",
     "s3",
     "r2",
-    "upload",
+    "cloudflare-r2",
+    "aws",
+    "file-upload",
+    "typescript",
     "ai-coding"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",

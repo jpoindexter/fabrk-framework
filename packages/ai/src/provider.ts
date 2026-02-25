@@ -7,12 +7,12 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { validateOllamaUrl } from './llm/ollama-client';
 
 // Provider types
 export type AIProvider = 'openai' | 'google' | 'ollama';
 
-// Default Ollama settings
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1';
+// OLLAMA_MODEL is read at module load time (low churn — model name rarely changes)
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
 
 // Get the configured provider based on available API keys
@@ -28,8 +28,8 @@ export function getConfiguredProvider(): AIProvider | null {
   return null;
 }
 
-// Create OpenAI client
-export function getOpenAIClient() {
+// Create OpenAI client (internal — used by getModel)
+function getOpenAIClient() {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not configured');
@@ -37,8 +37,8 @@ export function getOpenAIClient() {
   return createOpenAI({ apiKey });
 }
 
-// Create Google (Gemini) client
-export function getGoogleClient() {
+// Create Google (Gemini) client (internal — used by getModel)
+function getGoogleClient() {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error('GOOGLE_AI_API_KEY is not configured');
@@ -46,16 +46,16 @@ export function getGoogleClient() {
   return createGoogleGenerativeAI({ apiKey });
 }
 
-// Create Ollama client (OpenAI-compatible API)
-export function getOllamaClient() {
-  return createOpenAICompatible({
-    name: 'ollama',
-    baseURL: OLLAMA_BASE_URL,
-    // Ollama doesn't require an API key
-  });
+// Create Ollama client (internal — used by getModel)
+// OLLAMA_BASE_URL is read here (not at module load) so it can be set after import
+function getOllamaClient() {
+  const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1'
+  validateOllamaUrl(baseUrl)
+  return createOpenAICompatible({ name: 'ollama', baseURL: baseUrl })
 }
 
 // Get the appropriate model based on provider
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getModel(provider?: AIProvider): any {
   const activeProvider = provider || getConfiguredProvider();
 
@@ -77,22 +77,3 @@ export function getModel(provider?: AIProvider): any {
   }
 }
 
-// Check if AI is available
-export function isAIConfigured(): boolean {
-  return getConfiguredProvider() !== null;
-}
-
-// Get current provider name (useful for UI)
-export function getCurrentProviderName(): string {
-  const provider = getConfiguredProvider();
-  switch (provider) {
-    case 'ollama':
-      return `Ollama (${OLLAMA_MODEL})`;
-    case 'openai':
-      return 'OpenAI (GPT-4o-mini)';
-    case 'google':
-      return 'Google (Gemini 1.5 Flash)';
-    default:
-      return 'Not configured';
-  }
-}

@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { describe, it, expect } from 'vitest'
 import { createNextAuthAdapter } from './adapter'
 
 describe('isConfigured', () => {
@@ -147,9 +148,7 @@ describe('MFA', () => {
   })
 })
 
-// ============================================================================
 // Helper: Compute current TOTP for testing
-// ============================================================================
 
 const BASE32_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 

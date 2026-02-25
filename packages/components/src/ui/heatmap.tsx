@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface HeatmapDataItem {
@@ -26,11 +26,11 @@ export function Heatmap({
   cellSize = 40,
   gap = 4,
   colorScale = [
-    'var(--color-muted)',
-    'oklch(80% 0.1 240)',
-    'oklch(70% 0.15 240)',
-    'oklch(60% 0.20 240)',
-    'oklch(50% 0.25 240)',
+    'hsl(var(--muted))',
+    'hsl(var(--chart-5))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--primary))',
   ],
   showValues = false,
   showLabels = true,

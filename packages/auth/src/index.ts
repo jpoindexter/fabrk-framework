@@ -25,7 +25,6 @@ export { InMemoryAuthStore, InMemoryApiKeyStore } from './types'
 export type {
   NextAuthAdapterConfig,
   ApiKeyGeneratorConfig,
-  MfaConfig,
   AuthStore,
   ApiKeyStore,
 } from './types'

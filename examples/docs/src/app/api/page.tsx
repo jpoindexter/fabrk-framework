@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
 
 const packages = [
@@ -12,14 +12,10 @@ const packages = [
   { name: '@fabrk/auth', description: 'NextAuth, API keys, MFA (TOTP + backup codes)' },
   { name: '@fabrk/components', description: '105+ UI components, charts, AI chat, admin' },
   { name: '@fabrk/email', description: 'Resend adapter, console adapter, 4 templates' },
-  { name: '@fabrk/mcp', description: 'Model Context Protocol server toolkit' },
   { name: '@fabrk/payments', description: 'Stripe, Polar, Lemon Squeezy adapters' },
-  { name: '@fabrk/referrals', description: 'Referral system' },
   { name: '@fabrk/security', description: 'CSRF, CSP, rate limiting, audit, GDPR, CORS' },
   { name: '@fabrk/storage', description: 'S3, Cloudflare R2, local filesystem' },
   { name: '@fabrk/store-prisma', description: 'Prisma store adapters for 7 entity types' },
-  { name: '@fabrk/themes', description: 'Opt-in theming layer with runtime switching' },
-  { name: 'fabrk', description: 'AI-first React framework — agents, tools, prompts, MCP, CLI' },
 ]
 
 const quickReference = [
@@ -76,7 +72,6 @@ const quickReference = [
       { name: 'createPromptTemplate / composePrompts', kind: 'function', description: 'Reusable prompt templates' },
       { name: 'generateEmbeddings / cosineSimilarity', kind: 'function', description: 'Vector embeddings and similarity' },
       { name: 'createTextStream / mergeStreams', kind: 'function', description: 'Streaming response utilities' },
-      { name: 'CodeValidator / validateCode', kind: 'class', description: 'AI-generated code validation' },
       { name: 'createAIMiddleware / budgetEnforcement', kind: 'function', description: 'AI request middleware and budget limits' },
     ],
   },
@@ -97,28 +92,13 @@ const quickReference = [
       { name: 'escapeHtml / sanitizeUrl / sanitizeSqlInput', kind: 'function', description: 'Input validation and sanitization' },
     ],
   },
-  {
-    name: 'fabrk',
-    description: 'AI-first React framework — agents, tools, prompts, MCP, CLI',
-    exports: [
-      { name: 'defineAgent', kind: 'function', description: 'Define an AI agent with model, tools, auth, budget' },
-      { name: 'defineTool / textResult', kind: 'function', description: 'Define MCP-compatible tools' },
-      { name: 'callLLM / callWithFallback', kind: 'function', description: 'LLM calls with provider fallback' },
-      { name: 'checkBudget / recordCost', kind: 'function', description: 'Budget enforcement per agent/session' },
-      { name: 'createAgentHandler', kind: 'function', description: 'Web-standard request handler for agents' },
-      { name: 'createSSEStream / formatSSEEvent', kind: 'function', description: 'Server-sent events streaming' },
-      { name: 'loadPrompt / interpolatePrompt', kind: 'function', description: 'Markdown prompt loading and interpolation' },
-      { name: 'createAuthGuard', kind: 'function', description: 'Auth middleware for agent routes' },
-      { name: 'generateAgentsMd', kind: 'function', description: 'Generate AGENTS.md from scanned agents/tools' },
-    ],
-  },
 ]
 
 export default function ApiReferencePage() {
   return (
     <DocLayout
       title="API REFERENCE"
-      description="Auto-generated TypeScript API documentation for all 15 packages. Generated with TypeDoc from JSDoc annotations and TypeScript types."
+      description="Auto-generated TypeScript API documentation for all 12 packages. Generated with TypeDoc from JSDoc annotations and TypeScript types."
     >
       <Section title="QUICK REFERENCE">
         <p className="text-sm text-muted-foreground mb-6">

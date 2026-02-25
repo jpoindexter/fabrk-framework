@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createLocalAdapter } from './local/adapter'
 import { createS3Adapter } from './s3/adapter'
@@ -12,12 +13,10 @@ vi.mock('fs', () => ({
     writeFile: vi.fn().mockResolvedValue(undefined),
     unlink: vi.fn().mockResolvedValue(undefined),
     access: vi.fn().mockResolvedValue(undefined),
+    // realpath resolves symlinks; return the path unchanged in tests (no symlinks)
+    realpath: vi.fn().mockImplementation((p: string) => Promise.resolve(p)),
   },
 }))
-
-// ============================================================================
-// ADAPTER CONFIGURATION
-// ============================================================================
 
 describe('adapter configuration', () => {
   it('local adapter: name, version, isConfigured', () => {
@@ -45,10 +44,6 @@ describe('adapter configuration', () => {
     expect(adapter.isConfigured()).toBe(true)
   })
 })
-
-// ============================================================================
-// LOCAL ADAPTER BEHAVIOR
-// ============================================================================
 
 describe('Local Adapter', () => {
   let adapter: StorageAdapter
@@ -123,10 +118,6 @@ describe('Local Adapter', () => {
   })
 })
 
-// ============================================================================
-// FILE VALIDATION
-// ============================================================================
-
 describe('validateFile', () => {
   it('should pass valid files and reject oversized files', () => {
     expect(validateFile({ size: 1024, contentType: 'text/plain', filename: 'test.txt' }).valid).toBe(true)
@@ -150,20 +141,16 @@ describe('validateFile', () => {
   })
 })
 
-// ============================================================================
-// STORAGE KEY GENERATION
-// ============================================================================
-
 describe('generateStorageKey', () => {
-  it('should generate key with timestamp and sanitize special chars', () => {
-    expect(generateStorageKey('photo.jpg')).toMatch(/^photo_\d+\.jpg$/)
-    expect(generateStorageKey('my file (1).txt')).toMatch(/^my_file_1__\d+\.txt$/)
-    expect(generateStorageKey('a___b.txt')).toMatch(/^a_b_\d+\.txt$/)
+  it('should generate key with timestamp, nonce, and sanitize special chars', () => {
+    expect(generateStorageKey('photo.jpg')).toMatch(/^photo_\d+_[a-f0-9]+\.jpg$/)
+    expect(generateStorageKey('my file (1).txt')).toMatch(/^my_file_1__\d+_[a-f0-9]+\.txt$/)
+    expect(generateStorageKey('a___b.txt')).toMatch(/^a_b_\d+_[a-f0-9]+\.txt$/)
   })
 
   it('should prepend path, strip slashes, and handle extensionless files', () => {
-    expect(generateStorageKey('test.txt', 'uploads/images')).toMatch(/^uploads\/images\/test_\d+\.txt$/)
-    expect(generateStorageKey('test.txt', '/uploads/')).toMatch(/^uploads\/test_\d+\.txt$/)
-    expect(generateStorageKey('README')).toMatch(/^README_\d+$/)
+    expect(generateStorageKey('test.txt', 'uploads/images')).toMatch(/^uploads\/images\/test_\d+_[a-f0-9]+\.txt$/)
+    expect(generateStorageKey('test.txt', '/uploads/')).toMatch(/^uploads\/test_\d+_[a-f0-9]+\.txt$/)
+    expect(generateStorageKey('README')).toMatch(/^README_\d+_[a-f0-9]+$/)
   })
 })

@@ -14,7 +14,7 @@ import type {
 
 export interface TeamManager {
   /** Create an organization */
-  createOrg(options: { name: string; slug: string; ownerId: string }): Promise<Organization>
+  createOrg(options: { name: string; slug: string; ownerId: string; ownerEmail: string }): Promise<Organization>
   /** Get organization by ID */
   getOrg(id: string): Promise<Organization | null>
   /** Get organization by slug */
@@ -34,7 +34,7 @@ export interface TeamManager {
   /** Create an invitation */
   createInvite(orgId: string, email: string, role: OrgRole, invitedBy: string): Promise<OrgInvite>
   /** Accept an invitation */
-  acceptInvite(token: string): Promise<OrgInvite | null>
+  acceptInvite(token: string, userId: string): Promise<OrgMember | null>
 }
 
 export function createTeamManager(store: TeamStore): TeamManager {
@@ -56,7 +56,7 @@ export function createTeamManager(store: TeamStore): TeamManager {
         orgId: org.id,
         role: 'owner',
         joinedAt: new Date(),
-        email: '', // Will be filled by caller
+        email: options.ownerEmail,
       })
 
       return org
@@ -70,10 +70,12 @@ export function createTeamManager(store: TeamStore): TeamManager {
       return store.getOrgBySlug(slug)
     },
 
+    /** @security No authorization check — caller must verify user has admin/owner role */
     async updateOrg(id: string, updates) {
       await store.updateOrg(id, updates)
     },
 
+    /** @security No authorization check — caller must verify user has admin/owner role */
     async deleteOrg(id: string) {
       await store.deleteOrg(id)
     },
@@ -93,10 +95,12 @@ export function createTeamManager(store: TeamStore): TeamManager {
       })
     },
 
+    /** @security No authorization check — caller must verify user has admin/owner role */
     async updateMemberRole(orgId, userId, role) {
       await store.updateMemberRole(orgId, userId, role)
     },
 
+    /** @security No authorization check — caller must verify user has admin/owner role */
     async removeMember(orgId, userId) {
       await store.removeMember(orgId, userId)
     },
@@ -105,7 +109,7 @@ export function createTeamManager(store: TeamStore): TeamManager {
       const bytes = new Uint8Array(32)
       crypto.getRandomValues(bytes)
       const token = Array.from(bytes)
-        .map((b) => b.toString(36).padStart(2, '0'))
+        .map((b) => b.toString(16).padStart(2, '0'))
         .join('')
 
       const invite: OrgInvite = {
@@ -123,14 +127,22 @@ export function createTeamManager(store: TeamStore): TeamManager {
       return invite
     },
 
-    async acceptInvite(token: string) {
-      const invite = await store.getInviteByToken(token)
+    /** @security No authorization check — caller must verify user has permission to accept this invite */
+    async acceptInvite(token: string, userId: string): Promise<OrgMember | null> {
+      // Store atomically checks+accepts — returns null if already accepted or expired
+      const invite = await store.acceptInvite(token)
       if (!invite) return null
-      if (invite.accepted) return null
-      if (invite.expiresAt < new Date()) return null
 
-      await store.acceptInvite(token)
-      return invite
+      const member: OrgMember = {
+        userId,
+        orgId: invite.orgId,
+        role: invite.role,
+        joinedAt: new Date(),
+        email: invite.email,
+      }
+
+      await store.addMember(member)
+      return member
     },
   }
 }

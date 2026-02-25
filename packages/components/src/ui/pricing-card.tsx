@@ -7,7 +7,7 @@
 import { Terminal } from 'lucide-react';
 import { Card, CardContent } from './card';
 import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 export interface PricingCardProps {
   /** Main price to display (e.g., "$199") */

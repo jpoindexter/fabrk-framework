@@ -1,5 +1,4 @@
 /**
- * FABRK COMPONENT
  * TierBadge - Subscription tier indicator with icon
  *
  * @example

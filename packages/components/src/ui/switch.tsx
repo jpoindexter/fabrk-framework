@@ -12,7 +12,7 @@
 
 import * as SwitchPrimitive from '@radix-ui/react-switch';
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimitive.Root>) {
@@ -26,7 +26,7 @@ function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimi
         mode.state.focus.ring,
         mode.state.disabled.cursor,
         mode.state.disabled.opacity,
-        `data-[state=checked]:${mode.color.bg.accent} data-[state=unchecked]:${mode.color.bg.muted}`,
+        'data-[state=checked]:bg-accent data-[state=unchecked]:bg-muted',
         'rounded-full', // Switches should always be pill-shaped
         className
       )}

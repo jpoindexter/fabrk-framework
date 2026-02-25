@@ -17,8 +17,9 @@ import { Card, CardHeader, CardContent } from '../ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
+import { getInitials } from '../utils';
 
 export type ActivityType =
   | 'created'
@@ -103,15 +104,6 @@ export function TeamActivityFeed({
   showTimestamp = true,
   className,
 }: TeamActivityFeedProps) {
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const formatTimestamp = (date: Date) => {
     return formatDistanceToNow(date, { addSuffix: true });
   };

@@ -17,9 +17,9 @@ import {
   InputOTPSlot,
   InputOTPSeparator,
 } from '../ui/input-otp';
-import { AlertTriangle, Loader2, Copy, Check, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, Loader2, Copy, Check, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { mode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 
 type SetupStep = 'qr' | 'verify' | 'backup';
 
@@ -49,6 +49,7 @@ export function MfaSetupDialog({
   const [verificationCode, setVerificationCode] = React.useState('');
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [copiedSecret, setCopiedSecret] = React.useState(false);
+  const [showSecret, setShowSecret] = React.useState(false);
 
   const handleCopySecret = async () => {
     try {
@@ -125,7 +126,18 @@ export function MfaSetupDialog({
                 Can&apos;t scan? Enter this code manually:
               </p>
               <div className={cn('bg-muted flex items-center gap-2 p-2', mode.radius)}>
-                <code className={cn('flex-1 text-xs break-all', mode.font)}>{totpSecret}</code>
+                <code className={cn('flex-1 text-xs break-all', mode.font)}>
+                  {showSecret ? totpSecret : '\u2022'.repeat(Math.min(totpSecret.length, 32))}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSecret((v) => !v)}
+                  className="shrink-0"
+                  aria-label={showSecret ? 'Hide secret' : 'Show secret'}
+                >
+                  {showSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
                 <Button variant="ghost" size="sm" onClick={handleCopySecret} className="shrink-0">
                   {copiedSecret ? (
                     <Check className="text-success h-4 w-4" />

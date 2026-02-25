@@ -28,9 +28,7 @@ import type {
   RateLimitResult,
 } from './plugin-types'
 
-// ============================================================================
 // BASE PLUGIN INTERFACE
-// ============================================================================
 
 export interface FabrkPlugin {
   /** Unique plugin name */
@@ -43,9 +41,7 @@ export interface FabrkPlugin {
   destroy?(): Promise<void>
 }
 
-// ============================================================================
 // ADAPTER INTERFACES
-// ============================================================================
 
 /**
  * Payment adapter interface
@@ -188,9 +184,7 @@ export interface RateLimitAdapter extends FabrkPlugin {
   reset(identifier: string, limit: string): Promise<void>
 }
 
-// ============================================================================
 // PLUGIN REGISTRY
-// ============================================================================
 
 export type AdapterType = 'payment' | 'auth' | 'email' | 'storage' | 'rateLimit'
 
@@ -286,16 +280,26 @@ export class PluginRegistry {
    */
   async initialize(): Promise<void> {
     const all = [...this.adapters.values(), ...this.plugins]
-    await Promise.all(all.map((p) => p.initialize?.()))
+    const results = await Promise.allSettled(all.map((p) => p.initialize?.() ?? Promise.resolve()))
+    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+    if (failures.length > 0) {
+      throw new AggregateError(failures.map((f) => f.reason), 'Plugin initialization failed')
+    }
   }
 
   /**
-   * Destroy all registered adapters and plugins
+   * Destroy all registered adapters and plugins.
+   * All plugins are destroyed even if some fail; failures are logged but not thrown.
    */
   async destroy(): Promise<void> {
     const all = [...this.adapters.values(), ...this.plugins]
-    await Promise.all(all.map((p) => p.destroy?.()))
+    const results = await Promise.allSettled(all.map((p) => p.destroy?.() ?? Promise.resolve()))
     this.adapters.clear()
     this.plugins = []
+    for (const result of results) {
+      if (result.status === 'rejected') {
+        console.error('[FABRK] Plugin destroy error:', result.reason)
+      }
+    }
   }
 }

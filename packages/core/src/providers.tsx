@@ -2,7 +2,7 @@
  * Provider components for FABRK framework
  *
  * FabrkProvider wraps the framework context (plugins, config, features).
- * Design system theming is separate — compose with ThemeProvider from @fabrk/themes.
+ * Design system theming is separate — compose with ThemeProvider from @fabrk/design-system.
  */
 
 'use client';
@@ -31,7 +31,7 @@ export interface FabrkProviderProps {
  * Wraps the framework context including:
  * - FabrkContext - Plugin registry and framework config
  *
- * For theming, compose with ThemeProvider from @fabrk/themes:
+ * For theming, compose with ThemeProvider from @fabrk/design-system:
  *
  * @example
  * ```tsx
@@ -52,7 +52,7 @@ export interface FabrkProviderProps {
  *
  * // With design system (opt-in)
  * import { FabrkProvider } from '@fabrk/core'
- * import { ThemeProvider } from '@fabrk/themes'
+ * import { ThemeProvider } from '@fabrk/design-system'
  *
  * export default function RootLayout({ children }) {
  *   return (

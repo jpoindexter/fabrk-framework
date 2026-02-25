@@ -6,9 +6,7 @@ import {
   registerTemplate,
 } from './index'
 
-// ============================================================================
 // CONSOLE ADAPTER
-// ============================================================================
 
 describe('createConsoleAdapter', () => {
   beforeEach(() => {
@@ -58,9 +56,7 @@ describe('createConsoleAdapter', () => {
   })
 })
 
-// ============================================================================
 // RESEND ADAPTER
-// ============================================================================
 
 describe('createResendAdapter', () => {
   it('should report configured/unconfigured correctly', () => {
@@ -77,9 +73,7 @@ describe('createResendAdapter', () => {
   })
 })
 
-// ============================================================================
 // TEMPLATE RENDERING
-// ============================================================================
 
 describe('renderTemplate', () => {
   it('should render verification template with data and defaults', () => {
@@ -130,9 +124,7 @@ describe('renderTemplate', () => {
   })
 })
 
-// ============================================================================
 // CUSTOM TEMPLATE REGISTRATION
-// ============================================================================
 
 describe('registerTemplate', () => {
   it('should register, render, and override custom templates', () => {

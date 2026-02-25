@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/security",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Security utilities for FABRK framework (CSRF, CSP, rate limiting, audit, GDPR)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -49,6 +49,10 @@
     "csp",
     "rate-limit",
     "audit-log",
+    "gdpr",
+    "cors",
+    "bot-protection",
+    "typescript",
     "ai-coding"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",

@@ -1,10 +1,5 @@
-/**
- * Security package types
- */
+import type { AuditStore, AuditEvent } from '@fabrk/core'
 
-import type { AuditStore, AuditEvent, RateLimitResult } from '@fabrk/core'
-
-// Re-export for convenience
 export type { AuditStore, AuditEvent }
 
 export interface CsrfConfig {
@@ -74,6 +69,8 @@ export interface MemoryRateLimitConfig {
   defaultMax?: number
   /** Default window size in seconds */
   defaultWindowSeconds?: number
+  /** Maximum number of tracked keys to prevent unbounded memory growth (default: 10000) */
+  maxEntries?: number
 }
 
 export interface UpstashRateLimitConfig {
@@ -94,9 +91,13 @@ export interface UpstashRateLimitConfig {
  */
 export class InMemoryAuditStore implements AuditStore {
   private events: AuditEvent[] = []
+  private readonly maxEntries = 10000
 
   async log(event: AuditEvent): Promise<void> {
     this.events.push(event)
+    if (this.events.length > this.maxEntries) {
+      this.events.splice(0, this.events.length - this.maxEntries)
+    }
   }
 
   async query(options: {
@@ -117,7 +118,9 @@ export class InMemoryAuditStore implements AuditStore {
     if (options.resourceType) filtered = filtered.filter((e) => e.resourceType === options.resourceType)
     if (options.resourceId) filtered = filtered.filter((e) => e.resourceId === options.resourceId)
     if (options.action) filtered = filtered.filter((e) => e.action === options.action)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (options.from) filtered = filtered.filter((e) => e.timestamp >= options.from!)
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (options.to) filtered = filtered.filter((e) => e.timestamp <= options.to!)
 
     // Sort by timestamp descending

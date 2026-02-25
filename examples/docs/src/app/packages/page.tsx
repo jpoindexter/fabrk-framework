@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { DocLayout, Section, CodeBlock } from '@/components/doc-layout'
 
 interface PackageInfo {
@@ -14,35 +14,6 @@ interface PackageInfo {
 }
 
 const packages: PackageInfo[] = [
-  {
-    id: 'fabrk',
-    name: 'fabrk',
-    description: 'AI-first React framework on Vite 7 — defineAgent, defineTool, loadPrompt, SSE streaming, multi-target deploy',
-    exports: [
-      'defineAgent() — Declare an AI agent with model, tools, and system prompt',
-      'defineTool() — Create MCP-compatible tool definitions',
-      'loadPrompt() — Load prompt templates with partials and variables',
-      'createSSEStream() — Server-sent event streaming for real-time AI responses',
-      'deploy() — Multi-target deploy (Workers, Node, Vercel)',
-      'Dev dashboard at /__ai — Inspect agents, tools, and prompts',
-    ],
-    install: 'pnpm add fabrk',
-    example: `import { defineAgent, defineTool, loadPrompt } from 'fabrk'
-
-const agent = defineAgent({
-  model: 'claude-sonnet-4-5-20250514',
-  tools: [searchTool, analyzeTool],
-  system: loadPrompt('assistant'),
-})
-
-const searchTool = defineTool({
-  name: 'search',
-  description: 'Search the knowledge base',
-  handler: async ({ query }) => {
-    return await search(query)
-  },
-})`,
-  },
   {
     id: 'config',
     name: '@fabrk/config',
@@ -76,6 +47,9 @@ export default defineFabrkConfig({
       'primitives — Raw token values (colors, space, fonts)',
       'applyTheme() — Runtime theme switching via CSS variables',
       'getThemeNames() — List all available themes',
+      'ThemeProvider, useThemeContext(), ThemeScript — Theme context & SSR',
+      'Chart colors: getChartColors(), getChartColor()',
+      'Formatters: formatButtonText(), formatLabelText(), formatCardHeader()',
     ],
     install: 'pnpm add @fabrk/design-system',
     example: `import { mode } from '@fabrk/design-system'
@@ -147,7 +121,7 @@ function Dashboard() {
   DataTable, ChatInput, MfaCard, PricingCard
 } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 function MetricsPage() {
   return (
@@ -173,8 +147,6 @@ function MetricsPage() {
       'Embeddings: getEmbeddingProvider(), cosineSimilarity(), findNearest()',
       'Streaming: parseStreamChunks(), createTextStream(), mergeStreams()',
       'Prompts: PromptBuilder, createPromptTemplate(), composePrompts()',
-      'Validation: CodeValidator, validateCode(), isCodeSafe()',
-      'Testing: AITest, testDoesNotThrow(), testReturnsType()',
       'Content: moderateContent(), generateImage(), textToSpeech(), speechToText()',
     ],
     install: 'pnpm add @fabrk/ai',
@@ -192,33 +164,6 @@ await tracker.track({
   userId: 'user_123', model: 'claude-sonnet-4-5-20250514',
   provider: 'anthropic', inputTokens: 12, outputTokens: 85, feature: 'chat',
 })`,
-  },
-  {
-    id: 'themes',
-    name: '@fabrk/themes',
-    description: 'Opt-in theming layer on top of @fabrk/design-system. Provides ThemeProvider, runtime theme context, chart color utilities, and text formatters.',
-    exports: [
-      'mode — Re-exported design mode object (radius, font, shadow)',
-      'ThemeProvider, useThemeContext(), ThemeScript — Theme context & SSR',
-      'primitives — Raw token values (colors, space, fonts)',
-      'Chart colors: getChartColors(), getChartColor()',
-      'Formatters: formatButtonText(), formatLabelText(), formatCardHeader()',
-      'Theme utils: getActiveTheme(), getActiveThemeClasses()',
-    ],
-    install: 'pnpm add @fabrk/themes',
-    example: `import { mode } from '@fabrk/themes'
-import { cn } from '@fabrk/core'
-
-// Use design tokens everywhere
-<Card className={cn("border border-border", mode.radius)}>
-  <h2 className={cn("uppercase", mode.font)}>
-    {mode.cardHeader('TITLE')}
-  </h2>
-</Card>
-
-// Chart colors for data visualization
-import { getChartColors } from '@fabrk/themes'
-const colors = getChartColors(5) // ['#...', '#...', ...]`,
   },
   {
     id: 'payments',
@@ -372,33 +317,6 @@ await audit.log({
 })`,
   },
   {
-    id: 'mcp',
-    name: '@fabrk/mcp',
-    description: 'Model Context Protocol utilities — tool definition helpers, schema builders, and server implementation patterns for AI agent integration.',
-    exports: [
-      'defineTool() — Define MCP tools with type-safe schemas',
-      'createSchema() — Build tool parameter schemas',
-      'createMCPServer() — Server implementation helpers',
-      'Types: MCPTool, MCPSchema, MCPServerConfig',
-    ],
-    install: 'pnpm add @fabrk/mcp',
-    example: `import { defineTool, createSchema } from '@fabrk/mcp'
-
-const searchTool = defineTool({
-  name: 'search',
-  description: 'Search the knowledge base',
-  schema: createSchema({
-    query: 'string',
-    limit: 'number?',
-    filters: 'string[]?',
-  }),
-  handler: async ({ query, limit = 10 }) => {
-    const results = await search(query, limit)
-    return { results }
-  },
-})`,
-  },
-  {
     id: 'store-prisma',
     name: '@fabrk/store-prisma',
     description: '7 Prisma store adapters that implement core store interfaces. Connects FABRK features to a real PostgreSQL database via Prisma ORM.',
@@ -430,60 +348,13 @@ const fabrk = autoWire(config, undefined, {
   featureFlagStore: new PrismaFeatureFlagStore(prisma),
 })`,
   },
-  {
-    id: 'ui',
-    name: '@fabrk/ui',
-    description: 'Component registry (shadcn-style). Provides a registry of all FABRK components with metadata for tooling and code generation.',
-    exports: [
-      'componentRegistry — Registry of all components with metadata',
-      'getComponent() — Look up component by name',
-      'listComponents() — List all registered components',
-      'ComponentMeta — Component metadata type (props, category, imports)',
-    ],
-    install: 'pnpm add @fabrk/ui',
-    example: `import { componentRegistry, getComponent } from '@fabrk/ui'
-
-// Look up component metadata
-const buttonMeta = getComponent('Button')
-// { name: 'Button', category: 'forms', package: '@fabrk/components', ... }
-
-// List all components in a category
-const charts = listComponents({ category: 'charts' })
-// [{ name: 'BarChart', ... }, { name: 'LineChart', ... }, ...]`,
-  },
-  {
-    id: 'referrals',
-    name: '@fabrk/referrals',
-    description: 'Referral system with code generation, tracking, and reward management. Supports multi-tier referral programs.',
-    exports: [
-      'ReferralManager — Create and manage referral programs',
-      'generateReferralCode() — Generate unique referral codes',
-      'trackReferral() — Track referral conversions',
-      'InMemoryReferralStore — Dev/testing store',
-      'Types: ReferralStore, ReferralCode, ReferralReward',
-    ],
-    install: 'pnpm add @fabrk/referrals',
-    example: `import { ReferralManager, InMemoryReferralStore } from '@fabrk/referrals'
-
-const referrals = new ReferralManager(new InMemoryReferralStore())
-
-// Generate a referral code for a user
-const code = await referrals.generateCode({ userId: 'user_123' })
-// "FABRK-A7X2"
-
-// Track when someone signs up via referral
-await referrals.trackConversion({
-  code: 'FABRK-A7X2',
-  newUserId: 'user_456',
-})`,
-  },
 ]
 
 export default function PackagesPage() {
   return (
     <DocLayout
       title="PACKAGES"
-      description="17 modular packages covering every aspect of full-stack development. Install only what you need."
+      description="12 modular packages covering every aspect of full-stack development. Install only what you need."
     >
       {/* Dependency diagram */}
       <Section title="DEPENDENCY ARCHITECTURE">

@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { describe, it, expect, beforeEach } from 'vitest'
 import { createStripeAdapter } from './stripe/adapter'
 import { createPolarAdapter } from './polar/adapter'
 import { createLemonSqueezyAdapter } from './lemonsqueezy/adapter'
@@ -33,9 +34,7 @@ async function polarWebhookHeaders(payload: string, secret: string) {
   }
 }
 
-// ---------------------------------------------------------------------------
 // Stripe Adapter
-// ---------------------------------------------------------------------------
 
 describe('createStripeAdapter', () => {
   it('should return a named adapter and check isConfigured', () => {
@@ -49,9 +48,7 @@ describe('createStripeAdapter', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
 // Polar Adapter
-// ---------------------------------------------------------------------------
 
 describe('createPolarAdapter', () => {
   const validConfig = { accessToken: 'polar_pat_abc123', webhookSecret: 'test_basic_webhook_secret' }
@@ -100,9 +97,7 @@ describe('createPolarAdapter', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
 // Polar Webhook Signature Verification
-// ---------------------------------------------------------------------------
 
 describe('Polar webhook signature verification', () => {
   const webhookSecret = 'test_polar_webhook_secret'
@@ -162,9 +157,7 @@ describe('Polar webhook signature verification', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
 // Lemon Squeezy Adapter
-// ---------------------------------------------------------------------------
 
 describe('createLemonSqueezyAdapter', () => {
   const validConfig = { apiKey: 'ls_test_key_abc', storeId: 'store_123', webhookSecret: 'whsec_ls_test' }
@@ -191,7 +184,7 @@ describe('createLemonSqueezyAdapter', () => {
   it('should verify and parse a valid webhook', async () => {
     const adapter = createLemonSqueezyAdapter(validConfig)
     const payload = JSON.stringify({
-      meta: { event_name: 'subscription_created', webhook_id: 'wh_42' },
+      meta: { event_name: 'subscription_created', webhook_id: 'wh_42', created_at: new Date().toISOString() },
       data: { attributes: { status: 'active', variant_id: 100 } },
     })
 
@@ -208,9 +201,7 @@ describe('createLemonSqueezyAdapter', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
 // InMemoryPaymentStore
-// ---------------------------------------------------------------------------
 
 describe('InMemoryPaymentStore', () => {
   let store: InMemoryPaymentStore

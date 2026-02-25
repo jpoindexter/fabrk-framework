@@ -15,9 +15,6 @@
 
 import type { SecurityHeadersConfig } from './types'
 
-/**
- * Generate security headers as a Record
- */
 export function getSecurityHeaders(
   config: SecurityHeadersConfig = {}
 ): Record<string, string> {
@@ -62,9 +59,6 @@ export function getSecurityHeaders(
   return headers
 }
 
-/**
- * Apply security headers to a Response
- */
 export function applySecurityHeaders(
   response: Response,
   config?: SecurityHeadersConfig

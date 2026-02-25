@@ -27,13 +27,9 @@
 import type { CorsConfig } from './types'
 
 export interface CorsHandler {
-  /** Generate CORS headers for a request */
   getHeaders(request: Request): Record<string, string>
-  /** Handle a preflight (OPTIONS) request */
   preflight(request: Request): Response
-  /** Apply CORS headers to an existing response */
   apply(request: Request, response: Response): Response
-  /** Check if an origin is allowed */
   isAllowed(origin: string): boolean
 }
 
@@ -47,7 +43,6 @@ export function createCorsHandler(config: CorsConfig): CorsHandler {
     maxAge = 86400,
   } = config
 
-  // Reject wildcard origin with credentials — this reflects any origin with credentials
   if (origins.includes('*') && credentials) {
     throw new Error('CORS: origins ["*"] with credentials: true is insecure. Specify explicit origins.')
   }
@@ -66,6 +61,11 @@ export function createCorsHandler(config: CorsConfig): CorsHandler {
     // Use the specific origin (not *) when credentials are enabled
     headers['Access-Control-Allow-Origin'] = credentials ? origin : (origins.includes('*') ? '*' : origin)
 
+    /** @security Vary: Origin prevents shared caches from serving a response with the wrong ACAO header to a different origin (cache poisoning). Required whenever ACAO is not a static wildcard '*'. */
+    if (!origins.includes('*')) {
+      headers['Vary'] = 'Origin'
+    }
+
     if (credentials) {
       headers['Access-Control-Allow-Credentials'] = 'true'
     }
@@ -83,6 +83,12 @@ export function createCorsHandler(config: CorsConfig): CorsHandler {
 
     preflight(request: Request): Response {
       const headers = getHeaders(request)
+
+      // If origin is not allowed, return a bare 204 with no CORS headers
+      // to avoid leaking configuration to disallowed origins
+      if (!headers['Access-Control-Allow-Origin']) {
+        return new Response(null, { status: 204 })
+      }
 
       headers['Access-Control-Allow-Methods'] = methods.join(', ')
       headers['Access-Control-Allow-Headers'] = allowedHeaders.join(', ')

@@ -23,7 +23,7 @@ import type {
   CostStore,
   CostSummary,
   FeatureCost,
-} from './cost';
+} from './cost-types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
 type PrismaClient = any;
@@ -102,11 +102,30 @@ export class PrismaCostStore implements CostStore {
       userId?: string;
     }
   ): Promise<CostSummary[]> {
-    const truncFn = period === 'daily' ? 'day' : period === 'weekly' ? 'week' : 'month';
+    // DATE_TRUNC keyword ('day'/'week'/'month') cannot be parameterized via $queryRaw
+    // tagged template because Prisma sends it as a bind parameter, which PostgreSQL
+    // rejects. The value comes from a switch with only literal branches, so it is
+    // safe to interpolate via $queryRawUnsafe.
+    let truncKeyword: string;
+    switch (period) {
+      case 'daily':
+        truncKeyword = 'day';
+        break;
+      case 'weekly':
+        truncKeyword = 'week';
+        break;
+      case 'monthly':
+        truncKeyword = 'month';
+        break;
+    }
 
-    const results = await this.prisma.$queryRaw`
-      SELECT
-        DATE_TRUNC(${truncFn}, timestamp) as date,
+    const startDate = filters?.startDate ?? null;
+    const endDate = filters?.endDate ?? null;
+    const userId = filters?.userId ?? null;
+
+    const results = await this.prisma.$queryRawUnsafe(
+      `SELECT
+        DATE_TRUNC('${truncKeyword}', timestamp) as date,
         SUM("costUSD") as total_cost,
         SUM("totalTokens") as total_tokens,
         COUNT(*) as request_count,
@@ -115,12 +134,15 @@ export class PrismaCostStore implements CostStore {
         AVG("durationMs") as avg_duration_ms
       FROM "AICostEvent"
       WHERE
-        (${filters?.startDate ?? null}::timestamp IS NULL OR timestamp >= ${filters?.startDate ?? null})
-        AND (${filters?.endDate ?? null}::timestamp IS NULL OR timestamp <= ${filters?.endDate ?? null})
-        AND (${filters?.userId ?? null}::text IS NULL OR "userId" = ${filters?.userId ?? null})
-      GROUP BY DATE_TRUNC(${truncFn}, timestamp)
-      ORDER BY date DESC
-    `;
+        ($1::timestamp IS NULL OR timestamp >= $1)
+        AND ($2::timestamp IS NULL OR timestamp <= $2)
+        AND ($3::text IS NULL OR "userId" = $3)
+      GROUP BY DATE_TRUNC('${truncKeyword}', timestamp)
+      ORDER BY date DESC`,
+      startDate,
+      endDate,
+      userId
+    );
 
     return (results as Array<Record<string, unknown>>).map((r) => ({
       date: (r.date as Date).toISOString().split('T')[0],

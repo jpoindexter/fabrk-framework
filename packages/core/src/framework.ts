@@ -1,9 +1,9 @@
-import { FabrkConfig, FabrkConfigInput, FabrkInstance, fabrkConfigSchema } from './types'
+import { FabrkConfigInput, FabrkInstance, fabrkConfigSchema } from './types'
 import { createMiddleware } from './middleware'
 import { PluginRegistry } from './plugins'
 import type { FabrkPlugin } from './plugins'
 import * as hooks from './hooks'
-import { autoWire, type AdapterOverrides, type FeatureModules } from './auto-wire'
+import { autoWire, type AdapterOverrides } from './auto-wire'
 import { applyDevDefaults } from './defaults'
 
 export interface CreateFabrkOptions extends FabrkConfigInput {

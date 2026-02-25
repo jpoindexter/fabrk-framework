@@ -1,8 +1,3 @@
-/**
- * ✅ FABRK COMPONENT LOGIC
- * Prompt builder business logic and state management
- */
-
 import { useState, useCallback } from 'react';
 
 export interface PromptTemplate {

@@ -5,9 +5,7 @@
  * These are resolved by the active theme.
  */
 
-// =============================================================================
 // SEMANTIC TOKEN TYPES
-// =============================================================================
 
 export interface ColorTokens {
   bg: {
@@ -181,9 +179,7 @@ export interface StateTokens {
   };
 }
 
-// =============================================================================
 // SEMANTIC TOKEN INTERFACE
-// =============================================================================
 
 export interface SemanticTokens {
   color: ColorTokens;
@@ -196,9 +192,7 @@ export interface SemanticTokens {
   state: StateTokens; // NEW
 }
 
-// =============================================================================
 // CSS VARIABLE NAMES (for mapping)
-// =============================================================================
 
 export const cssVariableNames = {
   color: {

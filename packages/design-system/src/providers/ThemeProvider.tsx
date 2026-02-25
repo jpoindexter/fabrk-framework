@@ -4,9 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { ThemeName } from '../themes';
 import { DEFAULT_THEME, THEME_NAMES } from '../themes';
 
-// =============================================================================
 // CONTEXT TYPES
-// =============================================================================
 
 // Color themes correspond to CRT phosphor palettes in globals.css
 export type ColorThemeName =
@@ -56,7 +54,7 @@ const ALL_THEMES = [
 ] as const;
 
 // Dark themes for system dark mode (all terminal themes are dark)
-const DARK_THEMES: ColorThemeName[] = [
+const _DARK_THEMES: ColorThemeName[] = [
   // Standard CRT
   'amber',
   'green',
@@ -82,13 +80,6 @@ const DARK_THEMES: ColorThemeName[] = [
 // Light theme for system light mode
 const LIGHT_THEME: ColorThemeName = 'bw';
 
-// Get a random dark theme
-function getRandomDarkTheme(): ColorThemeName {
-  return DARK_THEMES[Math.floor(Math.random() * DARK_THEMES.length)];
-}
-
-// =============================================================================
-
 export interface ThemeContextValue {
   theme: ThemeName;
   setTheme: (theme: ThemeName) => void;
@@ -112,15 +103,11 @@ export interface ThemeScriptProps {
   nonce?: string;
 }
 
-// =============================================================================
 // CONTEXT
-// =============================================================================
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-// =============================================================================
 // PROVIDER
-// =============================================================================
 
 export function ThemeProvider({
   children,
@@ -130,8 +117,10 @@ export function ThemeProvider({
   storageKeyPrefix = 'design-system',
   persist = true,
 }: ThemeProviderProps) {
-  const colorKey = storageKey || 'theme';
-  const legacyColorKey = storageKey || `${storageKeyPrefix}-color-theme`;
+  const colorKey = storageKey ?? 'theme';
+  // legacyColorKey is only needed when storageKey is not provided (migration from old key name).
+  // When storageKey IS provided, both keys would resolve to the same string — avoid the double read.
+  const legacyColorKey: string | null = storageKey ? null : `${storageKeyPrefix}-color-theme`;
 
   const [theme, setThemeState] = useState<ThemeName>(defaultTheme);
   const [colorTheme, setColorThemeState] = useState<ColorThemeName>(defaultColorTheme);
@@ -144,21 +133,25 @@ export function ThemeProvider({
       return;
     }
 
-    const storedColor = localStorage.getItem(colorKey) || localStorage.getItem(legacyColorKey);
+    const storedColor =
+      localStorage.getItem(colorKey) ||
+      (legacyColorKey ? localStorage.getItem(legacyColorKey) : null);
 
     if (storedColor && ALL_THEMES.includes(storedColor as ColorThemeName)) {
       // User has a stored preference - use it
       setColorThemeState(storedColor as ColorThemeName);
     } else {
-      // No stored preference - detect system preference
+      // No stored preference - detect system preference.
+      // Use a fixed default dark theme to match the ThemeScript server render
+      // and avoid hydration mismatch (Math.random() produces different values).
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const systemTheme = prefersDark ? getRandomDarkTheme() : LIGHT_THEME;
+      const systemTheme = prefersDark ? defaultColorTheme : LIGHT_THEME;
       setColorThemeState(systemTheme);
       // Don't persist system-detected theme until user explicitly changes it
     }
 
     setMounted(true);
-  }, [colorKey, legacyColorKey, persist]);
+  }, [colorKey, legacyColorKey, persist, defaultColorTheme]);
 
   // Update localStorage and DOM when theme changes
   useEffect(() => {
@@ -197,9 +190,7 @@ export function ThemeProvider({
   );
 }
 
-// =============================================================================
 // HOOKS
-// =============================================================================
 
 export function useThemeContext(): ThemeContextValue {
   const context = useContext(ThemeContext);
@@ -213,13 +204,28 @@ export function useOptionalThemeContext(): ThemeContextValue | null {
   return useContext(ThemeContext);
 }
 
-// =============================================================================
 // SCRIPT FOR SSR FLASH PREVENTION
-// =============================================================================
 
 /**
- * Inline script to prevent flash of unstyled content
- * Add this to <head> before any stylesheets
+ * Escape a string for safe interpolation inside a single-quoted JS string
+ * within a script tag. Prevents injection via storage key props.
+ */
+function escapeScriptString(value: string): string {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '\\r')
+    .replace(/<\/script/gi, '<\\/script');
+}
+
+/**
+ * Inline script to prevent flash of unstyled content.
+ * Add this to head before any stylesheets.
+ *
+ * Security: All interpolated props are escaped via escapeScriptString
+ * to prevent script injection. defaultColorTheme is validated against
+ * the known theme list.
  */
 export function ThemeScript({
   storageKey,
@@ -227,13 +233,25 @@ export function ThemeScript({
   defaultColorTheme = 'green',
   nonce,
 }: ThemeScriptProps) {
-  const colorKey = storageKey || 'theme';
-  const legacyColorKey = storageKey || `${storageKeyPrefix}-color-theme`;
+  // Validate defaultColorTheme against known theme names
+  const safeDefaultColorTheme = ALL_THEMES.includes(defaultColorTheme)
+    ? defaultColorTheme
+    : 'green';
 
+  const colorKey = storageKey ?? 'theme';
+  // legacyColorKey is only needed when storageKey is not provided (migration from old key name).
+  // When storageKey IS provided, both keys would resolve to the same string — avoid the double read.
+  const legacyColorKey: string | null = storageKey ? null : `${storageKeyPrefix}-color-theme`;
+
+  const escapedColorKey = escapeScriptString(colorKey);
+  const escapedLegacyColorKey = legacyColorKey ? escapeScriptString(legacyColorKey) : null;
+  const escapedDefault = escapeScriptString(safeDefaultColorTheme);
+
+  // All interpolated values are escaped above — safe for inline script context
   const script = `
     (function() {
       try {
-        var colorTheme = localStorage.getItem('${colorKey}') || localStorage.getItem('${legacyColorKey}');
+        var colorTheme = localStorage.getItem('${escapedColorKey}')${escapedLegacyColorKey ? ` || localStorage.getItem('${escapedLegacyColorKey}')` : ''};
         var validThemes = [
           'amber', 'green', 'blue', 'red', 'purple',
           'gameboy', 'c64', 'gbpocket', 'vic20', 'atari', 'spectrum',
@@ -249,19 +267,15 @@ export function ThemeScript({
         if (colorTheme && validThemes.includes(colorTheme)) {
           document.documentElement.setAttribute('data-theme', colorTheme);
         } else {
-          // No stored preference - detect system preference
           var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
           if (prefersDark) {
-            // Pick a random dark theme
-            var randomDark = darkThemes[Math.floor(Math.random() * darkThemes.length)];
-            document.documentElement.setAttribute('data-theme', randomDark);
+            document.documentElement.setAttribute('data-theme', '${escapedDefault}');
           } else {
-            // Light mode - use B&W theme
             document.documentElement.setAttribute('data-theme', 'bw');
           }
         }
       } catch (e) {
-        document.documentElement.setAttribute('data-theme', '${defaultColorTheme}');
+        document.documentElement.setAttribute('data-theme', '${escapedDefault}');
       }
     })();
   `;

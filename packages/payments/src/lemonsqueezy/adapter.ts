@@ -24,8 +24,18 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { LemonSqueezyAdapterConfig } from '../types'
-import { timingSafeEqual } from '../crypto-utils'
+import { timingSafeEqual, hashPayload } from '../crypto-utils'
+import { createIdempotencyCache } from '../idempotency'
 
+// Shared idempotency cache to reject duplicate webhook events
+const lsCache = createIdempotencyCache(10_000)
+
+/**
+ * @remarks **Serverless warning:** The built-in idempotency cache is process-scoped
+ * and does NOT survive cold starts on serverless platforms (Vercel, AWS Lambda, etc.).
+ * For production serverless deployments, inject a persistent idempotency store
+ * (Redis, database) to prevent webhook replay attacks across function invocations.
+ */
 export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.lemonsqueezy.com/v1'
 
@@ -122,12 +132,44 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
 
         const event = JSON.parse(payloadStr)
 
+        // Replay protection: two-sided timestamp check.
+        // Math.abs() would accept future-dated events (attacker sets timestamp far in
+        // the future so the event remains "valid" forever). Use explicit bounds instead.
+        const createdAt = event.meta?.created_at
+        if (!createdAt) {
+          return { verified: false, error: 'Webhook missing timestamp (replay protection)' }
+        }
+        const eventTimestamp = new Date(createdAt).getTime()
+        if (isNaN(eventTimestamp)) {
+          return { verified: false, error: 'Webhook timestamp is not a valid date (replay protection)' }
+        }
+        const now = Date.now()
+        if (eventTimestamp < now - 300_000) {
+          return { verified: false, error: 'Webhook timestamp too old (possible replay)' }
+        }
+        if (eventTimestamp > now + 30_000) {
+          return { verified: false, error: 'Webhook timestamp in the future (possible replay)' }
+        }
+
+        // Idempotency: reject duplicate event IDs
+        // Derive a deterministic ID from payload hash when event has no webhook_id
+        const eventId = event.meta?.webhook_id ?? `derived:${await hashPayload(payloadStr)}`
+        const eventType = event.meta?.event_name ?? 'unknown'
+        const eventData = (event.data?.attributes ?? event.data ?? {}) as Record<string, unknown>
+        if (!lsCache.markProcessed(eventId)) {
+          return {
+            verified: true,
+            duplicate: true,
+            event: { type: eventType, id: eventId, data: eventData, raw: event },
+          }
+        }
+
         return {
           verified: true,
           event: {
-            type: event.meta.event_name,
-            id: event.meta.webhook_id ?? crypto.randomUUID(),
-            data: event.data.attributes as Record<string, unknown>,
+            type: eventType,
+            id: eventId,
+            data: eventData,
             raw: event,
           },
         }
@@ -141,7 +183,7 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
 
     async getCustomer(customerId: string): Promise<CustomerInfo | null> {
       try {
-        const data = await lsFetch(`/customers/${customerId}`)
+        const data = await lsFetch(`/customers/${encodeURIComponent(customerId)}`)
         const attrs = data.data.attributes
 
         return {
@@ -158,7 +200,7 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
 
     async getSubscription(subscriptionId: string): Promise<SubscriptionInfo | null> {
       try {
-        const data = await lsFetch(`/subscriptions/${subscriptionId}`)
+        const data = await lsFetch(`/subscriptions/${encodeURIComponent(subscriptionId)}`)
         const attrs = data.data.attributes
 
         const statusMap: Record<string, SubscriptionInfo['status']> = {
@@ -174,7 +216,7 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
           id: data.data.id,
           status: statusMap[attrs.status] ?? 'active',
           priceId: attrs.variant_id?.toString() ?? '',
-          currentPeriodStart: new Date(attrs.renews_at),
+          currentPeriodStart: new Date(attrs.created_at),
           currentPeriodEnd: new Date(attrs.renews_at),
           cancelAtPeriodEnd: attrs.cancelled ?? false,
         }
@@ -185,11 +227,28 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
 
     async cancelSubscription(
       subscriptionId: string,
-      _options?: { atPeriodEnd?: boolean }
+      options?: { atPeriodEnd?: boolean }
     ): Promise<void> {
-      await lsFetch(`/subscriptions/${subscriptionId}`, {
-        method: 'DELETE',
-      })
+      if (options?.atPeriodEnd) {
+        // Schedule cancellation at end of current billing period via PATCH
+        await lsFetch(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+          method: 'PATCH',
+          body: JSON.stringify({
+            data: {
+              type: 'subscriptions',
+              id: subscriptionId,
+              attributes: {
+                cancelled: true,
+              },
+            },
+          }),
+        })
+      } else {
+        // Immediate cancellation via DELETE
+        await lsFetch(`/subscriptions/${encodeURIComponent(subscriptionId)}`, {
+          method: 'DELETE',
+        })
+      }
     },
   }
 }

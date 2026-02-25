@@ -1,21 +1,11 @@
-/**
- * ✅ FABRK COMPONENT - UX HEURISTIC #9
- * Help Users Recognize, Diagnose, and Recover from Errors
- *
- * Error Message Formula:
- * - What went wrong
- * - Why it happened
- * - How to fix it
- * - Action to resolve (optional)
- */
-
 'use client';
 
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 import * as React from 'react';
 import { Button } from './button';
+import { sanitizeHref } from '../utils';
 
 export interface FormErrorProps {
   what?: string;
@@ -72,7 +62,7 @@ export const FormError = React.forwardRef<HTMLDivElement, FormErrorProps>(
                 )}
                 {helpLink && (
                   <Button size="sm" variant="ghost" asChild className="h-7 text-xs">
-                    <a href={helpLink} target="_blank" rel="noopener noreferrer">
+                    <a href={sanitizeHref(helpLink)} target="_blank" rel="noopener noreferrer">
                       &gt; LEARN MORE
                     </a>
                   </Button>

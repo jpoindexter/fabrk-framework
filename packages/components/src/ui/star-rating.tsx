@@ -12,7 +12,7 @@
 'use client'
 
 import { useState } from 'react'
-import { cn } from '../lib/utils'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export interface StarRatingProps {

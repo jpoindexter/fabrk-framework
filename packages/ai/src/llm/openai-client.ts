@@ -5,6 +5,9 @@
 import type { LLMClient, LLMOpts, LLMConfig } from './types'
 import { LLM_DEFAULTS } from './types'
 
+/** Hard cap on tokens per request to prevent runaway cost from untrusted input */
+const MAX_TOKENS_LIMIT = 100_000
+
 export class OpenAIClient implements LLMClient {
   private config: LLMConfig
 
@@ -16,6 +19,7 @@ export class OpenAIClient implements LLMClient {
   }
 
   async generate(opts: LLMOpts): Promise<string> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let OpenAI: any
     try {
       const mod = await import('openai')
@@ -36,7 +40,7 @@ export class OpenAIClient implements LLMClient {
       {
         model: this.config.openaiModel || LLM_DEFAULTS.openaiModel,
         messages,
-        max_tokens: opts.maxTokens ?? this.config.maxTokens,
+        max_tokens: Math.min(opts.maxTokens ?? this.config.maxTokens ?? MAX_TOKENS_LIMIT, MAX_TOKENS_LIMIT),
         temperature: opts.temperature ?? this.config.temperature,
       },
       { timeout: this.config.timeoutMs }

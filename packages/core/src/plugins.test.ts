@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { PluginRegistry } from './plugins'
-import type { FabrkPlugin, PaymentAdapter, AuthAdapter } from './plugins'
+import type { FabrkPlugin, PaymentAdapter } from './plugins'
 
 function createMockPlugin(name: string, version = '1.0.0'): FabrkPlugin {
   return {

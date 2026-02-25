@@ -1,6 +1,7 @@
 /**
  * Tests for vector similarity functions
  */
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { describe, it, expect } from 'vitest'
 import {

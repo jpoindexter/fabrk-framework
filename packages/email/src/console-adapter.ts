@@ -13,10 +13,12 @@
  * ```
  */
 
+/* eslint-disable no-console */
 import type { EmailAdapter } from '@fabrk/core'
 import type { EmailOptions, EmailResult, EmailTemplateData } from '@fabrk/core'
 import type { ConsoleAdapterConfig } from './types'
 import { renderTemplate } from './templates/render'
+import { sanitizeSubject } from './utils'
 
 export function createConsoleAdapter(config: ConsoleAdapterConfig = {}): EmailAdapter {
   let emailCount = 0
@@ -39,7 +41,7 @@ export function createConsoleAdapter(config: ConsoleAdapterConfig = {}): EmailAd
       console.log(`  ID:      ${id}`)
       console.log(`  From:    ${config.from ?? 'noreply@localhost'}`)
       console.log(`  To:      ${Array.isArray(options.to) ? options.to.join(', ') : options.to}`)
-      console.log(`  Subject: ${options.subject}`)
+      console.log(`  Subject: ${sanitizeSubject(options.subject)}`)
 
       if (options.cc) {
         console.log(`  CC:      ${Array.isArray(options.cc) ? options.cc.join(', ') : options.cc}`)

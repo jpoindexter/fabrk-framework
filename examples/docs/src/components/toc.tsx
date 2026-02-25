@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { useEffect, useRef, useState } from 'react'
 
 interface TocHeading {
@@ -112,7 +112,7 @@ export function TableOfContents() {
   if (headings.length === 0) return null
 
   return (
-    <aside className="hidden xl:block w-56 shrink-0 sticky top-0 max-h-screen overflow-y-auto py-12 pr-4">
+    <aside className="hidden xl:block w-56 shrink-0 sticky top-0 h-screen overflow-y-auto py-12 pr-4">
       <div className={cn('text-xs font-bold text-muted-foreground uppercase mb-3', mode.font)}>
         [ON THIS PAGE]
       </div>
@@ -131,11 +131,9 @@ export function TableOfContents() {
             }}
             className={cn(
               'block py-1 text-xs transition-colors leading-snug',
-              heading.level === 3 ? 'pl-4' : 'pl-0',
               activeId === heading.id
-                ? 'text-primary border-l-2 border-primary pl-2'
-                : 'text-muted-foreground hover:text-foreground',
-              activeId === heading.id && heading.level === 3 && 'pl-6'
+                ? cn('text-primary border-l-2 border-primary', heading.level === 3 ? 'pl-6' : 'pl-2')
+                : cn('text-muted-foreground hover:text-foreground', heading.level === 3 ? 'pl-4' : 'pl-0')
             )}
           >
             {heading.text}

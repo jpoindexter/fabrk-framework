@@ -1,0 +1,29 @@
+{
+  "name": "fabrk-agent-demo",
+  "version": "0.1.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3004",
+    "build": "next build",
+    "start": "next start",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fabrk/components": "workspace:*",
+    "@fabrk/design-system": "workspace:*",
+    "@fabrk/core": "workspace:*",
+    "next": "^15.1.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tanstack/react-table": "^8.20.5",
+    "lucide-react": "^0.344.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^5.3.3"
+  }
+}

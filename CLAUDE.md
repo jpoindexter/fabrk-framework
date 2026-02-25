@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FABRK Framework is a monorepo that provides the first UI framework designed specifically for AI coding agents. It enables AI assistants (Claude Code, Cursor, GitHub Copilot, v0.dev) to build full-stack applications in minutes by importing pre-built components and tools instead of writing everything from scratch.
 
-**Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Next.js 15 • Changesets for versioning
+**Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Next.js 16 • Changesets for versioning
 
 **Requirements:** Node.js 22+ • pnpm 9+
 
@@ -25,7 +25,7 @@ pnpm dev                  # Build all packages in watch mode
 pnpm build                # Build all packages for production
 pnpm type-check           # TypeScript validation across all packages
 pnpm lint                 # Lint all packages
-pnpm test                 # Run all 1,689 tests
+pnpm test                 # Run all 763 tests
 pnpm clean                # Remove all build artifacts
 
 # Quality
@@ -55,7 +55,7 @@ This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies fl
 
 ```
 @fabrk/config (foundational — Zod schemas, no deps)
-@fabrk/design-system (foundational — themes, no deps)
+@fabrk/design-system (foundational — 18 themes, design tokens, no deps)
     ↓
 @fabrk/core (depends on config, design-system)
     ↓
@@ -64,12 +64,10 @@ This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies fl
 @fabrk/email (depends on core)
 @fabrk/storage (depends on core)
 @fabrk/security (depends on core)
-@fabrk/mcp (standalone — MCP server toolkit)
 @fabrk/store-prisma (depends on core)
     ↓
 @fabrk/ai (depends on core)
 @fabrk/components (depends on core, design-system)
-@fabrk/themes (depends on design-system)
     ↓
 Templates & Examples (depend on all packages)
 ```
@@ -81,20 +79,15 @@ fabrk-framework/
 ├── packages/
 │   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
-│   ├── framework/          # fabrk - AI-first React framework on Vite (agents, tools, prompts, deploy)
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell
+│   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell, component registry
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, streaming, LLM providers, embeddings)
 │   ├── payments/          # @fabrk/payments - Stripe, Polar, Lemon Squeezy adapters
 │   ├── auth/              # @fabrk/auth - NextAuth, API keys, MFA (TOTP + backup codes)
 │   ├── email/             # @fabrk/email - Resend adapter + email templates
 │   ├── storage/           # @fabrk/storage - S3, R2, local filesystem adapters
 │   ├── security/          # @fabrk/security - CSRF, CSP, rate limiting, audit, GDPR, CORS
-│   ├── mcp/               # @fabrk/mcp - MCP server toolkit (defineTool, stdio transport)
 │   ├── store-prisma/      # @fabrk/store-prisma - 7 Prisma store adapters
-│   ├── themes/            # @fabrk/themes - Opt-in theming layer
-│   ├── ui/                # @fabrk/ui - Component registry (shadcn-style)
-│   ├── referrals/         # @fabrk/referrals - Referral system
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
 ├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce)
@@ -496,14 +489,13 @@ Read these files for context:
 
 ### Current Stats
 
-- **21/21 packages build** (17 packages + 4 examples)
-- **1,755 tests** across 97 test files (unit + rendering + integration + SSR + framework)
-- **29/29 type-check**, **21/21 lint** (0 errors, 0 warnings)
-- **105+ components**, 8 chart types, 18 themes, 59 Storybook stories
-- **fabrk framework**: agents, tools, prompts, SSE streaming, auth guard, /__ai dashboard, multi-target deploy
+- **16/16 packages build** (12 packages + 4 examples)
+- **763 tests**, all passing
+- **105+ components**, 8 chart types, 18 themes
+- **12 packages**, ~43K source lines
 - **4 examples**: basic-usage, docs site, saas-analytics, ecommerce
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher
-- **Bundle size tracking**: 7 packages tracked via size-limit, all within limits
+- **Bundle size tracking**: packages tracked via size-limit, all within limits
 
 ---
 

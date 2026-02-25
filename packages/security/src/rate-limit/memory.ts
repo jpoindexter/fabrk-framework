@@ -19,6 +19,7 @@
 
 import type { RateLimitAdapter, RateLimitOptions, RateLimitResult } from '@fabrk/core'
 import type { MemoryRateLimitConfig } from '../types'
+import { sanitizeKeyPart } from './utils'
 
 interface WindowEntry {
   count: number
@@ -28,19 +29,34 @@ interface WindowEntry {
 export function createMemoryRateLimiter(
   config: MemoryRateLimitConfig = {}
 ): RateLimitAdapter {
-  const { defaultMax = 100, defaultWindowSeconds = 60 } = config
+  const { defaultMax = 100, defaultWindowSeconds = 60, maxEntries = 10_000 } = config
 
   // Map<"identifier:limit", WindowEntry>
   const windows = new Map<string, WindowEntry>()
 
-  // Periodic cleanup of expired entries
-  const cleanupInterval = setInterval(() => {
+  function pruneExpired(): void {
     const now = Date.now()
     for (const [key, entry] of windows) {
       if (entry.resetAt < now) {
         windows.delete(key)
       }
     }
+
+    // If still over maxEntries after expiry cleanup, evict oldest entries (FIFO via Map insertion order)
+    if (windows.size > maxEntries) {
+      const excess = windows.size - maxEntries
+      const keys = windows.keys()
+      for (let i = 0; i < excess; i++) {
+        const next = keys.next()
+        if (!next.done) {
+          windows.delete(next.value)
+        }
+      }
+    }
+  }
+
+  const cleanupInterval = setInterval(() => {
+    pruneExpired()
   }, 60_000)
 
   // Prevent interval from keeping the process alive
@@ -64,13 +80,16 @@ export function createMemoryRateLimiter(
     async check(options: RateLimitOptions): Promise<RateLimitResult> {
       const max = options.max ?? defaultMax
       const windowSeconds = options.windowSeconds ?? defaultWindowSeconds
-      const key = `${options.identifier}:${options.limit}`
+      const key = `${sanitizeKeyPart(options.identifier)}:${sanitizeKeyPart(options.limit)}`
       const now = Date.now()
 
       let entry = windows.get(key)
 
-      // Create or reset window
       if (!entry || entry.resetAt < now) {
+        if (!entry && windows.size >= maxEntries) {
+          pruneExpired()
+        }
+
         entry = {
           count: 0,
           resetAt: now + windowSeconds * 1000,
@@ -94,7 +113,7 @@ export function createMemoryRateLimiter(
     },
 
     async reset(identifier: string, limit: string): Promise<void> {
-      windows.delete(`${identifier}:${limit}`)
+      windows.delete(`${sanitizeKeyPart(identifier)}:${sanitizeKeyPart(limit)}`)
     },
   }
 }

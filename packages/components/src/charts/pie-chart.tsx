@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface PieChartDataItem {
@@ -45,7 +45,11 @@ export function PieChart({
 }: PieChartProps) {
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
+  if (!data || data.length === 0) return null;
+
   const total = data.reduce((sum, item) => sum + item.value, 0);
+  if (total === 0) return null;
+
   const center = size / 2;
   const radius = size / 2 - 10;
 
@@ -128,7 +132,7 @@ export function PieChart({
                 fill={segment.color}
                 stroke="var(--color-background)"
                 strokeWidth={2}
-                className={cn('cursor-pointer transition-all', isHovered && mode.state.hover.opacity.replace('hover:', ''))}
+                className={cn('cursor-pointer transition-all', isHovered && 'opacity-80')}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => onSegmentClick?.(segment, index)}

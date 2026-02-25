@@ -15,8 +15,8 @@
 
 'use client'
 
-import { useState } from 'react'
-import { cn } from '../lib/utils'
+import { useEffect, useRef, useState } from 'react'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export type FeedbackType = 'bug' | 'feature' | 'improvement' | 'other'
@@ -50,6 +50,15 @@ export function FeedbackWidget({
   const [message, setMessage] = useState('')
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current !== null) {
+        clearTimeout(resetTimerRef.current)
+      }
+    }
+  }, [])
 
   const positionClasses =
     position === 'bottom-right' ? 'bottom-4 right-4' : 'bottom-4 left-4'
@@ -58,7 +67,7 @@ export function FeedbackWidget({
     if (!message.trim()) return
     await onSubmit({ type, message, email: email || undefined })
     setSubmitted(true)
-    setTimeout(() => {
+    resetTimerRef.current = setTimeout(() => {
       setIsOpen(false)
       setSubmitted(false)
       setMessage('')

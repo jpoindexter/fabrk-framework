@@ -20,7 +20,7 @@
 
 import * as React from 'react';
 import { Check, ChevronsUpDown, Plus, Building2 } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { mode } from '@fabrk/design-system';
+import { sanitizeSrc } from '../utils';
 
 export interface OrgSwitcherOrganization {
   id: string;
@@ -97,8 +98,8 @@ export function OrgSwitcher({
             className
           )}
         >
-          {currentOrg?.logo ? (
-            <img src={currentOrg.logo} alt={currentOrg.name} className={cn('h-5 w-5', mode.radius)} />
+          {currentOrg?.logo && sanitizeSrc(currentOrg.logo) ? (
+            <img src={sanitizeSrc(currentOrg.logo)} alt={currentOrg.name} className={cn('h-5 w-5', mode.radius)} />
           ) : (
             <Building2 className="text-muted-foreground h-4 w-4" />
           )}
@@ -126,8 +127,8 @@ export function OrgSwitcher({
             className="cursor-pointer font-semibold"
           >
             <div className="flex w-full items-center gap-2">
-              {org.logo ? (
-                <img src={org.logo} alt={org.name} className={cn('h-5 w-5', mode.radius)} />
+              {org.logo && sanitizeSrc(org.logo) ? (
+                <img src={sanitizeSrc(org.logo)} alt={org.name} className={cn('h-5 w-5', mode.radius)} />
               ) : (
                 <Building2 className="text-muted-foreground h-4 w-4" />
               )}

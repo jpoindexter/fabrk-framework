@@ -1,8 +1,9 @@
 import type { RenderedEmail } from './render'
+import { escapeHtml, sanitizeUrl } from '../utils'
 
 export function verificationTemplate(data: Record<string, unknown>): RenderedEmail {
-  const url = data.verificationUrl as string ?? '#'
-  const name = data.name as string ?? 'there'
+  const url = sanitizeUrl(data.verificationUrl as string ?? '#')
+  const name = escapeHtml(data.name as string ?? 'there')
 
   return {
     subject: 'Verify your email address',
@@ -12,7 +13,7 @@ export function verificationTemplate(data: Record<string, unknown>): RenderedEma
         <p>Hi ${name},</p>
         <p>Click the link below to verify your email address:</p>
         <p>
-          <a href="${url}" style="color: #00ff00; text-decoration: underline;">${url}</a>
+          <a href="${escapeHtml(url)}" style="color: #00ff00; text-decoration: underline;">${escapeHtml(url)}</a>
         </p>
         <p>This link expires in 24 hours.</p>
         <p style="color: #666; font-size: 12px;">If you didn't create an account, you can safely ignore this email.</p>

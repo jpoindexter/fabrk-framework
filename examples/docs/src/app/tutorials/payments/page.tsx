@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
 
 export default function PaymentsTutorialPage() {
@@ -156,7 +156,7 @@ stripe trigger checkout.session.completed`}</CodeBlock>
 
 import { PricingCard } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 import { useState } from 'react'
 
 const plans = [

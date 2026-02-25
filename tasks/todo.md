@@ -1,9 +1,11 @@
 # Current Task: FABRK Framework (AI-first React framework on Vite)
 
+> **HISTORICAL:** The `packages/framework` package was removed during the package consolidation (17 -> 12 packages). This task tracker is preserved for historical context.
+
 **Plan:** `docs/plans/2026-02-25-fabrk-framework-implementation.md`
 **Design:** `docs/plans/2026-02-25-fabrk-framework-design.md`
 
-## Status: All 7 Days Complete (MVP Done)
+## Status: Archived (packages/framework removed)
 
 ### Day 1: Fork + Rename
 - [x] Task 1: Clone vinext into packages/framework

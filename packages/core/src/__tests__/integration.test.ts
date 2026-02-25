@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect } from 'vitest'
 import { autoWire } from '../auto-wire'
 import type { AutoWireResult } from '../auto-wire'
@@ -5,16 +7,10 @@ import { applyDevDefaults, isDev } from '../defaults'
 import { PluginRegistry } from '../plugins'
 import type { AuthAdapter, EmailAdapter, StorageAdapter, RateLimitAdapter } from '../plugins'
 import { createMiddleware, compose } from '../middleware'
-import { createNotificationManager } from '../notifications/manager'
-import { createFeatureFlagManager } from '../feature-flags/manager'
-import { createJobQueue } from '../jobs/queue'
-import { createTeamManager } from '../teams/organizations'
 import { InMemoryTeamStore } from '../teams/memory-store'
 import type { FabrkConfigInput } from '../types'
 
-// ============================================================================
 // Test 1: Auto-Wiring Integration
-// ============================================================================
 
 describe('Auto-Wiring Integration', () => {
   it('should return a registry and features from autoWire with minimal config', async () => {
@@ -114,6 +110,7 @@ describe('Auto-Wiring Integration', () => {
       name: 'Test Org',
       slug: 'test-org',
       ownerId: 'user-1',
+      ownerEmail: 'owner@test.com',
     })
 
     expect(org.name).toBe('Test Org')
@@ -157,9 +154,7 @@ describe('Auto-Wiring Integration', () => {
   })
 })
 
-// ============================================================================
 // Test 2: Dev Defaults
-// ============================================================================
 
 describe('Dev Defaults', () => {
   it('should detect dev environment', () => {
@@ -213,9 +208,7 @@ describe('Dev Defaults', () => {
   })
 })
 
-// ============================================================================
 // Test 3: Plugin Registry
-// ============================================================================
 
 describe('PluginRegistry', () => {
   it('should register and retrieve adapters by type', () => {
@@ -288,9 +281,7 @@ describe('PluginRegistry', () => {
   })
 })
 
-// ============================================================================
 // Test 4: Middleware System
-// ============================================================================
 
 describe('Middleware System', () => {
   it('should run middleware in order', async () => {
@@ -380,9 +371,7 @@ describe('Middleware System', () => {
   })
 })
 
-// ============================================================================
 // Test 5: Feature Modules (Notifications, Feature Flags, Jobs)
-// ============================================================================
 
 describe('Feature Modules via autoWire', () => {
   let result: AutoWireResult
@@ -515,6 +504,7 @@ describe('Feature Modules via autoWire', () => {
       name: 'Acme Corp',
       slug: 'acme-corp',
       ownerId: 'owner-1',
+      ownerEmail: 'owner@acme.com',
     })
 
     expect(org.id).toBeDefined()
@@ -548,8 +538,9 @@ describe('Feature Modules via autoWire', () => {
     expect(invite.email).toBe('new@acme.com')
 
     // Accept invite
-    const accepted = await teams.acceptInvite(invite.token)
+    const accepted = await teams.acceptInvite(invite.token, 'new-user-id')
     expect(accepted).not.toBeNull()
-    expect(accepted!.id).toBe(invite.id)
+    expect(accepted!.email).toBe(invite.email)
+    expect(accepted!.userId).toBe('new-user-id')
   })
 })

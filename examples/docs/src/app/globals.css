@@ -1,5 +1,96 @@
 @import "tailwindcss";
 
+/* Scan workspace packages so Tailwind sees all class names used by @fabrk/components */
+@source '../../../../packages/components/src';
+@source '../../../../packages/design-system/src';
+
+/* ===== TAILWIND v4 THEME MAPPING =====
+   Colors use `@theme inline` so utilities reference the runtime CSS variables
+   directly — this is what makes theme switching work without a page reload.
+   Type/sizing/z-index use explicit @layer utilities (no Tailwind scan needed).
+===== */
+@theme inline {
+  /* ── COLORS ── */
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  /* ── RADIUS ── mode.radius = 'rounded-dynamic' */
+  --radius-dynamic: var(--radius);
+
+  /* ── FONTS ── mode.font = 'font-body' */
+  --font-body: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+  --font-heading: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+  --font-code: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
+}
+
+/* ===== EXPLICIT UTILITIES =====
+   Defined here so they're always in the CSS output — not dependent on
+   Tailwind scanning node_modules or workspace packages.
+===== */
+@layer utilities {
+  /* ── TYPOGRAPHY SCALE ── M3-based type scale, mode.typography.* */
+  .text-display-xl  { font-size: 5.5rem;    line-height: 6rem; }
+  .text-display-l   { font-size: 3.5625rem; line-height: 4rem; }
+  .text-display-m   { font-size: 2.8125rem; line-height: 3.25rem; }
+  .text-display-s   { font-size: 2.25rem;   line-height: 2.75rem; }
+  .text-headline-l  { font-size: 2rem;      line-height: 2.5rem; }
+  .text-headline-m  { font-size: 1.75rem;   line-height: 2.25rem; }
+  .text-headline-s  { font-size: 1.5rem;    line-height: 2rem; }
+  .text-title-l     { font-size: 1.375rem;  line-height: 1.875rem; }
+  .text-title-m     { font-size: 1rem;      line-height: 1.5rem; }
+  .text-title-s     { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-body-l      { font-size: 1rem;      line-height: 1.5rem; }
+  .text-body-m      { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-body-s      { font-size: 0.75rem;   line-height: 1rem; }
+  .text-label-l     { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-label-m     { font-size: 0.75rem;   line-height: 1rem; }
+  .text-label-s     { font-size: 0.6875rem; line-height: 1rem; }
+  .text-code-l      { font-size: 1rem;      line-height: 1.5rem; }
+  .text-code-m      { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-code-s      { font-size: 0.75rem;   line-height: 1rem; }
+  .text-caption     { font-size: 0.6875rem; line-height: 1rem; }
+  .text-2xs         { font-size: 0.625rem;  line-height: 1rem; }
+
+  /* ── LETTER SPACING ── tracking-caps */
+  .tracking-caps { letter-spacing: 0.1em; }
+
+  /* ── SIZING ── mode.sizing.* */
+  .h-panel          { height: 37.5rem; }
+  .h-panel-sm       { height: 25rem; }
+  .w-sidebar        { width: 18rem; }
+  .max-w-auth       { max-width: 25rem; }
+  .min-w-dropdown   { min-width: 8rem; }
+  .min-w-select     { min-width: 5rem; }
+  .max-h-dropdown   { max-height: 18.75rem; }
+  .max-h-textarea   { max-height: 12.5rem; }
+  .min-h-touch      { min-height: 2.75rem; }
+  .min-w-touch      { min-width: 2.75rem; }
+
+  /* ── Z-INDEX ── mode.zIndex.* */
+  .z-banner { z-index: 60; }
+  .z-modal  { z-index: 100; }
+}
+
 /* ===== DEFAULT: GREEN CRT ===== */
 :root, [data-theme="green"] {
   --background: 0 0% 3%;

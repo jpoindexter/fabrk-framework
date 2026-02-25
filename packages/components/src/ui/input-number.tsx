@@ -1,19 +1,9 @@
 'use client';
 
-/**
- * ✅ FABRK COMPONENT
- * Number input component with validation.
- *
- * @example
- * ```tsx
- * <input-number />
- * ```
- */
-
 import { Button } from './button';
 import { Input } from './input';
 import { isSharpMode } from '@fabrk/design-system';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import * as React from 'react';
 

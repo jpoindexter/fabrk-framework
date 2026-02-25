@@ -1,9 +1,3 @@
-/**
- * Prisma-based Team Store
- *
- * Persists organizations, members, and invites to the database.
- */
-
 import type {
   TeamStore,
   Organization,
@@ -11,9 +5,7 @@ import type {
   OrgInvite,
   OrgRole,
 } from '@fabrk/core'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Prisma client is user-provided
-type PrismaClient = any
+import type { PrismaClient } from './types'
 
 export class PrismaTeamStore implements TeamStore {
   constructor(private prisma: PrismaClient) {}
@@ -43,9 +35,18 @@ export class PrismaTeamStore implements TeamStore {
   }
 
   async updateOrg(id: string, updates: Partial<Organization>): Promise<void> {
+    // Whitelist allowed fields to prevent mass assignment (e.g., overwriting ownerId)
+    const ALLOWED_FIELDS = ['name', 'logoUrl', 'settings'] as const
+    const filtered: Record<string, unknown> = {}
+    for (const key of ALLOWED_FIELDS) {
+      if (key in updates) {
+        filtered[key] = (updates as Record<string, unknown>)[key]
+      }
+    }
+
     await this.prisma.organization.update({
       where: { id },
-      data: updates,
+      data: filtered,
     })
   }
 
@@ -57,6 +58,7 @@ export class PrismaTeamStore implements TeamStore {
     const members = await this.prisma.organizationMember.findMany({
       where: { organizationId: orgId },
       include: { user: true },
+      take: 500,
     })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return members.map((m: any) => ({
@@ -113,11 +115,22 @@ export class PrismaTeamStore implements TeamStore {
     return invite ? mapInvite(invite) : null
   }
 
-  async acceptInvite(token: string): Promise<void> {
-    await this.prisma.organizationInvite.update({
-      where: { token },
-      data: { acceptedAt: new Date() },
+  async acceptInvite(token: string): Promise<OrgInvite | null> {
+    const now = new Date()
+    // Atomically accept only if not yet accepted AND not expired
+    const result = await this.prisma.organizationInvite.updateMany({
+      where: {
+        token,
+        acceptedAt: null,
+        expiresAt: { gt: now },
+      },
+      data: { acceptedAt: now },
     })
+    if (result.count === 0) return null
+    // Fetch the accepted invite to return
+    const raw = await this.prisma.organizationInvite.findUnique({ where: { token } })
+    if (!raw) return null
+    return mapInvite(raw)
   }
 }
 

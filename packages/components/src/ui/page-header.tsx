@@ -1,5 +1,4 @@
 /**
- * FABRK COMPONENT
  * PageHeader - Swiss/International typographic page header with tabs and search
  *
  * @example
@@ -23,7 +22,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from './button';
 import { Input } from './input';

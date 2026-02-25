@@ -47,7 +47,9 @@ export function createPromptTemplate<T extends Record<string, string>>(
       const merged = { ...defaults, ...variables };
       let result = template;
       for (const [key, value] of Object.entries(merged)) {
-        result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'g'), value);
+        // Escape regex special characters in key to prevent regex injection
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        result = result.replace(new RegExp(`\\{\\{\\s*${escapedKey}\\s*\\}\\}`, 'g'), () => value);
       }
       return result;
     },

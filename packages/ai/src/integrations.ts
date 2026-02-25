@@ -15,18 +15,20 @@
  * });
  */
 
-import { getCostTracker } from './cost';
+import { getCostTracker } from './tracker';
 import { AppError, successResponse, errorResponse, type APIResponse } from './types';
 
-// Type definitions for optional SDKs
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnthropicMessage = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type OpenAICompletion = any;
+/** Hard cap on tokens per request to prevent runaway cost from untrusted input */
+const MAX_TOKENS_LIMIT = 100_000;
 
-// ============================================================================
-// TYPES
-// ============================================================================
+/** Scrub API key patterns from error messages to prevent leaks in logs */
+function scrubApiKeys(message: string): string {
+  return message
+    .replace(/sk-[a-zA-Z0-9_-]{10,}/g, 'sk-***REDACTED***')
+    .replace(/AIza[a-zA-Z0-9_-]{30,}/g, 'AIza***REDACTED***')
+    .replace(/re_[a-zA-Z0-9_]{10,}/g, 're_***REDACTED***')
+    .replace(/Bearer\s+[a-zA-Z0-9_.-]{20,}/g, 'Bearer ***REDACTED***');
+}
 
 export interface GenerateOptions {
   prompt: string;
@@ -40,18 +42,18 @@ export interface GenerateOptions {
 
 export interface GenerateResult {
   content: string;
-  usage: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-  };
+  /**
+   * Always returns zeros. Usage is tracked internally by AICostTracker.
+   * @deprecated Use getCostTracker().getTodaysCost() for actual spend data.
+   */
+  usage: { promptTokens: number; completionTokens: number; totalTokens: number; };
+  /**
+   * Always returns 0. Cost is tracked internally by AICostTracker.
+   * @deprecated Use getCostTracker().getTodaysCost() for actual spend data.
+   */
   cost: number;
   model: string;
 }
-
-// ============================================================================
-// CLAUDE INTEGRATION
-// ============================================================================
 
 /**
  * Claude AI integration with automatic cost tracking
@@ -81,12 +83,14 @@ export const claude = {
     try {
       // Dynamic import to avoid requiring SDK at build time
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Anthropic = (await import('@anthropic-ai/sdk' as any)).default;
+      const mod = await import('@anthropic-ai/sdk' as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Anthropic = mod.default || (mod as any).Anthropic || mod;
       const client = new Anthropic();
 
       const tracker = getCostTracker();
 
-      const result: AnthropicMessage = await tracker.trackClaudeCall({
+      const result = await tracker.trackClaudeCall<string>({
         model,
         feature,
         prompt,
@@ -98,7 +102,7 @@ export const claude = {
 
           return client.messages.create({
             model,
-            max_tokens: maxTokens,
+            max_tokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
             temperature,
             system: systemPrompt,
             messages,
@@ -106,26 +110,31 @@ export const claude = {
         },
       });
 
-      const content = result.content[0]?.type === 'text' ? result.content[0].text : '';
+      const content = typeof result === 'string' ? result : '';
 
+      // NOTE: Usage and cost are tracked internally by AICostTracker and persisted
+      // to the configured CostStore. They cannot be returned here because trackClaudeCall()
+      // extracts content from the raw response and only that string is returned.
+      // To retrieve usage data, query the cost tracker: getCostTracker().getTodaysCost()
       return successResponse({
         content,
         usage: {
-          promptTokens: result.usage?.input_tokens || 0,
-          completionTokens: result.usage?.output_tokens || 0,
-          totalTokens: (result.usage?.input_tokens || 0) + (result.usage?.output_tokens || 0),
+          promptTokens: 0,  // see NOTE above
+          completionTokens: 0,  // see NOTE above
+          totalTokens: 0,  // see NOTE above
         },
-        cost: 0, // Cost is tracked internally
+        cost: 0,  // see NOTE above
         model,
       });
     } catch (error) {
       if (error instanceof AppError) {
         return errorResponse(error.code, error.message);
       }
-      console.error('Claude generation error:', error);
+      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
+      console.error('Claude generation error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'CLAUDE_ERROR',
-        error instanceof Error ? error.message : 'Failed to generate with Claude'
+        scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate with Claude')
       );
     }
   },
@@ -143,10 +152,6 @@ export const claude = {
     }
   },
 };
-
-// ============================================================================
-// OPENAI INTEGRATION
-// ============================================================================
 
 /**
  * OpenAI integration with automatic cost tracking
@@ -176,12 +181,14 @@ export const openai = {
     try {
       // Dynamic import to avoid requiring SDK at build time
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const OpenAI = (await import('openai' as any)).default;
+      const mod = await import('openai' as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const OpenAI = mod.default || (mod as any).OpenAI || mod;
       const client = new OpenAI();
 
       const tracker = getCostTracker();
 
-      const result: OpenAICompletion = await tracker.trackOpenAICall({
+      const result = await tracker.trackOpenAICall<string>({
         model,
         feature,
         prompt,
@@ -196,33 +203,38 @@ export const openai = {
 
           return client.chat.completions.create({
             model,
-            max_tokens: maxTokens,
+            max_tokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
             temperature,
             messages,
           });
         },
       });
 
-      const content = result.choices?.[0]?.message?.content || '';
+      const content = typeof result === 'string' ? result : '';
 
+      // NOTE: Usage and cost are tracked internally by AICostTracker and persisted
+      // to the configured CostStore. They cannot be returned here because trackOpenAICall()
+      // extracts content from the raw response and only that string is returned.
+      // To retrieve usage data, query the cost tracker: getCostTracker().getTodaysCost()
       return successResponse({
         content,
         usage: {
-          promptTokens: result.usage?.prompt_tokens || 0,
-          completionTokens: result.usage?.completion_tokens || 0,
-          totalTokens: result.usage?.total_tokens || 0,
+          promptTokens: 0,  // see NOTE above
+          completionTokens: 0,  // see NOTE above
+          totalTokens: 0,  // see NOTE above
         },
-        cost: 0,
+        cost: 0,  // see NOTE above
         model,
       });
     } catch (error) {
       if (error instanceof AppError) {
         return errorResponse(error.code, error.message);
       }
-      console.error('OpenAI generation error:', error);
+      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
+      console.error('OpenAI generation error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'OPENAI_ERROR',
-        error instanceof Error ? error.message : 'Failed to generate with OpenAI'
+        scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate with OpenAI')
       );
     }
   },
@@ -236,7 +248,9 @@ export const openai = {
   ): Promise<APIResponse<number[][]>> {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const OpenAI = (await import('openai' as any)).default;
+      const mod = await import('openai' as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const OpenAI = mod.default || (mod as any).OpenAI || mod;
       const client = new OpenAI();
 
       const response = await client.embeddings.create({
@@ -248,10 +262,11 @@ export const openai = {
       const embeddings = response.data.map((d: any) => d.embedding);
       return successResponse(embeddings);
     } catch (error) {
-      console.error('OpenAI embedding error:', error);
+      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
+      console.error('OpenAI embedding error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'EMBEDDING_ERROR',
-        error instanceof Error ? error.message : 'Failed to generate embeddings'
+        scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate embeddings')
       );
     }
   },
@@ -270,16 +285,15 @@ export const openai = {
   },
 };
 
-// ============================================================================
-// VERCEL AI SDK INTEGRATION
-// ============================================================================
-
 /**
  * Vercel AI SDK integration (uses configured provider)
  */
 export const vercelAI = {
   /**
    * Generate text using Vercel AI SDK with the configured provider
+   *
+   * @remarks Costs are NOT tracked when Vercel AI SDK is used. Use claude.generate()
+   * or openai.generate() for cost-tracked calls. This path is a last-resort fallback.
    *
    * @example
    * const result = await vercelAI.generate({
@@ -288,7 +302,7 @@ export const vercelAI = {
    * });
    */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
-    const { prompt, feature: _feature, userId: _userId, maxTokens = 1024, systemPrompt } = options;
+    const { prompt, maxTokens = 1024, systemPrompt } = options;
 
     try {
       const { generateText } = await import('ai');
@@ -296,18 +310,12 @@ export const vercelAI = {
 
       const model = getModel();
 
-      // We can't directly wrap generateText with cost tracking since it doesn't
-      // return token counts in a standard format. Track as a generic call.
-      const startTime = Date.now();
-
       const result = await generateText({
         model,
         prompt,
         system: systemPrompt,
-        maxTokens: maxTokens,
+        maxTokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
       });
-
-      const _duration = Date.now() - startTime;
 
       // Estimate tokens (rough approximation)
       const estimatedPromptTokens = Math.ceil(prompt.length / 4);
@@ -324,10 +332,11 @@ export const vercelAI = {
         model: 'vercel-ai-sdk',
       });
     } catch (error) {
-      console.error('Vercel AI generation error:', error);
+      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
+      console.error('Vercel AI generation error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'VERCEL_AI_ERROR',
-        error instanceof Error ? error.message : 'Failed to generate with Vercel AI SDK'
+        scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate with Vercel AI SDK')
       );
     }
   },
@@ -348,23 +357,20 @@ export const vercelAI = {
         model,
         prompt,
         system: systemPrompt,
-        maxTokens: maxTokens,
+        maxTokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
       });
 
       return successResponse((await result).textStream);
     } catch (error) {
-      console.error('Vercel AI stream error:', error);
+      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
+      console.error('Vercel AI stream error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'VERCEL_AI_ERROR',
-        error instanceof Error ? error.message : 'Failed to stream with Vercel AI SDK'
+        scrubApiKeys(error instanceof Error ? error.message : 'Failed to stream with Vercel AI SDK')
       );
     }
   },
 };
-
-// ============================================================================
-// UNIFIED AI INTERFACE
-// ============================================================================
 
 /**
  * Unified AI interface - auto-selects available provider
@@ -376,6 +382,10 @@ export const ai = {
 
   /**
    * Generate using the best available provider
+   *
+   * @remarks Falls back through: claude → openai → vercelAI (last resort).
+   * When falling back to vercelAI, costs are NOT tracked. Use claude.generate()
+   * or openai.generate() directly for guaranteed cost tracking.
    */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
     // Try Claude first (preferred)
@@ -388,15 +398,14 @@ export const ai = {
       return openai.generate(options);
     }
 
-    // Try Vercel AI SDK as last resort
-    try {
-      return await vercelAI.generate(options);
-    } catch {
-      return errorResponse(
-        'NO_AI_PROVIDER',
-        'No AI provider configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY.'
-      );
-    }
+    // No cost-tracked provider is available. Refusing to fall back to vercelAI
+    // because vercelAI.generate() returns cost: 0 and bypasses all cost tracking
+    // and budget enforcement, which is a silent security/billing risk.
+    return errorResponse(
+      'NO_AI_PROVIDER',
+      'No AI provider configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY. ' +
+      'Fallback to Vercel AI SDK is disabled to preserve cost tracking.'
+    );
   },
 
   /**

@@ -15,12 +15,13 @@
 'use client'
 
 import { useState } from 'react'
-import { cn } from '../lib/utils'
+import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export interface NPSSurveyProps {
   onSubmit: (score: number, feedback?: string) => void | Promise<void>
   onDismiss?: () => void
+  onError?: (error: unknown) => void
   title?: string
   className?: string
 }
@@ -28,6 +29,7 @@ export interface NPSSurveyProps {
 export function NPSSurvey({
   onSubmit,
   onDismiss,
+  onError,
   title = 'How likely are you to recommend us?',
   className,
 }: NPSSurveyProps) {
@@ -37,8 +39,12 @@ export function NPSSurvey({
 
   const handleSubmit = async () => {
     if (score === null) return
-    await onSubmit(score, feedback || undefined)
-    setSubmitted(true)
+    try {
+      await onSubmit(score, feedback || undefined)
+      setSubmitted(true)
+    } catch (err) {
+      onError?.(err)
+    }
   }
 
   if (submitted) {

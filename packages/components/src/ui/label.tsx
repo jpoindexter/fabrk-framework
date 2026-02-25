@@ -1,17 +1,4 @@
-/**
- * ✅ FABRK COMPONENT
- * - Component under 150 lines ✓
- * - No hardcoded styles ✓
- * - Design tokens only ✓
- * - UX heuristics applied ✓
- *
- * @example
- * ```tsx
- * <label>Content</label>
- * ```
- */
-
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import * as React from 'react';
 
@@ -27,7 +14,6 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
         data-slot="label"
         ref={ref}
         className={cn(
-          // Uses mode tokens for consistent theming
           mode.color.text.primary,
           mode.typography.label,
           mode.font,
@@ -39,7 +25,6 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
         {...props}
       >
         {children}
-        {/* UX Heuristic #5: Error Prevention - Show required indicator */}
         {required && (
           <span className={cn(mode.color.text.danger, 'ml-1')} aria-label="required">
             *

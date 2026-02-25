@@ -22,10 +22,11 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from './button';
 import { TierBadge } from './tier-badge';
+import { sanitizeHref, sanitizeSrc } from '../utils';
 import { Menu, X, LogOut } from 'lucide-react';
 
 export interface DashboardNavItem {
@@ -104,7 +105,7 @@ export function DashboardShell({
           {sidebarItems.map((item) => {
             const isActive = item.active || item.id === activeItemId;
             const Wrapper = item.href ? LinkComponent : 'button';
-            const wrapperProps = item.href ? { href: item.href } : { type: 'button' as const };
+            const wrapperProps = item.href ? { href: sanitizeHref(item.href) } : { type: 'button' as const };
 
             return (
               <Wrapper
@@ -144,9 +145,10 @@ export function DashboardShell({
         {user && (
           <div className="border-t border-border p-4">
             <div className="flex items-center gap-2">
-              {user.image ? (
+              {user.image && sanitizeSrc(user.image) ? (
                 <img
-                  src={user.image}
+                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                  src={sanitizeSrc(user.image)!}
                   alt={user.name || ''}
                   className="size-8 rounded-full"
                 />

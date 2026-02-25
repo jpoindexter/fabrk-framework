@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface FunnelStage {
@@ -39,11 +39,11 @@ export function FunnelChart({
   const isVertical = direction === 'vertical';
 
   const DEFAULT_COLORS = [
-    'oklch(70% 0.15 240)',
-    'oklch(70% 0.15 210)',
-    'oklch(70% 0.15 180)',
-    'oklch(70% 0.15 150)',
-    'oklch(70% 0.15 120)',
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
   ];
 
   return (

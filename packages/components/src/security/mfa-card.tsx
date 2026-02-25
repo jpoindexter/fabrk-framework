@@ -19,7 +19,7 @@
 
 import * as React from 'react';
 import { Button } from '../ui/button';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Card, CardHeader, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';

@@ -4,12 +4,17 @@
 
 import type { EmbeddingProvider, EmbeddingConfig } from './types'
 import { EMBEDDING_DEFAULTS } from './types'
+import { validateOllamaUrl } from '../llm/ollama-client'
 
 export class OllamaEmbeddingProvider implements EmbeddingProvider {
   private config: EmbeddingConfig
 
   constructor(config: Partial<EmbeddingConfig> = {}) {
     this.config = { ...EMBEDDING_DEFAULTS, ...config, provider: 'ollama' }
+
+    // Validate the base URL on construction to prevent SSRF
+    const baseUrl = this.config.baseUrl || EMBEDDING_DEFAULTS.ollamaBaseUrl
+    validateOllamaUrl(baseUrl)
   }
 
   async embed(text: string): Promise<number[]> {

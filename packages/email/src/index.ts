@@ -17,5 +17,8 @@ export { resetTemplate } from './templates/reset'
 export { welcomeTemplate } from './templates/welcome'
 export { inviteTemplate } from './templates/invite'
 
+// Utilities
+export { escapeHtml, sanitizeUrl, sanitizeSubject } from './utils'
+
 // Types
 export type { ResendAdapterConfig, ConsoleAdapterConfig } from './types'

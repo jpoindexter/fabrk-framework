@@ -17,7 +17,7 @@
 
 import * as React from 'react';
 import { LucideIcon } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode, formatButtonText } from '@fabrk/design-system';
 import { Button } from './button';
 

@@ -34,18 +34,14 @@ packages/
   config/          # @fabrk/config — Type-safe config builder (Zod schemas)
   design-system/   # @fabrk/design-system — 18 themes, design tokens, mode object
   core/            # @fabrk/core — Framework runtime, plugins, middleware, utilities
-  components/      # @fabrk/components — 105+ UI components, 8 charts, dashboard shell
+  components/      # @fabrk/components — 105+ UI components, 8 charts, dashboard shell, component registry
   ai/              # @fabrk/ai — AI toolkit (cost tracking, validation, streaming)
   payments/        # @fabrk/payments — Stripe, Polar, Lemon Squeezy adapters
   auth/            # @fabrk/auth — NextAuth, API keys, MFA
   email/           # @fabrk/email — Resend adapter + templates
   storage/         # @fabrk/storage — S3, R2, local filesystem adapters
   security/        # @fabrk/security — CSRF, CSP, rate limiting, audit, GDPR
-  mcp/             # @fabrk/mcp — Model Context Protocol utilities
   store-prisma/    # @fabrk/store-prisma — Prisma database adapters
-  ui/              # @fabrk/ui — Component registry (shadcn-style)
-  themes/          # @fabrk/themes — Opt-in theming layer
-  referrals/       # @fabrk/referrals — Referral and affiliate system
   cli/             # create-fabrk-app — CLI scaffolding tool
 ```
 
@@ -54,7 +50,7 @@ Dependencies flow in this order:
 ```
 config, design-system (foundational, no deps)
   -> core
-    -> payments, auth, email, storage, security, mcp, referrals
+    -> payments, auth, email, storage, security, store-prisma
     -> ai, components
 ```
 
@@ -74,7 +70,7 @@ Turbo handles the build order automatically, so running `pnpm build` at the root
 ### Running Tests
 
 ```bash
-# Run all tests (1,286+ across 38 test files)
+# Run all tests (763 across all test files)
 pnpm test
 
 # Watch mode

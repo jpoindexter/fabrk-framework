@@ -1,7 +1,9 @@
 # FABRK Framework Design Document
 
+> **HISTORICAL:** This design document references `packages/framework` (`@fabrk/framework`) and `@fabrk/mcp`, both of which have been removed from the monorepo. This document is preserved for historical context only.
+
 **Date:** 2026-02-25
-**Status:** Draft
+**Status:** Archived (packages/framework was removed)
 **Author:** Jason Poindexter + Claude
 
 ## Vision

@@ -99,7 +99,7 @@ These component files are never imported anywhere:
 Most used external packages:
 
 - `@fabrk/core` — 7 imports
-- `@fabrk/themes` — 7 imports
+- `@fabrk/design-system` — 7 imports
 - `next` — 4 imports
 - `react` — 1 imports
 - `@fabrk/components` — 1 imports

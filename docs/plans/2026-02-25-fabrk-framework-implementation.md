@@ -1,5 +1,7 @@
 # FABRK Framework Implementation Plan
 
+> **HISTORICAL:** This plan references `packages/framework` (`@fabrk/framework`) and `@fabrk/mcp`, both of which have been removed from the monorepo. This document is preserved for historical context only.
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Fork vinext (Cloudflare's Next.js-on-Vite reimplementation) and add AI-native conventions (agents, tools, prompts) to create an AI-first React framework.

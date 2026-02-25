@@ -1,20 +1,7 @@
-/**
- * ✅ FABRK COMPONENT
- * Terminal Spinner - Authentic terminal loading animation using Braille dots
- * Production-ready ✓
- *
- * @example
- * ```tsx
- * <TerminalSpinner />
- * <TerminalSpinner size="lg" />
- * <TerminalSpinner label="Loading data..." />
- * ```
- */
-
 'use client';
 
 import { useEffect, useState } from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 // Braille dot spinner sequence (most authentic terminal look)

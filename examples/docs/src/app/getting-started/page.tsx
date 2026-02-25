@@ -1,4 +1,5 @@
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
+import { STATS } from '@/data/stats'
 
 export default function GettingStartedPage() {
   return (
@@ -37,7 +38,7 @@ pnpm dev`}</CodeBlock>
 
         <InfoCard title="MANUAL INSTALL">
           If you prefer to add FABRK to an existing Next.js project:
-          <CodeBlock title="install packages">{`pnpm add @fabrk/core @fabrk/config @fabrk/components @fabrk/themes
+          <CodeBlock title="install packages">{`pnpm add @fabrk/core @fabrk/config @fabrk/components @fabrk/design-system
 
 # Add feature packages as needed:
 pnpm add @fabrk/auth @fabrk/payments @fabrk/ai @fabrk/email
@@ -122,7 +123,7 @@ import {
   KPICard, Card, Badge, Button, DataTable, BarChart
 } from '@fabrk/components'
 import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/themes'
+import { mode } from '@fabrk/design-system'
 
 const stats = [
   { title: 'REVENUE', value: '$12,340', trend: 12.5 },
@@ -315,7 +316,7 @@ fabrk info`}</CodeBlock>
             Learn about all 12 config sections &mdash; from AI budgets to security headers.
           </InfoCard>
           <InfoCard title="PACKAGES">
-            Explore the 16 packages &mdash; payments, auth, email, storage, security, and more.
+            Explore the {STATS.packages} packages &mdash; payments, auth, email, storage, security, and more.
           </InfoCard>
           <InfoCard title="COMPONENTS">
             Browse 105+ components &mdash; charts, forms, admin panels, AI chat, and more.

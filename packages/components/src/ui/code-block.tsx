@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Highlight, type PrismTheme } from 'prism-react-renderer';
 import { Copy, Check } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 interface CodeBlockProps {
@@ -60,9 +60,12 @@ export function CodeBlock({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(code.trim());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    navigator.clipboard.writeText(code.trim()).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // Clipboard access denied or unavailable
+    });
   };
 
   // Add $ prompt for bash/shell commands

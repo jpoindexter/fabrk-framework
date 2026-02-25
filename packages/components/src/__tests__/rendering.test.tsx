@@ -12,9 +12,7 @@ import { Container } from '../ui/container'
 import { EmptyState } from '../ui/empty-state'
 import { LoadingSpinner, Skeleton } from '../ui/loading'
 
-// ============================================================================
 // Badge
-// ============================================================================
 describe('Badge', () => {
   it('renders text and supports variants', () => {
     const { rerender } = render(<Badge>NEW</Badge>)
@@ -25,9 +23,7 @@ describe('Badge', () => {
   })
 })
 
-// ============================================================================
 // Card
-// ============================================================================
 describe('Card', () => {
   it('renders Card with header and content', () => {
     render(
@@ -43,9 +39,7 @@ describe('Card', () => {
   })
 })
 
-// ============================================================================
 // Label
-// ============================================================================
 describe('Label', () => {
   it('renders as label element with required indicator', () => {
     render(<Label required data-testid="label-test">Email</Label>)
@@ -54,9 +48,7 @@ describe('Label', () => {
   })
 })
 
-// ============================================================================
 // Container
-// ============================================================================
 describe('Container', () => {
   it('renders children with size prop', () => {
     render(<Container size="md" data-testid="container">Page content</Container>)
@@ -65,9 +57,7 @@ describe('Container', () => {
   })
 })
 
-// ============================================================================
 // EmptyState
-// ============================================================================
 describe('EmptyState', () => {
   it('renders title, description, and action button', () => {
     const onClick = vi.fn()
@@ -84,9 +74,7 @@ describe('EmptyState', () => {
   })
 })
 
-// ============================================================================
 // LoadingSpinner / Skeleton
-// ============================================================================
 describe('LoadingSpinner', () => {
   it('renders with status role', () => {
     render(<LoadingSpinner />)

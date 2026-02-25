@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { cn } from '../lib/utils';
+import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 import { Button } from '../ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Mail, MessageSquare, MoreVertical, Edit, Trash2, User } from 'lucide-react';
+import { getInitials, sanitizeSrc } from '../utils';
 
 export interface Member {
   id: string;
@@ -52,15 +53,6 @@ const getStatusColor = (status?: 'online' | 'away' | 'offline') => {
     default:
       return mode.color.bg.muted;
   }
-};
-
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
 };
 
 const formatMemberSince = (date?: Date | string) => {
@@ -139,14 +131,15 @@ const MemberCard = React.forwardRef<HTMLDivElement, MemberCardProps>(
         <div
           ref={ref}
           className={cn(
-            `bg-card flex items-center gap-4 border p-4 transition-all ${mode.state.hover.opacity}`,
+            'bg-card flex items-center gap-4 border p-4 transition-all',
+            mode.state.hover.opacity,
             mode.radius,
             className
           )}
         >
           <div className="relative">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={member.avatar} alt={member.name} />
+              <AvatarImage src={sanitizeSrc(member.avatar)} alt={member.name} />
               <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
             </Avatar>
             {member.status && (
@@ -203,12 +196,12 @@ const MemberCard = React.forwardRef<HTMLDivElement, MemberCardProps>(
     return (
       <div
         ref={ref}
-        className={cn(`bg-card border p-6 transition-all ${mode.state.hover.opacity}`, mode.radius, className)}
+        className={cn('bg-card border p-6 transition-all', mode.state.hover.opacity, mode.radius, className)}
       >
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={member.avatar} alt={member.name} />
+              <AvatarImage src={sanitizeSrc(member.avatar)} alt={member.name} />
               <AvatarFallback className="text-2xl">{getInitials(member.name)}</AvatarFallback>
             </Avatar>
             {member.status && (

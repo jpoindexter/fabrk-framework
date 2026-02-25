@@ -1,26 +1,19 @@
-/**
- * S3 Storage Adapter
- *
- * Implements StorageAdapter using AWS S3.
- * @aws-sdk/client-s3 is an optional peer dependency.
- *
- * @example
- * ```ts
- * import { createS3Adapter } from '@fabrk/storage'
- *
- * const storage = createS3Adapter({
- *   bucket: process.env.S3_BUCKET!,
- *   region: process.env.AWS_REGION!,
- * })
- *
- * registry.register('storage', storage)
- * ```
- */
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { StorageAdapter } from '@fabrk/core'
 import type { UploadOptions, UploadResult, SignedUrlOptions, SignedUrlResult } from '@fabrk/core'
 import type { S3AdapterConfig } from '../types'
-import { validateFile, generateStorageKey } from '../validation'
+import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath } from '../validation'
+
+/**
+ * Sanitize a filename component only (no path separators, no timestamp prefix).
+ * Used when the caller provides an explicit path so the filename is sanitized
+ * without adding the timestamp that generateStorageKey() appends.
+ */
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_{2,}/g, '_')
+}
 
 export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
   let s3Client: any = null
@@ -85,8 +78,54 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
     async upload(options: UploadOptions): Promise<UploadResult> {
       const client = getClient()
 
-      // Validate file
-      const size = options.file instanceof Blob ? options.file.size : (options.file as ArrayBuffer).byteLength
+      // When a path is provided, sanitize the filename separately (without the timestamp
+      // that generateStorageKey adds) so the caller gets a deterministic key.
+      const key = options.path
+        ? `${sanitizePath(options.path)}/${sanitizeFilename(options.filename)}`
+        : generateStorageKey(options.filename)
+
+      // Convert to buffer for S3 (must happen before size computation
+      // so ReadableStream inputs are fully buffered)
+      let body: any
+      if (options.file instanceof Blob) {
+        const maxBytes = options.maxSize ?? (10 * 1024 * 1024)
+        if (options.file.size > maxBytes) {
+          throw new Error(`File size ${options.file.size} bytes exceeds maximum ${maxBytes} bytes`)
+        }
+        body = Buffer.from(await options.file.arrayBuffer())
+      } else if (options.file instanceof ArrayBuffer) {
+        const maxBytes = options.maxSize ?? (10 * 1024 * 1024)
+        if (options.file.byteLength > maxBytes) {
+          throw new Error(`File size ${options.file.byteLength} bytes exceeds maximum ${maxBytes} bytes`)
+        }
+        body = Buffer.from(options.file)
+      } else {
+        // Abort streaming early when accumulated size exceeds the limit to prevent
+        // an attacker from exhausting process memory with a large stream (OOM DoS).
+        const maxBytes = options.maxSize ?? (10 * 1024 * 1024) // 10MB default
+        const chunks: Uint8Array[] = []
+        let totalSize = 0
+        const reader = (options.file as ReadableStream).getReader()
+        let done = false
+        while (!done) {
+          const result = await reader.read()
+          done = result.done
+          if (result.value) {
+            totalSize += result.value.length
+            if (totalSize > maxBytes) {
+              reader.cancel()
+              throw new Error(`File exceeds maximum size of ${maxBytes} bytes`)
+            }
+            chunks.push(result.value)
+          }
+        }
+        body = Buffer.concat(chunks)
+      }
+
+      // Compute size AFTER buffering so all input types (including
+      // ReadableStream) use the actual buffer length
+      const size = body.length
+
       const validation = validateFile(
         {
           size,
@@ -103,27 +142,10 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
         throw new Error(validation.error)
       }
 
-      const key = options.path
-        ? `${options.path.replace(/^\/|\/$/g, '')}/${options.filename}`
-        : generateStorageKey(options.filename)
-
-      // Convert to buffer for S3
-      let body: any
-      if (options.file instanceof Blob) {
-        body = Buffer.from(await options.file.arrayBuffer())
-      } else if (options.file instanceof ArrayBuffer) {
-        body = Buffer.from(options.file)
-      } else {
-        // ReadableStream
-        const chunks: Uint8Array[] = []
-        const reader = (options.file as ReadableStream).getReader()
-        let done = false
-        while (!done) {
-          const result = await reader.read()
-          done = result.done
-          if (result.value) chunks.push(result.value)
+      if (options.contentType) {
+        if (!validateMagicBytes(body, options.contentType)) {
+          throw new Error(`File content does not match declared type ${options.contentType}`)
         }
-        body = Buffer.concat(chunks)
       }
 
       await client.send(
@@ -137,9 +159,15 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
         })
       )
 
-      const url = options.public
-        ? `https://${config.bucket}.s3.${config.region}.amazonaws.com/${key}`
-        : undefined
+      let url: string | undefined
+      if (options.public) {
+        if (config.endpoint) {
+          const base = config.endpoint.replace(/\/$/, '')
+          url = `${base}/${config.bucket}/${key}`
+        } else {
+          url = `https://${config.bucket}.s3.${config.region}.amazonaws.com/${key}`
+        }
+      }
 
       return {
         key,
@@ -158,11 +186,12 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
         )
       }
 
+      const safeKey = sanitizePath(options.key)
       const expiresIn = options.expiresIn ?? config.defaultExpiresIn ?? 3600
 
       const command = new GetObjectCommand({
         Bucket: config.bucket,
-        Key: options.key,
+        Key: safeKey,
         ...(options.contentDisposition
           ? { ResponseContentDisposition: options.contentDisposition }
           : {}),
@@ -178,23 +207,25 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
 
     async delete(key: string): Promise<void> {
       const client = getClient()
+      const safeKey = sanitizePath(key)
 
       await client.send(
         new DeleteObjectCommand({
           Bucket: config.bucket,
-          Key: key,
+          Key: safeKey,
         })
       )
     },
 
     async exists(key: string): Promise<boolean> {
       const client = getClient()
+      const safeKey = sanitizePath(key)
 
       try {
         await client.send(
           new HeadObjectCommand({
             Bucket: config.bucket,
-            Key: key,
+            Key: safeKey,
           })
         )
         return true

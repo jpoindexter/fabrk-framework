@@ -6,11 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FABRK Framework is a monorepo that provides the first UI framework designed specifically for AI coding agents. It enables AI assistants (Claude Code, Cursor, GitHub Copilot, v0.dev) to build full-stack applications in minutes by importing pre-built components and tools instead of writing everything from scratch.
 
-**Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Next.js 16 • Changesets for versioning
+**Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Next.js 15 • Changesets for versioning
 
 **Requirements:** Node.js 22+ • pnpm 9+
 
-**Source Material:** Code is being extracted from `/Users/jasonpoindexter/Documents/GitHub/_active/fabrk-dev` boilerplate
+**Source Material:** Code extracted from the `fabrk-dev` boilerplate (sibling repo)
 
 ---
 
@@ -25,8 +25,13 @@ pnpm dev                  # Build all packages in watch mode
 pnpm build                # Build all packages for production
 pnpm type-check           # TypeScript validation across all packages
 pnpm lint                 # Lint all packages
-pnpm test                 # Run tests across all packages
+pnpm test                 # Run all 1,689 tests
 pnpm clean                # Remove all build artifacts
+
+# Quality
+pnpm size                 # Bundle size tracking (7 packages)
+pnpm storybook            # Launch Storybook at localhost:6006
+pnpm build-storybook      # Build static Storybook site
 
 # Package-specific (from package directory)
 cd packages/components
@@ -59,9 +64,12 @@ This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies fl
 @fabrk/email (depends on core)
 @fabrk/storage (depends on core)
 @fabrk/security (depends on core)
+@fabrk/mcp (standalone — MCP server toolkit)
+@fabrk/store-prisma (depends on core)
     ↓
 @fabrk/ai (depends on core)
 @fabrk/components (depends on core, design-system)
+@fabrk/themes (depends on design-system)
     ↓
 Templates & Examples (depend on all packages)
 ```
@@ -71,20 +79,26 @@ Templates & Examples (depend on all packages)
 ```
 fabrk-framework/
 ├── packages/
-│   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell, AI chat, admin, security
-│   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, validation, streaming, prompts)
-│   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
 │   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
+│   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
+│   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
+│   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell
+│   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, streaming, LLM providers, embeddings)
 │   ├── payments/          # @fabrk/payments - Stripe, Polar, Lemon Squeezy adapters
 │   ├── auth/              # @fabrk/auth - NextAuth, API keys, MFA (TOTP + backup codes)
 │   ├── email/             # @fabrk/email - Resend adapter + email templates
 │   ├── storage/           # @fabrk/storage - S3, R2, local filesystem adapters
 │   ├── security/          # @fabrk/security - CSRF, CSP, rate limiting, audit, GDPR, CORS
+│   ├── mcp/               # @fabrk/mcp - MCP server toolkit (defineTool, stdio transport)
+│   ├── store-prisma/      # @fabrk/store-prisma - 7 Prisma store adapters
+│   ├── themes/            # @fabrk/themes - Opt-in theming layer
+│   ├── ui/                # @fabrk/ui - Component registry (shadcn-style)
+│   ├── referrals/         # @fabrk/referrals - Referral system
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
 ├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce)
-└── docs/                  # Documentation
+├── tasks/                 # Task tracking (todo.md, lessons.md)
+└── docs/                  # Design docs and plans
 ```
 
 ### Package Build System
@@ -287,31 +301,19 @@ This enables proper ESM/CJS dual-module support and TypeScript resolution.
 
 ---
 
-## Critical Design System Rules
+## Non-Obvious Patterns (Gotchas)
 
-From DESIGN_SYSTEM_RULES.md (must preserve when extracting components):
+1. **Vitest split**: Root `vitest.config.ts` runs all non-component tests. `packages/components` has its own vitest config with `jsdom` environment. Root excludes `packages/components/src/__tests__/**`.
 
-1. **Full borders need mode.radius:**
-   ```tsx
-   <Card className={cn("border", mode.radius)}>
-   ```
+2. **`"use client"` banner**: The components package uses tsup's `banner` option to inject `"use client"` at the top of every output file. This is needed for Next.js App Router compatibility. Components using hooks or event handlers work because of this — don't add `"use client"` manually to individual component files.
 
-2. **Partial borders NO mode.radius:**
-   ```tsx
-   <div className="border-t"> // Correct
-   ```
+3. **`cn()` lives in `@fabrk/core`**: Not `@/lib/utils` or `@/utils`. Every import transformation from fabrk-dev must change `import { cn } from '@/lib/utils'` to `import { cn } from '@fabrk/core'`.
 
-3. **Always use design tokens:**
-   ```tsx
-   className="bg-primary text-primary-foreground" // ✅
-   className="bg-blue-500 text-white" // ❌
-   ```
+4. **Adapter + Store patterns**: All external services use adapter interfaces from `@fabrk/core`. Every store (CostStore, TeamStore, AuditStore, etc.) has an in-memory default for dev/testing. Real implementations (Prisma, etc.) are injected at runtime.
 
-4. **Terminal text casing:**
-   - Labels: UPPERCASE `[SYSTEM]`
-   - Buttons: UPPERCASE with `>`: `> SUBMIT`
-   - Headlines: UPPERCASE
-   - Body: Normal case
+5. **Web Crypto API**: Used throughout for hashing, tokens — no Node.js `crypto` module. This ensures compatibility with edge runtimes (Cloudflare Workers, Vercel Edge).
+
+6. **`pnpm size` not `size`**: On macOS, `size` is a system binary. Use `npx size-limit` or the `pnpm size` script which wraps it correctly.
 
 ---
 

@@ -1,10 +1,10 @@
 'use client'
 
-import { cn } from '@fabrk/core'
 import {
-  DashboardShell,
-  DashboardHeader,
-  StatsGrid,
+  KpiCard,
+  Card,
+  CardHeader,
+  CardContent,
   BarChart,
   LineChart,
   DonutChart,
@@ -16,7 +16,25 @@ import {
   TableHead,
   TableCell,
 } from '@fabrk/components'
-import { mode } from '@fabrk/design-system'
+import {
+  LayoutDashboard,
+  DollarSign,
+  Users,
+  Package,
+  Settings,
+  TrendingUp,
+  Activity,
+  BarChart3,
+  Search,
+  Bell,
+  LogOut,
+  Menu,
+  X,
+  ChevronRight,
+  Zap,
+  Globe,
+} from 'lucide-react'
+import { useState } from 'react'
 
 // --- Mock Data ---
 
@@ -46,151 +64,310 @@ const planDistribution = [
 ]
 
 const topCustomers = [
-  { name: 'Acme Corp', plan: 'Team', mrr: '$2,400', status: 'active' },
-  { name: 'Globex Inc', plan: 'Pro', mrr: '$1,200', status: 'active' },
-  { name: 'Initech', plan: 'Pro', mrr: '$840', status: 'active' },
-  { name: 'Hooli', plan: 'Team', mrr: '$720', status: 'churned' },
-  { name: 'Pied Piper', plan: 'Pro', mrr: '$480', status: 'active' },
-  { name: 'Soylent', plan: 'Free', mrr: '$0', status: 'trial' },
+  { name: 'Acme Corp', plan: 'Team', mrr: '$2,400', status: 'active', date: 'Jan 15, 2026' },
+  { name: 'Globex Inc', plan: 'Pro', mrr: '$1,200', status: 'active', date: 'Jan 12, 2026' },
+  { name: 'Initech', plan: 'Pro', mrr: '$840', status: 'active', date: 'Jan 10, 2026' },
+  { name: 'Hooli', plan: 'Team', mrr: '$720', status: 'churned', date: 'Dec 28, 2025' },
+  { name: 'Pied Piper', plan: 'Pro', mrr: '$480', status: 'active', date: 'Dec 20, 2025' },
+  { name: 'Soylent', plan: 'Free', mrr: '$0', status: 'trial', date: 'Dec 18, 2025' },
 ]
 
-const sidebarItems = [
-  { id: 'overview', label: 'Overview', active: true },
-  { id: 'revenue', label: 'Revenue' },
-  { id: 'users', label: 'Users' },
-  { id: 'products', label: 'Products' },
-  { id: 'settings', label: 'Settings' },
+interface NavItemData {
+  id: string
+  label: string
+  icon: React.ReactNode
+  active?: boolean
+  badge?: string
+}
+
+const navSections: { title: string; items: NavItemData[] }[] = [
+  {
+    title: 'Main',
+    items: [
+      { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="size-[15px]" />, active: true },
+      { id: 'revenue', label: 'Revenue', icon: <DollarSign className="size-[15px]" /> },
+      { id: 'users', label: 'Users', icon: <Users className="size-[15px]" /> },
+    ],
+  },
+  {
+    title: 'Products',
+    items: [
+      { id: 'products', label: 'All Products', icon: <Package className="size-[15px]" />, badge: '3' },
+      { id: 'features', label: 'Features', icon: <Zap className="size-[15px]" /> },
+      { id: 'analytics', label: 'Analytics', icon: <BarChart3 className="size-[15px]" /> },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { id: 'integrations', label: 'Integrations', icon: <Globe className="size-[15px]" /> },
+      { id: 'settings', label: 'Settings', icon: <Settings className="size-[15px]" /> },
+    ],
+  },
 ]
 
-// --- Page Component ---
+function NavItem({ item }: { item: NavItemData }) {
+  return (
+    <button
+      className={`flex w-full items-center gap-2 rounded-md px-2 py-[6px] text-left text-[13px] transition-colors ${
+        item.active
+          ? 'bg-foreground text-background font-medium'
+          : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+      }`}
+    >
+      <span className="shrink-0 opacity-70">{item.icon}</span>
+      <span className="flex-1">{item.label}</span>
+      {item.badge && (
+        <span
+          className={`flex h-[18px] min-w-[18px] items-center justify-center rounded px-1 text-[10px] font-medium ${
+            item.active ? 'bg-background/20 text-background' : 'bg-secondary text-muted-foreground'
+          }`}
+        >
+          {item.badge}
+        </span>
+      )}
+    </button>
+  )
+}
 
 export default function AnalyticsDashboard() {
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
   return (
-    <DashboardShell
-      sidebarItems={sidebarItems}
-      user={{ name: 'Jason', tier: 'pro' }}
-      logo={<span className="text-accent text-xl">#</span>}
-      title="Analytics"
-      onSignOut={() => {}}
-    >
-      <DashboardHeader
-        title="ANALYTICS OVERVIEW"
-        subtitle="Real-time SaaS metrics and KPIs"
-      />
-
-      {/* KPI Stats */}
-      <StatsGrid
-        items={[
-          { label: 'MRR', value: '$12,450', change: '+8.3%' },
-          { label: 'Active Users', value: 2847, change: '+12.4%' },
-          { label: 'Churn Rate', value: '3.2%', change: '-0.5%' },
-          { label: 'ARPU', value: '$48.20', change: '+2.1%' },
-        ]}
-      />
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        {/* Monthly Revenue Bar Chart */}
-        <div className="border-b border-r border-border p-4">
-          <div className="mb-3">
-            <span className={cn('text-xs uppercase tracking-wider text-muted-foreground', mode.font)}>
-              [REVENUE] MONTHLY RECURRING REVENUE
-            </span>
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex w-[220px] flex-col border-r border-border bg-card transition-transform lg:static lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between px-3 py-3">
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+              F
+            </div>
+            <span className="text-[13px] font-semibold">FABRK</span>
           </div>
-          <BarChart
-            data={revenueData}
-            xAxisKey="month"
-            series={[{ dataKey: 'revenue', name: 'Revenue' }]}
-            height={250}
-            yAxisFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
-            tooltipFormatter={(v) => `$${v.toLocaleString()}`}
-          />
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground" aria-label="Close">
+            <X className="size-4" />
+          </button>
         </div>
 
-        {/* Daily Active Users Line Chart */}
-        <div className="border-b border-border p-4">
-          <div className="mb-3">
-            <span className={cn('text-xs uppercase tracking-wider text-muted-foreground', mode.font)}>
-              [USERS] DAILY ACTIVE USERS
-            </span>
+        {/* Search */}
+        <div className="px-2.5 pb-1">
+          <div className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-[5px] text-muted-foreground">
+            <Search className="size-3" />
+            <span className="text-[12px]">Search</span>
+            <kbd className="ml-auto rounded border border-border bg-card px-1 py-[1px] text-[10px]">/</kbd>
           </div>
-          <LineChart
-            data={dauData}
-            xAxisKey="day"
-            series={[{ dataKey: 'users', name: 'Active Users', type: 'monotone' }]}
-            height={250}
-            yAxisFormatter={(v) => v.toLocaleString()}
-          />
         </div>
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto px-2.5 py-2">
+          {navSections.map((section) => (
+            <div key={section.title} className="mb-3">
+              <div className="mb-[2px] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/60">
+                {section.title}
+              </div>
+              <div className="space-y-[1px]">
+                {section.items.map((item) => (
+                  <NavItem key={item.id} item={item} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+        {/* User */}
+        <div className="border-t border-border px-2.5 py-2.5">
+          <div className="flex items-center gap-2 px-1">
+            <div className="flex size-7 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-muted-foreground">
+              J
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[12px] font-medium truncate leading-tight">Jason</div>
+              <div className="text-[10px] text-muted-foreground leading-tight">Pro Plan</div>
+            </div>
+            <button className="text-muted-foreground hover:text-foreground" aria-label="Sign out">
+              <LogOut className="size-3" />
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-background/60 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Main */}
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+        {/* Top Bar */}
+        <header className="flex items-center justify-between border-b border-border bg-card px-3 py-2 lg:px-4">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground" aria-label="Open menu">
+              <Menu className="size-4" />
+            </button>
+            <nav className="flex items-center gap-1 text-[12px] text-muted-foreground">
+              <span className="hover:text-foreground cursor-pointer transition-colors">Home</span>
+              <ChevronRight className="size-3" />
+              <span className="font-medium text-foreground">Analytics</span>
+            </nav>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="relative text-muted-foreground hover:text-foreground transition-colors" aria-label="Notifications">
+              <Bell className="size-[15px]" />
+              <span className="absolute -top-0.5 -right-0.5 flex size-1.5 rounded-full bg-destructive" />
+            </button>
+            <button className="rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+              Account Settings
+            </button>
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="flex flex-col gap-3 p-3 lg:p-4">
+
+            {/* Page Title */}
+            <div className="px-0.5">
+              <h1 className="text-[15px] font-semibold tracking-tight">Analytics Overview</h1>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Real-time SaaS metrics and KPIs</p>
+            </div>
+
+            {/* KPI Row */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <KpiCard
+                title="MRR"
+                value="$12,450"
+                change={8.3}
+                trend="up"
+                subtitle="vs last month"
+                icon={<DollarSign className="size-3.5 text-muted-foreground" />}
+              />
+              <KpiCard
+                title="ACTIVE USERS"
+                value="2,847"
+                change={12.4}
+                trend="up"
+                subtitle="daily active"
+                icon={<Users className="size-3.5 text-muted-foreground" />}
+              />
+              <KpiCard
+                title="CHURN RATE"
+                value="3.2%"
+                change={0.5}
+                trend="down"
+                subtitle="vs last month"
+                icon={<TrendingUp className="size-3.5 text-muted-foreground" />}
+              />
+              <KpiCard
+                title="ARPU"
+                value="$48.20"
+                change={2.1}
+                trend="up"
+                subtitle="per user"
+                icon={<Activity className="size-3.5 text-muted-foreground" />}
+              />
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <Card size="auto">
+                <CardHeader
+                  title="MONTHLY REVENUE"
+                  icon={<BarChart3 className="size-3.5 text-muted-foreground" />}
+                  meta="6M"
+                />
+                <CardContent padding="md">
+                  <BarChart
+                    data={revenueData}
+                    xAxisKey="month"
+                    series={[{ dataKey: 'revenue', name: 'Revenue', radius: [3, 3, 0, 0] }]}
+                    height={240}
+                    yAxisFormatter={(v) => `$${(v / 1000).toFixed(0)}K`}
+                    tooltipFormatter={(v) => `$${v.toLocaleString()}`}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card size="auto">
+                <CardHeader
+                  title="DAILY ACTIVE USERS"
+                  icon={<Users className="size-3.5 text-muted-foreground" />}
+                  meta="7D"
+                />
+                <CardContent padding="md">
+                  <LineChart
+                    data={dauData}
+                    xAxisKey="day"
+                    series={[{ dataKey: 'users', name: 'Active Users', type: 'monotone' }]}
+                    height={240}
+                    yAxisFormatter={(v) => v.toLocaleString()}
+                    margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Table + Donut */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <Card size="auto" className="lg:col-span-2">
+                <CardHeader title="TOP ACCOUNTS" meta={`${topCustomers.length} accounts`} />
+                <CardContent padding="sm">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>NAME</TableHead>
+                        <TableHead>PLAN</TableHead>
+                        <TableHead>MRR</TableHead>
+                        <TableHead>DATE</TableHead>
+                        <TableHead>STATUS</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {topCustomers.map((c) => (
+                        <TableRow key={c.name}>
+                          <TableCell className="font-medium">{c.name}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{c.plan.toUpperCase()}</Badge>
+                          </TableCell>
+                          <TableCell className="tabular-nums">{c.mrr}</TableCell>
+                          <TableCell className="text-muted-foreground">{c.date}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={c.status === 'active' ? 'default' : c.status === 'churned' ? 'destructive' : 'outline'}
+                            >
+                              {c.status.toUpperCase()}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              <Card size="auto">
+                <CardHeader title="PLAN DISTRIBUTION" meta="3 tiers" />
+                <CardContent padding="md">
+                  <div className="flex items-center justify-center py-2">
+                    <DonutChart
+                      data={planDistribution}
+                      size={180}
+                      thickness={40}
+                      showLegend
+                      showPercentages
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </main>
       </div>
-
-      {/* Bottom Row: Table + Donut */}
-      <div className="grid grid-cols-1 lg:grid-cols-3">
-        {/* Top Customers Table */}
-        <div className="lg:col-span-2 border-r border-border p-4">
-          <div className="mb-3">
-            <span className={cn('text-xs uppercase tracking-wider text-muted-foreground', mode.font)}>
-              [CUSTOMERS] TOP ACCOUNTS
-            </span>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>NAME</TableHead>
-                <TableHead>PLAN</TableHead>
-                <TableHead>MRR</TableHead>
-                <TableHead>STATUS</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {topCustomers.map((customer) => (
-                <TableRow key={customer.name}>
-                  <TableCell className={cn('font-medium', mode.font)}>
-                    {customer.name}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary">{customer.plan.toUpperCase()}</Badge>
-                  </TableCell>
-                  <TableCell className={cn('tabular-nums', mode.font)}>
-                    {customer.mrr}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        customer.status === 'active'
-                          ? 'default'
-                          : customer.status === 'churned'
-                            ? 'destructive'
-                            : 'outline'
-                      }
-                    >
-                      {customer.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Plan Distribution Donut */}
-        <div className="p-4">
-          <div className="mb-3">
-            <span className={cn('text-xs uppercase tracking-wider text-muted-foreground', mode.font)}>
-              [PLANS] DISTRIBUTION
-            </span>
-          </div>
-          <div className="flex items-center justify-center">
-            <DonutChart
-              data={planDistribution}
-              size={220}
-              thickness={50}
-              showLegend
-              showPercentages
-            />
-          </div>
-        </div>
-      </div>
-    </DashboardShell>
+    </div>
   )
 }

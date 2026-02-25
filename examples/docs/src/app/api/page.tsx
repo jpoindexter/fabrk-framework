@@ -19,6 +19,7 @@ const packages = [
   { name: '@fabrk/storage', description: 'S3, Cloudflare R2, local filesystem' },
   { name: '@fabrk/store-prisma', description: 'Prisma store adapters for 7 entity types' },
   { name: '@fabrk/themes', description: 'Opt-in theming layer with runtime switching' },
+  { name: 'fabrk', description: 'AI-first React framework — agents, tools, prompts, MCP, CLI' },
 ]
 
 const quickReference = [
@@ -96,13 +97,28 @@ const quickReference = [
       { name: 'escapeHtml / sanitizeUrl / sanitizeSqlInput', kind: 'function', description: 'Input validation and sanitization' },
     ],
   },
+  {
+    name: 'fabrk',
+    description: 'AI-first React framework — agents, tools, prompts, MCP, CLI',
+    exports: [
+      { name: 'defineAgent', kind: 'function', description: 'Define an AI agent with model, tools, auth, budget' },
+      { name: 'defineTool / textResult', kind: 'function', description: 'Define MCP-compatible tools' },
+      { name: 'callLLM / callWithFallback', kind: 'function', description: 'LLM calls with provider fallback' },
+      { name: 'checkBudget / recordCost', kind: 'function', description: 'Budget enforcement per agent/session' },
+      { name: 'createAgentHandler', kind: 'function', description: 'Web-standard request handler for agents' },
+      { name: 'createSSEStream / formatSSEEvent', kind: 'function', description: 'Server-sent events streaming' },
+      { name: 'loadPrompt / interpolatePrompt', kind: 'function', description: 'Markdown prompt loading and interpolation' },
+      { name: 'createAuthGuard', kind: 'function', description: 'Auth middleware for agent routes' },
+      { name: 'generateAgentsMd', kind: 'function', description: 'Generate AGENTS.md from scanned agents/tools' },
+    ],
+  },
 ]
 
 export default function ApiReferencePage() {
   return (
     <DocLayout
       title="API REFERENCE"
-      description="Auto-generated TypeScript API documentation for all 14 packages. Generated with TypeDoc from JSDoc annotations and TypeScript types."
+      description="Auto-generated TypeScript API documentation for all 15 packages. Generated with TypeDoc from JSDoc annotations and TypeScript types."
     >
       <Section title="QUICK REFERENCE">
         <p className="text-sm text-muted-foreground mb-6">

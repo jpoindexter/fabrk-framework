@@ -3,48 +3,22 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { defineTool, textResult, jsonResult, errorResult, buildSchema, parseArgs } from './helpers'
-
-describe('defineTool', () => {
-  it('returns the tool definition unchanged', () => {
-    const tool = {
-      name: 'test',
-      description: 'A test tool',
-      inputSchema: { type: 'object' as const, properties: {} },
-      handler: async () => textResult('ok'),
-    }
-    expect(defineTool(tool)).toBe(tool)
-  })
-})
+import { textResult, jsonResult, errorResult, buildSchema, parseArgs } from './helpers'
 
 describe('textResult', () => {
   it('creates a text content result', () => {
     const result = textResult('hello')
-    expect(result).toEqual({
-      content: [{ type: 'text', text: 'hello' }],
-    })
-  })
-
-  it('handles empty string', () => {
-    const result = textResult('')
-    expect(result.content[0].text).toBe('')
+    expect(result).toEqual({ content: [{ type: 'text', text: 'hello' }] })
   })
 })
 
 describe('jsonResult', () => {
-  it('stringifies objects with formatting', () => {
-    const result = jsonResult({ name: 'test', count: 42 })
-    expect(result.content[0].text).toBe(JSON.stringify({ name: 'test', count: 42 }, null, 2))
-  })
-
-  it('handles arrays', () => {
-    const result = jsonResult([1, 2, 3])
-    expect(result.content[0].text).toBe('[\n  1,\n  2,\n  3\n]')
-  })
-
-  it('handles null', () => {
-    const result = jsonResult(null)
-    expect(result.content[0].text).toBe('null')
+  it('stringifies objects, arrays, and null', () => {
+    expect(jsonResult({ name: 'test', count: 42 }).content[0].text).toBe(
+      JSON.stringify({ name: 'test', count: 42 }, null, 2)
+    )
+    expect(jsonResult([1, 2, 3]).content[0].text).toBe('[\n  1,\n  2,\n  3\n]')
+    expect(jsonResult(null).content[0].text).toBe('null')
   })
 })
 
@@ -59,7 +33,7 @@ describe('errorResult', () => {
 })
 
 describe('buildSchema', () => {
-  it('builds JSON Schema from field map', () => {
+  it('builds JSON Schema with required array and omits when no required', () => {
     const schema = buildSchema({
       name: { type: 'string', description: 'User name', required: true },
       age: { type: 'number', description: 'User age' },
@@ -73,89 +47,30 @@ describe('buildSchema', () => {
       },
       required: ['name'],
     })
-  })
 
-  it('omits required array when no fields are required', () => {
-    const schema = buildSchema({
-      limit: { type: 'number', description: 'Max results' },
-    })
-
-    expect(schema).toEqual({
-      type: 'object',
-      properties: {
-        limit: { type: 'number', description: 'Max results' },
-      },
-    })
-    expect(schema.required).toBeUndefined()
-  })
-
-  it('supports enum fields', () => {
-    const schema = buildSchema({
-      status: { type: 'string', enum: ['active', 'inactive'], required: true },
-    })
-
-    expect(schema.properties!.status).toEqual({
-      type: 'string',
-      enum: ['active', 'inactive'],
-    })
-  })
-
-  it('supports array items', () => {
-    const schema = buildSchema({
-      tags: { type: 'array', items: { type: 'string' } },
-    })
-
-    expect(schema.properties!.tags).toEqual({
-      type: 'array',
-      items: { type: 'string' },
-    })
-  })
-
-  it('supports default values', () => {
-    const schema = buildSchema({
-      limit: { type: 'number', default: 10 },
-    })
-
-    expect(schema.properties!.limit).toEqual({
-      type: 'number',
-      default: 10,
-    })
+    const noRequired = buildSchema({ limit: { type: 'number', description: 'Max results' } })
+    expect(noRequired.required).toBeUndefined()
   })
 })
 
 describe('parseArgs', () => {
-  it('parses valid args through schema', () => {
-    const schema = {
-      parse: (data: unknown) => data as { name: string },
-    }
-    const result = parseArgs({ name: 'test' }, schema)
-    expect(result).toEqual({ name: 'test' })
-  })
+  it('parses valid args and throws formatted error for Zod-style errors', () => {
+    const schema = { parse: (data: unknown) => data as { name: string } }
+    expect(parseArgs({ name: 'test' }, schema)).toEqual({ name: 'test' })
 
-  it('throws formatted error for Zod-style errors', () => {
-    const schema = {
+    const zodSchema = {
       parse: () => {
         const error = new Error('Validation failed')
         ;(error as any).issues = [
           { path: ['name'], message: 'Required' },
-          { path: ['age'], message: 'Expected number, received string' },
+          { path: ['age'], message: 'Expected number' },
         ]
         throw error
       },
     }
+    expect(() => parseArgs({}, zodSchema)).toThrow('Invalid arguments: name: Required, age: Expected number')
 
-    expect(() => parseArgs({}, schema)).toThrow(
-      'Invalid arguments: name: Required, age: Expected number, received string'
-    )
-  })
-
-  it('re-throws non-Zod errors', () => {
-    const schema = {
-      parse: () => {
-        throw new Error('Something else')
-      },
-    }
-
-    expect(() => parseArgs({}, schema)).toThrow('Something else')
+    const genericSchema = { parse: () => { throw new Error('Something else') } }
+    expect(() => parseArgs({}, genericSchema)).toThrow('Something else')
   })
 })

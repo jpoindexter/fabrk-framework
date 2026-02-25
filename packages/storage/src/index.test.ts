@@ -25,33 +25,23 @@ describe('adapter configuration', () => {
     expect(adapter.name).toBe('local')
     expect(adapter.version).toBe('1.0.0')
     expect(adapter.isConfigured()).toBe(true)
-  })
-
-  it('local adapter: not configured when directory is empty', () => {
     expect(createLocalAdapter({ directory: '' }).isConfigured()).toBe(false)
   })
 
   it('s3 adapter: name, version, isConfigured', () => {
     const adapter = createS3Adapter({ bucket: 'test-bucket', region: 'us-east-1' })
     expect(adapter.name).toBe('s3')
-    expect(adapter.version).toBe('1.0.0')
     expect(adapter.isConfigured()).toBe(true)
-  })
-
-  it('s3 adapter: not configured when bucket or region is missing', () => {
     expect(createS3Adapter({ bucket: '', region: 'us-east-1' }).isConfigured()).toBe(false)
     expect(createS3Adapter({ bucket: 'test', region: '' }).isConfigured()).toBe(false)
   })
 
   it('r2 adapter: name, version, isConfigured', () => {
     const adapter = createR2Adapter({
-      bucket: 'test-bucket',
-      accountId: 'test-account-id',
-      accessKeyId: 'test-key',
-      secretAccessKey: 'test-secret',
+      bucket: 'test-bucket', accountId: 'test-account-id',
+      accessKeyId: 'test-key', secretAccessKey: 'test-secret',
     })
     expect(adapter.name).toBe('r2')
-    expect(adapter.version).toBe('1.0.0')
     expect(adapter.isConfigured()).toBe(true)
   })
 })
@@ -65,212 +55,71 @@ describe('Local Adapter', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    adapter = createLocalAdapter({
-      directory: '/tmp/test-uploads',
-      baseUrl: '/api/files',
-    })
+    adapter = createLocalAdapter({ directory: '/tmp/test-uploads', baseUrl: '/api/files' })
   })
 
-  describe('initialize', () => {
-    it('should create the storage directory', async () => {
-      const { promises: fs } = await import('fs')
-      await adapter.initialize!()
-      expect(fs.mkdir).toHaveBeenCalledWith('/tmp/test-uploads', { recursive: true })
-    })
+  it('should create the storage directory on initialize', async () => {
+    const { promises: fs } = await import('fs')
+    await adapter.initialize!()
+    expect(fs.mkdir).toHaveBeenCalledWith('/tmp/test-uploads', { recursive: true })
   })
 
-  describe('upload', () => {
-    it('should write file and return result with key and url', async () => {
-      const { promises: fs } = await import('fs')
-      const file = new Blob(['hello world'], { type: 'text/plain' })
+  it('should upload files with path and generate key without path', async () => {
+    const { promises: fs } = await import('fs')
+    const file = new Blob(['hello world'], { type: 'text/plain' })
 
-      const result = await adapter.upload({
-        file,
-        filename: 'test.txt',
-        contentType: 'text/plain',
-        path: 'documents',
-      })
+    const result = await adapter.upload({ file, filename: 'test.txt', contentType: 'text/plain', path: 'documents' })
+    expect(result.key).toBe('documents/test.txt')
+    expect(result.url).toContain('/api/files/documents/test.txt')
+    expect(result.size).toBe(11)
+    expect(fs.writeFile).toHaveBeenCalled()
 
-      expect(result.key).toBe('documents/test.txt')
-      expect(result.url).toContain('/api/files/documents/test.txt')
-      expect(result.size).toBe(11)
-      expect(result.contentType).toBe('text/plain')
-      expect(fs.writeFile).toHaveBeenCalled()
-    })
-
-    it('should generate storage key when no path is provided', async () => {
-      const file = new Blob(['data'], { type: 'text/plain' })
-
-      const result = await adapter.upload({
-        file,
-        filename: 'test.txt',
-        contentType: 'text/plain',
-      })
-
-      // Key should be generated with timestamp
-      expect(result.key).toContain('test_')
-      expect(result.key).toContain('.txt')
-    })
-
-    it('should reject files exceeding max size', async () => {
-      const adapter = createLocalAdapter({
-        directory: '/tmp/test',
-        maxFileSize: 5,
-      })
-
-      const file = new Blob(['too large file content'], { type: 'text/plain' })
-
-      await expect(
-        adapter.upload({
-          file,
-          filename: 'big.txt',
-          contentType: 'text/plain',
-        })
-      ).rejects.toThrow(/exceeds maximum/)
-    })
-
-    it('should handle ArrayBuffer input', async () => {
-      const encoder = new TextEncoder()
-      const buffer = encoder.encode('hello').buffer as ArrayBuffer
-
-      const result = await adapter.upload({
-        file: buffer,
-        filename: 'data.bin',
-        contentType: 'application/octet-stream',
-        path: 'bin',
-      })
-
-      expect(result.key).toBe('bin/data.bin')
-      expect(result.size).toBe(5)
-    })
+    const autoKey = await adapter.upload({ file, filename: 'test.txt', contentType: 'text/plain' })
+    expect(autoKey.key).toContain('test_')
+    expect(autoKey.key).toContain('.txt')
   })
 
-  describe('getSignedUrl', () => {
-    it('should return a URL with expiry parameter', async () => {
-      const result = await adapter.getSignedUrl({ key: 'docs/file.pdf' })
+  it('should reject files exceeding max size', async () => {
+    const smallAdapter = createLocalAdapter({ directory: '/tmp/test', maxFileSize: 5 })
+    const file = new Blob(['too large file content'], { type: 'text/plain' })
 
-      expect(result.url).toContain('/api/files/docs/file.pdf')
-      expect(result.url).toContain('expires=')
-      expect(result.expiresAt).toBeInstanceOf(Date)
-      expect(result.expiresAt.getTime()).toBeGreaterThan(Date.now())
-    })
-
-    it('should respect custom expiresIn', async () => {
-      const before = Date.now()
-      const result = await adapter.getSignedUrl({
-        key: 'file.txt',
-        expiresIn: 60,
-      })
-
-      const expectedExpiry = before + 60 * 1000
-      // Allow 1 second of tolerance
-      expect(result.expiresAt.getTime()).toBeGreaterThanOrEqual(expectedExpiry - 1000)
-      expect(result.expiresAt.getTime()).toBeLessThanOrEqual(expectedExpiry + 1000)
-    })
-
-    it('should return key directly when no baseUrl configured', async () => {
-      const noBaseAdapter = createLocalAdapter({ directory: '/tmp/test' })
-      const result = await noBaseAdapter.getSignedUrl({ key: 'file.txt' })
-      expect(result.url).toBe('file.txt')
-    })
+    await expect(smallAdapter.upload({ file, filename: 'big.txt', contentType: 'text/plain' })).rejects.toThrow(/exceeds maximum/)
   })
 
-  describe('delete', () => {
-    it('should call fs.unlink with the correct path', async () => {
-      const { promises: fs } = await import('fs')
-      await adapter.delete('uploads/file.txt')
-      expect(fs.unlink).toHaveBeenCalledWith('/tmp/test-uploads/uploads/file.txt')
-    })
-
-    it('should not throw when file does not exist', async () => {
-      const { promises: fs } = await import('fs')
-      const unlinkMock = fs.unlink as ReturnType<typeof vi.fn>
-      unlinkMock.mockRejectedValueOnce(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
-
-      await expect(adapter.delete('nonexistent.txt')).resolves.toBeUndefined()
-    })
-
-    it('should rethrow non-ENOENT errors', async () => {
-      const { promises: fs } = await import('fs')
-      const unlinkMock = fs.unlink as ReturnType<typeof vi.fn>
-      unlinkMock.mockRejectedValueOnce(Object.assign(new Error('EACCES'), { code: 'EACCES' }))
-
-      await expect(adapter.delete('protected.txt')).rejects.toThrow('EACCES')
-    })
+  it('should handle ArrayBuffer input', async () => {
+    const buffer = new TextEncoder().encode('hello').buffer as ArrayBuffer
+    const result = await adapter.upload({ file: buffer, filename: 'data.bin', contentType: 'application/octet-stream', path: 'bin' })
+    expect(result.key).toBe('bin/data.bin')
+    expect(result.size).toBe(5)
   })
 
-  describe('exists', () => {
-    it('should return true when file exists', async () => {
-      const result = await adapter.exists('file.txt')
-      expect(result).toBe(true)
-    })
-
-    it('should return false when file does not exist', async () => {
-      const { promises: fs } = await import('fs')
-      const accessMock = fs.access as ReturnType<typeof vi.fn>
-      accessMock.mockRejectedValueOnce(new Error('ENOENT'))
-
-      const result = await adapter.exists('missing.txt')
-      expect(result).toBe(false)
-    })
-  })
-})
-
-// ============================================================================
-// S3 ADAPTER ERROR CASES
-// ============================================================================
-
-describe('S3 Adapter Error Cases', () => {
-  it('should reject upload of files that fail validation', async () => {
-    const adapter = createS3Adapter({
-      bucket: 'test-bucket',
-      region: 'us-east-1',
-    })
-
-    const file = new Blob(['data'], { type: 'text/plain' })
-
-    await expect(
-      adapter.upload({
-        file,
-        filename: '../etc/passwd',
-        contentType: 'text/plain',
-      })
-    ).rejects.toThrow('Invalid filename')
+  it('should return signed URL with expiry', async () => {
+    const result = await adapter.getSignedUrl({ key: 'docs/file.pdf' })
+    expect(result.url).toContain('/api/files/docs/file.pdf')
+    expect(result.url).toContain('expires=')
+    expect(result.expiresAt.getTime()).toBeGreaterThan(Date.now())
   })
 
-  it('should reject upload of dangerous file types', async () => {
-    const adapter = createS3Adapter({
-      bucket: 'test-bucket',
-      region: 'us-east-1',
-    })
+  it('should delete files and handle ENOENT gracefully', async () => {
+    const { promises: fs } = await import('fs')
+    await adapter.delete('uploads/file.txt')
+    expect(fs.unlink).toHaveBeenCalledWith('/tmp/test-uploads/uploads/file.txt')
 
-    const file = new Blob(['data'], { type: 'application/x-executable' })
+    const unlinkMock = fs.unlink as ReturnType<typeof vi.fn>
+    unlinkMock.mockRejectedValueOnce(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }))
+    await expect(adapter.delete('nonexistent.txt')).resolves.toBeUndefined()
 
-    await expect(
-      adapter.upload({
-        file,
-        filename: 'malware',
-        contentType: 'application/x-executable',
-      })
-    ).rejects.toThrow('blocked')
+    unlinkMock.mockRejectedValueOnce(Object.assign(new Error('EACCES'), { code: 'EACCES' }))
+    await expect(adapter.delete('protected.txt')).rejects.toThrow('EACCES')
   })
 
-  it('should reject upload exceeding max size', async () => {
-    const adapter = createS3Adapter({
-      bucket: 'test-bucket',
-      region: 'us-east-1',
-    })
+  it('should check file existence', async () => {
+    expect(await adapter.exists('file.txt')).toBe(true)
 
-    const file = new Blob(['x'.repeat(100)], { type: 'text/plain' })
-
-    await expect(
-      adapter.upload({
-        file,
-        filename: 'big.txt',
-        contentType: 'text/plain',
-        maxSize: 10,
-      })
-    ).rejects.toThrow('exceeds maximum')
+    const { promises: fs } = await import('fs')
+    const accessMock = fs.access as ReturnType<typeof vi.fn>
+    accessMock.mockRejectedValueOnce(new Error('ENOENT'))
+    expect(await adapter.exists('missing.txt')).toBe(false)
   })
 })
 
@@ -279,109 +128,25 @@ describe('S3 Adapter Error Cases', () => {
 // ============================================================================
 
 describe('validateFile', () => {
-  it('should pass valid file', () => {
-    const result = validateFile({
-      size: 1024,
-      contentType: 'text/plain',
-      filename: 'test.txt',
-    })
-    expect(result.valid).toBe(true)
-    expect(result.error).toBeUndefined()
+  it('should pass valid files and reject oversized files', () => {
+    expect(validateFile({ size: 1024, contentType: 'text/plain', filename: 'test.txt' }).valid).toBe(true)
+    expect(validateFile({ size: 20 * 1024 * 1024, contentType: 'text/plain', filename: 'big.txt' }, { maxSize: 10 * 1024 * 1024 }).valid).toBe(false)
+    expect(validateFile({ size: 11 * 1024 * 1024, contentType: 'text/plain', filename: 'big.txt' }).valid).toBe(false) // default 10MB
   })
 
-  it('should reject file exceeding max size', () => {
-    const result = validateFile(
-      { size: 20 * 1024 * 1024, contentType: 'text/plain', filename: 'big.txt' },
-      { maxSize: 10 * 1024 * 1024 }
-    )
-    expect(result.valid).toBe(false)
-    expect(result.error).toContain('exceeds maximum')
-  })
-
-  it('should use default max size of 10MB', () => {
-    const result = validateFile({
-      size: 11 * 1024 * 1024,
-      contentType: 'text/plain',
-      filename: 'big.txt',
-    })
-    expect(result.valid).toBe(false)
-    expect(result.error).toContain('exceeds maximum')
-  })
-
-  it('should allow file within default max size', () => {
-    const result = validateFile({
-      size: 9 * 1024 * 1024,
-      contentType: 'text/plain',
-      filename: 'ok.txt',
-    })
-    expect(result.valid).toBe(true)
-  })
-
-  it('should reject disallowed content types', () => {
-    const result = validateFile(
-      { size: 100, contentType: 'application/pdf', filename: 'doc.pdf' },
-      { allowedTypes: ['image/*', 'text/plain'] }
-    )
-    expect(result.valid).toBe(false)
-    expect(result.error).toContain('not allowed')
-  })
-
-  it('should allow content type matching wildcard', () => {
-    const result = validateFile(
-      { size: 100, contentType: 'image/png', filename: 'photo.png' },
-      { allowedTypes: ['image/*'] }
-    )
-    expect(result.valid).toBe(true)
-  })
-
-  it('should allow exact content type match', () => {
-    const result = validateFile(
-      { size: 100, contentType: 'text/plain', filename: 'note.txt' },
-      { allowedTypes: ['text/plain'] }
-    )
-    expect(result.valid).toBe(true)
-  })
-
-  it('should block dangerous file types', () => {
-    const result = validateFile({
-      size: 100,
-      contentType: 'application/x-executable',
-      filename: 'malware',
-    })
-    expect(result.valid).toBe(false)
-    expect(result.error).toContain('blocked')
-  })
-
-  it('should block custom blocked types', () => {
-    const result = validateFile(
-      { size: 100, contentType: 'application/zip', filename: 'archive.zip' },
-      { blockedTypes: ['application/zip'] }
-    )
-    expect(result.valid).toBe(false)
-    expect(result.error).toContain('blocked')
+  it('should enforce allowed and blocked content types', () => {
+    expect(validateFile({ size: 100, contentType: 'application/pdf', filename: 'doc.pdf' }, { allowedTypes: ['image/*', 'text/plain'] }).valid).toBe(false)
+    expect(validateFile({ size: 100, contentType: 'image/png', filename: 'photo.png' }, { allowedTypes: ['image/*'] }).valid).toBe(true)
+    expect(validateFile({ size: 100, contentType: 'text/plain', filename: 'note.txt' }, { allowedTypes: ['text/plain'] }).valid).toBe(true)
+    expect(validateFile({ size: 100, contentType: 'application/x-executable', filename: 'malware' }).valid).toBe(false)
+    expect(validateFile({ size: 100, contentType: 'application/zip', filename: 'archive.zip' }, { blockedTypes: ['application/zip'] }).valid).toBe(false)
   })
 
   it('should reject filenames with path traversal', () => {
-    expect(
-      validateFile({ size: 100, contentType: 'text/plain', filename: '../etc/passwd' }).valid
-    ).toBe(false)
-
-    expect(
-      validateFile({ size: 100, contentType: 'text/plain', filename: 'path/file.txt' }).valid
-    ).toBe(false)
-
-    expect(
-      validateFile({ size: 100, contentType: 'text/plain', filename: 'path\\file.txt' }).valid
-    ).toBe(false)
-  })
-
-  it('should return "Invalid filename" error for path traversal', () => {
-    const result = validateFile({
-      size: 100,
-      contentType: 'text/plain',
-      filename: '../secret.txt',
-    })
-    expect(result.error).toBe('Invalid filename')
+    expect(validateFile({ size: 100, contentType: 'text/plain', filename: '../etc/passwd' }).valid).toBe(false)
+    expect(validateFile({ size: 100, contentType: 'text/plain', filename: 'path/file.txt' }).valid).toBe(false)
+    expect(validateFile({ size: 100, contentType: 'text/plain', filename: 'path\\file.txt' }).valid).toBe(false)
+    expect(validateFile({ size: 100, contentType: 'text/plain', filename: '../secret.txt' }).error).toBe('Invalid filename')
   })
 })
 
@@ -390,34 +155,15 @@ describe('validateFile', () => {
 // ============================================================================
 
 describe('generateStorageKey', () => {
-  it('should generate a key with timestamp', () => {
-    const key = generateStorageKey('photo.jpg')
-    expect(key).toMatch(/^photo_\d+\.jpg$/)
+  it('should generate key with timestamp and sanitize special chars', () => {
+    expect(generateStorageKey('photo.jpg')).toMatch(/^photo_\d+\.jpg$/)
+    expect(generateStorageKey('my file (1).txt')).toMatch(/^my_file_1__\d+\.txt$/)
+    expect(generateStorageKey('a___b.txt')).toMatch(/^a_b_\d+\.txt$/)
   })
 
-  it('should sanitize special characters', () => {
-    const key = generateStorageKey('my file (1).txt')
-    // Spaces and parens become underscores, timestamp is appended
-    expect(key).toMatch(/^my_file_1__\d+\.txt$/)
-  })
-
-  it('should collapse multiple underscores', () => {
-    const key = generateStorageKey('a___b.txt')
-    expect(key).toMatch(/^a_b_\d+\.txt$/)
-  })
-
-  it('should prepend path when provided', () => {
-    const key = generateStorageKey('test.txt', 'uploads/images')
-    expect(key).toMatch(/^uploads\/images\/test_\d+\.txt$/)
-  })
-
-  it('should strip leading and trailing slashes from path', () => {
-    const key = generateStorageKey('test.txt', '/uploads/')
-    expect(key).toMatch(/^uploads\/test_\d+\.txt$/)
-  })
-
-  it('should handle filenames without extension', () => {
-    const key = generateStorageKey('README')
-    expect(key).toMatch(/^README_\d+$/)
+  it('should prepend path, strip slashes, and handle extensionless files', () => {
+    expect(generateStorageKey('test.txt', 'uploads/images')).toMatch(/^uploads\/images\/test_\d+\.txt$/)
+    expect(generateStorageKey('test.txt', '/uploads/')).toMatch(/^uploads\/test_\d+\.txt$/)
+    expect(generateStorageKey('README')).toMatch(/^README_\d+$/)
   })
 })

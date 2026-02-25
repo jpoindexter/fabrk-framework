@@ -3,13 +3,13 @@
 **Plan:** `docs/plans/2026-02-25-fabrk-framework-implementation.md`
 **Design:** `docs/plans/2026-02-25-fabrk-framework-design.md`
 
-## Status: Planning Complete, Ready to Execute
+## Status: Day 1 Complete, Day 2 In Progress
 
 ### Day 1: Fork + Rename
-- [ ] Task 1: Clone vinext into packages/framework
-- [ ] Task 2: Rename vinext to fabrk (CLI, package.json)
-- [ ] Task 3: Wire fabrk.config.ts support
-- [ ] Task 4: Verify build + CLI works
+- [x] Task 1: Clone vinext into packages/framework
+- [x] Task 2: Rename vinext to fabrk (CLI, package.json, index.ts — 0 vinext refs remain)
+- [x] Task 3: Wire fabrk.config.ts support (defineFabrkConfig + loadFabrkConfig, 3 tests)
+- [x] Task 4: Verify build + CLI works (tsc builds clean, `fabrk --help` shows branding)
 
 ### Day 2: Agent System
 - [ ] Task 5: Agents directory scanner

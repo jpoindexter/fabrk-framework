@@ -18,7 +18,7 @@
  * ```
  */
 
-import { timingSafeEqual } from '../crypto-utils'
+import { timingSafeEqual } from '@fabrk/core'
 
 /**
  * TOTP replay protection: recently used codes are cached to prevent reuse

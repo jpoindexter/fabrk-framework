@@ -1,5 +1,5 @@
 import type { AuthStore, ApiKeyStore, Session, ApiKeyInfo } from '@fabrk/core'
-import { timingSafeEqual } from './crypto-utils'
+import { timingSafeEqual } from '@fabrk/core'
 
 export type { AuthStore, ApiKeyStore }
 

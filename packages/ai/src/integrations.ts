@@ -7,7 +7,7 @@
  * - Use typed responses
  *
  * @example
- * import { ai } from '@/lib/ai/integrations';
+ * import { ai } from '@fabrk/ai';
  *
  * const result = await ai.claude.generate({
  *   prompt: 'Generate a user profile form',
@@ -42,16 +42,6 @@ export interface GenerateOptions {
 
 export interface GenerateResult {
   content: string;
-  /**
-   * Always returns zeros. Usage is tracked internally by AICostTracker.
-   * @deprecated Use getCostTracker().getTodaysCost() for actual spend data.
-   */
-  usage: { promptTokens: number; completionTokens: number; totalTokens: number; };
-  /**
-   * Always returns 0. Cost is tracked internally by AICostTracker.
-   * @deprecated Use getCostTracker().getTodaysCost() for actual spend data.
-   */
-  cost: number;
   model: string;
 }
 
@@ -112,20 +102,7 @@ export const claude = {
 
       const content = typeof result === 'string' ? result : '';
 
-      // NOTE: Usage and cost are tracked internally by AICostTracker and persisted
-      // to the configured CostStore. They cannot be returned here because trackClaudeCall()
-      // extracts content from the raw response and only that string is returned.
-      // To retrieve usage data, query the cost tracker: getCostTracker().getTodaysCost()
-      return successResponse({
-        content,
-        usage: {
-          promptTokens: 0,  // see NOTE above
-          completionTokens: 0,  // see NOTE above
-          totalTokens: 0,  // see NOTE above
-        },
-        cost: 0,  // see NOTE above
-        model,
-      });
+      return successResponse({ content, model });
     } catch (error) {
       if (error instanceof AppError) {
         return errorResponse(error.code, error.message);
@@ -212,20 +189,7 @@ export const openai = {
 
       const content = typeof result === 'string' ? result : '';
 
-      // NOTE: Usage and cost are tracked internally by AICostTracker and persisted
-      // to the configured CostStore. They cannot be returned here because trackOpenAICall()
-      // extracts content from the raw response and only that string is returned.
-      // To retrieve usage data, query the cost tracker: getCostTracker().getTodaysCost()
-      return successResponse({
-        content,
-        usage: {
-          promptTokens: 0,  // see NOTE above
-          completionTokens: 0,  // see NOTE above
-          totalTokens: 0,  // see NOTE above
-        },
-        cost: 0,  // see NOTE above
-        model,
-      });
+      return successResponse({ content, model });
     } catch (error) {
       if (error instanceof AppError) {
         return errorResponse(error.code, error.message);
@@ -286,106 +250,16 @@ export const openai = {
 };
 
 /**
- * Vercel AI SDK integration (uses configured provider)
- */
-export const vercelAI = {
-  /**
-   * Generate text using Vercel AI SDK with the configured provider
-   *
-   * @remarks Costs are NOT tracked when Vercel AI SDK is used. Use claude.generate()
-   * or openai.generate() for cost-tracked calls. This path is a last-resort fallback.
-   *
-   * @example
-   * const result = await vercelAI.generate({
-   *   prompt: 'Explain quantum computing',
-   *   feature: 'explanation',
-   * });
-   */
-  async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
-    const { prompt, maxTokens = 1024, systemPrompt } = options;
-
-    try {
-      const { generateText } = await import('ai');
-      const { getModel } = await import('./provider');
-
-      const model = getModel();
-
-      const result = await generateText({
-        model,
-        prompt,
-        system: systemPrompt,
-        maxTokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
-      });
-
-      // Estimate tokens (rough approximation)
-      const estimatedPromptTokens = Math.ceil(prompt.length / 4);
-      const estimatedCompletionTokens = Math.ceil(result.text.length / 4);
-
-      return successResponse({
-        content: result.text,
-        usage: {
-          promptTokens: estimatedPromptTokens,
-          completionTokens: estimatedCompletionTokens,
-          totalTokens: estimatedPromptTokens + estimatedCompletionTokens,
-        },
-        cost: 0,
-        model: 'vercel-ai-sdk',
-      });
-    } catch (error) {
-      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
-      console.error('Vercel AI generation error:', scrubApiKeys(safeMessage));
-      return errorResponse(
-        'VERCEL_AI_ERROR',
-        scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate with Vercel AI SDK')
-      );
-    }
-  },
-
-  /**
-   * Stream text generation
-   */
-  async stream(options: GenerateOptions): Promise<APIResponse<ReadableStream<string>>> {
-    const { prompt, maxTokens = 1024, systemPrompt } = options;
-
-    try {
-      const { streamText } = await import('ai');
-      const { getModel } = await import('./provider');
-
-      const model = getModel();
-
-      const result = streamText({
-        model,
-        prompt,
-        system: systemPrompt,
-        maxTokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
-      });
-
-      return successResponse((await result).textStream);
-    } catch (error) {
-      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
-      console.error('Vercel AI stream error:', scrubApiKeys(safeMessage));
-      return errorResponse(
-        'VERCEL_AI_ERROR',
-        scrubApiKeys(error instanceof Error ? error.message : 'Failed to stream with Vercel AI SDK')
-      );
-    }
-  },
-};
-
-/**
  * Unified AI interface - auto-selects available provider
  */
 export const ai = {
   claude,
   openai,
-  vercelAI,
 
   /**
    * Generate using the best available provider
    *
-   * @remarks Falls back through: claude → openai → vercelAI (last resort).
-   * When falling back to vercelAI, costs are NOT tracked. Use claude.generate()
-   * or openai.generate() directly for guaranteed cost tracking.
+   * @remarks Falls back through: claude → openai. Both paths track costs.
    */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
     // Try Claude first (preferred)
@@ -398,13 +272,9 @@ export const ai = {
       return openai.generate(options);
     }
 
-    // No cost-tracked provider is available. Refusing to fall back to vercelAI
-    // because vercelAI.generate() returns cost: 0 and bypasses all cost tracking
-    // and budget enforcement, which is a silent security/billing risk.
     return errorResponse(
       'NO_AI_PROVIDER',
-      'No AI provider configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY. ' +
-      'Fallback to Vercel AI SDK is disabled to preserve cost tracking.'
+      'No AI provider configured. Set ANTHROPIC_API_KEY or OPENAI_API_KEY.'
     );
   },
 
@@ -420,5 +290,3 @@ export const ai = {
     return providers;
   },
 };
-
-export default ai;

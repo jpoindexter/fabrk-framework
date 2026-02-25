@@ -151,17 +151,6 @@ export function corsMiddleware(
 }
 
 /**
- * Cost tracking middleware — tracks AI request costs in the store.
- * Cost data is persisted via the AI cost store; no console output is emitted.
- */
-export function costTrackingMiddleware(): MiddlewareFunction<RequestContext & { cost?: number; feature?: string }> {
-  return async (ctx, next) => {
-    await next()
-    // ctx.cost is available here for downstream middleware or handlers to persist
-  }
-}
-
-/**
  * Security headers middleware
  *
  * @remarks This middleware sets basic security headers (X-Content-Type-Options, X-Frame-Options,

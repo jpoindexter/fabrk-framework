@@ -69,7 +69,7 @@ const SEARCH_INDEX: SearchEntry[] = [
   // Key Concepts
   { title: 'Auto-wiring', href: '/configuration#auto-wiring', keywords: ['auto-wiring', 'autoWire', 'adapters', 'configuration', 'setup', 'zero-config'], category: 'CONCEPTS' },
   { title: 'Design Tokens', href: '/components#design-rules', keywords: ['design tokens', 'css variables', 'bg-primary', 'text-foreground', 'semantic colors', 'theming'], category: 'CONCEPTS' },
-  { title: 'mode Object', href: '/packages#design-system', keywords: ['mode', 'mode.radius', 'mode.font', 'mode.shadow', 'design system', 'runtime'], category: 'CONCEPTS' },
+  { title: 'mode Object', href: '/packages#design-system', keywords: ['mode', 'mode.radius', 'mode.font', 'mode.textTransform', 'design system', 'runtime'], category: 'CONCEPTS' },
   { title: 'Middleware', href: '/packages#core', keywords: ['middleware', 'auth', 'rateLimit', 'cors', 'csrf', 'request pipeline'], category: 'CONCEPTS' },
   { title: 'Store Pattern', href: '/migration#step-6:-wire-store-adapters', keywords: ['store', 'adapter', 'in-memory', 'prisma', 'injectable', 'interface', 'StoreOverrides'], category: 'CONCEPTS' },
   { title: 'Feature Flags', href: '/configuration#feature-flags', keywords: ['feature flags', 'flags', 'rollout', 'a/b testing', 'useFeatureFlag'], category: 'CONCEPTS' },

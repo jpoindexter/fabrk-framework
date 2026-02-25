@@ -54,9 +54,9 @@ export default defineFabrkConfig({
     install: 'pnpm add @fabrk/design-system',
     example: `import { mode } from '@fabrk/design-system'
 
-// mode.radius — border radius class (e.g., 'rounded-none', 'rounded-lg')
-// mode.font   — font family class (e.g., 'font-mono')
-// mode.shadow — shadow class
+// mode.radius        — border radius class (e.g., 'rounded-dynamic')
+// mode.font          — font family class (e.g., 'font-body')
+// mode.textTransform — text casing ('uppercase' | 'normal')
 
 // Full borders ALWAYS get mode.radius
 <Card className={cn("border border-border", mode.radius)}>

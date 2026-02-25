@@ -13,6 +13,9 @@ export {
   getConfiguredProvider,
 } from './provider';
 
+// API response types
+export type { APIResponse } from './types';
+
 // AI DEVELOPMENT TOOLS
 
 // Cost tracking — types
@@ -48,7 +51,6 @@ export {
   ai,
   claude,
   openai,
-  vercelAI,
 } from './integrations';
 
 // Streaming utilities

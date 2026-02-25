@@ -31,6 +31,7 @@ import { InMemoryTeamStore } from './teams/memory-store'
 import { createFeatureFlagManager, type FeatureFlagManager } from './feature-flags/manager'
 import { createWebhookManager, type WebhookManager } from './webhooks/manager'
 import { createJobQueue, type JobQueue } from './jobs/queue'
+import { isDev } from './defaults'
 
 // Helper: safely read env vars without direct process.env reference
 function env(key: string, fallback = ''): string {
@@ -39,15 +40,6 @@ function env(key: string, fallback = ''): string {
     return (globalThis as any).process?.env?.[key] ?? fallback
   } catch {
     return fallback
-  }
-}
-
-function isDev(): boolean {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (globalThis as any).process?.env?.NODE_ENV !== 'production'
-  } catch {
-    return false
   }
 }
 

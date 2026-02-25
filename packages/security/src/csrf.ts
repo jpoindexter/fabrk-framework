@@ -20,7 +20,7 @@
  */
 
 import type { CsrfConfig } from './types'
-import { timingSafeEqual } from './crypto-utils'
+import { timingSafeEqual } from '@fabrk/core'
 
 export interface CsrfProtection {
   generateToken(): Promise<string>

@@ -20,7 +20,7 @@
  * ```
  */
 
-import { timingSafeEqual } from '../crypto-utils'
+import { timingSafeEqual } from '@fabrk/core'
 
 export function generateBackupCodes(count: number = 10): string[] {
   const codes: string[] = []

@@ -7,7 +7,7 @@
  *
  * Usage:
  * ```tsx
- * import { getChartColors } from '@/design-system/tokens/chart-colors';
+ * import { getChartColors } from '@fabrk/design-system';
  *
  * const colors = getChartColors();
  * // Returns CSS variables if available, fallbacks otherwise

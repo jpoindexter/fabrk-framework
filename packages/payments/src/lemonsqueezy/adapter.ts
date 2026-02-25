@@ -24,7 +24,7 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { LemonSqueezyAdapterConfig } from '../types'
-import { timingSafeEqual, hashPayload } from '../crypto-utils'
+import { timingSafeEqual, hashPayload } from '@fabrk/core'
 import { createIdempotencyCache } from '../idempotency'
 
 // Shared idempotency cache to reject duplicate webhook events

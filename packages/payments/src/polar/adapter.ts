@@ -23,7 +23,7 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { PolarAdapterConfig } from '../types'
-import { timingSafeEqual, hashPayload } from '../crypto-utils'
+import { timingSafeEqual, hashPayload } from '@fabrk/core'
 import { createIdempotencyCache } from '../idempotency'
 
 // Shared idempotency cache to reject duplicate webhook events
@@ -100,7 +100,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
       if (parts.length < 2) continue
       // parts[0] is the version (e.g., "v1"), parts[1] is the base64 signature
       const sigValue = parts.slice(1).join(',')
-      if (timingSafeEqual(sigValue, expectedSignature)) {
+      if (await timingSafeEqual(sigValue, expectedSignature)) {
         return true
       }
     }

@@ -223,15 +223,6 @@ export class AICostTracker {
 
       await this.store.save(event);
 
-      // eslint-disable-next-line no-console -- intentional tracking log
-      console.log('AI call tracked', {
-        feature,
-        model,
-        costUSD: costUSD.toFixed(4),
-        tokens: promptTokens + completionTokens,
-        durationMs,
-      });
-
       const content = extractContent(response);
       return (content !== undefined && content !== null ? content : response) as T;
     } catch (error) {
@@ -256,13 +247,6 @@ export class AICostTracker {
       };
 
       await this.store.save(event);
-
-      console.error('AI call failed', {
-        feature,
-        model,
-        error: event.errorMessage,
-        durationMs,
-      });
 
       throw error;
     }
@@ -431,26 +415,31 @@ let defaultStore: CostStore | null = null;
 let defaultTracker: AICostTracker | null = null;
 
 /**
- * Get the default cost tracker instance
- * Uses in-memory store by default, override with setCostStore()
+ * Parse AI_DAILY_BUDGET from environment.
+ * Returns undefined when unset, throws on invalid values.
+ * Strict: AI_DAILY_BUDGET=0 is honoured (blocks all AI calls).
+ */
+function parseBudgetFromEnv(): number | undefined {
+  const raw = process.env.AI_DAILY_BUDGET;
+  if (raw === undefined || raw === '') return undefined;
+  const parsed = Number(raw);
+  if (!isFinite(parsed) || parsed < 0) {
+    throw new Error(
+      `Invalid AI_DAILY_BUDGET: "${raw}" is not a valid non-negative number. ` +
+      `Set a valid dollar amount (e.g. AI_DAILY_BUDGET=10) or unset the variable to disable budget enforcement.`
+    );
+  }
+  return parsed;
+}
+
+/**
+ * Get the default cost tracker instance.
+ * Uses in-memory store by default, override with setCostStore().
  */
 export function getCostTracker(): AICostTracker {
   if (!defaultTracker) {
     defaultStore = defaultStore || new InMemoryCostStore();
-    // Use strict undefined check so AI_DAILY_BUDGET=0 (block all AI calls) is honoured.
-    // `Number("0") || undefined` would incorrectly evaluate to undefined because 0 is falsy.
-    let budget: number | undefined;
-    if (process.env.AI_DAILY_BUDGET !== undefined && process.env.AI_DAILY_BUDGET !== '') {
-      const parsed = Number(process.env.AI_DAILY_BUDGET);
-      if (!isFinite(parsed) || parsed < 0) {
-        throw new Error(
-          `Invalid AI_DAILY_BUDGET: "${process.env.AI_DAILY_BUDGET}" is not a valid non-negative number. ` +
-          `Set a valid dollar amount (e.g. AI_DAILY_BUDGET=10) or unset the variable to disable budget enforcement.`
-        );
-      }
-      budget = parsed;
-    }
-    defaultTracker = new AICostTracker(defaultStore, { dailyBudget: budget });
+    defaultTracker = new AICostTracker(defaultStore, { dailyBudget: parseBudgetFromEnv() });
   }
   return defaultTracker;
 }
@@ -460,18 +449,5 @@ export function getCostTracker(): AICostTracker {
  */
 export function setCostStore(store: CostStore): void {
   defaultStore = store;
-  // Use strict undefined check so AI_DAILY_BUDGET=0 (block all AI calls) is honoured.
-  // `Number("0") || undefined` would incorrectly evaluate to undefined because 0 is falsy.
-  let budget: number | undefined;
-  if (process.env.AI_DAILY_BUDGET !== undefined && process.env.AI_DAILY_BUDGET !== '') {
-    const parsed = Number(process.env.AI_DAILY_BUDGET);
-    if (!isFinite(parsed) || parsed < 0) {
-      throw new Error(
-        `Invalid AI_DAILY_BUDGET: "${process.env.AI_DAILY_BUDGET}" is not a valid non-negative number. ` +
-        `Set a valid dollar amount (e.g. AI_DAILY_BUDGET=10) or unset the variable to disable budget enforcement.`
-      );
-    }
-    budget = parsed;
-  }
-  defaultTracker = new AICostTracker(store, { dailyBudget: budget });
+  defaultTracker = new AICostTracker(store, { dailyBudget: parseBudgetFromEnv() });
 }

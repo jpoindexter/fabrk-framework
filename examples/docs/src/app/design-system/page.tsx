@@ -164,9 +164,7 @@ import { cn } from '@fabrk/core'
           {[
             { key: 'mode.radius', value: mode.radius || 'rounded-none', desc: 'Border radius — apply to every full-border element' },
             { key: 'mode.font', value: mode.font || 'font-mono', desc: 'Font family — apply to headings, labels, buttons' },
-            { key: 'mode.shadow', value: mode.shadow || 'shadow-sm', desc: 'Box shadow — apply to elevated surfaces' },
-            { key: 'mode.inputStyle', value: mode.inputStyle || 'border border-input', desc: 'Input field border style' },
-            { key: 'mode.borderWidth', value: mode.borderWidth || 'border', desc: 'Default border width' },
+            { key: 'mode.textTransform', value: mode.textTransform || 'uppercase', desc: 'Text transform — uppercase for terminal aesthetic' },
           ].map((item) => (
             <div key={item.key} className="px-4 py-3 grid grid-cols-3 gap-2">
               <code className={cn('text-xs text-primary', mode.font)}>{item.key}</code>

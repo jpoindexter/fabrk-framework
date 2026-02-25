@@ -20,6 +20,14 @@
     "test": "vitest run",
     "lint": "eslint src"
   },
+  "peerDependencies": {
+    "@prisma/client": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@prisma/client": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@fabrk/core": "workspace:*"
   },

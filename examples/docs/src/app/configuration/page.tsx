@@ -72,9 +72,9 @@ export const { email, storage, payments, auth, security } = fabrk`}</CodeBlock>
 
 // The 'mode' object from @fabrk/design-system or @fabrk/design-system
 // provides runtime access to theme values:
-//   mode.radius  → 'rounded-none' | 'rounded-lg' | 'rounded-full'
-//   mode.font    → 'font-mono' | 'font-sans'
-//   mode.shadow  → shadow class`}</CodeBlock>
+//   mode.radius        → 'rounded-dynamic'
+//   mode.font          → 'font-body'
+//   mode.textTransform → 'uppercase' | 'normal'`}</CodeBlock>
       </Section>
 
       <Section title="AI">

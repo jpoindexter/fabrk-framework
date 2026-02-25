@@ -22,7 +22,7 @@
  */
 
 import type { AuditEvent, AuditStore } from '@fabrk/core'
-import { timingSafeEqual } from '../crypto-utils'
+import { timingSafeEqual } from '@fabrk/core'
 
 export interface AuditLogInput {
   actorId: string

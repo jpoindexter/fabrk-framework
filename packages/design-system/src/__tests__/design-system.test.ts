@@ -4,10 +4,7 @@ import {
   formatLabelText,
   formatCardHeader,
   formatStatusText,
-  formatLabel,
-  formatCardTitle,
   isSharpMode,
-  hasRoundedCorners,
   terminalClasses,
   // Chart colors
   CHART_FALLBACK_COLORS,
@@ -47,27 +44,19 @@ describe('terminal theme utility functions', () => {
   it('terminalClasses should have correct radius and text values', () => {
     expect(terminalClasses.radius).toBe('rounded-dynamic')
     expect(terminalClasses.text).toBe('uppercase')
-    expect(terminalClasses.font).toBeTruthy()
-    expect(terminalClasses.cardHeader).toBeTruthy()
-    expect(terminalClasses.label).toBeTruthy()
-    expect(terminalClasses.button).toBeTruthy()
-    expect(terminalClasses.input).toBeTruthy()
-    expect(terminalClasses.card).toBeTruthy()
-    expect(terminalClasses.badge).toBeTruthy()
+    expect(terminalClasses.font).toBe('font-body')
+    expect(terminalClasses.cardHeader).toBe('font-mono text-xs text-muted-foreground')
+    expect(terminalClasses.label).toBe('font-mono text-xs text-muted-foreground uppercase')
+    expect(terminalClasses.button).toBe('rounded-dynamic font-mono uppercase')
+    expect(terminalClasses.input).toBe('rounded-dynamic font-mono border-border')
+    expect(terminalClasses.card).toBe('rounded-dynamic border border-border')
+    expect(terminalClasses.badge).toBe('rounded-dynamic font-mono text-xs uppercase')
   })
 })
 
-// BACKWARDS COMPATIBILITY ALIASES
-
-describe('backwards compatibility aliases', () => {
-  it('formatLabel and formatCardTitle should be same references', () => {
-    expect(formatLabel).toBe(formatLabelText)
-    expect(formatCardTitle).toBe(formatCardHeader)
-  })
-
-  it('isSharpMode should return true and hasRoundedCorners should return false', () => {
+describe('isSharpMode', () => {
+  it('should return true for terminal theme', () => {
     expect(isSharpMode()).toBe(true)
-    expect(hasRoundedCorners()).toBe(false)
   })
 })
 

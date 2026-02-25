@@ -4,6 +4,7 @@
  * Supports: OpenAI, Google (Gemini), and Ollama (local)
  */
 
+import type { LanguageModelV1 } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
@@ -55,8 +56,10 @@ function getOllamaClient() {
 }
 
 // Get the appropriate model based on provider
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getModel(provider?: AIProvider): any {
+// Returns LanguageModelV1 for compatibility with ai SDK's generateText/streamText.
+// Provider SDKs return LanguageModelV2 which is runtime-compatible but not type-compatible
+// with the ai package's LanguageModelV1 typedef — cast bridges the V1↔V2 gap.
+export function getModel(provider?: AIProvider): LanguageModelV1 {
   const activeProvider = provider || getConfiguredProvider();
 
   if (!activeProvider) {
@@ -65,13 +68,15 @@ export function getModel(provider?: AIProvider): any {
     );
   }
 
+  // Provider SDKs return LanguageModelV2; ai SDK expects LanguageModelV1.
+  // They are runtime-compatible (V2 extends V1 behavior) but not type-compatible.
   switch (activeProvider) {
     case 'ollama':
-      return getOllamaClient()(OLLAMA_MODEL);
+      return getOllamaClient()(OLLAMA_MODEL) as unknown as LanguageModelV1;
     case 'openai':
-      return getOpenAIClient()('gpt-4o-mini');
+      return getOpenAIClient()('gpt-4o-mini') as unknown as LanguageModelV1;
     case 'google':
-      return getGoogleClient()('gemini-1.5-flash');
+      return getGoogleClient()('gemini-1.5-flash') as unknown as LanguageModelV1;
     default:
       throw new Error(`Unknown provider: ${activeProvider}`);
   }

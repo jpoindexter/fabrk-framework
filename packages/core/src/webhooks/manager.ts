@@ -20,6 +20,7 @@
  */
 
 import type { WebhookConfig, WebhookDelivery, WebhookStore } from '../plugin-types'
+import { timingSafeEqual } from '../crypto'
 
 const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
 
@@ -114,20 +115,7 @@ function validateWebhookUrl(url: string): void {
   }
 }
 
-/**
- * Constant-time string comparison for webhook signatures.
- * Always iterates over the maximum length to avoid leaking length info.
- */
-function timingSafeEqual(a: string, b: string): boolean {
-  const maxLen = Math.max(a.length, b.length)
-  let result = a.length ^ b.length
-
-  for (let i = 0; i < maxLen; i++) {
-    result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0)
-  }
-
-  return result === 0
-}
+// timingSafeEqual imported from ../crypto (HMAC-SHA256 based)
 
 export interface WebhookManager {
   /** Register a new webhook endpoint */
@@ -304,7 +292,7 @@ export function createWebhookManager(
 
     async verify(payload: string, signature: string, secret: string): Promise<boolean> {
       const expected = await sign(payload, secret)
-      return timingSafeEqual(expected, signature)
+      return await timingSafeEqual(expected, signature)
     },
 
     async list(): Promise<WebhookConfig[]> {

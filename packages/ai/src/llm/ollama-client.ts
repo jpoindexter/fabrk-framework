@@ -3,10 +3,7 @@
  */
 
 import type { LLMClient, LLMOpts, LLMConfig } from './types'
-import { LLM_DEFAULTS } from './types'
-
-/** Hard cap on tokens per request to prevent runaway cost from untrusted input */
-const MAX_TOKENS_LIMIT = 100_000
+import { LLM_DEFAULTS, MAX_TOKENS_LIMIT } from './types'
 
 /**
  * Validate that an Ollama base URL is safe.

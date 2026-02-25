@@ -73,13 +73,9 @@ export {
 export {
   themes,
   themeClasses,
-  themeUtils,
   THEME_NAMES,
   DEFAULT_THEME,
   CURRENT_THEME,
-  getActiveTheme,
-  getActiveThemeClasses,
-  getActiveThemeUtils,
   terminalTheme,
   terminalClasses,
   formatButtonText,
@@ -88,7 +84,7 @@ export {
   formatStatusText,
 } from './themes';
 
-export type { ThemeName, ThemeUtils } from './themes';
+export type { ThemeName } from './themes';
 
 // PROVIDER EXPORTS
 
@@ -113,12 +109,7 @@ export {
   generateHashmarkCss,
 } from './presets';
 
-// BACKWARDS COMPATIBILITY LAYER
-// The following exports maintain compatibility with the 100+ components
-// that import from @/design-system using the old API.
-
 import {
-  CURRENT_THEME,
   terminalClasses,
   formatButtonText,
   formatLabelText,
@@ -284,9 +275,3 @@ export const mode: ModeConfig = {
   },
 };
 
-/**
- * Check if current mode is sharp (terminal)
- */
-export function isSharpMode(): boolean {
-  return CURRENT_THEME === 'terminal';
-}

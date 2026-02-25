@@ -97,8 +97,6 @@ Card.displayName = 'Card';
  * CardHeader - Clean header with title
  */
 export type CardHeaderProps = {
-  /** @deprecated No longer used - kept for backwards compatibility */
-  code?: string;
   /** Title displayed in header */
   title: string;
   /** Optional icon displayed on the right side of header */

@@ -212,11 +212,6 @@ export {
   jobsConfigSchema,
 }
 
-/**
- * @deprecated Use `themeConfigSchema` instead. This alias will be removed in a future major version.
- */
-export { themeConfigSchema as designConfigSchema }
-
 // Inferred types for each section
 export type FrameworkConfig = z.infer<typeof frameworkConfigSchema>
 export type AIConfig = z.infer<typeof aiConfigSchema>
@@ -231,11 +226,6 @@ export type TeamsConfig = z.infer<typeof teamsConfigSchema>
 export type FeatureFlagsConfig = z.infer<typeof featureFlagsConfigSchema>
 export type WebhooksConfig = z.infer<typeof webhooksConfigSchema>
 export type JobsConfig = z.infer<typeof jobsConfigSchema>
-
-/**
- * @deprecated Use `ThemeConfig` instead. This alias will be removed in a future major version.
- */
-export type DesignConfig = ThemeConfig
 
 /**
  * Define a type-safe FABRK configuration.

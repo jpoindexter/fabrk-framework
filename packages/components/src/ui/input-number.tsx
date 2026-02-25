@@ -2,7 +2,6 @@
 
 import { Button } from './button';
 import { Input } from './input';
-import { isSharpMode } from '@fabrk/design-system';
 import { cn } from '@fabrk/core';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import * as React from 'react';
@@ -128,7 +127,7 @@ const InputNumber = React.forwardRef<HTMLInputElement, InputNumberProps>(
               type="button"
               variant="ghost"
               size="icon"
-              className={cn('h-4 w-6 p-0', isSharpMode() && 'rounded-b-none')}
+              className={cn('h-4 w-6 p-0', 'rounded-b-none')}
               onClick={increment}
               disabled={disabled || (max !== undefined && value !== undefined && value >= max)}
               tabIndex={-1}
@@ -140,7 +139,7 @@ const InputNumber = React.forwardRef<HTMLInputElement, InputNumberProps>(
               type="button"
               variant="ghost"
               size="icon"
-              className={cn('h-4 w-6 p-0', isSharpMode() && 'rounded-t-none')}
+              className={cn('h-4 w-6 p-0', 'rounded-t-none')}
               onClick={decrement}
               disabled={disabled || (min !== undefined && value !== undefined && value <= min)}
               tabIndex={-1}

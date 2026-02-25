@@ -111,7 +111,6 @@ export function TeamActivityFeed({
   return (
     <Card className={cn('overflow-hidden', className)}>
       <CardHeader
-        code="0x00"
         title="TEAM ACTIVITY"
         icon={<Activity className="h-4 w-4" />}
         meta={`${activities.length} event${activities.length !== 1 ? 's' : ''}`}

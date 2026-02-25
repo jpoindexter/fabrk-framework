@@ -340,27 +340,6 @@ export class AICostTracker {
   }
 
   /**
-   * Get cost summary for a period
-   */
-  async getCostSummary(
-    period: 'daily' | 'weekly' | 'monthly',
-    filters?: { startDate?: Date; endDate?: Date; userId?: string }
-  ): Promise<CostSummary[]> {
-    return this.store.aggregate(period, filters);
-  }
-
-  /**
-   * Get costs by feature
-   */
-  async getFeatureCosts(filters?: {
-    startDate?: Date;
-    endDate?: Date;
-    userId?: string;
-  }): Promise<FeatureCost[]> {
-    return this.store.getFeatureCosts(filters);
-  }
-
-  /**
    * Check if within daily budget.
    * @security TOCTOU race: concurrent requests can all pass the budget check before any completes. In high-concurrency environments, use atomic reserve-and-deduct at the store level.
    */

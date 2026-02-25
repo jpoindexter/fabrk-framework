@@ -7,7 +7,6 @@ import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
 
 export interface AdminMetricsCardProps {
-  code?: string;
   title: string;
   value: string | number;
   change?: number;
@@ -27,7 +26,6 @@ const toneMap = {
 };
 
 export function AdminMetricsCard({
-  code = '0x00',
   title,
   value,
   change,
@@ -45,7 +43,7 @@ export function AdminMetricsCard({
 
   return (
     <Card tone={toneMap[variant]} className={className}>
-      <CardHeader code={code} title={title} icon={icon} />
+      <CardHeader title={title} icon={icon} />
       <CardContent>
         {loading ? (
           <div className="space-y-2">

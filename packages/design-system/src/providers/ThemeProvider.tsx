@@ -1,8 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import type { ThemeName } from '../themes';
-import { DEFAULT_THEME, THEME_NAMES } from '../themes';
 
 // CONTEXT TYPES
 
@@ -53,43 +51,16 @@ const ALL_THEMES = [
   'bw',
 ] as const;
 
-// Dark themes for system dark mode (all terminal themes are dark)
-const _DARK_THEMES: ColorThemeName[] = [
-  // Standard CRT
-  'amber',
-  'green',
-  'blue',
-  'red',
-  'purple',
-  // Retro Computer
-  'gameboy',
-  'c64',
-  'gbpocket',
-  'vic20',
-  'atari',
-  'spectrum',
-  // Futuristic
-  'cyberpunk',
-  'phosphor',
-  'holographic',
-  'navigator',
-  'blueprint',
-  'infrared',
-];
-
 // Light theme for system light mode
 const LIGHT_THEME: ColorThemeName = 'bw';
 
 export interface ThemeContextValue {
-  theme: ThemeName;
-  setTheme: (theme: ThemeName) => void;
   colorTheme: ColorThemeName;
   setColorTheme: (theme: ColorThemeName) => void;
 }
 
 export interface ThemeProviderProps {
   children: React.ReactNode;
-  defaultTheme?: ThemeName;
   defaultColorTheme?: ColorThemeName;
   storageKey?: string;
   storageKeyPrefix?: string;
@@ -111,7 +82,6 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({
   children,
-  defaultTheme = DEFAULT_THEME,
   defaultColorTheme = 'green',
   storageKey,
   storageKeyPrefix = 'design-system',
@@ -122,7 +92,6 @@ export function ThemeProvider({
   // When storageKey IS provided, both keys would resolve to the same string — avoid the double read.
   const legacyColorKey: string | null = storageKey ? null : `${storageKeyPrefix}-color-theme`;
 
-  const [theme, setThemeState] = useState<ThemeName>(defaultTheme);
   const [colorTheme, setColorThemeState] = useState<ColorThemeName>(defaultColorTheme);
   const [mounted, setMounted] = useState(false);
 
@@ -164,12 +133,6 @@ export function ThemeProvider({
     document.documentElement.setAttribute('data-theme', colorTheme);
   }, [colorTheme, colorKey, mounted, persist]);
 
-  const setTheme = (newTheme: ThemeName) => {
-    if (THEME_NAMES.includes(newTheme)) {
-      setThemeState(newTheme);
-    }
-  };
-
   const setColorTheme = (newTheme: ColorThemeName) => {
     if (ALL_THEMES.includes(newTheme)) {
       setColorThemeState(newTheme);
@@ -179,8 +142,6 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider
       value={{
-        theme,
-        setTheme,
         colorTheme,
         setColorTheme,
       }}

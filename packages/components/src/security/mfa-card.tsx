@@ -44,7 +44,7 @@ export function MfaCard({
 }: MfaCardProps) {
   return (
     <Card tone={twoFactorEnabled ? 'success' : 'warning'}>
-      <CardHeader code="0x02" title="TWO FACTOR AUTH" icon={<Smartphone className="h-4 w-4" />} />
+      <CardHeader title="TWO FACTOR AUTH" icon={<Smartphone className="h-4 w-4" />} />
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">
           <p className={cn(mode.font, 'text-muted-foreground', 'text-xs')}>

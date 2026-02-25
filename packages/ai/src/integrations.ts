@@ -17,9 +17,7 @@
 
 import { getCostTracker } from './tracker';
 import { AppError, successResponse, errorResponse, type APIResponse } from './types';
-
-/** Hard cap on tokens per request to prevent runaway cost from untrusted input */
-const MAX_TOKENS_LIMIT = 100_000;
+import { MAX_TOKENS_LIMIT } from './llm/types';
 
 /** Scrub API key patterns from error messages to prevent leaks in logs */
 function scrubApiKeys(message: string): string {
@@ -80,7 +78,7 @@ export const claude = {
 
       const tracker = getCostTracker();
 
-      const result = await tracker.trackClaudeCall<string>({
+      const content = await tracker.trackClaudeCall<string>({
         model,
         feature,
         prompt,
@@ -100,8 +98,6 @@ export const claude = {
         },
       });
 
-      const content = typeof result === 'string' ? result : '';
-
       return successResponse({ content, model });
     } catch (error) {
       if (error instanceof AppError) {
@@ -117,16 +113,10 @@ export const claude = {
   },
 
   /**
-   * Check if Claude SDK is available
+   * Check if Claude is available (API key configured)
    */
-  async isAvailable(): Promise<boolean> {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await import('@anthropic-ai/sdk' as any);
-      return !!process.env.ANTHROPIC_API_KEY;
-    } catch {
-      return false;
-    }
+  isAvailable(): boolean {
+    return !!process.env.ANTHROPIC_API_KEY;
   },
 };
 
@@ -165,7 +155,7 @@ export const openai = {
 
       const tracker = getCostTracker();
 
-      const result = await tracker.trackOpenAICall<string>({
+      const content = await tracker.trackOpenAICall<string>({
         model,
         feature,
         prompt,
@@ -186,8 +176,6 @@ export const openai = {
           });
         },
       });
-
-      const content = typeof result === 'string' ? result : '';
 
       return successResponse({ content, model });
     } catch (error) {
@@ -236,16 +224,10 @@ export const openai = {
   },
 
   /**
-   * Check if OpenAI SDK is available
+   * Check if OpenAI is available (API key configured)
    */
-  async isAvailable(): Promise<boolean> {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await import('openai' as any);
-      return !!process.env.OPENAI_API_KEY;
-    } catch {
-      return false;
-    }
+  isAvailable(): boolean {
+    return !!process.env.OPENAI_API_KEY;
   },
 };
 
@@ -263,12 +245,12 @@ export const ai = {
    */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
     // Try Claude first (preferred)
-    if (await claude.isAvailable()) {
+    if (claude.isAvailable()) {
       return claude.generate(options);
     }
 
     // Fall back to OpenAI
-    if (await openai.isAvailable()) {
+    if (openai.isAvailable()) {
       return openai.generate(options);
     }
 
@@ -284,8 +266,8 @@ export const ai = {
   async getAvailableProviders(): Promise<string[]> {
     const providers: string[] = [];
 
-    if (await claude.isAvailable()) providers.push('claude');
-    if (await openai.isAvailable()) providers.push('openai');
+    if (claude.isAvailable()) providers.push('claude');
+    if (openai.isAvailable()) providers.push('openai');
 
     return providers;
   },

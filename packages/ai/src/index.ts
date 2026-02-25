@@ -7,12 +7,6 @@
  * @module ai
  */
 
-// Re-export Vercel AI SDK provider utilities
-export {
-  getModel,
-  getConfiguredProvider,
-} from './provider';
-
 // API response types
 export type { APIResponse } from './types';
 

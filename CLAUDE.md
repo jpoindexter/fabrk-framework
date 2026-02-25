@@ -354,6 +354,104 @@ import { cn } from '@fabrk/core'
 
 ---
 
+## Workflow Orchestration
+
+### 1. Plan Mode Default
+
+- Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions)
+- If something goes sideways, STOP and re-plan immediately — don't keep pushing
+- Use plan mode for verification steps, not just building
+- Write detailed specs upfront to reduce ambiguity
+
+### 2. Subagent Strategy
+
+- Use subagents liberally to keep main context window clean
+- Offload research, exploration, and parallel analysis to subagents
+- For complex problems, throw more compute at it via subagents
+- One task per subagent for focused execution
+
+### 3. Self-Improvement Loop
+
+- After ANY correction from the user: update `tasks/lessons.md` with the pattern
+- Write rules for yourself that prevent the same mistake
+- Ruthlessly iterate on these lessons until mistake rate drops
+- Review lessons at session start for relevant project
+
+### 4. Verification Before Done
+
+- Never mark a task complete without proving it works
+- Diff behavior between main and your changes when relevant
+- Ask yourself: "Would a staff engineer approve this?"
+- Run tests, check logs, demonstrate correctness
+
+### 5. Demand Elegance (Balanced)
+
+- For non-trivial changes: pause and ask "is there a more elegant way?"
+- If a fix feels hacky: "Knowing everything I know now, implement the elegant solution"
+- Skip this for simple, obvious fixes — don't over-engineer
+- Challenge your own work before presenting it
+
+### 6. Autonomous Bug Fixing
+
+- When given a bug report: just fix it. Don't ask for hand-holding
+- Point at logs, errors, failing tests — then resolve them
+- Zero context switching required from the user
+- Go fix failing CI tests without being told how
+
+---
+
+## Task Management
+
+1. **Plan First**: Write plan to `tasks/todo.md` with checkable items
+2. **Verify Plan**: Check in before starting implementation
+3. **Track Progress**: Mark items complete as you go
+4. **Explain Changes**: High-level summary at each step
+5. **Document Results**: Add review section to `tasks/todo.md`
+6. **Capture Lessons**: Update `tasks/lessons.md` after corrections
+
+---
+
+## Engineering Preferences
+
+These guide all code review and implementation decisions:
+
+- **DRY is important** — flag repetition aggressively
+- **Well-tested code is non-negotiable** — rather have too many tests than too few
+- **"Engineered enough"** — not under-engineered (fragile, hacky) and not over-engineered (premature abstraction, unnecessary complexity)
+- **Handle more edge cases, not fewer** — thoughtfulness > speed
+- **Explicit over clever** — bias toward readability
+
+---
+
+## Plan Mode Review Process
+
+When reviewing a plan before implementation, evaluate these areas in order. For every issue found: describe concretely with file/line references, present 2-3 options (including "do nothing"), specify effort/risk/impact for each, give an opinionated recommendation, then ask for input before proceeding.
+
+### Review Areas
+
+1. **Architecture**: System design, component boundaries, dependency graph, coupling, data flow, scaling, security (auth, data access, API boundaries)
+2. **Code Quality**: Organization, module structure, DRY violations (aggressive), error handling, edge cases (explicit), tech debt hotspots, over/under-engineering
+3. **Tests**: Coverage gaps (unit/integration/e2e), assertion strength, missing edge cases, untested failure modes and error paths
+4. **Performance**: N+1 queries, memory usage, caching opportunities, slow/high-complexity code paths
+
+### Review Workflow
+
+- **Before starting**: Ask if BIG CHANGE (4 top issues per section, interactive) or SMALL CHANGE (1 question per section)
+- Number issues and letter options (e.g., "Issue #1, Option A")
+- Recommended option always listed first
+- Pause after each section for feedback
+- Do not assume priorities on timeline or scale
+
+---
+
+## Core Principles
+
+- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
+- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
+
+---
+
 ## Git Workflow
 
 ```bash
@@ -395,12 +493,13 @@ Read these files for context:
 
 ### Current Stats
 
-- **20/20 packages build** (18 packages + 2 examples)
-- **1,286 tests** across 38 files (unit + rendering + integration)
-- **23/23 type-check**, **18/18 lint** (0 errors, 0 warnings)
-- **105+ components**, 8 chart types, 18 themes
+- **20/20 packages build** (16 packages + 4 examples)
+- **1,689 tests** across 82 test files (unit + rendering + integration + SSR)
+- **25/25 type-check**, **20/20 lint** (0 errors, 0 warnings)
+- **105+ components**, 8 chart types, 18 themes, 59 Storybook stories
 - **4 examples**: basic-usage, docs site, saas-analytics, ecommerce
-- **Docs site**: 8 pages with Cmd+K search and sticky TOC
+- **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher
+- **Bundle size tracking**: 7 packages tracked via size-limit, all within limits
 
 ---
 

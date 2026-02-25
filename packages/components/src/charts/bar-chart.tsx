@@ -40,15 +40,15 @@ import { mode } from '@fabrk/design-system';
 // Theme colors using CSS custom properties directly
 const THEME_COLORS = {
   chart: [
-    'var(--color-chart-1)',
-    'var(--color-chart-2)',
-    'var(--color-chart-3)',
-    'var(--color-chart-4)',
-    'var(--color-chart-5)',
-    'var(--color-chart-6)',
+    'hsl(var(--chart-1))',
+    'hsl(var(--chart-2))',
+    'hsl(var(--chart-3))',
+    'hsl(var(--chart-4))',
+    'hsl(var(--chart-5))',
+    'hsl(var(--chart-6))',
   ],
-  muted: 'var(--color-muted-foreground)',
-  border: 'var(--color-border)',
+  muted: 'hsl(var(--muted-foreground))',
+  border: 'hsl(var(--border))',
 };
 
 export interface BarChartDataPoint {

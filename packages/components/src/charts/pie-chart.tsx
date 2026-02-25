@@ -23,12 +23,12 @@ interface PieChartProps {
 
 // Theme-aware chart colors with varied lightness for monochromatic themes
 const DEFAULT_COLORS = [
-  'var(--color-chart-1)',
-  'var(--color-chart-2)',
-  'var(--color-chart-3)',
-  'var(--color-chart-4)',
-  'var(--color-chart-5)',
-  'var(--color-chart-6)',
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+  'hsl(var(--chart-6))',
   'var(--color-chart-7)',
   'var(--color-chart-8)',
 ];

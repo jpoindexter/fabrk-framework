@@ -21,7 +21,7 @@ export function Sparkline({
   width = 100,
   height = 30,
   strokeWidth = 2,
-  color = 'var(--color-primary)',
+  color = 'hsl(var(--primary))',
   fillColor,
   showArea = false,
   showDots = false,
@@ -166,7 +166,7 @@ export function SparklineGroup({ items, className }: SparklineGroupProps) {
             width={60}
             height={24}
             strokeWidth={2}
-            color={item.color || 'var(--color-primary)'}
+            color={item.color || 'hsl(var(--primary))'}
             showArea={true}
           />
         </div>

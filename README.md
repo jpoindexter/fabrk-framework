@@ -11,7 +11,6 @@
   <img src="https://img.shields.io/badge/tests-1%2C755-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Storybook-59%20stories-ff4785" alt="Storybook" />
   <img src="https://img.shields.io/badge/hooks-16-green" alt="Hooks" />
 </p>
 
@@ -233,17 +232,6 @@ pnpm dev    # Local development at localhost:3000
 2. Set Root Directory to `examples/docs`
 3. Framework Preset: Next.js
 4. Deploy
-
-## Component Explorer
-
-Browse all 105+ components in [Storybook](https://storybook.js.org/) with 59 interactive stories:
-
-```bash
-pnpm storybook          # Launch at localhost:6006
-pnpm build-storybook    # Build static site
-```
-
-Categories: UI Controls, Data Display, Layout, Charts, Feedback, Organization, Admin/Security, AI — all with autodocs and arg controls.
 
 ## Contributing
 

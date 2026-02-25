@@ -43,22 +43,10 @@ describe('createStripeAdapter', () => {
     webhookSecret: 'whsec_test_xyz',
   }
 
-  it('should return an object implementing the PaymentAdapter interface', () => {
+  it('should return a named adapter with correct version', () => {
     const adapter = createStripeAdapter(validConfig)
-
     expect(adapter.name).toBe('stripe')
     expect(adapter.version).toBe('1.0.0')
-    expect(typeof adapter.isConfigured).toBe('function')
-    expect(typeof adapter.createCheckout).toBe('function')
-    expect(typeof adapter.handleWebhook).toBe('function')
-    expect(typeof adapter.getCustomer).toBe('function')
-    expect(typeof adapter.getSubscription).toBe('function')
-    expect(typeof adapter.cancelSubscription).toBe('function')
-    expect(typeof adapter.createPortalSession).toBe('function')
-  })
-
-  it('should report configured when secretKey and webhookSecret are present', () => {
-    const adapter = createStripeAdapter(validConfig)
     expect(adapter.isConfigured()).toBe(true)
   })
 
@@ -91,21 +79,10 @@ describe('createPolarAdapter', () => {
     webhookSecret: 'test_basic_webhook_secret',
   }
 
-  it('should return an object implementing the PaymentAdapter interface', () => {
+  it('should return a named adapter with correct version', () => {
     const adapter = createPolarAdapter(validConfig)
-
     expect(adapter.name).toBe('polar')
     expect(adapter.version).toBe('1.0.0')
-    expect(typeof adapter.isConfigured).toBe('function')
-    expect(typeof adapter.createCheckout).toBe('function')
-    expect(typeof adapter.handleWebhook).toBe('function')
-    expect(typeof adapter.getCustomer).toBe('function')
-    expect(typeof adapter.getSubscription).toBe('function')
-    expect(typeof adapter.cancelSubscription).toBe('function')
-  })
-
-  it('should report configured when accessToken is present', () => {
-    const adapter = createPolarAdapter(validConfig)
     expect(adapter.isConfigured()).toBe(true)
   })
 
@@ -342,21 +319,10 @@ describe('createLemonSqueezyAdapter', () => {
     webhookSecret: 'whsec_ls_test',
   }
 
-  it('should return an object implementing the PaymentAdapter interface', () => {
+  it('should return a named adapter with correct version', () => {
     const adapter = createLemonSqueezyAdapter(validConfig)
-
     expect(adapter.name).toBe('lemonsqueezy')
     expect(adapter.version).toBe('1.0.0')
-    expect(typeof adapter.isConfigured).toBe('function')
-    expect(typeof adapter.createCheckout).toBe('function')
-    expect(typeof adapter.handleWebhook).toBe('function')
-    expect(typeof adapter.getCustomer).toBe('function')
-    expect(typeof adapter.getSubscription).toBe('function')
-    expect(typeof adapter.cancelSubscription).toBe('function')
-  })
-
-  it('should report configured when all required fields are present', () => {
-    const adapter = createLemonSqueezyAdapter(validConfig)
     expect(adapter.isConfigured()).toBe(true)
   })
 

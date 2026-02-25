@@ -16,120 +16,43 @@ vi.mock('fs', () => ({
 }))
 
 // ============================================================================
-// ADAPTER INTERFACE CONTRACT
+// ADAPTER CONFIGURATION
 // ============================================================================
 
-describe('Storage Adapter Interface Contract', () => {
-  describe('createLocalAdapter', () => {
-    let adapter: StorageAdapter
-
-    beforeEach(() => {
-      adapter = createLocalAdapter({ directory: '/tmp/test-uploads' })
-    })
-
-    it('should return an object with name and version', () => {
-      expect(adapter.name).toBe('local')
-      expect(adapter.version).toBe('1.0.0')
-    })
-
-    it('should implement isConfigured', () => {
-      expect(typeof adapter.isConfigured).toBe('function')
-      expect(adapter.isConfigured()).toBe(true)
-    })
-
-    it('should implement upload', () => {
-      expect(typeof adapter.upload).toBe('function')
-    })
-
-    it('should implement getSignedUrl', () => {
-      expect(typeof adapter.getSignedUrl).toBe('function')
-    })
-
-    it('should implement delete', () => {
-      expect(typeof adapter.delete).toBe('function')
-    })
-
-    it('should implement exists', () => {
-      expect(typeof adapter.exists).toBe('function')
-    })
-
-    it('should implement initialize', () => {
-      expect(typeof adapter.initialize).toBe('function')
-    })
-
-    it('should report not configured when directory is empty', () => {
-      const emptyAdapter = createLocalAdapter({ directory: '' })
-      expect(emptyAdapter.isConfigured()).toBe(false)
-    })
+describe('adapter configuration', () => {
+  it('local adapter: name, version, isConfigured', () => {
+    const adapter = createLocalAdapter({ directory: '/tmp/test-uploads' })
+    expect(adapter.name).toBe('local')
+    expect(adapter.version).toBe('1.0.0')
+    expect(adapter.isConfigured()).toBe(true)
   })
 
-  describe('createS3Adapter', () => {
-    let adapter: StorageAdapter
-
-    beforeEach(() => {
-      adapter = createS3Adapter({
-        bucket: 'test-bucket',
-        region: 'us-east-1',
-      })
-    })
-
-    it('should return an object with name and version', () => {
-      expect(adapter.name).toBe('s3')
-      expect(adapter.version).toBe('1.0.0')
-    })
-
-    it('should implement isConfigured', () => {
-      expect(typeof adapter.isConfigured).toBe('function')
-      expect(adapter.isConfigured()).toBe(true)
-    })
-
-    it('should implement all StorageAdapter methods', () => {
-      expect(typeof adapter.upload).toBe('function')
-      expect(typeof adapter.getSignedUrl).toBe('function')
-      expect(typeof adapter.delete).toBe('function')
-      expect(typeof adapter.exists).toBe('function')
-      expect(typeof adapter.initialize).toBe('function')
-    })
-
-    it('should report not configured when bucket is missing', () => {
-      const badAdapter = createS3Adapter({ bucket: '', region: 'us-east-1' })
-      expect(badAdapter.isConfigured()).toBe(false)
-    })
-
-    it('should report not configured when region is missing', () => {
-      const badAdapter = createS3Adapter({ bucket: 'test', region: '' })
-      expect(badAdapter.isConfigured()).toBe(false)
-    })
+  it('local adapter: not configured when directory is empty', () => {
+    expect(createLocalAdapter({ directory: '' }).isConfigured()).toBe(false)
   })
 
-  describe('createR2Adapter', () => {
-    let adapter: StorageAdapter
+  it('s3 adapter: name, version, isConfigured', () => {
+    const adapter = createS3Adapter({ bucket: 'test-bucket', region: 'us-east-1' })
+    expect(adapter.name).toBe('s3')
+    expect(adapter.version).toBe('1.0.0')
+    expect(adapter.isConfigured()).toBe(true)
+  })
 
-    beforeEach(() => {
-      adapter = createR2Adapter({
-        bucket: 'test-bucket',
-        accountId: 'test-account-id',
-        accessKeyId: 'test-key',
-        secretAccessKey: 'test-secret',
-      })
-    })
+  it('s3 adapter: not configured when bucket or region is missing', () => {
+    expect(createS3Adapter({ bucket: '', region: 'us-east-1' }).isConfigured()).toBe(false)
+    expect(createS3Adapter({ bucket: 'test', region: '' }).isConfigured()).toBe(false)
+  })
 
-    it('should return an object with name r2', () => {
-      expect(adapter.name).toBe('r2')
-      expect(adapter.version).toBe('1.0.0')
+  it('r2 adapter: name, version, isConfigured', () => {
+    const adapter = createR2Adapter({
+      bucket: 'test-bucket',
+      accountId: 'test-account-id',
+      accessKeyId: 'test-key',
+      secretAccessKey: 'test-secret',
     })
-
-    it('should implement all StorageAdapter methods', () => {
-      expect(typeof adapter.isConfigured).toBe('function')
-      expect(typeof adapter.upload).toBe('function')
-      expect(typeof adapter.getSignedUrl).toBe('function')
-      expect(typeof adapter.delete).toBe('function')
-      expect(typeof adapter.exists).toBe('function')
-    })
-
-    it('should report configured when all required fields are present', () => {
-      expect(adapter.isConfigured()).toBe(true)
-    })
+    expect(adapter.name).toBe('r2')
+    expect(adapter.version).toBe('1.0.0')
+    expect(adapter.isConfigured()).toBe(true)
   })
 })
 

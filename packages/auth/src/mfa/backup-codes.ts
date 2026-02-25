@@ -20,6 +20,8 @@
  * ```
  */
 
+import { timingSafeEqual } from '../crypto-utils'
+
 /**
  * Generate a set of backup codes
  */
@@ -63,7 +65,14 @@ export async function verifyBackupCode(
   const normalizedCode = code.toUpperCase().replace(/\s/g, '')
   const codeHash = await hashCode(normalizedCode)
 
-  const matchedIndex = hashedCodes.indexOf(codeHash)
+  // Use constant-time comparison to prevent timing attacks on hash lookup
+  let matchedIndex = -1
+  for (let i = 0; i < hashedCodes.length; i++) {
+    if (timingSafeEqual(codeHash, hashedCodes[i])) {
+      matchedIndex = i
+    }
+  }
+
   return {
     valid: matchedIndex !== -1,
     matchedIndex,

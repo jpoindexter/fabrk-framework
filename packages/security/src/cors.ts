@@ -47,6 +47,11 @@ export function createCorsHandler(config: CorsConfig): CorsHandler {
     maxAge = 86400,
   } = config
 
+  // Reject wildcard origin with credentials — this reflects any origin with credentials
+  if (origins.includes('*') && credentials) {
+    throw new Error('CORS: origins ["*"] with credentials: true is insecure. Specify explicit origins.')
+  }
+
   function isAllowed(origin: string): boolean {
     if (origins.includes('*')) return true
     return origins.includes(origin)

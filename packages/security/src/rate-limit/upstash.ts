@@ -23,7 +23,7 @@ import type { UpstashRateLimitConfig } from '../types'
 export function createUpstashRateLimiter(
   config: UpstashRateLimitConfig
 ): RateLimitAdapter {
-  const { defaultMax = 100, defaultWindowSeconds = 60 } = config
+  const { defaultMax = 100, defaultWindowSeconds = 60, failOpen = false } = config
 
   async function redisCommand(command: string[]): Promise<any> {
     const response = await fetch(`${config.url}/pipeline`, {
@@ -57,7 +57,15 @@ export function createUpstashRateLimiter(
       const key = `fabrk:rl:${options.identifier}:${options.limit}`
       const now = Date.now()
 
-      // Use Redis pipeline: INCR + EXPIRE (if new key)
+      // Atomic INCR + conditional EXPIRE via Lua script to avoid race conditions
+      const luaScript = `
+        local count = redis.call('INCR', KEYS[1])
+        if count == 1 then
+          redis.call('EXPIRE', KEYS[1], tonumber(ARGV[1]))
+        end
+        local ttl = redis.call('TTL', KEYS[1])
+        return {count, ttl}
+      `
       const response = await fetch(`${config.url}/pipeline`, {
         method: 'POST',
         headers: {
@@ -65,29 +73,31 @@ export function createUpstashRateLimiter(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify([
-          ['INCR', key],
-          ['TTL', key],
+          ['EVAL', luaScript, '1', key, windowSeconds.toString()],
         ]),
       })
 
       if (!response.ok) {
-        // Fail open — allow the request if Redis is down
+        if (failOpen) {
+          return {
+            allowed: true,
+            remaining: max,
+            limit: max,
+            resetAt: new Date(now + windowSeconds * 1000),
+          }
+        }
         return {
-          allowed: true,
-          remaining: max,
+          allowed: false,
+          remaining: 0,
           limit: max,
           resetAt: new Date(now + windowSeconds * 1000),
         }
       }
 
       const results = await response.json()
-      const count = results[0]?.result ?? 1
-      const ttl = results[1]?.result ?? -1
-
-      // Set expiry if this is a new key (TTL = -1)
-      if (ttl === -1) {
-        await redisCommand(['EXPIRE', key, windowSeconds.toString()])
-      }
+      const evalResult = results[0]?.result ?? [1, windowSeconds]
+      const count = evalResult[0] ?? 1
+      const ttl = evalResult[1] ?? windowSeconds
 
       const allowed = count <= max
       const remaining = Math.max(0, max - count)

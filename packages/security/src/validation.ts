@@ -24,7 +24,9 @@ export function stripHtml(input: string): string {
 }
 
 /**
- * Sanitize a string for use in SQL (basic protection — use parameterized queries instead)
+ * @deprecated Use parameterized queries instead. This blocklist approach does not
+ * protect against Unicode escapes, double-encoding, or DB-specific injection vectors.
+ * Will be removed in a future major version.
  */
 export function sanitizeSqlInput(input: string): string {
   return input.replace(/['";\\]/g, '')

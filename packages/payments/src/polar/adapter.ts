@@ -23,6 +23,7 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { PolarAdapterConfig } from '../types'
+import { timingSafeEqual } from '../crypto-utils'
 
 export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.polar.sh/v1'
@@ -87,7 +88,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
       if (parts.length < 2) continue
       // parts[0] is the version (e.g., "v1"), parts[1] is the base64 signature
       const sigValue = parts.slice(1).join(',')
-      if (sigValue === expectedSignature) {
+      if (timingSafeEqual(sigValue, expectedSignature)) {
         return true
       }
     }
@@ -138,13 +139,24 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
             }
           }
 
+          // Reject timestamps older than 5 minutes to prevent replay attacks
+          const timestampAge = Math.abs(Date.now() / 1000 - Number(timestamp))
+          if (isNaN(timestampAge) || timestampAge > 300) {
+            return {
+              verified: false,
+              error: 'Webhook timestamp too old or invalid (replay protection)',
+            }
+          }
+
           const verified = await verifyWebhookSignature(payloadStr, webhookId, timestamp, signatureHeader)
           if (!verified) {
             return { verified: false, error: 'Invalid webhook signature' }
           }
         } else {
-          // No webhookSecret configured — log a warning but still process
-          console.warn('[fabrk/payments] Polar webhookSecret not configured — skipping signature verification')
+          return {
+            verified: false,
+            error: 'Polar webhookSecret is required for webhook verification',
+          }
         }
 
         const event = JSON.parse(payloadStr)

@@ -62,13 +62,33 @@ export async function hashApiKey(key: string): Promise<string> {
 }
 
 /**
- * Base62 encode a Uint8Array
+ * Base62 encode using rejection sampling to eliminate modulo bias.
+ * Discards byte values >= 248 (largest multiple of 62 under 256)
+ * to ensure uniform distribution across all 62 characters.
  */
 function base62Encode(bytes: Uint8Array): string {
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+  const limit = 248 // 62 * 4 = 248 — largest multiple of 62 that fits in a byte
   let result = ''
-  for (const byte of bytes) {
-    result += chars[byte % 62]
+  let i = 0
+
+  while (result.length < bytes.length) {
+    if (i >= bytes.length) {
+      // Need more random bytes — generate a fresh batch
+      const extra = new Uint8Array(bytes.length - result.length + 16)
+      crypto.getRandomValues(extra)
+      for (const b of extra) {
+        if (b < limit && result.length < bytes.length) {
+          result += chars[b % 62]
+        }
+      }
+    } else if (bytes[i] < limit) {
+      result += chars[bytes[i] % 62]
+      i++
+    } else {
+      i++ // reject biased byte
+    }
   }
+
   return result
 }

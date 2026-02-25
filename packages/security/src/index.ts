@@ -40,6 +40,9 @@ export type { BotDetectionResult } from './bot-protection'
 export { createCorsHandler } from './cors'
 export type { CorsHandler } from './cors'
 
+// Crypto Utilities
+export { timingSafeEqual } from './crypto-utils'
+
 // Input Validation
 export {
   escapeHtml,

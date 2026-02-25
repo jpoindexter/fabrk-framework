@@ -4,6 +4,35 @@ import { createPolarAdapter } from './polar/adapter'
 import { createLemonSqueezyAdapter } from './lemonsqueezy/adapter'
 import { InMemoryPaymentStore } from './types'
 
+/** Compute a valid svix-style HMAC-SHA256 signature for Polar webhook tests */
+async function computePolarSig(
+  body: string,
+  webhookId: string,
+  timestamp: string,
+  secret: string
+): Promise<string> {
+  const encoder = new TextEncoder()
+  const secretBytes = secret.startsWith('whsec_')
+    ? Uint8Array.from(atob(secret.slice(6)), (c) => c.charCodeAt(0))
+    : encoder.encode(secret)
+  const message = `${webhookId}.${timestamp}.${body}`
+  const key = await crypto.subtle.importKey('raw', secretBytes, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
+  return btoa(String.fromCharCode(...new Uint8Array(signed)))
+}
+
+/** Build valid Polar webhook headers for a payload */
+async function polarWebhookHeaders(payload: string, secret: string) {
+  const webhookId = 'msg_test_' + Math.random().toString(36).slice(2, 8)
+  const timestamp = Math.floor(Date.now() / 1000).toString()
+  const sig = await computePolarSig(payload, webhookId, timestamp, secret)
+  return {
+    'webhook-id': webhookId,
+    'webhook-timestamp': timestamp,
+    'webhook-signature': `v1,${sig}`,
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Stripe Adapter
 // ---------------------------------------------------------------------------
@@ -59,6 +88,7 @@ describe('createStripeAdapter', () => {
 describe('createPolarAdapter', () => {
   const validConfig = {
     accessToken: 'polar_pat_abc123',
+    webhookSecret: 'test_basic_webhook_secret',
   }
 
   it('should return an object implementing the PaymentAdapter interface', () => {
@@ -91,8 +121,9 @@ describe('createPolarAdapter', () => {
       id: 'evt_123',
       data: { subscription_id: 'sub_abc' },
     })
+    const headers = await polarWebhookHeaders(payload, validConfig.webhookSecret)
 
-    const result = await adapter.handleWebhook(payload, 'sig_test')
+    const result = await adapter.handleWebhook(payload, '', headers)
 
     expect(result.verified).toBe(true)
     expect(result.event).toBeDefined()
@@ -108,9 +139,10 @@ describe('createPolarAdapter', () => {
       id: 'evt_456',
       data: { amount: 1000 },
     })
+    const headers = await polarWebhookHeaders(payload, validConfig.webhookSecret)
     const buffer = new TextEncoder().encode(payload).buffer
 
-    const result = await adapter.handleWebhook(buffer, 'sig_test')
+    const result = await adapter.handleWebhook(buffer, '', headers)
 
     expect(result.verified).toBe(true)
     expect(result.event!.type).toBe('checkout.completed')
@@ -118,8 +150,10 @@ describe('createPolarAdapter', () => {
 
   it('should return unverified result for invalid JSON webhook', async () => {
     const adapter = createPolarAdapter(validConfig)
+    const payload = 'not valid json'
+    const headers = await polarWebhookHeaders(payload, validConfig.webhookSecret)
 
-    const result = await adapter.handleWebhook('not valid json', 'sig_test')
+    const result = await adapter.handleWebhook(payload, '', headers)
 
     expect(result.verified).toBe(false)
     expect(result.error).toBeDefined()
@@ -131,8 +165,9 @@ describe('createPolarAdapter', () => {
       type: 'subscription.updated',
       data: { status: 'active' },
     })
+    const headers = await polarWebhookHeaders(payload, validConfig.webhookSecret)
 
-    const result = await adapter.handleWebhook(payload, 'sig_test')
+    const result = await adapter.handleWebhook(payload, '', headers)
 
     expect(result.verified).toBe(true)
     expect(result.event!.id).toBeDefined()
@@ -148,30 +183,6 @@ describe('createPolarAdapter', () => {
 describe('Polar webhook signature verification', () => {
   const webhookSecret = 'test_polar_webhook_secret'
 
-  /** Helper: compute a valid svix-style HMAC-SHA256 signature for a Polar webhook */
-  async function computePolarSignature(
-    body: string,
-    webhookId: string,
-    timestamp: string,
-    secret: string
-  ): Promise<string> {
-    const encoder = new TextEncoder()
-    const secretBytes = secret.startsWith('whsec_')
-      ? Uint8Array.from(atob(secret.slice(6)), (c) => c.charCodeAt(0))
-      : encoder.encode(secret)
-
-    const message = `${webhookId}.${timestamp}.${body}`
-    const key = await crypto.subtle.importKey(
-      'raw',
-      secretBytes,
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    )
-    const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
-    return btoa(String.fromCharCode(...new Uint8Array(signed)))
-  }
-
   it('should verify a valid webhook signature', async () => {
     const adapter = createPolarAdapter({
       accessToken: 'polar_pat_abc123',
@@ -185,8 +196,8 @@ describe('Polar webhook signature verification', () => {
     })
 
     const webhookId = 'msg_abc123'
-    const timestamp = '1700000000'
-    const sig = await computePolarSignature(payload, webhookId, timestamp, webhookSecret)
+    const timestamp = Math.floor(Date.now() / 1000).toString()
+    const sig = await computePolarSig(payload, webhookId, timestamp, webhookSecret)
 
     const result = await adapter.handleWebhook(payload, '', {
       'webhook-id': webhookId,
@@ -213,8 +224,8 @@ describe('Polar webhook signature verification', () => {
     })
 
     const webhookId = 'msg_multi'
-    const timestamp = '1700000001'
-    const validSig = await computePolarSignature(payload, webhookId, timestamp, webhookSecret)
+    const timestamp = Math.floor(Date.now() / 1000).toString()
+    const validSig = await computePolarSig(payload, webhookId, timestamp, webhookSecret)
 
     // Multiple signatures: first is wrong, second is correct
     const signatureHeader = `v1,invalidbase64sig v1,${validSig}`
@@ -243,7 +254,7 @@ describe('Polar webhook signature verification', () => {
 
     const result = await adapter.handleWebhook(payload, '', {
       'webhook-id': 'msg_bad',
-      'webhook-timestamp': '1700000000',
+      'webhook-timestamp': Math.floor(Date.now() / 1000).toString(),
       'webhook-signature': 'v1,definitelyNotAValidSignature',
     })
 
@@ -270,12 +281,10 @@ describe('Polar webhook signature verification', () => {
     expect(result.error).toBe('Missing required webhook headers (webhook-id, webhook-timestamp, webhook-signature)')
   })
 
-  it('should process without verification when webhookSecret is not configured', async () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
-
+  it('should reject webhook when webhookSecret is not configured', async () => {
     const adapter = createPolarAdapter({
       accessToken: 'polar_pat_abc123',
-      // No webhookSecret
+      // No webhookSecret — should reject
     })
 
     const payload = JSON.stringify({
@@ -286,14 +295,8 @@ describe('Polar webhook signature verification', () => {
 
     const result = await adapter.handleWebhook(payload, 'any_sig')
 
-    expect(result.verified).toBe(true)
-    expect(result.event).toBeDefined()
-    expect(result.event!.type).toBe('subscription.updated')
-    expect(warnSpy).toHaveBeenCalledWith(
-      '[fabrk/payments] Polar webhookSecret not configured — skipping signature verification'
-    )
-
-    warnSpy.mockRestore()
+    expect(result.verified).toBe(false)
+    expect(result.error).toBe('Polar webhookSecret is required for webhook verification')
   })
 
   it('should support whsec_ prefixed secrets', async () => {
@@ -314,8 +317,8 @@ describe('Polar webhook signature verification', () => {
     })
 
     const webhookId = 'msg_whsec'
-    const timestamp = '1700000002'
-    const sig = await computePolarSignature(payload, webhookId, timestamp, whsecSecret)
+    const timestamp = Math.floor(Date.now() / 1000).toString()
+    const sig = await computePolarSig(payload, webhookId, timestamp, whsecSecret)
 
     const result = await adapter.handleWebhook(payload, '', {
       'webhook-id': webhookId,

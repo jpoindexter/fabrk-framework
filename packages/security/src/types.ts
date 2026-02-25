@@ -85,6 +85,8 @@ export interface UpstashRateLimitConfig {
   defaultMax?: number
   /** Default window size in seconds */
   defaultWindowSeconds?: number
+  /** Allow requests when Redis is unreachable (default: false) */
+  failOpen?: boolean
 }
 
 /**

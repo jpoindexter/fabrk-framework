@@ -9,10 +9,6 @@ export interface APIResponse<T> {
     message: string;
     details?: Record<string, unknown>;
   };
-  meta?: {
-    timestamp: string;
-    requestId: string;
-  };
 }
 
 /**
@@ -43,33 +39,15 @@ export class AppError extends Error {
         message: this.message,
         details: this.details,
       },
-      meta: {
-        timestamp: new Date().toISOString(),
-        requestId: generateRequestId(),
-      },
     };
   }
-}
-
-/**
- * Generate a unique request ID
- */
-export function generateRequestId(): string {
-  return `req_${crypto.randomUUID()}`
 }
 
 /**
  * Create a success response
  */
 export function successResponse<T>(data: T): APIResponse<T> {
-  return {
-    success: true,
-    data,
-    meta: {
-      timestamp: new Date().toISOString(),
-      requestId: generateRequestId(),
-    },
-  };
+  return { success: true, data };
 }
 
 /**
@@ -83,9 +61,5 @@ export function errorResponse(
   return {
     success: false,
     error: { code, message, details },
-    meta: {
-      timestamp: new Date().toISOString(),
-      requestId: generateRequestId(),
-    },
   };
 }

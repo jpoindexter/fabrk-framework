@@ -20,7 +20,7 @@
  * ```
  */
 
-import { timingSafeEqual } from '@fabrk/core'
+import { timingSafeEqual, hashPayload } from '@fabrk/core'
 
 export function generateBackupCodes(count: number = 10): string[] {
   const codes: string[] = []
@@ -46,7 +46,7 @@ export async function hashBackupCodes(codes: string[]): Promise<string[]> {
   // so that stored hashes are consistent with the normalization applied during
   // verification. This ensures "ABCD-EFGH" and "ABCDEFGH" hash identically.
   return Promise.all(
-    codes.map((c) => hashCode(c.toUpperCase().replace(/[-\s]/g, '')))
+    codes.map((c) => hashPayload(c.toUpperCase().replace(/[-\s]/g, '')))
   )
 }
 
@@ -70,7 +70,7 @@ export async function verifyBackupCode(
   // Normalize: uppercase, strip whitespace AND dashes so that both
   // "ABCD-EFGH" and "ABCDEFGH" hash to the same value.
   const normalizedCode = code.toUpperCase().replace(/[-\s]/g, '')
-  const codeHash = await hashCode(normalizedCode)
+  const codeHash = await hashPayload(normalizedCode)
 
   // Use constant-time comparison to prevent timing attacks on hash lookup
   let matchedIndex = -1
@@ -84,12 +84,4 @@ export async function verifyBackupCode(
     valid: matchedIndex !== -1,
     matchedIndex,
   }
-}
-
-async function hashCode(code: string): Promise<string> {
-  const encoder = new TextEncoder()
-  const data = encoder.encode(code)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
 }

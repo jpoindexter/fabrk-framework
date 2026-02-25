@@ -4,7 +4,6 @@ import {
   formatLabelText,
   formatCardHeader,
   formatStatusText,
-  isSharpMode,
   terminalClasses,
   // Chart colors
   CHART_FALLBACK_COLORS,
@@ -51,12 +50,6 @@ describe('terminal theme utility functions', () => {
     expect(terminalClasses.input).toBe('rounded-dynamic font-mono border-border')
     expect(terminalClasses.card).toBe('rounded-dynamic border border-border')
     expect(terminalClasses.badge).toBe('rounded-dynamic font-mono text-xs uppercase')
-  })
-})
-
-describe('isSharpMode', () => {
-  it('should return true for terminal theme', () => {
-    expect(isSharpMode()).toBe(true)
   })
 })
 

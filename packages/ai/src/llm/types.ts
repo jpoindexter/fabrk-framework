@@ -53,6 +53,9 @@ export interface LLMConfig {
   timeoutMs?: number
 }
 
+/** Hard cap on tokens per request to prevent runaway cost from untrusted input */
+export const MAX_TOKENS_LIMIT = 100_000
+
 /** Default LLM configuration values */
 export const LLM_DEFAULTS: Required<Omit<LLMConfig, 'openaiApiKey' | 'anthropicApiKey'>> = {
   provider: 'openai',

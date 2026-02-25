@@ -2,7 +2,6 @@ import { FabrkConfigInput, FabrkInstance, fabrkConfigSchema } from './types'
 import { createMiddleware } from './middleware'
 import { PluginRegistry } from './plugins'
 import type { FabrkPlugin } from './plugins'
-import * as hooks from './hooks'
 import { autoWire, type AdapterOverrides } from './auto-wire'
 import { applyDevDefaults } from './defaults'
 
@@ -38,7 +37,6 @@ export function createFabrk(config: FabrkConfigInput = {}): FabrkInstance {
   return {
     config: validatedConfig,
     middleware: createMiddleware(),
-    hooks,
     registry,
   }
 }
@@ -86,7 +84,6 @@ export async function initFabrk(options: CreateFabrkOptions = {}): Promise<Fabrk
   return {
     config: validatedConfig,
     middleware: createMiddleware(),
-    hooks,
     registry,
     features,
   }

@@ -25,7 +25,6 @@ export interface SystemHealthMetric {
 }
 
 export interface SystemHealthWidgetProps {
-  code?: string;
   uptime?: number;
   avgResponseTime?: number;
   errorRate?: number;
@@ -35,7 +34,6 @@ export interface SystemHealthWidgetProps {
 }
 
 export function SystemHealthWidget({
-  code = '0x00',
   uptime = 99.9,
   avgResponseTime = 145,
   errorRate = 0.2,
@@ -80,7 +78,6 @@ export function SystemHealthWidget({
     <Card tone={tone} className={className}>
       <div className="border-border flex items-center justify-between border-b px-4 py-2">
         <CardHeader
-          code={code}
           title="SYSTEM HEALTH"
           meta={`Updated: ${lastUpdated.toLocaleTimeString()}`}
           icon={<Activity className="h-4 w-4" />}

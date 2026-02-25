@@ -28,14 +28,6 @@
   "dependencies": {
     "@fabrk/core": "workspace:*"
   },
-  "peerDependencies": {
-    "@upstash/redis": ">=1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@upstash/redis": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsup": "^8.0.1",

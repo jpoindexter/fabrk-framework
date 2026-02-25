@@ -34,47 +34,6 @@ export const themeClasses = {
   terminal: terminalClasses,
 };
 
-// THEME ACCESS
-
-/**
- * Get the active theme tokens (always terminal)
- */
-export function getActiveTheme(): SemanticTokens {
-  return terminalTheme;
-}
-
-/**
- * Get the active theme classes (always terminal)
- */
-export function getActiveThemeClasses() {
-  return terminalClasses;
-}
-
-// THEME UTILITIES
-
-export interface ThemeUtils {
-  formatButtonText: (text: string) => string;
-  formatLabelText: (label: string) => string;
-  formatCardHeader: (title: string, code?: string) => string;
-  formatStatusText: (status: string) => string;
-}
-
-export const themeUtils: Record<ThemeName, ThemeUtils> = {
-  terminal: {
-    formatButtonText,
-    formatLabelText,
-    formatCardHeader,
-    formatStatusText,
-  },
-};
-
-/**
- * Get utilities for the active theme (always terminal)
- */
-export function getActiveThemeUtils(): ThemeUtils {
-  return themeUtils.terminal;
-}
-
 // RE-EXPORTS
 
 export { terminalTheme, terminalClasses };

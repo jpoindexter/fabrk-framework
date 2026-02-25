@@ -166,8 +166,8 @@ describe('InMemoryApiKeyStore', () => {
   })
 
   const createKeyInfo = (
-    overrides: Partial<ApiKeyInfo & { hash: string }> = {}
-  ): ApiKeyInfo & { hash: string } => ({
+    overrides: Partial<ApiKeyInfo & { hash: string; userId?: string }> = {}
+  ): ApiKeyInfo & { hash: string; userId?: string } => ({
     id: 'key-1',
     prefix: 'fabrk_live_abc123',
     name: 'Test Key',
@@ -175,6 +175,7 @@ describe('InMemoryApiKeyStore', () => {
     createdAt: new Date(),
     active: true,
     hash: 'sha256:abcdef1234567890',
+    userId: 'user-1',
     ...overrides,
   })
 

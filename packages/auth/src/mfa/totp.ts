@@ -18,6 +18,8 @@
  * ```
  */
 
+import { timingSafeEqual } from '../crypto-utils'
+
 /**
  * Generate a random TOTP secret (base32 encoded)
  */
@@ -58,7 +60,7 @@ export async function verifyTotp(
   for (let i = -window; i <= window; i++) {
     const counter = Math.floor((now + i * timeStep) / timeStep)
     const expected = await generateHotp(secret, counter)
-    if (expected === code) {
+    if (timingSafeEqual(expected, code)) {
       return true
     }
   }

@@ -24,6 +24,7 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { LemonSqueezyAdapterConfig } from '../types'
+import { timingSafeEqual } from '../crypto-utils'
 
 export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.lemonsqueezy.com/v1'
@@ -64,7 +65,8 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')
 
-    return expectedSignature === signature
+    // Constant-time comparison to prevent timing attacks
+    return timingSafeEqual(expectedSignature, signature)
   }
 
   return {

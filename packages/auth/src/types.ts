@@ -83,8 +83,7 @@ export class InMemoryAuthStore implements AuthStore {
  * In-memory API key store for development/testing
  */
 export class InMemoryApiKeyStore implements ApiKeyStore {
-  private keys = new Map<string, ApiKeyInfo & { hash: string }>()
-  private userKeys = new Map<string, Set<string>>()
+  private keys = new Map<string, ApiKeyInfo & { hash: string; userId?: string }>()
 
   async getByHash(hash: string): Promise<ApiKeyInfo | null> {
     for (const key of this.keys.values()) {
@@ -94,10 +93,8 @@ export class InMemoryApiKeyStore implements ApiKeyStore {
   }
 
   async create(key: ApiKeyInfo & { hash: string }): Promise<void> {
-    this.keys.set(key.id, key)
-    if (!this.userKeys.has(key.id)) {
-      this.userKeys.set(key.id, new Set())
-    }
+    // Store userId if present on the key object for listByUser filtering
+    this.keys.set(key.id, key as ApiKeyInfo & { hash: string; userId?: string })
   }
 
   async revoke(id: string): Promise<void> {
@@ -107,8 +104,10 @@ export class InMemoryApiKeyStore implements ApiKeyStore {
     }
   }
 
-  async listByUser(_userId: string): Promise<ApiKeyInfo[]> {
-    return Array.from(this.keys.values()).filter((k) => k.active)
+  async listByUser(userId: string): Promise<ApiKeyInfo[]> {
+    return Array.from(this.keys.values()).filter(
+      (k) => k.active && k.userId === userId
+    )
   }
 
   async updateLastUsed(id: string): Promise<void> {

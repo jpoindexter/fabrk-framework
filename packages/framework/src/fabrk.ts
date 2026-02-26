@@ -36,3 +36,6 @@ export { buildSecurityHeaders } from "./middleware/security";
 export { generateAgentsMd } from "./build/agents-md";
 export type { AgentsMdInput } from "./build/agents-md";
 
+export { agentPlugin } from "./agents/vite-plugin";
+export { dashboardPlugin } from "./dashboard/vite-plugin";
+

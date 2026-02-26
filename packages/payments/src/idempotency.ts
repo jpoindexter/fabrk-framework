@@ -15,6 +15,10 @@ export interface IdempotencyCache {
 /**
  * Create a bounded idempotency cache that tracks processed event IDs.
  * When the cache exceeds `maxSize`, the oldest entries are evicted.
+ *
+ * **Serverless warning:** This cache is process-scoped and does NOT survive
+ * cold starts. For production serverless deployments, inject a persistent
+ * idempotency store (Redis, database) to prevent webhook replay attacks.
  */
 export function createIdempotencyCache(maxSize: number): IdempotencyCache {
   const seen = new Set<string>()

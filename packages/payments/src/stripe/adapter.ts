@@ -32,12 +32,6 @@ import { createIdempotencyCache } from '../idempotency'
 // Shared idempotency cache to reject duplicate webhook events
 const stripeCache = createIdempotencyCache(10_000)
 
-/**
- * @remarks **Serverless warning:** The built-in idempotency cache is process-scoped
- * and does NOT survive cold starts on serverless platforms (Vercel, AWS Lambda, etc.).
- * For production serverless deployments, inject a persistent idempotency store
- * (Redis, database) to prevent webhook replay attacks across function invocations.
- */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter {

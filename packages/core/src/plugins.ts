@@ -31,13 +31,11 @@ import type {
 // BASE PLUGIN INTERFACE
 
 export interface FabrkPlugin {
-  /** Unique plugin name */
   name: string
-  /** Plugin version (semver) */
   version: string
-  /** Initialize the plugin (called once during framework startup) */
+  /** Called once during framework startup */
   initialize?(): Promise<void>
-  /** Cleanup the plugin (called on framework shutdown) */
+  /** Called on framework shutdown */
   destroy?(): Promise<void>
 }
 
@@ -226,51 +224,30 @@ export class PluginRegistry {
     return this
   }
 
-  /**
-   * Get the registered payment adapter
-   */
   getPayment(): PaymentAdapter | null {
     return (this.adapters.get('payment') as PaymentAdapter) ?? null
   }
 
-  /**
-   * Get the registered auth adapter
-   */
   getAuth(): AuthAdapter | null {
     return (this.adapters.get('auth') as AuthAdapter) ?? null
   }
 
-  /**
-   * Get the registered email adapter
-   */
   getEmail(): EmailAdapter | null {
     return (this.adapters.get('email') as EmailAdapter) ?? null
   }
 
-  /**
-   * Get the registered storage adapter
-   */
   getStorage(): StorageAdapter | null {
     return (this.adapters.get('storage') as StorageAdapter) ?? null
   }
 
-  /**
-   * Get the registered rate limit adapter
-   */
   getRateLimit(): RateLimitAdapter | null {
     return (this.adapters.get('rateLimit') as RateLimitAdapter) ?? null
   }
 
-  /**
-   * Check if an adapter type is registered
-   */
   has(type: AdapterType): boolean {
     return this.adapters.has(type)
   }
 
-  /**
-   * Get all registered adapter types
-   */
   getRegisteredTypes(): AdapterType[] {
     return Array.from(this.adapters.keys())
   }

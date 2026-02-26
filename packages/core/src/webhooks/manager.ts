@@ -106,8 +106,6 @@ function validateWebhookUrl(url: string): void {
   }
 }
 
-// timingSafeEqual imported from ../crypto (HMAC-SHA256 based)
-
 export interface WebhookManager {
   /** Register a new webhook endpoint */
   register(options: { url: string; events: string[] }): Promise<WebhookConfig>

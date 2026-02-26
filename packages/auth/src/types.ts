@@ -100,8 +100,9 @@ export class InMemoryApiKeyStore implements ApiKeyStore {
   }
 
   async listByUser(userId: string): Promise<ApiKeyInfo[]> {
+    const now = new Date()
     return Array.from(this.keys.values()).filter(
-      (k) => k.active && k.userId === userId
+      (k) => k.active && k.userId === userId && (!k.expiresAt || k.expiresAt > now)
     )
   }
 

@@ -93,7 +93,7 @@ fabrk-framework/
 │   ├── framework/         # fabrk - Meta-package: vinext + AI agents, tools, MCP, dashboard
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
-├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce)
+├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce, agent-demo)
 ├── tasks/                 # Task tracking (todo.md, lessons.md)
 └── docs/                  # Design docs and plans
 ```

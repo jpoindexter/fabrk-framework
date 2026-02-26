@@ -7,11 +7,11 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-12-green" alt="Packages" />
-  <img src="https://img.shields.io/badge/components-105%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-764-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/components-109%2B-green" alt="Components" />
+  <img src="https://img.shields.io/badge/tests-748-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/hooks-16-green" alt="Hooks" />
+  <img src="https://img.shields.io/badge/hooks-15-green" alt="Hooks" />
 </p>
 
 ---
@@ -66,10 +66,10 @@ FABRK is a modular monorepo — install only what you need.
 
 | Package | Description |
 |---------|-------------|
-| [`@fabrk/core`](packages/core) | Runtime, plugins, middleware, 14 hooks, teams, jobs, feature flags, auto-wiring |
-| [`@fabrk/config`](packages/config) | Type-safe config builder with Zod validation (14 sections) |
+| [`@fabrk/core`](packages/core) | Runtime, plugins, middleware, teams, jobs, feature flags, auto-wiring |
+| [`@fabrk/config`](packages/config) | Type-safe config builder with Zod validation (13 sections) |
 | [`@fabrk/design-system`](packages/design-system) | 18 themes, design tokens, `mode` object, runtime switching via CSS variables |
-| [`@fabrk/components`](packages/components) | 105+ UI components, 12 hooks, 8 chart types, AI chat, admin, security, component registry |
+| [`@fabrk/components`](packages/components) | 109+ UI components, 15 hooks, 11 chart types, AI chat, admin, security |
 
 ### Adapters & Services
 
@@ -183,7 +183,7 @@ Works with **Claude Code**, **Cursor**, **GitHub Copilot**, **v0.dev**, **Windsu
     |
 @fabrk/auth, payments, email, storage, security, ai
     |
-@fabrk/components (105+ UI components, charts, dashboard)
+@fabrk/components (109+ UI components, charts, dashboard)
 @fabrk/store-prisma (Prisma database adapters)
     |
 create-fabrk-app CLI (scaffolding)
@@ -201,8 +201,8 @@ create-fabrk-app CLI (scaffolding)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 16 packages (12 libs + 4 examples)
-pnpm test           # Run 763 tests
+pnpm build          # Build all 17 packages (12 libs + 5 examples)
+pnpm test           # Run 748 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```

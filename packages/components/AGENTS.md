@@ -1,6 +1,6 @@
 # @fabrk/components — AI Agent Reference
 
-105+ production-ready React components. All theme-aware via `@fabrk/design-system`.
+109+ production-ready React components. All theme-aware via `@fabrk/design-system`.
 Always a `"use client"` package — components work in Next.js App Router client components.
 
 ---
@@ -369,10 +369,7 @@ import { SchemaScript, Breadcrumbs } from '@fabrk/components'
 ## Hooks
 
 ```tsx
-import { useToast, useDebounce, useLocalStorage, useMediaQuery } from '@fabrk/components'
-
-const { toast } = useToast()
-toast({ title: 'Saved', description: 'Your changes were saved.' })
+import { useDebounce, useLocalStorage, useMediaQuery } from '@fabrk/components'
 
 const debouncedQuery = useDebounce(searchQuery, 300)
 const [theme, setTheme] = useLocalStorage('theme', 'dark')

@@ -34,7 +34,7 @@ packages/
   config/          # @fabrk/config — Type-safe config builder (Zod schemas)
   design-system/   # @fabrk/design-system — 18 themes, design tokens, mode object
   core/            # @fabrk/core — Framework runtime, plugins, middleware, utilities
-  components/      # @fabrk/components — 105+ UI components, 8 charts, dashboard shell, component registry
+  components/      # @fabrk/components — 109+ UI components, 11 charts, dashboard shell, 15 hooks
   ai/              # @fabrk/ai — AI toolkit (cost tracking, validation, streaming)
   payments/        # @fabrk/payments — Stripe, Polar, Lemon Squeezy adapters
   auth/            # @fabrk/auth — NextAuth, API keys, MFA
@@ -70,7 +70,7 @@ Turbo handles the build order automatically, so running `pnpm build` at the root
 ### Running Tests
 
 ```bash
-# Run all tests (763 across all test files)
+# Run all tests (748 across all test files)
 pnpm test
 
 # Watch mode

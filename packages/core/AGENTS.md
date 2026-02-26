@@ -239,7 +239,7 @@ await teams.updateMemberRole(org.id, 'user_456', 'admin')
 await teams.removeMember(org.id, 'user_456')
 
 const invite = await teams.createInvite(org.id, 'bob@acme.com', 'member', 'user_123')
-await teams.acceptInvite(invite.token, 'user_789')
+await teams.acceptInvite(invite.token, 'user_789', 'bob@acme.com')  // email validates invite recipient
 ```
 
 `OrgRole`: `'owner' | 'admin' | 'member' | 'guest'`

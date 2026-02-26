@@ -1,6 +1,6 @@
 # @fabrk/components
 
-105+ production-ready UI components and charts for the FABRK framework. Built on Radix UI with a terminal-inspired design system, fully accessible and theme-aware.
+109+ production-ready UI components and charts for the FABRK framework. Built on Radix UI with a terminal-inspired design system, fully accessible and theme-aware.
 
 ## Installation
 
@@ -91,29 +91,16 @@ function Metrics() {
 Add conversational AI to your app:
 
 ```tsx
-import { ChatInput, ChatMessage, StreamingMessage } from '@fabrk/components'
+import { AiChat } from '@fabrk/components'
 
 function ChatInterface() {
-  const [messages, setMessages] = useState([])
-
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex-1 overflow-auto p-4">
-        {messages.map((msg) => (
-          <ChatMessage
-            key={msg.id}
-            role={msg.role}
-            content={msg.content}
-            timestamp={msg.timestamp}
-          />
-        ))}
-      </div>
-      <ChatInput
-        onSubmit={(message) => handleSendMessage(message)}
-        placeholder="Ask me anything..."
-        maxLength={2000}
-      />
-    </div>
+    <AiChat
+      models={[{ id: 'claude-3', name: 'Claude 3' }]}
+      conversations={conversations}
+      onSendMessage={(msg) => handleSendMessage(msg)}
+      onNewConversation={() => createConversation()}
+    />
   )
 }
 ```
@@ -138,8 +125,8 @@ DashboardShell, DashboardHeader, PageHeader, KPICard, StatCard, StatsGrid, Syste
 ### Charts (8 components)
 AreaChart, BarChart, LineChart, PieChart, DonutChart, FunnelChart, Gauge, Sparkline
 
-### AI Components (5+ components)
-ChatInput, ChatMessage, StreamingMessage, JsonViewer, LogStream
+### AI Components (5 components)
+AiChat, AiChatInput, AiChatMessageList, AiChatSidebar, AiChatAttachmentPreview
 
 ### Security (3 components)
 MfaCard, MfaSetupDialog, BackupCodesModal
@@ -179,7 +166,7 @@ Rules:
 
 ## Features
 
-- **105+ Components** - Comprehensive UI library covering forms, navigation, data display, charts, and specialized features
+- **109+ Components** - Comprehensive UI library covering forms, navigation, data display, charts, and specialized features
 - **Terminal Aesthetic** - Monospace fonts, uppercase buttons, bracket labels, and ASCII art inspired design
 - **Design System** - 18 built-in themes with runtime CSS variable switching via `@fabrk/design-system`
 - **Radix UI Primitives** - Built on battle-tested, accessible component primitives

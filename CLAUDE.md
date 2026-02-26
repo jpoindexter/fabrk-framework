@@ -77,10 +77,10 @@ Templates & Examples (depend on all packages)
 ```
 fabrk-framework/
 ├── packages/
-│   ├── config/            # @fabrk/config - Type-safe config builder (12 sections, Zod)
+│   ├── config/            # @fabrk/config - Type-safe config builder (13 sections, Zod)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 105+ UI components, 8 charts, dashboard shell, component registry
+│   ├── components/        # @fabrk/components - 109+ UI components, 11 chart types, dashboard shell, 15 hooks
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, streaming, LLM providers, embeddings)
 │   ├── payments/          # @fabrk/payments - Stripe, Polar, Lemon Squeezy adapters
 │   ├── auth/              # @fabrk/auth - NextAuth, API keys, MFA (TOTP + backup codes)
@@ -485,7 +485,7 @@ Read these files for context:
 - **CONTRIBUTING.md** - How to contribute (setup, adding components/adapters, design rules)
 - **CHANGELOG.md** - Release history
 - **DESIGN_SYSTEM_RULES.md** - Design rules to preserve
-- **COMPONENT_INVENTORY.md** - List of all 105+ components
+- **COMPONENT_INVENTORY.md** - List of all 109+ components and 15 hooks
 
 ### Current Stats
 

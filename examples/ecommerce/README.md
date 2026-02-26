@@ -131,4 +131,4 @@ Perfect starting point for:
 - Inventory management UIs
 - Point-of-sale interfaces
 
-Built with FABRK Framework - [github.com/fabrkframework/fabrk](https://github.com/fabrkframework/fabrk)
+Built with FABRK Framework - [github.com/jpoindexter/fabrk-framework](https://github.com/jpoindexter/fabrk-framework)

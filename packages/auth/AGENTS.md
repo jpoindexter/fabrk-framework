@@ -169,7 +169,7 @@ Scopes apply only to API key auth. For session-based role checks, inspect
 | Store | Use case |
 |-------|----------|
 | `InMemoryAuthStore` | Dev/testing — sessions held in a `Map` |
-| `InMemoryApiKeyStore` | Dev/testing — timing-safe lookup, tracks `lastUsedAt` |
+| `InMemoryApiKeyStore` | Dev/testing — timing-safe lookup, filters revoked/expired keys, tracks `lastUsedAt` |
 | Custom `ApiKeyStore` | Production — implement `getByHash`, `create`, `revoke`, `listByUser`, `updateLastUsed` |
 
 ---

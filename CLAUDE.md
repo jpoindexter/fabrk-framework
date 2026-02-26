@@ -82,7 +82,7 @@ fabrk-framework/
 │   ├── config/            # @fabrk/config - Type-safe config builder (13 sections, Zod)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 109+ UI components, 11 chart types, dashboard shell, 15 hooks
+│   ├── components/        # @fabrk/components - 109+ UI components, 8 chart types, dashboard shell, 15 hooks
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, streaming, LLM providers, embeddings)
 │   ├── payments/          # @fabrk/payments - Stripe, Polar, Lemon Squeezy adapters
 │   ├── auth/              # @fabrk/auth - NextAuth, API keys, MFA (TOTP + backup codes)
@@ -500,7 +500,7 @@ Read these files for context:
 
 - **18/18 packages build** (13 packages + 5 examples)
 - **858 tests**, all passing (463 root across 47 files + 395 components across 44 files)
-- **109+ components**, 15 hooks, 11 chart types, 18 themes
+- **109+ components**, 15 hooks, 8 chart types, 18 themes
 - **13 packages** (12 @fabrk/* + fabrk meta-package), **23/23 type-check**
 - **5 examples**: basic-usage, docs site, saas-analytics, ecommerce, agent-demo
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher

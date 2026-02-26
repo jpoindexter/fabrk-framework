@@ -94,7 +94,7 @@ function NavGroup({ item }: { item: NavItem }) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden md:block w-64 border-r border-border bg-card sticky top-0 h-screen p-4 shrink-0 overflow-y-auto">
+    <aside data-sidebar className="hidden md:block w-64 border-r border-border bg-card sticky top-0 h-screen p-4 shrink-0 overflow-y-auto">
       <Link href="/" className="block mb-6">
         <div className={cn('text-primary font-bold text-lg', mode.font)}>
           {'>'} FABRK

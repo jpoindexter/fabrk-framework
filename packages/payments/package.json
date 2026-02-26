@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/payments",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Payment adapters for FABRK framework (Stripe, Polar, Lemon Squeezy)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

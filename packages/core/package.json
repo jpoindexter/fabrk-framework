@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "FABRK framework runtime — plugins, middleware, feature flags, teams, jobs, and webhooks",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

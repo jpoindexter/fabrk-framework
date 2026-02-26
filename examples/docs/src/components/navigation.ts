@@ -6,6 +6,7 @@ export interface NavItem {
 
 export const navigation: NavItem[] = [
   { label: 'HOME', href: '/' },
+  { label: 'ABOUT', href: '/about' },
   { label: 'GETTING STARTED', href: '/getting-started' },
   { label: 'CONFIGURATION', href: '/configuration' },
   { label: 'DESIGN SYSTEM', href: '/design-system' },
@@ -25,6 +26,7 @@ export const navigation: NavItem[] = [
       { label: '@fabrk/storage', href: '/packages#storage' },
       { label: '@fabrk/security', href: '/packages#security' },
       { label: '@fabrk/store-prisma', href: '/packages#store-prisma' },
+      { label: 'fabrk', href: '/packages#framework' },
     ],
   },
   {

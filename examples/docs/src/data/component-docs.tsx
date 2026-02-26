@@ -58,8 +58,9 @@ function SegmentedControlDemo() {
 
 // ─── Lazy Component Access ──────────────────────────────────────────────
 // We use require() to avoid circular deps and keep this registry declarative.
-// This file is only loaded client-side via 'use client'.
+// Returns a no-op during SSR prerender to prevent chart/browser crashes.
 function C(name: string) {
+  if (typeof window === 'undefined') return () => null
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const mod = require('@fabrk/components')
   return mod[name]

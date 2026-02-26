@@ -27,7 +27,8 @@ export * from './utils'
 // Plugin System
 export * from './plugins'
 export * from './plugin-types'
-export * from './context'
+export { useFabrk, useOptionalFabrk } from './context'
+export type { FabrkContextValue } from './context'
 
 // Feature Modules
 export { createNotificationManager } from './notifications/manager'

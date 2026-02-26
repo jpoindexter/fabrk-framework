@@ -8,8 +8,6 @@
 
 import { useOptionalFabrk } from '../context';
 
-// HOOK: useBilling
-
 /**
  * Access billing/payment adapter from the plugin registry
  *

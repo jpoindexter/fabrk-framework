@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
+import { CHART_COLORS } from './chart-theme';
 
 export interface FunnelStage {
   label: string;
@@ -37,14 +38,7 @@ export function FunnelChart({
 
   const maxValue = Math.max(...data.map((d) => d.value));
   const isVertical = direction === 'vertical';
-
-  const DEFAULT_COLORS = [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-  ];
+  const DEFAULT_COLORS = CHART_COLORS.chart;
 
   return (
     <div className={cn('space-y-4', className)}>

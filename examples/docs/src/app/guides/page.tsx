@@ -216,7 +216,7 @@ function DashboardHeader() {
       <h1 className="text-lg font-bold uppercase">DASHBOARD</h1>
       <NotificationCenter
         notifications={notifications}
-        onMarkRead={(id) => manager.markRead(id)}
+        onMarkRead={(id) => manager.markRead(id, userId)}
         onMarkAllRead={() => manager.markAllRead()}
       />
     </div>

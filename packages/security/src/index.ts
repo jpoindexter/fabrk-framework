@@ -40,13 +40,7 @@ export type { BotDetectionResult } from './bot-protection'
 export { createCorsHandler } from './cors'
 export type { CorsHandler } from './cors'
 
-// Crypto Utilities (re-export from @fabrk/core for convenience)
-export { timingSafeEqual } from '@fabrk/core'
-
 // Input Validation
-// Note: sanitizeSqlInput is intentionally NOT exported — it is a deprecated
-// blocklist-based helper that provides false security. Use parameterized
-// queries / prepared statements instead. See validation.ts for the warning.
 export {
   escapeHtml,
   stripHtml,

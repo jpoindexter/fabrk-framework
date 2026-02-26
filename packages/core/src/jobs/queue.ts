@@ -27,14 +27,7 @@
 
 import type { Job, JobOptions, JobStatus, JobStore } from '../plugin-types'
 
-const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
-
-function safeAssign<T extends Record<string, unknown>>(target: T, updates: Partial<T>): void {
-  for (const key of Object.keys(updates)) {
-    if (POISONED_KEYS.has(key)) continue
-    ;(target as Record<string, unknown>)[key] = (updates as Record<string, unknown>)[key]
-  }
-}
+const ALLOWED_JOB_UPDATE_FIELDS = ['status', 'lastAttemptAt', 'attempts', 'completedAt', 'error', 'result'] as const
 
 export interface JobQueue {
   /** Enqueue a job */
@@ -80,8 +73,11 @@ class InMemoryJobStore implements JobStore {
   async update(id: string, updates: Partial<Job>) {
     const job = this.jobs.get(id)
     if (job) {
-      safeAssign(job as unknown as Record<string, unknown>, updates as unknown as Record<string, unknown>)
-      // Remove from inFlight once the job reaches a terminal or error-retry state
+      for (const key of ALLOWED_JOB_UPDATE_FIELDS) {
+        if (key in updates) {
+          ;(job as unknown as Record<string, unknown>)[key] = (updates as unknown as Record<string, unknown>)[key]
+        }
+      }
       const terminalStatuses: Array<Job['status']> = ['completed', 'failed', 'pending']
       if (updates.status && terminalStatuses.includes(updates.status)) {
         this.inFlight.delete(id)
@@ -120,19 +116,18 @@ export function createJobQueue(store?: JobStore): JobQueue {
     const nextAttempts = job.attempts + 1
     try {
       await jobStore.update(job.id, {
-        status: 'running' as JobStatus,
+        status: 'running',
         lastAttemptAt: new Date(),
         attempts: nextAttempts,
       })
-    } catch (updateErr) {
-      console.error('Failed to lock job', job.id, updateErr)
+    } catch {
       return false
     }
 
     try {
       await handler(job)
       await jobStore.update(job.id, {
-        status: 'completed' as JobStatus,
+        status: 'completed',
         completedAt: new Date(),
       })
     } catch (err) {

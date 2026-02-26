@@ -19,7 +19,6 @@ export function registerDoctorCommand(program: Command): void {
 
       let issues = 0;
 
-      // Check package.json exists
       const pkgPath = path.join(root, 'package.json');
       if (fs.existsSync(pkgPath)) {
         console.log(chalk.green('  ✓') + chalk.dim(' package.json found'));
@@ -28,14 +27,12 @@ export function registerDoctorCommand(program: Command): void {
         issues++;
       }
 
-      // Check fabrk.config.ts
       if (hasFabrkConfig(root)) {
         console.log(chalk.green('  ✓') + chalk.dim(' fabrk.config.ts found'));
       } else {
         console.log(chalk.yellow('  ⚠') + chalk.dim(' fabrk.config.ts not found (optional but recommended)'));
       }
 
-      // Check @fabrk/core is installed
       if (fs.existsSync(pkgPath)) {
         const pkg = fs.readJsonSync(pkgPath);
         const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
@@ -47,7 +44,6 @@ export function registerDoctorCommand(program: Command): void {
           issues++;
         }
 
-        // Check for Next.js
         if (allDeps['next']) {
           console.log(chalk.green('  ✓') + chalk.dim(` next installed (${allDeps['next']})`));
         } else {
@@ -55,7 +51,6 @@ export function registerDoctorCommand(program: Command): void {
           issues++;
         }
 
-        // Check for React 19
         if (allDeps['react']) {
           const reactVer = allDeps['react'];
           if (reactVer.includes('19') || reactVer.includes('^19')) {
@@ -65,14 +60,12 @@ export function registerDoctorCommand(program: Command): void {
           }
         }
 
-        // Check for Tailwind CSS
         if (allDeps['tailwindcss'] || allDeps['@tailwindcss/postcss']) {
           console.log(chalk.green('  ✓') + chalk.dim(' Tailwind CSS installed'));
         } else {
           console.log(chalk.yellow('  ⚠') + chalk.dim(' Tailwind CSS not found'));
         }
 
-        // Check for TypeScript
         if (allDeps['typescript']) {
           console.log(chalk.green('  ✓') + chalk.dim(` typescript installed (${allDeps['typescript']})`));
         } else {
@@ -80,7 +73,6 @@ export function registerDoctorCommand(program: Command): void {
         }
       }
 
-      // Check node_modules exists
       if (fs.existsSync(path.join(root, 'node_modules'))) {
         console.log(chalk.green('  ✓') + chalk.dim(' node_modules exists'));
       } else {
@@ -88,7 +80,6 @@ export function registerDoctorCommand(program: Command): void {
         issues++;
       }
 
-      // Check .fabrk/ directory
       if (fs.existsSync(path.join(root, '.fabrk'))) {
         console.log(chalk.green('  ✓') + chalk.dim(' .fabrk/ directory exists'));
       } else {

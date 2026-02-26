@@ -36,20 +36,7 @@ import {
 } from 'recharts';
 import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
-
-// Theme colors using CSS custom properties directly
-const THEME_COLORS = {
-  chart: [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-    'hsl(var(--chart-6))',
-  ],
-  muted: 'hsl(var(--muted-foreground))',
-  border: 'hsl(var(--border))',
-};
+import { CHART_COLORS } from './chart-theme';
 
 export interface BarChartDataPoint {
   [key: string]: string | number;
@@ -124,7 +111,7 @@ export function BarChart({
   colors: customColors,
   className,
 }: BarChartProps) {
-  const colors = customColors || THEME_COLORS.chart;
+  const colors = customColors || CHART_COLORS.chart;
   // Memoize tooltip to prevent recreation on every render
   const CustomTooltip = React.useMemo(
     () =>
@@ -171,7 +158,7 @@ export function BarChart({
           {showGrid && (
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke={THEME_COLORS.border}
+              stroke={CHART_COLORS.border}
               opacity={0.5}
               horizontal={!horizontal}
               vertical={horizontal}
@@ -181,17 +168,17 @@ export function BarChart({
             <>
               <XAxis
                 type="number"
-                tick={{ fill: THEME_COLORS.muted, fontSize: 12 }}
-                tickLine={{ stroke: THEME_COLORS.border }}
-                axisLine={{ stroke: THEME_COLORS.border }}
+                tick={{ fill: CHART_COLORS.muted, fontSize: 12 }}
+                tickLine={{ stroke: CHART_COLORS.border }}
+                axisLine={{ stroke: CHART_COLORS.border }}
                 tickFormatter={yAxisFormatter}
               />
               <YAxis
                 type="category"
                 dataKey={xAxisKey}
-                tick={{ fill: THEME_COLORS.muted, fontSize: 12 }}
-                tickLine={{ stroke: THEME_COLORS.border }}
-                axisLine={{ stroke: THEME_COLORS.border }}
+                tick={{ fill: CHART_COLORS.muted, fontSize: 12 }}
+                tickLine={{ stroke: CHART_COLORS.border }}
+                axisLine={{ stroke: CHART_COLORS.border }}
                 tickFormatter={xAxisFormatter}
                 width={80}
               />
@@ -200,21 +187,21 @@ export function BarChart({
             <>
               <XAxis
                 dataKey={xAxisKey}
-                tick={{ fill: THEME_COLORS.muted, fontSize: 12 }}
-                tickLine={{ stroke: THEME_COLORS.border }}
-                axisLine={{ stroke: THEME_COLORS.border }}
+                tick={{ fill: CHART_COLORS.muted, fontSize: 12 }}
+                tickLine={{ stroke: CHART_COLORS.border }}
+                axisLine={{ stroke: CHART_COLORS.border }}
                 tickFormatter={xAxisFormatter}
               />
               <YAxis
-                tick={{ fill: THEME_COLORS.muted, fontSize: 12 }}
-                tickLine={{ stroke: THEME_COLORS.border }}
-                axisLine={{ stroke: THEME_COLORS.border }}
+                tick={{ fill: CHART_COLORS.muted, fontSize: 12 }}
+                tickLine={{ stroke: CHART_COLORS.border }}
+                axisLine={{ stroke: CHART_COLORS.border }}
                 tickFormatter={yAxisFormatter}
               />
             </>
           )}
           {showTooltip && (
-            <Tooltip content={CustomTooltip} cursor={{ fill: THEME_COLORS.border, opacity: 0.3 }} />
+            <Tooltip content={CustomTooltip} cursor={{ fill: CHART_COLORS.border, opacity: 0.3 }} />
           )}
           {showLegend && <Legend wrapperStyle={{ fontSize: 12 }} iconType="square" />}
           {series.map((s, seriesIndex) => (
@@ -309,7 +296,7 @@ export function StackedBarChart({
   stackColors,
   ...props
 }: StackedBarChartProps) {
-  const colors = stackColors || THEME_COLORS.chart;
+  const colors = stackColors || CHART_COLORS.chart;
 
   const series: BarChartSeries[] = stackKeys.map((key, index) => ({
     dataKey: key,

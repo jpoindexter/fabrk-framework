@@ -9,8 +9,6 @@
 import { useState, useEffect } from 'react';
 import { useOptionalFabrk } from '../context';
 
-// HOOK: useFeatureFlag
-
 /**
  * Check if a specific feature flag is enabled
  *

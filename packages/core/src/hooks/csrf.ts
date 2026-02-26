@@ -8,8 +8,6 @@
 
 import { useState, useCallback } from 'react';
 
-// HOOK: useCsrfToken
-
 /**
  * Read a CSRF token from a cookie and provide a fetch wrapper that attaches it.
  *

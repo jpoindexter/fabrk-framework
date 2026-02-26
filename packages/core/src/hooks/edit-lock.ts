@@ -24,8 +24,6 @@ export interface UseEditLockOptions {
   heartbeatInterval?: number;
 }
 
-// HOOK: useEditLock
-
 /**
  * Heartbeat-based edit lock with conflict detection.
  * Provide your own acquire/release callbacks — keeps the hook API-agnostic.

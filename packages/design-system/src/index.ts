@@ -1,30 +1,5 @@
 /**
- * Design System
- *
- * Token-driven, themeable design system for modern SaaS applications.
- *
- * Architecture:
- * ┌─────────────────────────────────────────────────────────────────┐
- * │  COMPONENTS                                                     │
- * │  Reference semantic tokens only                                 │
- * │  Never reference raw values or theme-specific tokens            │
- * ├─────────────────────────────────────────────────────────────────┤
- * │  SEMANTIC TOKENS                                                │
- * │  Role-based naming (bg-surface, text-primary)                   │
- * │  Resolved by active theme                                       │
- * ├─────────────────────────────────────────────────────────────────┤
- * │  THEMES                                                         │
- * │  Map semantic tokens to primitive values                        │
- * │  Terminal (monospace, sharp, structured)                        │
- * ├─────────────────────────────────────────────────────────────────┤
- * │  PRIMITIVES                                                     │
- * │  Raw values (colors, sizes)                                     │
- * │  Shared across all themes                                       │
- * └─────────────────────────────────────────────────────────────────┘
- *
- * @see ./spec/overview.md for philosophy
- * @see ./spec/foundations.md for token definitions
- * @see ./spec/themes.md for theme system
+ * @fabrk/design-system — token-driven, themeable design system.
  */
 
 // TOKEN EXPORTS
@@ -58,8 +33,6 @@ export type {
   TextTransformTokens,
   SpacingTokens,
 } from './tokens/semantic';
-
-export { cssVariableNames } from './tokens/semantic';
 
 export {
   CHART_FALLBACK_COLORS,

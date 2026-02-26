@@ -399,7 +399,7 @@ describe('Feature Modules via autoWire', () => {
     expect(count).toBeGreaterThanOrEqual(1)
 
     // Mark as read
-    await nm.markRead(notification.id)
+    await nm.markRead(notification.id, 'any-user')
 
     // Subscribe to notifications
     let received: any = null

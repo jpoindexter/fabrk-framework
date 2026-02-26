@@ -59,7 +59,7 @@ describe('NotificationManager', () => {
       message: 'Hello',
     })
 
-    await manager.markRead(notification.id)
+    await manager.markRead(notification.id, 'any')
 
     const unread = await manager.getUnreadCount('any')
     expect(unread).toBe(0)
@@ -84,7 +84,7 @@ describe('NotificationManager', () => {
       message: 'Hello',
     })
 
-    await manager.dismiss(notification.id)
+    await manager.dismiss(notification.id, 'any')
 
     const count = await manager.getUnreadCount('any')
     expect(count).toBe(0)
@@ -144,7 +144,7 @@ describe('NotificationManager', () => {
     const n = await manager.notify({ type: 'info', title: 'A', message: 'a' })
     await manager.notify({ type: 'info', title: 'B', message: 'b' })
 
-    await manager.markRead(n.id)
+    await manager.markRead(n.id, 'user')
 
     const unread = await manager.getForUser('user', { unreadOnly: true })
     expect(unread).toHaveLength(1)

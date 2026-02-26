@@ -6,9 +6,7 @@
 
 'use client';
 
-import { useOptionalFabrk } from '../context';
-
-// HOOK: useTeam
+import { createFeatureHook } from './create-feature-hook';
 
 /**
  * Access the team/organization manager
@@ -30,12 +28,4 @@ import { useOptionalFabrk } from '../context';
  * }
  * ```
  */
-export function useTeam() {
-  const fabrk = useOptionalFabrk();
-  const manager = fabrk?.features?.teams ?? null;
-
-  return {
-    enabled: !!manager,
-    manager,
-  };
-}
+export const useTeam = createFeatureHook('teams');

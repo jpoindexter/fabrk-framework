@@ -6,9 +6,7 @@
 
 'use client';
 
-import { useOptionalFabrk } from '../context';
-
-// HOOK: useJobs
+import { createFeatureHook } from './create-feature-hook';
 
 /**
  * Access the job queue
@@ -30,12 +28,4 @@ import { useOptionalFabrk } from '../context';
  * }
  * ```
  */
-export function useJobs() {
-  const fabrk = useOptionalFabrk();
-  const manager = fabrk?.features?.jobs ?? null;
-
-  return {
-    enabled: !!manager,
-    manager,
-  };
-}
+export const useJobs = createFeatureHook('jobs');

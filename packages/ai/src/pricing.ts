@@ -100,7 +100,6 @@ export function calculateCost(
 
   if (!pricing) {
     // Fallback: model not in pricing table — using rough estimate, actual cost may differ significantly
-    console.warn(`[FABRK AI] Unknown model "${model}" — cost estimate may be inaccurate. Add to MODEL_PRICING for accurate tracking.`)
     return { costUSD: ((promptTokens + completionTokens) / 1000) * 0.01, provider: 'other' as const }
   }
 

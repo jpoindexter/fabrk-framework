@@ -17,7 +17,7 @@
 
 import { getCostTracker } from './tracker';
 import { AppError, successResponse, errorResponse, type APIResponse } from './types';
-import { MAX_TOKENS_LIMIT } from './llm/types';
+import { MAX_TOKENS_LIMIT, LLM_DEFAULTS } from './llm/types';
 
 /** Scrub API key patterns from error messages to prevent leaks in logs */
 function scrubApiKeys(message: string): string {
@@ -62,7 +62,7 @@ export const claude = {
       prompt,
       feature,
       userId,
-      model = 'claude-sonnet-4-20250514',
+      model = LLM_DEFAULTS.anthropicModel,
       maxTokens = 1024,
       temperature = 0.7,
       systemPrompt,
@@ -103,8 +103,6 @@ export const claude = {
       if (error instanceof AppError) {
         return errorResponse(error.code, error.message);
       }
-      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
-      console.error('Claude generation error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'CLAUDE_ERROR',
         scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate with Claude')
@@ -182,8 +180,6 @@ export const openai = {
       if (error instanceof AppError) {
         return errorResponse(error.code, error.message);
       }
-      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
-      console.error('OpenAI generation error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'OPENAI_ERROR',
         scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate with OpenAI')
@@ -214,8 +210,6 @@ export const openai = {
       const embeddings = response.data.map((d: any) => d.embedding);
       return successResponse(embeddings);
     } catch (error) {
-      const safeMessage = error instanceof Error ? error.message : 'AI call failed';
-      console.error('OpenAI embedding error:', scrubApiKeys(safeMessage));
       return errorResponse(
         'EMBEDDING_ERROR',
         scrubApiKeys(error instanceof Error ? error.message : 'Failed to generate embeddings')
@@ -263,7 +257,7 @@ export const ai = {
   /**
    * Check which providers are available
    */
-  async getAvailableProviders(): Promise<string[]> {
+  getAvailableProviders(): string[] {
     const providers: string[] = [];
 
     if (claude.isAvailable()) providers.push('claude');

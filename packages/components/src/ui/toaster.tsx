@@ -46,7 +46,6 @@ export const Toaster = React.forwardRef<HTMLDivElement, ToasterProps>(({ ...prop
 });
 Toaster.displayName = 'Toaster';
 
-// Export additional components for test compatibility
 export const ToastAction = ({ children, altText, ...props }: ToastActionInnerProps) => (
   <button data-slot="toast-action" aria-label={altText} {...props}>
     {children}

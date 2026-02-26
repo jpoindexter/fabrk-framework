@@ -83,14 +83,8 @@
   "dependencies": {
     "vinext": "^0.0.5",
     "@fabrk/ai": "workspace:*",
-    "@fabrk/auth": "workspace:*",
     "@fabrk/components": "workspace:*",
-    "@fabrk/config": "workspace:*",
-    "@fabrk/core": "workspace:*",
-    "@fabrk/design-system": "workspace:*",
-    "@fabrk/security": "workspace:*",
-    "glob": "^11.0.0",
-    "zod": "^3.22.0"
+    "@fabrk/design-system": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

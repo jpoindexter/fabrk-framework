@@ -84,6 +84,32 @@ describe("loadPrompt", () => {
     expect(result).toBe("Hello {{> missing.md}} world");
   });
 
+  it("blocks path traversal attacks", async () => {
+    const promptsDir = path.join(tmpDir, "prompts");
+    fs.mkdirSync(promptsDir, { recursive: true });
+
+    await expect(
+      loadPrompt(tmpDir, "../../etc/passwd")
+    ).rejects.toThrow("Path traversal blocked");
+
+    await expect(
+      loadPrompt(tmpDir, "../../../etc/shadow")
+    ).rejects.toThrow("Path traversal blocked");
+  });
+
+  it("terminates on deep recursion (depth > 10)", async () => {
+    const promptsDir = path.join(tmpDir, "prompts");
+    fs.mkdirSync(promptsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(promptsDir, "recursive.md"),
+      "Loop: {{> recursive.md}}"
+    );
+
+    const result = await loadPrompt(tmpDir, "recursive.md");
+    expect(result).not.toContain("{{>");
+    expect(result.length).toBeLessThan(10_000);
+  });
+
   it("handles nested partials", async () => {
     const promptsDir = path.join(tmpDir, "prompts");
     fs.mkdirSync(promptsDir, { recursive: true });

@@ -1,8 +1,5 @@
 import type { FabrkConfig } from "../config/fabrk-config.js";
 
-/**
- * Build security headers based on FabrkConfig security settings.
- */
 export function buildSecurityHeaders(
   config?: FabrkConfig["security"]
 ): Record<string, string> {

@@ -2,18 +2,11 @@ import fs from "node:fs";
 import path from "node:path";
 
 export interface ScannedAgent {
-  /** Agent name (directory name under agents/) */
   name: string;
-  /** Absolute path to the agent.ts file */
   filePath: string;
-  /** Route pattern: /api/agents/{name} */
   routePattern: string;
 }
 
-/**
- * Scan the agents/ directory for agent definitions.
- * Each subdirectory with an agent.ts or agent.js file is an agent.
- */
 export function scanAgents(root: string): ScannedAgent[] {
   const agentsDir = path.join(root, "agents");
   if (!fs.existsSync(agentsDir)) return [];

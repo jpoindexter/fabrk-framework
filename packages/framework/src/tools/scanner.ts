@@ -2,18 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 export interface ScannedTool {
-  /** Tool name (filename without extension) */
   name: string;
-  /** Absolute path to the tool file */
   filePath: string;
 }
 
 const TOOL_EXTENSIONS = new Set([".ts", ".js", ".tsx", ".jsx"]);
 
-/**
- * Scan the tools/ directory for tool definitions.
- * Each .ts/.js file in tools/ is a tool (name derived from filename).
- */
 export function scanTools(root: string): ScannedTool[] {
   const toolsDir = path.join(root, "tools");
   if (!fs.existsSync(toolsDir)) return [];

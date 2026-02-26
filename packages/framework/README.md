@@ -6,7 +6,7 @@
 [![npm](https://img.shields.io/npm/v/fabrk)](https://www.npmjs.com/package/fabrk)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-fabrk composes [vinext](https://github.com/cloudflare/vinext) (Vite 7 + Next.js API + Cloudflare Workers) with AI agents, tools, 105+ components, auth, payments, and 18 themes.
+fabrk composes [vinext](https://github.com/cloudflare/vinext) (Vite 7 + Next.js API + Cloudflare Workers) with AI agents, tools, 109+ components, auth, payments, and 18 themes.
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ npx fabrk dev
 |-------------|------------|
 | Vite 7 plugin | AI agents (`defineAgent()`) |
 | SSR / RSC | Tools (`defineTool()`) + MCP |
-| Next.js API shims | 105+ UI components |
+| Next.js API shims | 109+ UI components |
 | Cloudflare Workers deploy | 18 themes + design system |
 | CLI (dev/build/deploy) | Auth (NextAuth, MFA, API keys) |
 | | Payments (Stripe, Polar, Lemon) |
@@ -42,8 +42,6 @@ export default {
   plugins: [fabrk()]
 }
 ```
-
-This gives you everything vinext provides plus AI agent scanning and the dev dashboard.
 
 ### AI Agents
 
@@ -79,7 +77,7 @@ export default defineTool({
 ### CLI
 
 ```bash
-fabrk dev        # vinext dev + AI agents + MCP server
+fabrk dev        # vinext dev + AI agents + MCP tools
 fabrk build      # vinext build + AGENTS.md generation
 fabrk deploy     # Cloudflare Workers deploy
 fabrk info       # Show agents, tools, prompts
@@ -89,7 +87,7 @@ fabrk info       # Show agents, tools, prompts
 
 ```
 vinext (Cloudflare)          @fabrk/* packages
-  Vite plugin                  @fabrk/components (105+ UI)
+  Vite plugin                  @fabrk/components (109+ UI)
   SSR / RSC                    @fabrk/ai (LLM, cost tracking)
   Routing                      @fabrk/auth (NextAuth, MFA)
   Next.js shims                @fabrk/payments (Stripe, Polar)
@@ -101,18 +99,13 @@ vinext (Cloudflare)          @fabrk/* packages
     +---------+
 ```
 
-## Packages
+## Dependencies
 
 fabrk depends on the `@fabrk/*` ecosystem:
 
-- **@fabrk/components** — 105+ UI components, 8 chart types, dashboard shell
+- **@fabrk/components** — 109+ UI components, 11 chart types, dashboard shell
 - **@fabrk/ai** — LLM providers, cost tracking, embeddings, streaming
-- **@fabrk/auth** — NextAuth, API keys, MFA (TOTP + backup codes)
-- **@fabrk/payments** — Stripe, Polar, Lemon Squeezy adapters
-- **@fabrk/security** — CSRF, CSP, rate limiting, audit, GDPR
 - **@fabrk/design-system** — 18 themes, design tokens
-- **@fabrk/core** — Framework runtime, plugins, middleware
-- **@fabrk/config** — Type-safe config (Zod schemas)
 
 ## License
 

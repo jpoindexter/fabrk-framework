@@ -1,10 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-/**
- * Interpolate {{variable}} placeholders in a template string.
- * Missing variables are left as-is.
- */
 export function interpolatePrompt(
   template: string,
   variables: Record<string, string>
@@ -14,20 +10,24 @@ export function interpolatePrompt(
   });
 }
 
-/**
- * Load a prompt file from the prompts/ directory.
- * Resolves {{> partial.md}} includes recursively.
- */
+function assertWithinDir(fullPath: string, baseDir: string): void {
+  const resolved = path.resolve(fullPath);
+  const base = path.resolve(baseDir);
+  if (!resolved.startsWith(base + path.sep) && resolved !== base) {
+    throw new Error("Path traversal blocked");
+  }
+}
+
 export async function loadPrompt(
   root: string,
   promptPath: string,
-  _depth = 0
+  depth = 0
 ): Promise<string> {
-  // Prevent infinite recursion
-  if (_depth > 10) return "";
+  if (depth > 10) return "";
 
   const promptsDir = path.join(root, "prompts");
   const fullPath = path.join(promptsDir, promptPath);
+  assertWithinDir(fullPath, promptsDir);
 
   if (!fs.existsSync(fullPath)) {
     return `{{> ${promptPath}}}`;
@@ -35,13 +35,12 @@ export async function loadPrompt(
 
   let content = fs.readFileSync(fullPath, "utf-8");
 
-  // Resolve {{> partial}} includes
   const partialRegex = /\{\{>\s*([^}]+)\}\}/g;
   const matches = [...content.matchAll(partialRegex)];
 
   for (const match of matches) {
     const partialPath = match[1].trim();
-    const partialContent = await loadPrompt(root, partialPath, _depth + 1);
+    const partialContent = await loadPrompt(root, partialPath, depth + 1);
     content = content.replace(match[0], partialContent);
   }
 

@@ -12,49 +12,43 @@ export interface FabrkAIConfig {
 }
 
 export interface FabrkConfig {
-  /** AI configuration */
   ai?: FabrkAIConfig;
-  /** Auth mode for agents */
   auth?: {
     provider?: "nextauth" | "custom";
     apiKeys?: boolean;
     mfa?: boolean;
   };
-  /** Security settings */
   security?: {
     csrf?: boolean;
     csp?: boolean;
     rateLimit?: { windowMs?: number; max?: number };
   };
-  /** Deployment target */
   deploy?: {
     target?: "workers" | "node" | "vercel";
   };
 }
 
-/**
- * Type helper for fabrk.config.ts. Provides autocompletion.
- */
 export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {
   return config;
 }
 
-/**
- * Load fabrk.config.ts from a project root.
- * Falls back to next.config.js/mjs for migration compatibility.
- */
 export async function loadFabrkConfig(root: string): Promise<FabrkConfig> {
-  const configPath = path.join(root, "fabrk.config.ts");
-  const configPathJs = path.join(root, "fabrk.config.js");
+  const tsPath = path.join(root, "fabrk.config.ts");
+  const jsPath = path.join(root, "fabrk.config.js");
 
-  if (fs.existsSync(configPath) || fs.existsSync(configPathJs)) {
-    try {
-      const mod = await import(configPath);
-      return mod.default || mod;
-    } catch {
-      return {};
-    }
+  const importPath = fs.existsSync(tsPath)
+    ? tsPath
+    : fs.existsSync(jsPath)
+      ? jsPath
+      : null;
+
+  if (!importPath) return {};
+
+  try {
+    const mod = await import(importPath);
+    return mod.default || mod;
+  } catch (err) {
+    console.warn(`[fabrk] Failed to load config from ${importPath}:`, err);
+    return {};
   }
-
-  return {};
 }

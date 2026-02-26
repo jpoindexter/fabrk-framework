@@ -4,11 +4,8 @@ import { createAgentHandler } from "./route-handler.js";
 import type { AgentDefinition } from "./define-agent.js";
 import { scanTools } from "../tools/scanner.js";
 import { setAgents, setTools, recordCall } from "../dashboard/vite-plugin.js";
+import { buildSecurityHeaders } from "../middleware/security.js";
 
-/**
- * Vite plugin that scans agents/ and tools/ directories, registers
- * /api/agents/* middleware, and feeds the /__ai dashboard.
- */
 export function agentPlugin(): Plugin {
   let root: string;
 
@@ -24,7 +21,6 @@ export function agentPlugin(): Plugin {
       const agents = scanAgents(root);
       const tools = scanTools(root);
 
-      // Feed counts to dashboard
       setAgents(agents.length);
       setTools(tools.length);
 
@@ -52,7 +48,10 @@ export function agentPlugin(): Plugin {
           if (!agent) {
             res.statusCode = 404;
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: `Agent "${agentName}" not found` }));
+            for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+              res.setHeader(k, v);
+            }
+            res.end(JSON.stringify({ error: "Agent not found" }));
             return;
           }
 
@@ -62,8 +61,6 @@ export function agentPlugin(): Plugin {
 
             const handler = createAgentHandler({
               model: agentDef.model,
-              tools: agentDef.tools ?? [],
-              stream: agentDef.stream ?? true,
               auth: agentDef.auth ?? "none",
               systemPrompt: agentDef.systemPrompt,
               budget: agentDef.budget,
@@ -86,7 +83,10 @@ export function agentPlugin(): Plugin {
             console.error(`[fabrk] Agent "${agentName}" error:`, err);
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
-            res.end(JSON.stringify({ error: "Agent error", message: String(err) }));
+            for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+              res.setHeader(k, v);
+            }
+            res.end(JSON.stringify({ error: "Internal server error" }));
           }
         });
       };
@@ -94,14 +94,22 @@ export function agentPlugin(): Plugin {
   };
 }
 
-/** Convert Node.js IncomingMessage to Web Request */
+const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
+
 async function nodeToWebRequest(req: any, url: string): Promise<Request> {
-  const protocol = req.headers["x-forwarded-proto"] ?? "http";
+  const rawProto = req.headers["x-forwarded-proto"] ?? "http";
+  const protocol = rawProto === "https" ? "https" : "http";
   const host = req.headers.host ?? "localhost";
   const webUrl = `${protocol}://${host}${url}`;
 
   const bodyChunks: Buffer[] = [];
+  let totalSize = 0;
   for await (const chunk of req) {
+    totalSize += chunk.length;
+    if (totalSize > MAX_BODY_BYTES) {
+      req.destroy();
+      throw new Error("Request body too large");
+    }
     bodyChunks.push(chunk);
   }
   const body = Buffer.concat(bodyChunks).toString();
@@ -117,7 +125,6 @@ async function nodeToWebRequest(req: any, url: string): Promise<Request> {
   });
 }
 
-/** Write Web Response back to Node.js ServerResponse */
 async function writeWebResponse(res: any, webRes: Response): Promise<void> {
   res.statusCode = webRes.status;
   webRes.headers.forEach((value: string, key: string) => {
@@ -126,10 +133,14 @@ async function writeWebResponse(res: any, webRes: Response): Promise<void> {
 
   if (webRes.body) {
     const reader = webRes.body.getReader();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(value);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    } finally {
+      reader.releaseLock();
     }
   }
   res.end();

@@ -14,15 +14,13 @@
 | `fabrk/fabrk` | Full public API (agents, tools, prompts, middleware, config) |
 | `fabrk/agents` | `defineAgent()` |
 | `fabrk/tools` | `defineTool()`, `textResult()` |
-| `fabrk/client` | `useAgent()` React hook |
+| `fabrk/client/use-agent` | `useAgent()` React hook, `parseSSELine()` |
 | `fabrk/components` | Re-exports @fabrk/components |
 | `fabrk/themes` | Re-exports @fabrk/design-system |
 
 ## Agent System
 
 ### defineAgent(options)
-
-Define an AI agent with model, tools, auth, and budget:
 
 ```typescript
 import { defineAgent } from 'fabrk/agents'
@@ -31,19 +29,23 @@ export default defineAgent({
   model: 'claude-sonnet-4-5-20250514',
   tools: ['search-docs'],
   auth: 'required',
-  budget: { maxCostPerRequest: 0.05, dailyLimit: 10.0 },
+  budget: { daily: 10.0, perSession: 0.50 },
   systemPrompt: 'You are a helpful assistant.',
 })
 ```
 
 ### createAgentHandler(options)
 
-Creates a Web Request handler for an agent endpoint:
-
 ```typescript
 import { createAgentHandler } from 'fabrk/fabrk'
 
-const handler = createAgentHandler({ ...agentDef })
+const handler = createAgentHandler({
+  model: 'claude-sonnet-4-5-20250514',
+  tools: [],
+  stream: true,
+  auth: 'required',
+  budget: { daily: 10.0 },
+})
 // handler(request: Request) => Promise<Response>
 ```
 
@@ -53,8 +55,8 @@ const handler = createAgentHandler({ ...agentDef })
 import { createSSEResponse, formatSSEEvent } from 'fabrk/fabrk'
 
 const response = createSSEResponse(async function* () {
-  yield formatSSEEvent({ type: 'text', content: 'Hello' })
-  yield formatSSEEvent({ type: 'done' })
+  yield { type: 'text', content: 'Hello' }
+  yield { type: 'done' }
 })
 ```
 
@@ -81,7 +83,7 @@ export default defineTool({
 
 | Command | What It Does |
 |---------|-------------|
-| `fabrk dev` | vinext dev + MCP server + agent scanning |
+| `fabrk dev` | vinext dev + MCP tools + agent scanning |
 | `fabrk build` | vinext build + AGENTS.md generation |
 | `fabrk deploy` | Deploy to Cloudflare Workers (vinext) |
 | `fabrk start` | Start production server (vinext) |
@@ -90,11 +92,10 @@ export default defineTool({
 ## Client Hook
 
 ```typescript
-import { useAgent } from 'fabrk/client'
+import { useAgent } from 'fabrk/client/use-agent'
 
 function Chat() {
-  const { messages, send, isStreaming } = useAgent('/api/agents/chat')
-  // ...
+  const { messages, send, isStreaming, cost, error } = useAgent('chat')
 }
 ```
 
@@ -103,17 +104,25 @@ function Chat() {
 ```typescript
 import { createAuthGuard, buildSecurityHeaders } from 'fabrk/fabrk'
 
-const guard = createAuthGuard({ required: true })
+const guard = createAuthGuard('required')
 const headers = buildSecurityHeaders()
 ```
 
 ## Config
 
 ```typescript
-// fabrk.config.ts
 import { defineFabrkConfig } from 'fabrk/fabrk'
 
 export default defineFabrkConfig({
-  ai: { defaultModel: 'claude-sonnet-4-5-20250514', costTracking: true },
+  ai: { defaultModel: 'claude-sonnet-4-5-20250514' },
+  security: { csrf: true, csp: true },
 })
 ```
+
+## Security
+
+- Path traversal protection on prompt loading
+- Error internals never leaked to HTTP clients
+- Request body size capped at 1 MB
+- Session cost map capped at 10,000 entries
+- Security headers (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy) on all responses

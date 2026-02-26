@@ -41,13 +41,37 @@ describe("SSE stream utilities", () => {
     expect(stream).toBeInstanceOf(ReadableStream);
   });
 
-  it("createSSEResponse returns Response with correct headers", () => {
+  it("createSSEResponse returns Response with correct headers including security", () => {
     const res = createSSEResponse(async function* () {
       yield { type: "done" as const };
     });
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toBe("text/event-stream");
     expect(res.headers.get("Cache-Control")).toBe("no-cache");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+  });
+
+  it("emits error event when generator throws", async () => {
+    const stream = createSSEStream(async function* () {
+      yield { type: "text" as const, content: "partial" };
+      throw new Error("generator failure");
+    });
+
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    const chunks: string[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(decoder.decode(value));
+    }
+
+    const output = chunks.join("");
+    expect(output).toContain('"content":"partial"');
+    expect(output).toContain('"type":"error"');
+    expect(output).toContain('"message":"Stream error"');
   });
 
   it("streams events through ReadableStream", async () => {

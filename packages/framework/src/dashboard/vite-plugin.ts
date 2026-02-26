@@ -1,4 +1,5 @@
 import type { Plugin, ViteDevServer } from "vite";
+import { buildSecurityHeaders } from "../middleware/security.js";
 
 interface CallRecord {
   timestamp: number;
@@ -8,7 +9,6 @@ interface CallRecord {
   cost: number;
 }
 
-// Module-level state for tracking
 let agentCount = 0;
 let toolCount = 0;
 let calls: CallRecord[] = [];
@@ -25,7 +25,6 @@ export function setTools(count: number) {
 export function recordCall(record: CallRecord) {
   calls.push(record);
   totalCost += record.cost;
-  // Keep last 100 calls
   if (calls.length > 100) calls = calls.slice(-100);
 }
 
@@ -97,9 +96,6 @@ function generateDashboardHtml(): string {
 </html>`;
 }
 
-/**
- * Vite plugin that serves the /__ai dev dashboard.
- */
 export function dashboardPlugin(): Plugin {
   return {
     name: "fabrk:dashboard",
@@ -110,9 +106,30 @@ export function dashboardPlugin(): Plugin {
           const url: string = req.url ?? "/";
           const pathname = url.split("?")[0];
 
+          if (!pathname.startsWith("/__ai")) return next();
+
+          const remoteAddr: string | undefined = req.socket?.remoteAddress;
+          if (
+            remoteAddr &&
+            remoteAddr !== "127.0.0.1" &&
+            remoteAddr !== "::1" &&
+            remoteAddr !== "::ffff:127.0.0.1"
+          ) {
+            res.statusCode = 403;
+            res.setHeader("Content-Type", "application/json");
+            for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+              res.setHeader(k, v);
+            }
+            res.end(JSON.stringify({ error: "Dashboard only available on localhost" }));
+            return;
+          }
+
           if (pathname === "/__ai/api") {
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
+            for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+              res.setHeader(k, v);
+            }
             res.end(
               JSON.stringify({
                 agents: agentCount,
@@ -127,6 +144,9 @@ export function dashboardPlugin(): Plugin {
           if (pathname === "/__ai" || pathname === "/__ai/") {
             res.statusCode = 200;
             res.setHeader("Content-Type", "text/html");
+            for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+              res.setHeader(k, v);
+            }
             res.end(generateDashboardHtml());
             return;
           }

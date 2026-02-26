@@ -1,3 +1,5 @@
+import { buildSecurityHeaders } from "../middleware/security.js";
+
 export type SSEEvent =
   | { type: "text"; content: string }
   | {
@@ -25,7 +27,8 @@ export function createSSEStream(
           controller.enqueue(encoder.encode(formatSSEEvent(event)));
         }
       } catch (err) {
-        const errorEvent: SSEEvent = { type: "error", message: String(err) };
+        console.error("[fabrk] SSE stream error:", err);
+        const errorEvent: SSEEvent = { type: "error", message: "Stream error" };
         controller.enqueue(encoder.encode(formatSSEEvent(errorEvent)));
       } finally {
         controller.close();
@@ -43,6 +46,7 @@ export function createSSEResponse(
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
       Connection: "keep-alive",
+      ...buildSecurityHeaders(),
     },
   });
 }

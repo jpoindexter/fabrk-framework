@@ -1,11 +1,8 @@
 export type LLMProvider = "openai" | "anthropic" | "google" | "ollama";
 
 export interface LLMBridge {
-  /** Original model identifier as provided */
   model: string;
-  /** Resolved model name (prefix stripped for ollama) */
   resolvedModel: string;
-  /** Detected provider */
   provider: LLMProvider;
 }
 
@@ -22,9 +19,6 @@ function resolveModel(model: string): string {
   return model;
 }
 
-/**
- * Create an LLM bridge that connects to @fabrk/ai providers.
- */
 export function createLLMBridge(options: { model: string }): LLMBridge {
   return {
     model: options.model,

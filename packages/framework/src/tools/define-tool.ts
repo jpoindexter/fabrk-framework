@@ -3,17 +3,13 @@ export interface ToolResult {
 }
 
 export interface ToolDefinition {
-  /** Tool name (must match filename in tools/) */
   name: string;
-  /** Human-readable description for the LLM */
   description: string;
-  /** JSON Schema for the tool's input parameters */
   schema: {
     type: "object";
     properties: Record<string, unknown>;
     required?: string[];
   };
-  /** Handler function that executes the tool */
   handler: (input: Record<string, unknown>) => Promise<ToolResult>;
 }
 
@@ -28,9 +24,6 @@ export interface DefineToolOptions {
   handler: (input: Record<string, unknown>) => Promise<ToolResult>;
 }
 
-/**
- * Define a tool. Used in tools/*.ts files.
- */
 export function defineTool(options: DefineToolOptions): ToolDefinition {
   return {
     name: options.name,
@@ -40,9 +33,6 @@ export function defineTool(options: DefineToolOptions): ToolDefinition {
   };
 }
 
-/**
- * Helper to create a text result for tool responses.
- */
 export function textResult(text: string): ToolResult {
   return {
     content: [{ type: "text", text }],

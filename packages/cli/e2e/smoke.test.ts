@@ -1,12 +1,5 @@
-/**
- * E2E Smoke Test for create-fabrk-app CLI
- *
- * Verifies that `fabrk create` scaffolds a working project structure
- * from each template without errors.
- */
-
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { execSync } from 'child_process'
+import { execFileSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -40,8 +33,9 @@ describe('fabrk create', () => {
 
       beforeAll(() => {
         projectDir = path.join(tmpDir, projectName)
-        execSync(
-          `node ${CLI_DIST} create ${projectName} --template ${template} --no-install --no-git`,
+        execFileSync(
+          process.execPath,
+          [CLI_DIST, 'create', projectName, '--template', template, '--no-install', '--no-git'],
           {
             cwd: tmpDir,
             timeout: 30_000,
@@ -53,7 +47,6 @@ describe('fabrk create', () => {
       it('creates project with correct structure', () => {
         expect(fs.existsSync(projectDir)).toBe(true)
 
-        // package.json with correct name and deps
         const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf-8'))
         expect(pkg.name).toBe(projectName)
         expect(pkg.dependencies['@fabrk/core']).toBeDefined()
@@ -94,8 +87,9 @@ describe('fabrk create', () => {
 describe('fabrk create — error cases', () => {
   it('fails on invalid template name', () => {
     expect(() => {
-      execSync(
-        `node ${CLI_DIST} create bad-template-test --template nonexistent --no-install --no-git`,
+      execFileSync(
+        process.execPath,
+        [CLI_DIST, 'create', 'bad-template-test', '--template', 'nonexistent', '--no-install', '--no-git'],
         { cwd: tmpDir, timeout: 10_000, stdio: 'pipe', env: { ...process.env, NO_COLOR: '1' } }
       )
     }).toThrow()
@@ -106,8 +100,9 @@ describe('fabrk create — error cases', () => {
     fs.mkdirSync(dir, { recursive: true })
 
     expect(() => {
-      execSync(
-        `node ${CLI_DIST} create already-exists --template basic --no-install --no-git`,
+      execFileSync(
+        process.execPath,
+        [CLI_DIST, 'create', 'already-exists', '--template', 'basic', '--no-install', '--no-git'],
         { cwd: tmpDir, timeout: 10_000, stdio: 'pipe', env: { ...process.env, NO_COLOR: '1' } }
       )
     }).toThrow()

@@ -6,15 +6,13 @@ import { createAuthGuard } from "../middleware/auth-guard.js";
 import { buildSecurityHeaders } from "../middleware/security.js";
 
 export interface AgentHandlerOptions
-  extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt"> {
+  extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt" | "stream" | "tools"> {
   systemPrompt?: string;
   budget?: AgentDefinition["budget"];
   fallback?: string[];
-  /** Override LLM call — for testing or custom providers */
   _llmCall?: (
     messages: Array<{ role: string; content: string }>
   ) => Promise<LLMCallResult>;
-  /** Callback after each successful call (e.g., for dashboard recording) */
   onCallComplete?: (record: {
     agent: string;
     model: string;
@@ -23,32 +21,26 @@ export interface AgentHandlerOptions
   }) => void;
 }
 
-function jsonResponse(data: unknown, status: number, extra?: HeadersInit): Response {
+function jsonResponse(data: unknown, status: number): Response {
   const headers = {
     "Content-Type": "application/json",
     ...buildSecurityHeaders(),
-    ...(extra ?? {}),
   };
   return new Response(JSON.stringify(data), { status, headers });
 }
 
-/**
- * Create a Web-standard Request handler for an agent route.
- */
 export function createAgentHandler(options: AgentHandlerOptions) {
   const authGuard = createAuthGuard(options.auth);
-  const agentName = options.model.split("/").pop() ?? "agent";
+  const agentName = options.model.split("/").pop() || "agent";
 
   return async (req: Request): Promise<Response> => {
     if (req.method !== "POST") {
       return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
-    // Auth check
     const authResult = await authGuard(req);
     if (authResult) return authResult;
 
-    // Parse body
     let body: { messages?: Array<{ role: string; content: string }>; sessionId?: string };
     try {
       body = await req.json();
@@ -60,14 +52,23 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: "messages array required" }, 400);
     }
 
-    // Budget check
-    const sessionId = body.sessionId ?? "default";
+    for (const msg of body.messages) {
+      if (typeof msg.role !== "string" || typeof msg.content !== "string") {
+        return jsonResponse({ error: "Each message must have role and content strings" }, 400);
+      }
+      if (msg.content.length > 100_000) {
+        return jsonResponse({ error: "Message content too large" }, 400);
+      }
+    }
+
+    const sessionId = typeof body.sessionId === "string"
+      ? body.sessionId.slice(0, 128)
+      : "default";
     const budgetError = checkBudget(agentName, sessionId, options.budget);
     if (budgetError) {
       return jsonResponse({ error: budgetError }, 429);
     }
 
-    // Prepare messages with system prompt
     const messages = options.systemPrompt
       ? [{ role: "system", content: options.systemPrompt }, ...body.messages]
       : body.messages;
@@ -82,14 +83,12 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         const fallbacks = (options.fallback ?? []).map((m) =>
           createLLMBridge({ model: m })
         );
-        result = await callWithFallback(primary, fallbacks, messages, options.stream);
+        result = await callWithFallback(primary, fallbacks, messages);
       }
 
-      // Record cost for budget tracking
       const totalTokens = result.usage.promptTokens + result.usage.completionTokens;
       recordCost(agentName, sessionId, result.cost);
 
-      // Notify dashboard
       options.onCallComplete?.({
         agent: agentName,
         model: options.model,
@@ -99,7 +98,8 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
       return jsonResponse(result, 200);
     } catch (err) {
-      return jsonResponse({ error: "Agent error", message: String(err) }, 500);
+      console.error("[fabrk] Agent handler error:", err);
+      return jsonResponse({ error: "Internal server error" }, 500);
     }
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { SSEEvent } from "../agents/sse-stream.js";
 
 export interface AgentMessage {
@@ -13,10 +13,6 @@ export interface AgentUsage {
   completionTokens: number;
 }
 
-/**
- * Parse a single SSE line into an event object.
- * Returns null for non-data lines or invalid JSON.
- */
 export function parseSSELine(line: string): SSEEvent | null {
   if (!line.startsWith("data: ")) return null;
   const json = line.slice("data: ".length);
@@ -27,16 +23,6 @@ export function parseSSELine(line: string): SSEEvent | null {
   }
 }
 
-/**
- * React hook for interacting with an agent via SSE streaming.
- *
- * @example
- * ```tsx
- * const { send, messages, isStreaming, cost, error } = useAgent('chat')
- *
- * await send('Hello!')
- * ```
- */
 export function useAgent(agentName: string) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -46,6 +32,8 @@ export function useAgent(agentName: string) {
     completionTokens: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const messagesRef = useRef(messages);
+  messagesRef.current = messages;
 
   const send = useCallback(
     async (content: string) => {
@@ -53,15 +41,16 @@ export function useAgent(agentName: string) {
       setIsStreaming(true);
 
       const userMessage: AgentMessage = { role: "user", content };
-      setMessages((prev: AgentMessage[]) => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage]);
 
       try {
+        const MAX_HISTORY = 50;
         const allMessages = [
-          ...messages,
+          ...messagesRef.current.slice(-MAX_HISTORY),
           { role: "user" as const, content },
         ];
 
-        const res = await fetch(`/api/agents/${agentName}`, {
+        const res = await fetch(`/api/agents/${encodeURIComponent(agentName)}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: allMessages }),
@@ -77,54 +66,56 @@ export function useAgent(agentName: string) {
         const contentType = res.headers.get("Content-Type") ?? "";
 
         if (contentType.includes("text/event-stream") && res.body) {
-          // SSE streaming response
           const reader = res.body.getReader();
           const decoder = new TextDecoder();
           let assistantContent = "";
           let buffer = "";
 
-          setMessages((prev: AgentMessage[]) => [
+          setMessages((prev) => [
             ...prev,
             { role: "assistant", content: "" },
           ]);
 
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split("\n");
-            buffer = lines.pop() ?? "";
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
 
-            for (const line of lines) {
-              const event = parseSSELine(line);
-              if (!event) continue;
+              for (const line of lines) {
+                const event = parseSSELine(line);
+                if (!event) continue;
 
-              if (event.type === "text") {
-                assistantContent += event.content;
-                setMessages((prev: AgentMessage[]) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = {
-                    role: "assistant",
-                    content: assistantContent,
-                  };
-                  return updated;
-                });
-              } else if (event.type === "usage") {
-                setUsage({
-                  promptTokens: event.promptTokens,
-                  completionTokens: event.completionTokens,
-                });
-                setCost((prev: number) => prev + event.cost);
-              } else if (event.type === "error") {
-                setError(event.message);
+                if (event.type === "text") {
+                  assistantContent += event.content;
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      role: "assistant",
+                      content: assistantContent,
+                    };
+                    return updated;
+                  });
+                } else if (event.type === "usage") {
+                  setUsage({
+                    promptTokens: event.promptTokens,
+                    completionTokens: event.completionTokens,
+                  });
+                  setCost((prev) => prev + event.cost);
+                } else if (event.type === "error") {
+                  setError(event.message);
+                }
               }
             }
+          } finally {
+            reader.releaseLock();
           }
         } else {
-          // JSON response (non-streaming)
           const data = await res.json();
-          setMessages((prev: AgentMessage[]) => [
+          setMessages((prev) => [
             ...prev,
             { role: "assistant", content: data.content },
           ]);
@@ -135,7 +126,7 @@ export function useAgent(agentName: string) {
             });
           }
           if (data.cost) {
-            setCost((prev: number) => prev + data.cost);
+            setCost((prev) => prev + data.cost);
           }
         }
       } catch (err) {
@@ -144,7 +135,7 @@ export function useAgent(agentName: string) {
         setIsStreaming(false);
       }
     },
-    [agentName, messages]
+    [agentName]
   );
 
   return { send, messages, isStreaming, cost, usage, error };

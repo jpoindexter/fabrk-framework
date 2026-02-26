@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/security",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Security utilities for FABRK framework (CSRF, CSP, rate limiting, audit, GDPR)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

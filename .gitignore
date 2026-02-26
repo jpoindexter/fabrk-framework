@@ -19,6 +19,7 @@ playwright-report/
 # Build outputs
 dist/
 build/
+!**/src/build/
 .next/
 out/
 *.tsbuildinfo

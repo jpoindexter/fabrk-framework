@@ -40,7 +40,7 @@ jobs:
         run: pnpm audit --audit-level=high || true
 
   lint:
-    name: Lint
+    name: lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -76,7 +76,7 @@ jobs:
         run: pnpm lint
 
   type-check:
-    name: Type Check
+    name: type-check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -112,7 +112,7 @@ jobs:
         run: pnpm type-check
 
   build:
-    name: Build
+    name: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -165,7 +165,7 @@ jobs:
           retention-days: 7
 
   test:
-    name: Test
+    name: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

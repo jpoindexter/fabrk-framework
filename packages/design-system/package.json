@@ -10,11 +10,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    },
-    "./themes": {
-      "types": "./dist/themes.d.ts",
-      "import": "./dist/themes.mjs",
-      "require": "./dist/themes.js"
     }
   },
   "files": [

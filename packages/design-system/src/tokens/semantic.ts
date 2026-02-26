@@ -35,13 +35,13 @@ export interface ColorTokens {
     accent: string;
     accentHover: string;
     danger: string;
-    dangerOnColor: string; // NEW: Text on danger background
+    dangerOnColor: string;
     success: string;
-    successOnColor: string; // NEW: Text on success background
+    successOnColor: string;
     warning: string;
-    warningOnColor: string; // NEW: Text on warning background
+    warningOnColor: string;
     info: string;
-    infoOnColor: string; // NEW: Text on info background
+    infoOnColor: string;
   };
   border: {
     default: string;
@@ -50,11 +50,10 @@ export interface ColorTokens {
     accent: string;
     danger: string;
     success: string;
-    warning: string; // NEW: Warning border
+    warning: string;
     focus: string;
   };
   icon: {
-    // NEW: Icon colors
     primary: string;
     secondary: string;
     muted: string;
@@ -118,7 +117,6 @@ export interface SpacingTokens {
   };
 }
 
-// NEW: Typography text styles
 export interface TextStyle {
   fontSize: string;
   fontWeight: string;
@@ -147,7 +145,6 @@ export interface TypographyTokens {
   };
 }
 
-// NEW: State tokens
 export interface StateTokens {
   hover: {
     bgOpacity: string; // 0.08 (8% overlay)
@@ -188,210 +185,7 @@ export interface SemanticTokens {
   font: FontTokens;
   textTransform: TextTransformTokens;
   spacing: SpacingTokens;
-  typography: TypographyTokens; // NEW
-  state: StateTokens; // NEW
+  typography: TypographyTokens;
+  state: StateTokens;
 }
 
-// CSS VARIABLE NAMES (for mapping)
-
-export const cssVariableNames = {
-  color: {
-    bg: {
-      base: '--color-bg-base',
-      surface: '--color-bg-surface',
-      surfaceRaised: '--color-bg-surface-raised',
-      surfaceSunken: '--color-bg-surface-sunken',
-      muted: '--color-bg-muted',
-      accent: '--color-bg-accent',
-      accentMuted: '--color-bg-accent-muted',
-      accentHover: '--color-bg-accent-hover',
-      danger: '--color-bg-danger',
-      dangerMuted: '--color-bg-danger-muted',
-      success: '--color-bg-success',
-      successMuted: '--color-bg-success-muted',
-      warning: '--color-bg-warning',
-      warningMuted: '--color-bg-warning-muted',
-      info: '--color-bg-info',
-      infoMuted: '--color-bg-info-muted',
-    },
-    text: {
-      primary: '--color-text-primary',
-      secondary: '--color-text-secondary',
-      muted: '--color-text-muted',
-      disabled: '--color-text-disabled',
-      inverse: '--color-text-inverse',
-      accent: '--color-text-accent',
-      accentHover: '--color-text-accent-hover',
-      danger: '--color-text-danger',
-      dangerOnColor: '--color-text-danger-on-color',
-      success: '--color-text-success',
-      successOnColor: '--color-text-success-on-color',
-      warning: '--color-text-warning',
-      warningOnColor: '--color-text-warning-on-color',
-      info: '--color-text-info',
-      infoOnColor: '--color-text-info-on-color',
-    },
-    border: {
-      default: '--color-border-default',
-      muted: '--color-border-muted',
-      strong: '--color-border-strong',
-      accent: '--color-border-accent',
-      danger: '--color-border-danger',
-      success: '--color-border-success',
-      warning: '--color-border-warning',
-      focus: '--color-border-focus',
-    },
-    icon: {
-      primary: '--color-icon-primary',
-      secondary: '--color-icon-secondary',
-      muted: '--color-icon-muted',
-      accent: '--color-icon-accent',
-      danger: '--color-icon-danger',
-      success: '--color-icon-success',
-      warning: '--color-icon-warning',
-      info: '--color-icon-info',
-    },
-  },
-  radius: {
-    button: '--radius-button',
-    input: '--radius-input',
-    card: '--radius-card',
-    modal: '--radius-modal',
-    badge: '--radius-badge',
-    avatar: '--radius-avatar',
-  },
-  shadow: {
-    card: '--shadow-card',
-    dropdown: '--shadow-dropdown',
-    modal: '--shadow-modal',
-    button: '--shadow-button',
-  },
-  font: {
-    body: '--font-body',
-    heading: '--font-heading',
-    code: '--font-code',
-    ui: '--font-ui',
-  },
-  typography: {
-    display: {
-      fontSize: '--typography-display-size',
-      fontWeight: '--typography-display-weight',
-      lineHeight: '--typography-display-leading',
-      letterSpacing: '--typography-display-tracking',
-    },
-    h1: {
-      fontSize: '--typography-h1-size',
-      fontWeight: '--typography-h1-weight',
-      lineHeight: '--typography-h1-leading',
-      letterSpacing: '--typography-h1-tracking',
-    },
-    h2: {
-      fontSize: '--typography-h2-size',
-      fontWeight: '--typography-h2-weight',
-      lineHeight: '--typography-h2-leading',
-      letterSpacing: '--typography-h2-tracking',
-    },
-    h3: {
-      fontSize: '--typography-h3-size',
-      fontWeight: '--typography-h3-weight',
-      lineHeight: '--typography-h3-leading',
-      letterSpacing: '--typography-h3-tracking',
-    },
-    h4: {
-      fontSize: '--typography-h4-size',
-      fontWeight: '--typography-h4-weight',
-      lineHeight: '--typography-h4-leading',
-      letterSpacing: '--typography-h4-tracking',
-    },
-    h5: {
-      fontSize: '--typography-h5-size',
-      fontWeight: '--typography-h5-weight',
-      lineHeight: '--typography-h5-leading',
-      letterSpacing: '--typography-h5-tracking',
-    },
-    h6: {
-      fontSize: '--typography-h6-size',
-      fontWeight: '--typography-h6-weight',
-      lineHeight: '--typography-h6-leading',
-      letterSpacing: '--typography-h6-tracking',
-    },
-    body: {
-      l: {
-        fontSize: '--typography-body-l-size',
-        fontWeight: '--typography-body-l-weight',
-        lineHeight: '--typography-body-l-leading',
-        letterSpacing: '--typography-body-l-tracking',
-      },
-      m: {
-        fontSize: '--typography-body-m-size',
-        fontWeight: '--typography-body-m-weight',
-        lineHeight: '--typography-body-m-leading',
-        letterSpacing: '--typography-body-m-tracking',
-      },
-      s: {
-        fontSize: '--typography-body-s-size',
-        fontWeight: '--typography-body-s-weight',
-        lineHeight: '--typography-body-s-leading',
-        letterSpacing: '--typography-body-s-tracking',
-      },
-    },
-    label: {
-      fontSize: '--typography-label-size',
-      fontWeight: '--typography-label-weight',
-      lineHeight: '--typography-label-leading',
-      letterSpacing: '--typography-label-tracking',
-    },
-    caption: {
-      fontSize: '--typography-caption-size',
-      fontWeight: '--typography-caption-weight',
-      lineHeight: '--typography-caption-leading',
-      letterSpacing: '--typography-caption-tracking',
-    },
-    code: {
-      m: {
-        fontSize: '--typography-code-m-size',
-        fontWeight: '--typography-code-m-weight',
-        lineHeight: '--typography-code-m-leading',
-        letterSpacing: '--typography-code-m-tracking',
-      },
-      s: {
-        fontSize: '--typography-code-s-size',
-        fontWeight: '--typography-code-s-weight',
-        lineHeight: '--typography-code-s-leading',
-        letterSpacing: '--typography-code-s-tracking',
-      },
-    },
-  },
-  state: {
-    hover: {
-      bgOpacity: '--state-hover-bg-opacity',
-      borderOpacity: '--state-hover-border-opacity',
-      opacity: '--state-hover-opacity',
-    },
-    active: {
-      bgOpacity: '--state-active-bg-opacity',
-      borderOpacity: '--state-active-border-opacity',
-    },
-    focus: {
-      ringWidth: '--state-focus-ring-width',
-      ringOffset: '--state-focus-ring-offset',
-    },
-    disabled: {
-      opacity: '--state-disabled-opacity',
-    },
-    completed: {
-      opacity: '--state-completed-opacity',
-    },
-    muted: {
-      opacity: '--state-muted-opacity',
-    },
-    subtle: {
-      opacity: '--state-subtle-opacity',
-    },
-    secondary: {
-      opacity: '--state-secondary-opacity',
-    },
-  },
-} as const;
-
-export default cssVariableNames;

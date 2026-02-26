@@ -45,7 +45,7 @@ export class PrismaWebhookStore implements WebhookStore {
 
   async update(id: string, updates: Partial<WebhookConfig>): Promise<void> {
     // Whitelist allowed fields — never allow secret to be updated through this method
-    const ALLOWED_FIELDS = ['url', 'events', 'active'] as const
+    const ALLOWED_FIELDS = ['events', 'active'] as const
     const filtered: Record<string, unknown> = {}
     for (const key of ALLOWED_FIELDS) {
       if (key in updates) {

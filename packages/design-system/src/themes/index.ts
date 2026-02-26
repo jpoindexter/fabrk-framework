@@ -22,8 +22,6 @@ export const THEME_NAMES: ThemeName[] = ['terminal'];
 
 export const DEFAULT_THEME: ThemeName = 'terminal';
 
-export const CURRENT_THEME: ThemeName = 'terminal';
-
 // THEME REGISTRY
 
 export const themes: Record<ThemeName, SemanticTokens> = {

@@ -73,12 +73,7 @@ export type {
   ColorThemeName,
 } from './providers';
 
-import {
-  terminalClasses,
-  formatButtonText,
-  formatLabelText,
-  formatCardHeader,
-} from './themes';
+import { terminalClasses } from './themes';
 
 /**
  * Mode configuration — maps theme tokens to Tailwind classes.

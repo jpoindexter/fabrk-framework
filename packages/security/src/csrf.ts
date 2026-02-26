@@ -34,7 +34,8 @@ export function createCsrfProtection(config: CsrfConfig = {}): CsrfProtection {
     cookieName = '__fabrk_csrf',
     headerName = 'x-csrf-token',
     tokenLength = 32,
-    secure = process.env.NODE_ENV === 'production',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    secure = (globalThis as any).process?.env?.NODE_ENV === 'production',
     sameSite = 'strict',
   } = config
 

@@ -7,7 +7,6 @@ export {
   useThemeContext,
   useOptionalThemeContext,
   ThemeScript,
-  default as ThemeProviderDefault,
 } from './ThemeProvider';
 
 export type {

@@ -6,8 +6,8 @@
  * ```tsx
  * <DonutChart
  *   data={[
- *     { label: 'Desktop', value: 65, color: 'hsl(var(--chart-1))' },
- *     { label: 'Mobile', value: 35, color: 'hsl(var(--chart-2))' },
+ *     { label: 'Desktop', value: 65, color: 'var(--color-chart-1)' },
+ *     { label: 'Mobile', value: 35, color: 'var(--color-chart-2)' },
  *   ]}
  *   thickness={60}
  *   centerContent={<span className="text-2xl font-bold">100</span>}
@@ -136,7 +136,7 @@ export function ProgressDonutChart({
   thickness = 30,
   label,
   showPercentage = true,
-  color = 'hsl(var(--primary))',
+  color = 'var(--color-primary)',
   backgroundColor = 'var(--color-muted)',
   className,
 }: ProgressDonutChartProps) {

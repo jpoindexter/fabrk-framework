@@ -134,11 +134,15 @@ export interface ModeConfig {
   };
 
   typography: {
-    body: { m: string };
-    button: string;
+    display: { xl: string; l: string; m: string; s: string };
+    headline: { l: string; m: string; s: string };
+    title: { l: string; m: string; s: string };
+    body: { l: string; m: string; s: string };
+    label: { l: string; m: string; s: string };
+    code: { l: string; m: string; s: string };
     caption: string;
+    button: string;
     input: string;
-    label: string;
   };
 
   state: {
@@ -164,7 +168,7 @@ export const mode: ModeConfig = {
     bg: {
       base: 'bg-background',
       surface: 'bg-card',
-      surfaceRaised: 'bg-card',
+      surfaceRaised: 'bg-muted',
       elevated: 'bg-popover',
       accent: 'bg-accent',
       accentMuted: 'bg-accent/10',
@@ -210,11 +214,15 @@ export const mode: ModeConfig = {
   },
 
   typography: {
-    body: { m: 'text-body-m' },
-    button: 'text-label-m font-medium',
+    display: { xl: 'text-display-xl', l: 'text-display-l', m: 'text-display-m', s: 'text-display-s' },
+    headline: { l: 'text-headline-l', m: 'text-headline-m', s: 'text-headline-s' },
+    title: { l: 'text-title-l', m: 'text-title-m', s: 'text-title-s' },
+    body: { l: 'text-body-l', m: 'text-body-m', s: 'text-body-s' },
+    label: { l: 'text-label-l', m: 'text-label-m', s: 'text-label-s' },
+    code: { l: 'text-code-l', m: 'text-code-m', s: 'text-code-s' },
     caption: 'text-caption text-muted-foreground',
+    button: 'text-label-m font-medium',
     input: 'text-body-m',
-    label: 'text-label-m',
   },
 
   state: {

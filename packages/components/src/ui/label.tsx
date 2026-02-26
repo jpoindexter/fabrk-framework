@@ -15,7 +15,7 @@ const Label = React.forwardRef<HTMLLabelElement, LabelProps>(
         ref={ref}
         className={cn(
           mode.color.text.primary,
-          mode.typography.label,
+          mode.typography.label.m,
           mode.font,
           'peer-disabled:cursor-not-allowed peer-disabled:opacity-50',
           'transition-colors duration-200',

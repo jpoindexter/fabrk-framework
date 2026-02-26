@@ -85,10 +85,7 @@ templates/*/package-lock.json
 .cache/
 .parcel-cache/
 
-# Changesets
-.changeset/*.md
-!.changeset/README.md
-!.changeset/config.json
+# Changesets (keep .md files — they drive the release workflow)
 
 # TypeScript
 *.tsbuildinfo

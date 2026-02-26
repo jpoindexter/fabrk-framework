@@ -10,6 +10,7 @@ export default defineConfig({
     'src/client/use-agent.ts',
     'src/agents/define-agent.ts',
     'src/tools/define-tool.ts',
+    'src/build/agents-md.ts',
   ],
   format: ['esm'],
   dts: true,

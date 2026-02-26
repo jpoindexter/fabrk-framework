@@ -25,7 +25,7 @@ pnpm dev                  # Build all packages in watch mode
 pnpm build                # Build all packages for production
 pnpm type-check           # TypeScript validation across all packages
 pnpm lint                 # Lint all packages
-pnpm test                 # Run all 748 tests
+pnpm test                 # Run all 824 tests
 pnpm clean                # Remove all build artifacts
 
 # Quality
@@ -69,6 +69,8 @@ This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies fl
 @fabrk/ai (depends on core)
 @fabrk/components (depends on core, design-system)
     ↓
+fabrk (meta-package — vinext + @fabrk/ai, components, design-system)
+    ↓
 Templates & Examples (depend on all packages)
 ```
 
@@ -88,6 +90,7 @@ fabrk-framework/
 │   ├── storage/           # @fabrk/storage - S3, R2, local filesystem adapters
 │   ├── security/          # @fabrk/security - CSRF, CSP, rate limiting, audit, GDPR, CORS
 │   ├── store-prisma/      # @fabrk/store-prisma - 7 Prisma store adapters
+│   ├── framework/         # fabrk - Meta-package: vinext + AI agents, tools, MCP, dashboard
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
 ├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce)
@@ -309,6 +312,14 @@ This enables proper ESM/CJS dual-module support and TypeScript resolution.
 
 6. **`pnpm size` not `size`**: On macOS, `size` is a system binary. Use `npx size-limit` or the `pnpm size` script which wraps it correctly.
 
+7. **`fabrk` package security headers**: All HTTP response paths (auth guard errors, SSE streams, dashboard, agent route errors) must include `buildSecurityHeaders()` from `middleware/security.js`. Missing headers on any path is a security gap.
+
+8. **`fabrk` dashboard localhost-only**: The `/__ai` dev dashboard checks `req.socket.remoteAddress` against `127.0.0.1`, `::1`, `::ffff:127.0.0.1`. Never expose to non-local traffic.
+
+9. **Budget guard numeric validation**: `checkBudget` validates with `Number.isFinite()` + `>= 0` — rejects NaN, Infinity, and negative values. The `dailyCosts` map is capped at 1,000 agents with LRU eviction.
+
+10. **`||` vs `??` for empty strings**: `agentName ?? "agent"` doesn't catch `""` — use `||` when empty string should fall back to default.
+
 ---
 
 ## Component Extraction Process
@@ -487,14 +498,14 @@ Read these files for context:
 
 ### Current Stats
 
-- **17/17 packages build** (12 packages + 5 examples)
-- **748 tests**, all passing (353 root + 395 components)
+- **18/18 packages build** (13 packages + 5 examples)
+- **846 tests**, all passing (451 root across 47 files + 395 components across 44 files)
 - **109+ components**, 15 hooks, 11 chart types, 18 themes
-- **12 packages**, ~43K source lines
+- **13 packages** (12 @fabrk/* + fabrk meta-package), **23/23 type-check**
 - **5 examples**: basic-usage, docs site, saas-analytics, ecommerce, agent-demo
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher
 - **Bundle size tracking**: 7 packages tracked via size-limit, all within limits
-- **6 passes of adversarial security audits** — enterprise-grade hardening
+- **13+ passes of adversarial security audits** — enterprise-grade hardening
 
 ---
 

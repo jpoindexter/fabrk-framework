@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { checkBudget, recordCost } from "../agents/budget-guard.js";
 
 // Budget guard uses module-level Maps, so we need fresh state per test.
@@ -75,6 +75,47 @@ describe("recordCost", () => {
     // $3 total, so $2 session limit should fail
     const result = checkBudget(agent, session, { perSession: 2 });
     expect(result).toContain("Session budget exceeded");
+  });
+
+  it("throws on NaN daily budget", () => {
+    const agent = unique("agent");
+    expect(() => checkBudget(agent, "session", { daily: NaN })).toThrow(
+      "Invalid daily budget"
+    );
+  });
+
+  it("throws on negative daily budget", () => {
+    const agent = unique("agent");
+    expect(() => checkBudget(agent, "session", { daily: -5 })).toThrow(
+      "Invalid daily budget"
+    );
+  });
+
+  it("throws on Infinity perSession budget", () => {
+    const agent = unique("agent");
+    expect(() =>
+      checkBudget(agent, "session", { perSession: Infinity })
+    ).toThrow("Invalid perSession budget");
+  });
+
+  it("daily budget of 0 blocks immediately", () => {
+    const agent = unique("agent");
+    const result = checkBudget(agent, "session", { daily: 0 });
+    expect(result).toContain("Daily budget exceeded");
+  });
+
+  it("triggers alertThreshold warning", () => {
+    const agent = unique("agent");
+    const session = unique("session");
+
+    recordCost(agent, session, 8);
+
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    checkBudget(agent, session, { daily: 10, alertThreshold: 0.5 });
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("80%")
+    );
+    warnSpy.mockRestore();
   });
 
   it("tracks sessions independently", () => {

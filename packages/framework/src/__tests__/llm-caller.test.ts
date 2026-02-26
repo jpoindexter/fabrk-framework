@@ -23,8 +23,6 @@ describe("callWithFallback (via route handler)", () => {
 
     const handler = createAgentHandler({
       model: "test/model",
-      tools: [],
-      stream: false,
       auth: "none",
       _llmCall: async (messages) => ({
         content: `Echo: ${messages[messages.length - 1].content}`,
@@ -56,8 +54,6 @@ describe("callWithFallback (via route handler)", () => {
 
     const handler = createAgentHandler({
       model: "openai/gpt-4",
-      tools: [],
-      stream: false,
       auth: "none",
       _llmCall: async () => ({
         content: "OK",

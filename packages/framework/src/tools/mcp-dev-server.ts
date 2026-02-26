@@ -14,10 +14,6 @@ export interface McpToolDef {
   }>;
 }
 
-/**
- * Convert framework ToolDefinition[] to MCP-compatible tool definitions.
- * Maps `schema` -> `inputSchema` for MCP protocol compatibility.
- */
 export function buildMcpTools(tools: ToolDefinition[]): McpToolDef[] {
   return tools.map((tool) => ({
     name: tool.name,
@@ -27,19 +23,12 @@ export function buildMcpTools(tools: ToolDefinition[]): McpToolDef[] {
   }));
 }
 
-/**
- * Start an MCP dev server with the given tools.
- *
- * Attempts to use @modelcontextprotocol/sdk if available.
- * Falls back to a simple stdio JSON-RPC server if not.
- */
-export async function startMcpDevServer(
+export function startMcpDevServer(
   tools: ToolDefinition[],
-  options?: { name?: string; version?: string }
+  options?: { name?: string }
 ) {
   const mcpTools = buildMcpTools(tools);
 
-  // MCP server is optional — log tools for discoverability even without SDK
   console.log(
     `  [fabrk] MCP tools available: ${mcpTools.map((t) => t.name).join(", ")}`
   );

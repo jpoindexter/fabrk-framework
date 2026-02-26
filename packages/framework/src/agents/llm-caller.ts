@@ -8,18 +8,12 @@ export interface LLMCallResult {
 
 type Message = { role: string; content: string };
 
-/**
- * Call an LLM using @fabrk/ai's integration layer.
- * Handles provider detection and cost calculation.
- */
 export async function callLLM(
   bridge: LLMBridge,
-  messages: Message[],
-  _stream: boolean
+  messages: Message[]
 ): Promise<LLMCallResult> {
   const { ai, calculateModelCost } = await import("@fabrk/ai");
 
-  // Use the last user message as the prompt
   const userMessage = [...messages].reverse().find((m) => m.role === "user");
   const systemMessage = messages.find((m) => m.role === "system");
 
@@ -34,7 +28,6 @@ export async function callLLM(
     throw new Error(result.error?.message ?? "LLM call failed");
   }
 
-  // Estimate tokens from content length (rough heuristic)
   const promptTokens = Math.ceil(
     messages.reduce((sum, m) => sum + m.content.length, 0) / 4
   );
@@ -55,30 +48,26 @@ export async function callLLM(
   };
 }
 
-/**
- * Try the primary model, then each fallback in order.
- * Returns the first successful result.
- */
 export async function callWithFallback(
   primary: LLMBridge,
   fallbacks: LLMBridge[],
-  messages: Message[],
-  stream: boolean
+  messages: Message[]
 ): Promise<LLMCallResult> {
   const models = [primary, ...fallbacks];
 
+  let lastError: unknown;
   for (let i = 0; i < models.length; i++) {
     try {
-      return await callLLM(models[i], messages, stream);
+      return await callLLM(models[i], messages);
     } catch (err) {
-      const isLast = i === models.length - 1;
-      if (isLast) throw err;
-      console.warn(
-        `[fabrk] Model ${models[i].resolvedModel} failed, trying ${models[i + 1].resolvedModel}: ${err}`
-      );
+      lastError = err;
+      if (i < models.length - 1) {
+        console.warn(
+          `[fabrk] Model ${models[i].resolvedModel} failed, trying ${models[i + 1].resolvedModel}: ${err}`
+        );
+      }
     }
   }
 
-  // Unreachable, but TypeScript needs it
-  throw new Error("No models available");
+  throw lastError ?? new Error("No models available");
 }

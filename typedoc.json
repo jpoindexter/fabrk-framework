@@ -9,13 +9,10 @@
     "packages/auth",
     "packages/components",
     "packages/email",
-    "packages/mcp",
     "packages/payments",
-    "packages/referrals",
     "packages/security",
     "packages/storage",
-    "packages/store-prisma",
-    "packages/themes"
+    "packages/store-prisma"
   ],
   "out": "docs/api",
   "plugin": [

@@ -1,9 +1,3 @@
-/**
- * Jobs Hook
- *
- * Access the job queue from auto-wired features.
- */
-
 'use client';
 
 import { createFeatureHook } from './create-feature-hook';

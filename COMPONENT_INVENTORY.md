@@ -4,7 +4,7 @@ Complete inventory of all components exported from `@fabrk/components`. All comp
 
 **Import path:** `import { ComponentName } from '@fabrk/components'`
 
-**Total:** 109 components + 10 hooks across 9 categories.
+**Total:** 109 components + 15 hooks across 9 categories.
 
 ---
 
@@ -220,7 +220,7 @@ Structured data and navigation helpers for Next.js pages.
 
 ---
 
-## Hooks (10)
+## Hooks (15)
 
 All hooks are re-exported from `@fabrk/components`.
 

@@ -1,9 +1,3 @@
-/**
- * Billing Hook
- *
- * Access billing/payment adapter from the plugin registry.
- */
-
 'use client';
 
 import { useOptionalFabrk } from '../context';

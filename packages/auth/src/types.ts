@@ -44,6 +44,8 @@ export interface ApiKeyGeneratorConfig {
 
 export class InMemoryAuthStore implements AuthStore {
   private sessions = new Map<string, Session & { token: string }>()
+  private order: string[] = []
+  private readonly maxEntries = 10_000
 
   async getSession(sessionToken: string): Promise<Session | null> {
     const session = this.sessions.get(sessionToken)
@@ -57,6 +59,11 @@ export class InMemoryAuthStore implements AuthStore {
 
   async createSession(session: Session & { token: string }): Promise<void> {
     this.sessions.set(session.token, session)
+    this.order.push(session.token)
+    while (this.sessions.size > this.maxEntries) {
+      const oldest = this.order.shift()
+      if (oldest) this.sessions.delete(oldest)
+    }
   }
 
   async deleteSession(sessionToken: string): Promise<void> {
@@ -75,6 +82,9 @@ export class InMemoryApiKeyStore implements ApiKeyStore {
         matched = key
       }
     }
+    // Filter revoked and expired keys (matches Prisma store behavior)
+    if (matched && !matched.active) return null
+    if (matched?.expiresAt && matched.expiresAt < new Date()) return null
     return matched
   }
 

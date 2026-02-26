@@ -33,8 +33,8 @@ export interface TeamManager {
   removeMember(orgId: string, userId: string): Promise<void>
   /** Create an invitation */
   createInvite(orgId: string, email: string, role: OrgRole, invitedBy: string): Promise<OrgInvite>
-  /** Accept an invitation */
-  acceptInvite(token: string, userId: string): Promise<OrgMember | null>
+  /** Accept an invitation (email validates the accepting user matches the invite) */
+  acceptInvite(token: string, userId: string, email?: string): Promise<OrgMember | null>
 }
 
 export function createTeamManager(store: TeamStore): TeamManager {
@@ -126,11 +126,16 @@ export function createTeamManager(store: TeamStore): TeamManager {
       return invite
     },
 
-    /** @security No authorization check — caller must verify user has permission to accept this invite */
-    async acceptInvite(token: string, userId: string): Promise<OrgMember | null> {
+    /** @security Validates accepting user's email matches the invite recipient */
+    async acceptInvite(token: string, userId: string, email?: string): Promise<OrgMember | null> {
       // Store atomically checks+accepts — returns null if already accepted or expired
       const invite = await store.acceptInvite(token)
       if (!invite) return null
+
+      // Verify the accepting user matches the invited email when provided
+      if (email && invite.email.toLowerCase() !== email.toLowerCase()) {
+        return null
+      }
 
       const member: OrgMember = {
         userId,

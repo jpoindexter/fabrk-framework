@@ -1,9 +1,3 @@
-/**
- * Toast Hook
- *
- * Framework-agnostic toast state management.
- */
-
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';

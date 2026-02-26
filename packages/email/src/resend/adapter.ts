@@ -33,10 +33,11 @@ export function createResendAdapter(config: ResendAdapterConfig): EmailAdapter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let resend: any = null
 
-  function getResend() {
+  async function getResend() {
     if (!resend) {
       try {
-        const { Resend } = require('resend')
+        const mod = await import('resend')
+        const Resend = (mod as any).Resend || (mod as any).default
         resend = new Resend(config.apiKey)
       } catch {
         throw new Error(
@@ -52,7 +53,7 @@ export function createResendAdapter(config: ResendAdapterConfig): EmailAdapter {
     version: '1.0.0',
 
     async initialize() {
-      getResend()
+      await getResend()
     },
 
     isConfigured(): boolean {
@@ -60,7 +61,7 @@ export function createResendAdapter(config: ResendAdapterConfig): EmailAdapter {
     },
 
     async send(options: EmailOptions): Promise<EmailResult> {
-      const r = getResend()
+      const r = await getResend()
 
       try {
         const result = await r.emails.send({

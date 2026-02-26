@@ -1,9 +1,3 @@
-/**
- * API Keys Hook
- *
- * Access API key management from the auth adapter.
- */
-
 'use client';
 
 import { useMemo } from 'react';

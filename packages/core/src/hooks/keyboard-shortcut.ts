@@ -1,9 +1,3 @@
-/**
- * Keyboard Shortcut Hook
- *
- * Register global keyboard shortcuts with modifier key support.
- */
-
 'use client';
 
 import { useEffect } from 'react';

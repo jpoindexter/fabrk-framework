@@ -1,9 +1,3 @@
-/**
- * Edit Lock Hook
- *
- * Heartbeat-based edit lock with conflict detection.
- */
-
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';

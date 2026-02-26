@@ -82,7 +82,8 @@ describe('InMemoryApiKeyStore', () => {
     await store.create(createKeyInfo({ id: 'key-2', name: 'Revoked Key', hash: 'hash-2' }))
 
     await store.revoke('key-2')
-    expect((await store.getByHash('hash-2'))!.active).toBe(false)
+    // Revoked keys are excluded from getByHash (matches Prisma store behavior)
+    expect(await store.getByHash('hash-2')).toBeNull()
 
     const keys = await store.listByUser('user-1')
     expect(keys).toHaveLength(1)
@@ -90,6 +91,14 @@ describe('InMemoryApiKeyStore', () => {
 
     // Revoking non-existent should not throw
     await expect(store.revoke('non-existent')).resolves.toBeUndefined()
+  })
+
+  it('should exclude expired keys from getByHash', async () => {
+    await store.create(createKeyInfo({
+      id: 'key-exp', hash: 'hash-exp',
+      expiresAt: new Date(Date.now() - 1000),
+    }))
+    expect(await store.getByHash('hash-exp')).toBeNull()
   })
 
   it('should list active keys by user and return empty when none exist', async () => {

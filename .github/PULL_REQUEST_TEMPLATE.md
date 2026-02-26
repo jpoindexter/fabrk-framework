@@ -8,13 +8,19 @@
 
 ## Package(s) Affected
 
+- [ ] `@fabrk/config`
+- [ ] `@fabrk/design-system`
 - [ ] `@fabrk/core`
 - [ ] `@fabrk/components`
-- [ ] `@fabrk/design-system`
 - [ ] `@fabrk/ai`
-- [ ] `@fabrk/config`
+- [ ] `@fabrk/auth`
+- [ ] `@fabrk/payments`
+- [ ] `@fabrk/email`
+- [ ] `@fabrk/storage`
+- [ ] `@fabrk/security`
+- [ ] `@fabrk/store-prisma`
 - [ ] `create-fabrk-app`
-- [ ] Templates
+- [ ] Templates / Examples
 - [ ] Documentation
 
 ## Type

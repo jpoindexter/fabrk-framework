@@ -71,7 +71,7 @@ const quickReference = [
       { name: 'PromptBuilder', kind: 'class', description: 'Fluent prompt construction' },
       { name: 'createPromptTemplate / composePrompts', kind: 'function', description: 'Reusable prompt templates' },
       { name: 'generateEmbeddings / cosineSimilarity', kind: 'function', description: 'Vector embeddings and similarity' },
-      { name: 'createTextStream / mergeStreams', kind: 'function', description: 'Streaming response utilities' },
+      { name: 'createTextStream / concatStreams', kind: 'function', description: 'Streaming response utilities' },
       { name: 'createAIMiddleware / budgetEnforcement', kind: 'function', description: 'AI request middleware and budget limits' },
     ],
   },

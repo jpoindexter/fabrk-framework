@@ -47,25 +47,3 @@ export type { WebhookManager } from './webhooks/manager'
 export { createJobQueue } from './jobs/queue'
 export type { JobQueue } from './jobs/queue'
 
-// Validation utilities
-export {
-  // Types
-  type Severity,
-  type ValidationIssue,
-  type ValidationReport,
-  type ComponentMeta,
-  type ComponentRegistry,
-  // Validators
-  checkHardcodedColors,
-  checkInlineStyles,
-  checkEvalUsage,
-  checkDangerousHTML,
-  checkHardcodedSecrets,
-  checkAccessibility,
-  validateFile,
-  // Registry
-  createComponentRegistry,
-  // Report
-  generateReport,
-  formatReport,
-} from './validation'

@@ -1,8 +1,5 @@
 /**
  * React Hooks for FABRK Framework
- *
- * Cost tracking, billing, teams, feature flags, and other framework utilities.
- * Design system hooks are provided by @fabrk/design-system (separate package).
  */
 
 export { useBilling } from './billing'

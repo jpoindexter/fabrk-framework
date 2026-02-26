@@ -69,17 +69,14 @@ export function createFeatureFlagManager(
       if (!flag) return false
       if (!flag.enabled) return false
 
-      // Check user targeting
       if (flag.targetUsers?.length && context?.userId) {
         if (flag.targetUsers.includes(context.userId)) return true
       }
 
-      // Check role targeting
       if (flag.targetRoles?.length) {
         if (!context?.role || !flag.targetRoles.includes(context.role)) return false
       }
 
-      // Check rollout percentage
       if (flag.rolloutPercent !== undefined && flag.rolloutPercent < 100) {
         if (!context?.userId) {
           // No user context — use cryptographically secure random

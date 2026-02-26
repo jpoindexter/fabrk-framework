@@ -121,6 +121,8 @@ export function createJobQueue(store?: JobStore): JobQueue {
         attempts: nextAttempts,
       })
     } catch {
+      // Reset to pending so inFlight is cleared and job can be retried
+      await jobStore.update(job.id, { status: 'pending' }).catch(() => {})
       return false
     }
 

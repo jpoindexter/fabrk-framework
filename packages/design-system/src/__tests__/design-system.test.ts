@@ -3,17 +3,15 @@ import {
   formatButtonText,
   formatLabelText,
   formatCardHeader,
-  formatStatusText,
   terminalClasses,
   // Chart colors
   CHART_FALLBACK_COLORS,
   getChartColors,
   getChartColor,
   getChartColorVars,
-  // Presets
-  hashmarkVariables,
-  generateHashmarkCss,
 } from '../index'
+import { formatStatusText } from '../themes'
+import { hashmarkVariables, generateHashmarkCss } from '../presets'
 
 // TERMINAL THEME UTILITY FUNCTIONS
 

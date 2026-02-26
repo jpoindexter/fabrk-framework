@@ -145,7 +145,7 @@ function MetricsPage() {
       'Chat: chatWithOpenAI(), chatWithClaude(), chat()',
       'Cost: AICostTracker, InMemoryCostStore, MODEL_PRICING, CostStore interface',
       'Embeddings: getEmbeddingProvider(), cosineSimilarity(), findNearest()',
-      'Streaming: parseStreamChunks(), createTextStream(), mergeStreams()',
+      'Streaming: parseStreamChunks(), createTextStream(), concatStreams()',
       'Prompts: PromptBuilder, createPromptTemplate(), composePrompts()',
       'Content: moderateContent(), generateImage(), textToSpeech(), speechToText()',
     ],

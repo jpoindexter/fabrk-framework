@@ -2,18 +2,7 @@
 import type { StorageAdapter } from '@fabrk/core'
 import type { UploadOptions, UploadResult, SignedUrlOptions, SignedUrlResult } from '@fabrk/core'
 import type { S3AdapterConfig } from '../types'
-import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath } from '../validation'
-
-/**
- * Sanitize a filename component only (no path separators, no timestamp prefix).
- * Used when the caller provides an explicit path so the filename is sanitized
- * without adding the timestamp that generateStorageKey() appends.
- */
-function sanitizeFilename(filename: string): string {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-    .replace(/_{2,}/g, '_')
-}
+import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath, sanitizeFilename } from '../validation'
 
 export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
   let s3Client: any = null

@@ -391,7 +391,7 @@ let defaultTracker: AICostTracker | null = null;
  * Strict: AI_DAILY_BUDGET=0 is honoured (blocks all AI calls).
  */
 function parseBudgetFromEnv(): number | undefined {
-  const raw = process.env.AI_DAILY_BUDGET;
+  const raw = (globalThis as any).process?.env?.AI_DAILY_BUDGET as string | undefined;
   if (raw === undefined || raw === '') return undefined;
   const parsed = Number(raw);
   if (!isFinite(parsed) || parsed < 0) {

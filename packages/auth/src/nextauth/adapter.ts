@@ -119,7 +119,7 @@ export function createNextAuthAdapter(
     }): Promise<ApiKeyCreateResult> {
       const { key, prefix, hash } = await generateApiKey()
 
-      const keyInfo: ApiKeyInfo & { hash: string; userId?: string } = {
+      const keyInfo: ApiKeyInfo & { hash: string; userId: string } = {
         id: crypto.randomUUID(),
         prefix,
         name: options.name,

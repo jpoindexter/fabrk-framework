@@ -20,7 +20,7 @@ export class PrismaApiKeyStore implements ApiKeyStore {
   }
 
   /** @security No authorization check — caller must verify the requesting user has permission to create API keys. */
-  async create(key: ApiKeyInfo & { hash: string }): Promise<void> {
+  async create(key: ApiKeyInfo & { hash: string; userId: string }): Promise<void> {
     await this.prisma.apiKey.create({
       data: {
         id: key.id,
@@ -28,7 +28,7 @@ export class PrismaApiKeyStore implements ApiKeyStore {
         hash: key.hash,
         name: key.name,
         scopes: key.scopes,
-        userId: (key as ApiKeyInfo & { hash: string; userId?: string }).userId,
+        userId: key.userId,
         active: key.active,
         createdAt: key.createdAt,
         expiresAt: key.expiresAt,

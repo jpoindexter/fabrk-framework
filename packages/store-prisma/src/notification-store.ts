@@ -45,10 +45,9 @@ export class PrismaNotificationStore implements NotificationStore {
     return notifications.map((n: any) => mapNotification(n))
   }
 
-  /** @security No ownership check — caller must verify the notification belongs to the requesting user. */
-  async markRead(id: string): Promise<void> {
-    await this.prisma.notification.update({
-      where: { id },
+  async markRead(id: string, userId: string): Promise<void> {
+    await this.prisma.notification.updateMany({
+      where: { id, userIds: { has: userId } },
       data: { read: true },
     })
   }
@@ -63,10 +62,9 @@ export class PrismaNotificationStore implements NotificationStore {
     })
   }
 
-  /** @security No ownership check — caller must verify the notification belongs to the requesting user. */
-  async dismiss(id: string): Promise<void> {
-    await this.prisma.notification.update({
-      where: { id },
+  async dismiss(id: string, userId: string): Promise<void> {
+    await this.prisma.notification.updateMany({
+      where: { id, userIds: { has: userId } },
       data: { dismissed: true },
     })
   }

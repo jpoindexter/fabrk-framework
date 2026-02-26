@@ -78,9 +78,8 @@ export class InMemoryApiKeyStore implements ApiKeyStore {
     return matched
   }
 
-  async create(key: ApiKeyInfo & { hash: string }): Promise<void> {
-    // Store userId if present on the key object for listByUser filtering
-    this.keys.set(key.id, key as ApiKeyInfo & { hash: string; userId?: string })
+  async create(key: ApiKeyInfo & { hash: string; userId: string }): Promise<void> {
+    this.keys.set(key.id, key)
   }
 
   async revoke(id: string): Promise<void> {

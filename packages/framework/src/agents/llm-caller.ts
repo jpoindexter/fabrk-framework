@@ -63,7 +63,7 @@ export async function callWithFallback(
       lastError = err;
       if (i < models.length - 1) {
         console.warn(
-          `[fabrk] Model ${models[i].resolvedModel} failed, trying ${models[i + 1].resolvedModel}: ${err}`
+          `[fabrk] Model ${models[i].resolvedModel} failed, trying ${models[i + 1].resolvedModel}`
         );
       }
     }

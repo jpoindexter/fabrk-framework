@@ -29,6 +29,18 @@ describe("interpolatePrompt", () => {
     const result = interpolatePrompt("{{x}} and {{x}} again", { x: "hi" });
     expect(result).toBe("hi and hi again");
   });
+
+  it("does not resolve prototype properties (prototype pollution prevention)", () => {
+    const result = interpolatePrompt("{{constructor}} {{toString}}", {});
+    expect(result).toBe("{{constructor}} {{toString}}");
+  });
+
+  it("handles $-sequence characters in variable values", () => {
+    const result = interpolatePrompt("Price: {{amount}}", {
+      amount: "$100 $& $' $` $1",
+    });
+    expect(result).toBe("Price: $100 $& $' $` $1");
+  });
 });
 
 describe("loadPrompt", () => {
@@ -108,6 +120,22 @@ describe("loadPrompt", () => {
     const result = await loadPrompt(tmpDir, "recursive.md");
     expect(result).not.toContain("{{>");
     expect(result.length).toBeLessThan(10_000);
+  });
+
+  it("preserves $-sequence characters in partial content", async () => {
+    const promptsDir = path.join(tmpDir, "prompts");
+    fs.mkdirSync(promptsDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(promptsDir, "system.md"),
+      "Price: {{> pricing.md}}"
+    );
+    fs.writeFileSync(
+      path.join(promptsDir, "pricing.md"),
+      "$100 $& $' $` $1"
+    );
+
+    const result = await loadPrompt(tmpDir, "system.md");
+    expect(result).toBe("Price: $100 $& $' $` $1");
   });
 
   it("handles nested partials", async () => {

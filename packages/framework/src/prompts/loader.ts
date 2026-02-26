@@ -6,7 +6,7 @@ export function interpolatePrompt(
   variables: Record<string, string>
 ): string {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-    return key in variables ? variables[key] : match;
+    return Object.hasOwn(variables, key) ? variables[key] : match;
   });
 }
 
@@ -41,7 +41,7 @@ export async function loadPrompt(
   for (const match of matches) {
     const partialPath = match[1].trim();
     const partialContent = await loadPrompt(root, partialPath, depth + 1);
-    content = content.replace(match[0], partialContent);
+    content = content.replace(match[0], () => partialContent);
   }
 
   return content;

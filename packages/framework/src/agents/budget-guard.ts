@@ -34,6 +34,9 @@ export function checkBudget(
     }
 
     const threshold = budget.alertThreshold ?? 0.8;
+    if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
+      throw new Error(`[fabrk] Invalid alertThreshold: ${threshold}`);
+    }
     if (spent >= budget.daily * threshold) {
       console.warn(
         `[fabrk] Agent "${agentName}" at ${((spent / budget.daily) * 100).toFixed(0)}% of daily budget`
@@ -57,6 +60,9 @@ export function recordCost(
   sessionId: string,
   cost: number
 ): void {
+  if (!Number.isFinite(cost) || cost < 0) {
+    throw new Error(`[fabrk] Invalid cost value: ${cost}`);
+  }
   const currentDay = today();
   const entry = dailyCosts.get(agentName);
   if (entry?.date === currentDay) {

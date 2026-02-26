@@ -23,9 +23,8 @@ export default function fabrk(options: FabrkOptions = {}): Plugin[] {
   return [...vinextPlugins, ...plugins];
 }
 
-export { vinext };
 export { defineAgent } from "./agents/define-agent.js";
 export type { AgentDefinition } from "./agents/define-agent.js";
-export { defineTool } from "./tools/define-tool.js";
-export type { ToolDefinition } from "./tools/define-tool.js";
+export { defineTool, textResult } from "./tools/define-tool.js";
+export type { ToolDefinition, ToolResult } from "./tools/define-tool.js";
 export { loadFabrkConfig } from "./config/fabrk-config.js";

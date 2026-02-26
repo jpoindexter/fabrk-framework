@@ -24,7 +24,9 @@ export function setTools(count: number) {
 
 export function recordCall(record: CallRecord) {
   calls.push(record);
-  totalCost += record.cost;
+  if (Number.isFinite(record.cost)) {
+    totalCost += record.cost;
+  }
   if (calls.length > 100) calls = calls.slice(-100);
 }
 
@@ -103,12 +105,12 @@ export function dashboardPlugin(): Plugin {
     configureServer(server: ViteDevServer) {
       return () => {
         server.middlewares.use((req: any, res: any, next: any) => {
-          const url: string = req.url ?? "/";
+          const url = req.url ?? "/";
           const pathname = url.split("?")[0];
 
           if (!pathname.startsWith("/__ai")) return next();
 
-          const remoteAddr: string | undefined = req.socket?.remoteAddress;
+          const remoteAddr = req.socket?.remoteAddress;
           if (
             remoteAddr &&
             remoteAddr !== "127.0.0.1" &&

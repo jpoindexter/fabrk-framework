@@ -36,4 +36,3 @@ export { buildSecurityHeaders } from "./middleware/security.js";
 export { generateAgentsMd } from "./build/agents-md.js";
 export type { AgentsMdInput } from "./build/agents-md.js";
 
-export { parseSSELine } from "./client/use-agent.js";

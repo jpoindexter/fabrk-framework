@@ -52,9 +52,17 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: "messages array required" }, 400);
     }
 
+    if (body.messages.length > 200) {
+      return jsonResponse({ error: "Too many messages (max 200)" }, 400);
+    }
+
+    const ALLOWED_ROLES = new Set(["user", "assistant"]);
     for (const msg of body.messages) {
       if (typeof msg.role !== "string" || typeof msg.content !== "string") {
         return jsonResponse({ error: "Each message must have role and content strings" }, 400);
+      }
+      if (!ALLOWED_ROLES.has(msg.role)) {
+        return jsonResponse({ error: `Invalid role: ${msg.role}` }, 400);
       }
       if (msg.content.length > 100_000) {
         return jsonResponse({ error: "Message content too large" }, 400);

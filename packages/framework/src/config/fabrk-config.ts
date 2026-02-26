@@ -33,8 +33,9 @@ export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {
 }
 
 export async function loadFabrkConfig(root: string): Promise<FabrkConfig> {
-  const tsPath = path.join(root, "fabrk.config.ts");
-  const jsPath = path.join(root, "fabrk.config.js");
+  const resolvedRoot = path.resolve(root);
+  const tsPath = path.join(resolvedRoot, "fabrk.config.ts");
+  const jsPath = path.join(resolvedRoot, "fabrk.config.js");
 
   const importPath = fs.existsSync(tsPath)
     ? tsPath
@@ -43,6 +44,10 @@ export async function loadFabrkConfig(root: string): Promise<FabrkConfig> {
       : null;
 
   if (!importPath) return {};
+
+  if (!importPath.startsWith(resolvedRoot + path.sep) && importPath !== resolvedRoot) {
+    return {};
+  }
 
   try {
     const mod = await import(importPath);

@@ -23,6 +23,8 @@ export function parseSSELine(line: string): SSEEvent | null {
   }
 }
 
+const MAX_HISTORY = 50;
+
 export function useAgent(agentName: string) {
   const [messages, setMessages] = useState<AgentMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -44,7 +46,6 @@ export function useAgent(agentName: string) {
       setMessages((prev) => [...prev, userMessage]);
 
       try {
-        const MAX_HISTORY = 50;
         const allMessages = [
           ...messagesRef.current.slice(-MAX_HISTORY),
           { role: "user" as const, content },

@@ -129,4 +129,43 @@ describe("recordCost", () => {
     const result = checkBudget(agent, sessionB, { perSession: 5 });
     expect(result).toBeNull();
   });
+
+  it("throws on NaN cost value", () => {
+    const agent = unique("agent");
+    const session = unique("session");
+    expect(() => recordCost(agent, session, NaN)).toThrow("Invalid cost value");
+  });
+
+  it("throws on Infinity cost value", () => {
+    const agent = unique("agent");
+    const session = unique("session");
+    expect(() => recordCost(agent, session, Infinity)).toThrow("Invalid cost value");
+  });
+
+  it("throws on negative cost value", () => {
+    const agent = unique("agent");
+    const session = unique("session");
+    expect(() => recordCost(agent, session, -1)).toThrow("Invalid cost value");
+  });
+
+  it("throws on invalid alertThreshold", () => {
+    const agent = unique("agent");
+    expect(() =>
+      checkBudget(agent, "session", { daily: 10, alertThreshold: 1.5 })
+    ).toThrow("Invalid alertThreshold");
+  });
+
+  it("throws on NaN alertThreshold", () => {
+    const agent = unique("agent");
+    expect(() =>
+      checkBudget(agent, "session", { daily: 10, alertThreshold: NaN })
+    ).toThrow("Invalid alertThreshold");
+  });
+
+  it("throws on negative alertThreshold", () => {
+    const agent = unique("agent");
+    expect(() =>
+      checkBudget(agent, "session", { daily: 10, alertThreshold: -0.1 })
+    ).toThrow("Invalid alertThreshold");
+  });
 });

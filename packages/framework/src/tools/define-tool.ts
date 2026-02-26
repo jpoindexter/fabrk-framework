@@ -13,24 +13,8 @@ export interface ToolDefinition {
   handler: (input: Record<string, unknown>) => Promise<ToolResult>;
 }
 
-export interface DefineToolOptions {
-  name: string;
-  description: string;
-  schema: {
-    type: "object";
-    properties: Record<string, unknown>;
-    required?: string[];
-  };
-  handler: (input: Record<string, unknown>) => Promise<ToolResult>;
-}
-
-export function defineTool(options: DefineToolOptions): ToolDefinition {
-  return {
-    name: options.name,
-    description: options.description,
-    schema: options.schema,
-    handler: options.handler,
-  };
+export function defineTool(options: ToolDefinition): ToolDefinition {
+  return options;
 }
 
 export function textResult(text: string): ToolResult {

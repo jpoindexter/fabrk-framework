@@ -37,7 +37,7 @@ export function agentPlugin(): Plugin {
 
       return () => {
         server.middlewares.use(async (req: any, res: any, next: any) => {
-          const url: string = req.url ?? "/";
+          const url = req.url ?? "/";
           const pathname = url.split("?")[0];
 
           if (!pathname.startsWith("/api/agents/")) return next();
@@ -57,7 +57,21 @@ export function agentPlugin(): Plugin {
 
           try {
             const mod = await server.ssrLoadModule(agent.filePath);
-            const agentDef: AgentDefinition = mod.default ?? mod;
+            const agentDef = mod.default ?? mod;
+
+            if (
+              !agentDef ||
+              typeof agentDef !== "object" ||
+              typeof agentDef.model !== "string"
+            ) {
+              res.statusCode = 500;
+              res.setHeader("Content-Type", "application/json");
+              for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+                res.setHeader(k, v);
+              }
+              res.end(JSON.stringify({ error: "Invalid agent definition" }));
+              return;
+            }
 
             const handler = createAgentHandler({
               model: agentDef.model,
@@ -97,10 +111,7 @@ export function agentPlugin(): Plugin {
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
 
 async function nodeToWebRequest(req: any, url: string): Promise<Request> {
-  const rawProto = req.headers["x-forwarded-proto"] ?? "http";
-  const protocol = rawProto === "https" ? "https" : "http";
-  const host = req.headers.host ?? "localhost";
-  const webUrl = `${protocol}://${host}${url}`;
+  const webUrl = `http://localhost${url}`;
 
   const bodyChunks: Buffer[] = [];
   let totalSize = 0;

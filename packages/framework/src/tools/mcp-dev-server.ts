@@ -28,10 +28,5 @@ export function startMcpDevServer(
   options?: { name?: string }
 ) {
   const mcpTools = buildMcpTools(tools);
-
-  console.log(
-    `  [fabrk] MCP tools available: ${mcpTools.map((t) => t.name).join(", ")}`
-  );
-
   return { tools: mcpTools, name: options?.name ?? "fabrk-dev" };
 }

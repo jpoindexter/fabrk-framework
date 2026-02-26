@@ -25,7 +25,7 @@ pnpm dev                  # Build all packages in watch mode
 pnpm build                # Build all packages for production
 pnpm type-check           # TypeScript validation across all packages
 pnpm lint                 # Lint all packages
-pnpm test                 # Run all 824 tests
+pnpm test                 # Run all 858 tests
 pnpm clean                # Remove all build artifacts
 
 # Quality
@@ -499,13 +499,13 @@ Read these files for context:
 ### Current Stats
 
 - **18/18 packages build** (13 packages + 5 examples)
-- **846 tests**, all passing (451 root across 47 files + 395 components across 44 files)
+- **858 tests**, all passing (463 root across 47 files + 395 components across 44 files)
 - **109+ components**, 15 hooks, 11 chart types, 18 themes
 - **13 packages** (12 @fabrk/* + fabrk meta-package), **23/23 type-check**
 - **5 examples**: basic-usage, docs site, saas-analytics, ecommerce, agent-demo
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher
 - **Bundle size tracking**: 7 packages tracked via size-limit, all within limits
-- **13+ passes of adversarial security audits** — enterprise-grade hardening
+- **14+ passes of adversarial security audits** — enterprise-grade hardening
 
 ---
 

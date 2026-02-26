@@ -24,8 +24,6 @@ export interface KeyboardShortcutOptions {
   disabled?: boolean;
 }
 
-// HOOK: useKeyboardShortcut
-
 /**
  * Register a global keyboard shortcut. Ignores input/textarea focus.
  *

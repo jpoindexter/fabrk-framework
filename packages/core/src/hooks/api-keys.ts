@@ -9,8 +9,6 @@
 import { useMemo } from 'react';
 import { useOptionalFabrk } from '../context';
 
-// HOOK: useAPIKeys
-
 /**
  * Access API key management from the auth adapter
  *

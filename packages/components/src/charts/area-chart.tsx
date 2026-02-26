@@ -13,20 +13,7 @@ import {
 } from 'recharts';
 import { cn } from '@fabrk/core';
 import { mode } from '@fabrk/design-system';
-
-// Theme colors using CSS custom properties directly
-const THEME_COLORS = {
-  chart: [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-  ],
-  muted: 'hsl(var(--muted-foreground))',
-  border: 'hsl(var(--border))',
-  text: 'hsl(var(--foreground))',
-};
+import { CHART_COLORS } from './chart-theme';
 
 export interface AreaChartDataPoint {
   [key: string]: string | number;
@@ -97,7 +84,7 @@ export function AreaChart({
   gradient = true,
   className,
 }: AreaChartProps) {
-  const colors = THEME_COLORS.chart;
+  const colors = CHART_COLORS.chart;
 
   // Memoize tooltip to prevent recreation on every render
   const CustomTooltip = React.useMemo(
@@ -160,19 +147,19 @@ export function AreaChart({
           )}
 
           {showGrid && (
-            <CartesianGrid strokeDasharray="3 3" stroke={THEME_COLORS.border} opacity={0.5} />
+            <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.border} opacity={0.5} />
           )}
           <XAxis
             dataKey={xAxisKey}
-            tick={{ fill: THEME_COLORS.muted, fontSize: 12 }}
-            tickLine={{ stroke: THEME_COLORS.border }}
-            axisLine={{ stroke: THEME_COLORS.border }}
+            tick={{ fill: CHART_COLORS.muted, fontSize: 12 }}
+            tickLine={{ stroke: CHART_COLORS.border }}
+            axisLine={{ stroke: CHART_COLORS.border }}
             tickFormatter={xAxisFormatter}
           />
           <YAxis
-            tick={{ fill: THEME_COLORS.muted, fontSize: 12 }}
-            tickLine={{ stroke: THEME_COLORS.border }}
-            axisLine={{ stroke: THEME_COLORS.border }}
+            tick={{ fill: CHART_COLORS.muted, fontSize: 12 }}
+            tickLine={{ stroke: CHART_COLORS.border }}
+            axisLine={{ stroke: CHART_COLORS.border }}
             tickFormatter={yAxisFormatter}
           />
           {showTooltip && <Tooltip content={CustomTooltip} />}
@@ -278,7 +265,7 @@ export function StackedAreaChart({
   stackColors,
   ...props
 }: StackedAreaChartProps) {
-  const colors = stackColors || THEME_COLORS.chart;
+  const colors = stackColors || CHART_COLORS.chart;
 
   const series: AreaChartSeries[] = stackKeys.map((key, index) => ({
     dataKey: key,

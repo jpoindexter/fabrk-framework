@@ -6,9 +6,7 @@
 
 'use client';
 
-import { useOptionalFabrk } from '../context';
-
-// HOOK: useNotifications
+import { createFeatureHook } from './create-feature-hook';
 
 /**
  * Access the notification manager
@@ -35,12 +33,4 @@ import { useOptionalFabrk } from '../context';
  * }
  * ```
  */
-export function useNotifications() {
-  const fabrk = useOptionalFabrk();
-  const manager = fabrk?.features?.notifications ?? null;
-
-  return {
-    enabled: !!manager,
-    manager,
-  };
-}
+export const useNotifications = createFeatureHook('notifications');

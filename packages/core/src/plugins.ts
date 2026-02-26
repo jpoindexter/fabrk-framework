@@ -289,17 +289,16 @@ export class PluginRegistry {
 
   /**
    * Destroy all registered adapters and plugins.
-   * All plugins are destroyed even if some fail; failures are logged but not thrown.
+   * All plugins are destroyed even if some fail; throws AggregateError if any fail.
    */
   async destroy(): Promise<void> {
     const all = [...this.adapters.values(), ...this.plugins]
     const results = await Promise.allSettled(all.map((p) => p.destroy?.() ?? Promise.resolve()))
     this.adapters.clear()
     this.plugins = []
-    for (const result of results) {
-      if (result.status === 'rejected') {
-        console.error('[FABRK] Plugin destroy error:', result.reason)
-      }
+    const failures = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+    if (failures.length > 0) {
+      throw new AggregateError(failures.map((f) => f.reason), 'Plugin destroy failed')
     }
   }
 }

@@ -33,7 +33,7 @@ import { createWebhookManager, type WebhookManager } from './webhooks/manager'
 import { createJobQueue, type JobQueue } from './jobs/queue'
 import { isDev } from './defaults'
 
-// Helper: safely read env vars without direct process.env reference
+// Edge-safe env var access — avoids ReferenceError on Cloudflare Workers
 function env(key: string, fallback = ''): string {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,7 +149,6 @@ export async function autoWire(
   // Wire feature modules (sync, no external deps)
   const features = wireFeatures(config, stores)
 
-  // Initialize all adapters
   await registry.initialize()
 
   return { registry, features }

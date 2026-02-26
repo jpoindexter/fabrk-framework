@@ -66,28 +66,18 @@ export function useOptionalFabrk(): FabrkContextValue | null {
   return useContext(FabrkContext)
 }
 
-// PROVIDER
+// INTERNAL PROVIDER — used by FabrkProvider in providers.tsx, not exported publicly
 
-export interface FabrkContextProviderProps {
-  children: ReactNode
-  config: FabrkConfig
-  registry: PluginRegistry
-  features?: FeatureModules
-}
-
-/**
- * Internal context provider component
- *
- * Used by the main FabrkProvider in providers.tsx. Not intended for direct use.
- */
+/** @internal */
 export function FabrkContextProvider({
   children,
-  config,
-  registry,
-  features,
-}: FabrkContextProviderProps) {
+  value,
+}: {
+  children: ReactNode
+  value: FabrkContextValue
+}) {
   return (
-    <FabrkContext.Provider value={{ config, registry, features }}>
+    <FabrkContext.Provider value={value}>
       {children}
     </FabrkContext.Provider>
   )

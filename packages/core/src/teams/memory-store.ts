@@ -10,10 +10,10 @@ import type {
   TeamStore,
 } from '../plugin-types'
 
-const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+const POISONED_MAP_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
 
 function validateKey(key: string): void {
-  if (POISONED_KEYS.has(key)) {
+  if (POISONED_MAP_KEYS.has(key)) {
     throw new Error(`Invalid key: "${key}" is a restricted property name`)
   }
 }
@@ -42,12 +42,13 @@ export class InMemoryTeamStore implements TeamStore {
 
   async updateOrg(id: string, updates: Partial<Organization>): Promise<void> {
     validateKey(id)
+    const ALLOWED_FIELDS = ['name', 'logoUrl', 'settings'] as const
     const org = this.orgs.get(id)
     if (org) {
-      // Only copy own, non-prototype-polluting properties
-      for (const key of Object.keys(updates)) {
-        if (POISONED_KEYS.has(key)) continue
-        ;(org as unknown as Record<string, unknown>)[key] = (updates as unknown as Record<string, unknown>)[key]
+      for (const key of ALLOWED_FIELDS) {
+        if (key in updates) {
+          ;(org as unknown as Record<string, unknown>)[key] = (updates as unknown as Record<string, unknown>)[key]
+        }
       }
     }
   }

@@ -6,9 +6,7 @@
 
 'use client';
 
-import { useOptionalFabrk } from '../context';
-
-// HOOK: useWebhooks
+import { createFeatureHook } from './create-feature-hook';
 
 /**
  * Access the webhook manager
@@ -30,12 +28,4 @@ import { useOptionalFabrk } from '../context';
  * }
  * ```
  */
-export function useWebhooks() {
-  const fabrk = useOptionalFabrk();
-  const manager = fabrk?.features?.webhooks ?? null;
-
-  return {
-    enabled: !!manager,
-    manager,
-  };
-}
+export const useWebhooks = createFeatureHook('webhooks');

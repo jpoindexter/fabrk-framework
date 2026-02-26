@@ -21,6 +21,7 @@
 
 import type { CostStore, AICostEvent } from './cost-types'
 import { getCostTracker } from './tracker'
+import { LLM_DEFAULTS } from './llm/types'
 
 export interface AIRequestContext {
   /** The prompt or messages to send */
@@ -180,9 +181,9 @@ export interface FallbackConfig {
 
 /** Default model for each provider */
 const DEFAULT_MODELS: Record<ProviderName, string> = {
-  claude: 'claude-sonnet-4-20250514',
-  openai: 'gpt-4o',
-  ollama: 'llama3',
+  claude: LLM_DEFAULTS.anthropicModel,
+  openai: LLM_DEFAULTS.openaiModel,
+  ollama: LLM_DEFAULTS.ollamaModel,
 }
 
 /**

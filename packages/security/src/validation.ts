@@ -13,27 +13,6 @@ export function stripHtml(input: string): string {
   return input.replace(/<[^>]*(>|$)/gm, '')
 }
 
-/**
- * @deprecated **SECURITY WARNING**: Do NOT rely on this function for SQL injection
- * protection. This blocklist approach does not protect against Unicode escapes,
- * double-encoding, nested quoting, or database-specific injection vectors.
- *
- * **Use parameterized queries / prepared statements instead.**
- *
- * This function will be removed in a future major version. It is retained only
- * to avoid a breaking change for existing consumers.
- *
- * @see https://cheatsheetseries.owasp.org/cheatsheets/Query_Parameterization_Cheat_Sheet.html
- */
-export function sanitizeSqlInput(input: string): string {
-  if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
-    console.warn(
-      '[@fabrk/security] sanitizeSqlInput is deprecated and insecure. Use parameterized queries instead.'
-    )
-  }
-  return input.replace(/['";\\]/g, '')
-}
-
 export function sanitizeUrl(input: string): string | null {
   try {
     const url = new URL(input)

@@ -338,7 +338,7 @@ export interface FeatureFlagResult {
 
 // JOB QUEUE
 
-export type JobStatus = 'pending' | 'running' | 'completed' | 'failed' | 'retrying'
+export type JobStatus = 'pending' | 'running' | 'completed' | 'failed'
 
 export interface JobOptions {
   /** Job type/name */

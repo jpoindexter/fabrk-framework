@@ -55,8 +55,6 @@ export interface CostSummary {
   }>;
 }
 
-// HOOK: useCostTracking
-
 /**
  * Hook to track AI costs in real-time
  *
@@ -161,8 +159,6 @@ export function useCostTracking(options?: {
   };
 }
 
-// HOOK: useCostBudget
-
 /**
  * Simplified hook for just budget status
  *
@@ -195,8 +191,6 @@ export function useCostBudget(): {
     isLoading,
   };
 }
-
-// HOOK: useFeatureCost
 
 /**
  * Get cost for a specific feature

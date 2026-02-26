@@ -209,7 +209,7 @@ export const { email, storage, payments, auth, security } = fabrk`}</CodeBlock>
 // Usage in components:
 // const { manager } = useNotifications()
 // await manager.send({ userId, title: 'Deployed', body: '...' })
-// await manager.markRead(notificationId)`}</CodeBlock>
+// await manager.markRead(notificationId, userId)`}</CodeBlock>
       </Section>
 
       <Section title="TEAMS">

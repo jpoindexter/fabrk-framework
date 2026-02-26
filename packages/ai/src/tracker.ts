@@ -133,14 +133,6 @@ export class InMemoryCostStore implements CostStore {
     }
   }
 
-  // For testing
-  clear(): void {
-    this.events = [];
-  }
-
-  getAll(): AICostEvent[] {
-    return [...this.events];
-  }
 }
 
 /**
@@ -232,7 +224,7 @@ export class AICostTracker {
         id: this.generateId(),
         timestamp: new Date(),
         model,
-        provider: MODEL_PRICING[model]?.provider || errorProviderFallback as AICostEvent['provider'],
+        provider: (MODEL_PRICING[model]?.provider ?? errorProviderFallback) as AICostEvent['provider'],
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,

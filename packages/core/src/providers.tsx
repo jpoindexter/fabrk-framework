@@ -75,7 +75,7 @@ export function FabrkProvider({
   const registry = useMemo(() => externalRegistry ?? new PluginRegistry(), [externalRegistry]);
 
   return (
-    <FabrkContextProvider config={validatedConfig} registry={registry} features={features}>
+    <FabrkContextProvider value={{ config: validatedConfig, registry, features }}>
       {children}
     </FabrkContextProvider>
   );

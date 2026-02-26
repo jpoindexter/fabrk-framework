@@ -22,15 +22,6 @@
 import type { WebhookConfig, WebhookDelivery, WebhookStore } from '../plugin-types'
 import { timingSafeEqual } from '../crypto'
 
-const POISONED_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
-
-function safeAssign<T extends Record<string, unknown>>(target: T, updates: Partial<T>): void {
-  for (const key of Object.keys(updates)) {
-    if (POISONED_KEYS.has(key)) continue
-    ;(target as Record<string, unknown>)[key] = (updates as Record<string, unknown>)[key]
-  }
-}
-
 /**
  * Check whether four IPv4 octets fall into a private or reserved range.
  */
@@ -147,8 +138,15 @@ class InMemoryWebhookStore implements WebhookStore {
   }
   async listAll() { return Array.from(this.webhooks.values()) }
   async update(id: string, updates: Partial<WebhookConfig>) {
+    const ALLOWED_FIELDS = ['events', 'active'] as const
     const w = this.webhooks.get(id)
-    if (w) safeAssign(w as unknown as Record<string, unknown>, updates as unknown as Record<string, unknown>)
+    if (w) {
+      for (const key of ALLOWED_FIELDS) {
+        if (key in updates) {
+          ;(w as unknown as Record<string, unknown>)[key] = (updates as unknown as Record<string, unknown>)[key]
+        }
+      }
+    }
   }
   async delete(id: string) { this.webhooks.delete(id) }
   async recordDelivery(delivery: WebhookDelivery) {

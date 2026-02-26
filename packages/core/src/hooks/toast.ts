@@ -29,8 +29,6 @@ export interface UseToastReturn {
   dismissAll: () => void;
 }
 
-// HOOK: useToast
-
 /**
  * Framework-agnostic toast state management.
  * Pair with your own Toaster component or <Toaster /> from @fabrk/components.

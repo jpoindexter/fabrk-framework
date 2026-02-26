@@ -54,7 +54,7 @@ export * from './ui/styled-tabs'
 export * from './ui/switch'
 export * from './ui/table'
 export * from './ui/tabs'
-// Note: terminal-card exports are not included to avoid Badge naming conflict
+// terminal-card Badge excluded to avoid naming conflict with badge.tsx
 // Import directly from '@fabrk/components/ui/terminal-card' if needed
 export * from './ui/terminal-spinner'
 export * from './ui/textarea'
@@ -62,7 +62,6 @@ export * from './ui/toaster'
 export * from './ui/tooltip'
 export * from './ui/typewriter'
 
-// New UI Components (extracted from index)
 export * from './ui/tag'
 export * from './ui/segmented-control'
 export * from './ui/status-pulse'
@@ -140,5 +139,5 @@ export * from './hooks'
 export { cn } from '@fabrk/core'
 export { sanitizeHref } from './utils'
 
-// Component Registry
-export * from './registry'
+// Component Registry — internal only, used by CLI.
+// Import directly: '@fabrk/components/registry' if needed.

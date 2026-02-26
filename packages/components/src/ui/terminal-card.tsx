@@ -640,8 +640,6 @@ FeatureCard.displayName = 'FeatureCard';
  * ```
  */
 export type BadgeProps = React.HTMLAttributes<HTMLDivElement> & {
-  /** @deprecated No longer used */
-  code?: string;
   /** Primary label text */
   label: string;
   /** Optional metadata after the label (e.g., "v2.0") */
@@ -670,7 +668,6 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
 );
 Badge.displayName = 'Badge';
 
-// Export all components
 export {
   Stat,
   StatGroup,

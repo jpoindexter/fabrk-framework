@@ -1,13 +1,10 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { agentPlugin, dashboardPlugin } from 'fabrk/fabrk'
+import fabrk from 'fabrk'
 
 export default defineConfig({
   plugins: [
-    react(),
-    agentPlugin(),
-    dashboardPlugin(),
+    ...fabrk(),
     tailwindcss(),
   ],
 })

@@ -43,7 +43,6 @@ const NotificationBadge = React.forwardRef<HTMLDivElement, NotificationBadgeProp
           : '';
     const shouldShow = count === undefined ? dot : count > 0 || showZero;
 
-    // Variant styles - using mode tokens
     const variantStyles = {
       primary: `bg-primary text-primary-foreground border-primary`,
       destructive: `${mode.color.bg.danger} ${mode.color.text.dangerOnColor} ${mode.color.border.danger}`,
@@ -51,7 +50,6 @@ const NotificationBadge = React.forwardRef<HTMLDivElement, NotificationBadgeProp
       warning: `${mode.color.bg.warning} ${mode.color.text.warningOnColor} ${mode.color.border.warning}`,
     };
 
-    // Position styles
     const positionStyles = {
       'top-right': 'top-0 right-0 -translate-y-1/2 translate-x-1/2',
       'top-left': 'top-0 left-0 -translate-y-1/2 -translate-x-1/2',
@@ -59,14 +57,12 @@ const NotificationBadge = React.forwardRef<HTMLDivElement, NotificationBadgeProp
       'bottom-left': 'bottom-0 left-0 translate-y-1/2 -translate-x-1/2',
     };
 
-    // Size styles
     const sizeStyles = {
       sm: dot ? 'h-2 w-2' : 'h-4 w-4 text-xs min-w-4',
       md: dot ? 'h-2 w-2' : 'h-5 w-5 text-xs min-w-5',
       lg: dot ? 'h-3 w-3' : 'h-6 w-6 text-xs min-w-6',
     };
 
-    // Custom offset transform - always apply transform
     const customOffset = {
       transform: `translate(${offset.x}px, ${offset.y}px)`,
     };

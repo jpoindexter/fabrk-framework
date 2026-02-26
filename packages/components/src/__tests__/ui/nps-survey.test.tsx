@@ -32,13 +32,10 @@ describe('NPSSurvey', () => {
 
   it('shows feedback textarea and submit button after selecting a score', async () => {
     const { user } = render(<NPSSurvey {...defaultProps} />)
-    // Submit button should not be visible before score selection
     expect(screen.queryByText('> SUBMIT')).not.toBeInTheDocument()
 
-    // Click score 7
     await user.click(screen.getByText('7'))
 
-    // Now textarea and submit should appear
     expect(screen.getByPlaceholderText('Any additional feedback? (optional)')).toBeInTheDocument()
     expect(screen.getByText('> SUBMIT')).toBeInTheDocument()
   })
@@ -47,14 +44,11 @@ describe('NPSSurvey', () => {
     const onSubmit = vi.fn()
     const { user } = render(<NPSSurvey onSubmit={onSubmit} />)
 
-    // Select score 9
     await user.click(screen.getByText('9'))
 
-    // Type feedback
     const textarea = screen.getByPlaceholderText('Any additional feedback? (optional)')
     await user.type(textarea, 'Great product!')
 
-    // Submit
     await user.click(screen.getByText('> SUBMIT'))
 
     expect(onSubmit).toHaveBeenCalledWith(9, 'Great product!')

@@ -34,8 +34,6 @@ async function polarWebhookHeaders(payload: string, secret: string) {
   }
 }
 
-// Stripe Adapter
-
 describe('createStripeAdapter', () => {
   it('should return a named adapter and check isConfigured', () => {
     const adapter = createStripeAdapter({ secretKey: 'sk_test_abc123', webhookSecret: 'whsec_test_xyz' })
@@ -47,8 +45,6 @@ describe('createStripeAdapter', () => {
     expect(createStripeAdapter({ secretKey: 'sk_test_abc', webhookSecret: '' }).isConfigured()).toBe(false)
   })
 })
-
-// Polar Adapter
 
 describe('createPolarAdapter', () => {
   const validConfig = { accessToken: 'polar_pat_abc123', webhookSecret: 'test_basic_webhook_secret' }
@@ -96,8 +92,6 @@ describe('createPolarAdapter', () => {
     expect(result.event!.id.length).toBeGreaterThan(0)
   })
 })
-
-// Polar Webhook Signature Verification
 
 describe('Polar webhook signature verification', () => {
   const webhookSecret = 'test_polar_webhook_secret'
@@ -157,8 +151,6 @@ describe('Polar webhook signature verification', () => {
   })
 })
 
-// Lemon Squeezy Adapter
-
 describe('createLemonSqueezyAdapter', () => {
   const validConfig = { apiKey: 'ls_test_key_abc', storeId: 'store_123', webhookSecret: 'whsec_ls_test' }
 
@@ -200,8 +192,6 @@ describe('createLemonSqueezyAdapter', () => {
     expect(result.event!.data).toEqual({ status: 'active', variant_id: 100 })
   })
 })
-
-// InMemoryPaymentStore
 
 describe('InMemoryPaymentStore', () => {
   let store: InMemoryPaymentStore

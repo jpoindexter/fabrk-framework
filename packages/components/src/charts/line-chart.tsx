@@ -70,9 +70,7 @@ export interface LineChartProps {
   height?: number;
   /** Show grid lines */
   showGrid?: boolean;
-  /** Show legend */
   showLegend?: boolean;
-  /** Show tooltip */
   showTooltip?: boolean;
   /** Y-axis formatter */
   yAxisFormatter?: (value: number) => string;

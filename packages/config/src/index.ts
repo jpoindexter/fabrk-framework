@@ -212,7 +212,6 @@ export {
   jobsConfigSchema,
 }
 
-// Inferred types for each section
 export type FrameworkConfig = z.infer<typeof frameworkConfigSchema>
 export type AIConfig = z.infer<typeof aiConfigSchema>
 export type ThemeConfig = z.infer<typeof themeConfigSchema>

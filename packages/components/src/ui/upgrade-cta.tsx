@@ -111,7 +111,6 @@ export function UpgradeCTA({
     )
   }
 
-  // Card variant (default)
   return (
     <div
       className={cn(

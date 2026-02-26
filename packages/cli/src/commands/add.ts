@@ -35,16 +35,13 @@ export function registerAddCommand(program: Command): void {
         return;
       }
 
-      // Check for feature module adds (auth, payments, etc.)
       const featureModules = components.filter(c => (FEATURE_MODULES as readonly string[]).includes(c));
       const uiComponents = components.filter(c => !(FEATURE_MODULES as readonly string[]).includes(c));
 
-      // Handle feature module additions
       for (const mod of featureModules) {
         addFeatureModule(root, mod);
       }
 
-      // Handle UI component additions
       if (uiComponents.length > 0) {
         addUIComponents(root, uiComponents, targetDir);
       }
@@ -59,7 +56,6 @@ function addFeatureModule(root: string, moduleName: string): void {
     execFileSync('pnpm', ['add', pkgName], { cwd: root, stdio: 'ignore' });
     spinner.succeed(`Added ${pkgName}`);
 
-    // Update fabrk.config.ts hint
     console.log(chalk.dim(`  Update fabrk.config.ts to configure ${moduleName}`));
   } catch {
     spinner.fail(`Failed to add ${pkgName}`);
@@ -73,7 +69,6 @@ function addUIComponents(root: string, components: string[], targetDir: string):
     validateName(component);
   }
 
-  // Look for component files in the registry
   const registryPaths = [
     path.resolve(__dirname, '../registry'),
     path.resolve(__dirname, '../../registry'),
@@ -108,7 +103,6 @@ function addUIComponents(root: string, components: string[], targetDir: string):
     return;
   }
 
-  // Copy from registry
   fs.ensureDirSync(targetDir);
 
   for (const component of components) {

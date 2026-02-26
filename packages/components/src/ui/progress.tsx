@@ -192,7 +192,6 @@ export interface SolidProgressProps extends React.HTMLAttributes<HTMLDivElement>
   value?: number;
   /** Custom label (e.g., "Upload", "Download") */
   label?: string;
-  /** Show percentage */
   showPercentage?: boolean;
   /** Show completion state with checkmark */
   showComplete?: boolean;

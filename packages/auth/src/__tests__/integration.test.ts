@@ -55,8 +55,6 @@ async function generateCurrentTotp(secret: string): Promise<string> {
   return generateHotp(secret, Math.floor(Math.floor(Date.now() / 1000) / 30))
 }
 
-// API Key + Middleware Integration
-
 describe('Auth + Middleware Integration', () => {
   let adapter: AuthAdapter
 
@@ -136,8 +134,6 @@ describe('Auth + Middleware Integration', () => {
     })
   })
 
-  // Session Auth
-
   describe('Session Auth Middleware', () => {
     it('should allow authenticated and reject unauthenticated', async () => {
       const authedAdapter = createNextAuthAdapter({
@@ -166,8 +162,6 @@ describe('Auth + Middleware Integration', () => {
       expect(noAuthRes.status).toBe(401)
     })
   })
-
-  // MFA Flow
 
   describe('MFA Flow', () => {
     let mfaAdapter: AuthAdapter

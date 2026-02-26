@@ -28,9 +28,7 @@ describe('MfaSetupDialog', () => {
 
   it('displays the TOTP secret after clicking show', async () => {
     const { user } = render(<MfaSetupDialog {...defaultProps} />)
-    // Secret is hidden by default
     expect(screen.queryByText('JBSWY3DPEHPK3PXP')).not.toBeInTheDocument()
-    // Click show button to reveal
     await user.click(screen.getByRole('button', { name: /show/i }))
     expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeInTheDocument()
   })

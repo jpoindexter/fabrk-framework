@@ -4,7 +4,7 @@
 
 ## TL;DR
 
-- **What**: AI-first React UI framework — 12 packages, 109+ components, 18 themes
+- **What**: AI-first React UI framework — 13 packages, 109+ components, 18 themes
 - **Stack**: TypeScript 5.x • React 19 • Next.js 16 • pnpm workspaces • Turbo
 - **Package manager**: pnpm (NOT npm, NOT yarn)
 - **Rule #1**: USE EXISTING COMPONENTS — don't rebuild what's already here
@@ -13,9 +13,9 @@
 
 ```bash
 pnpm install          # Install all dependencies
-pnpm build            # Build all 17 packages (12 libs + 5 examples)
+pnpm build            # Build all 18 packages (13 libs + 5 examples)
 pnpm dev              # Watch mode
-pnpm test             # Run 748 tests
+pnpm test             # Run 858 tests
 pnpm type-check       # TypeScript validation
 pnpm lint             # Lint all packages
 pnpm size             # Bundle size tracking
@@ -36,6 +36,7 @@ pnpm size             # Bundle size tracking
 | `@fabrk/email` | Resend adapter + templates | `createResendAdapter()`, `createConsoleAdapter()` |
 | `@fabrk/storage` | S3, R2, local filesystem adapters | `createS3Adapter()`, `createR2Adapter()`, `createLocalAdapter()` |
 | `@fabrk/store-prisma` | 7 Prisma store adapters | `PrismaTeamStore`, `PrismaAuditStore`, `PrismaJobStore` |
+| `fabrk` | Full-stack framework on vinext — AI agents, tools, MCP, CLI | `defineAgent()`, `defineTool()`, `fabrk dev/build/deploy` |
 | `create-fabrk-app` | CLI scaffolding tool | `npx create-fabrk-app` |
 
 ## Component Categories
@@ -48,8 +49,8 @@ When a user asks you to build UI, check these first:
 ### Data Display
 `DataTable`, `KPICard`, `StatsGrid`, `TierBadge`, `UsageBar`, `ProgressCard`
 
-### Charts (8 types)
-`LineChart`, `BarChart`, `AreaChart`, `PieChart`, `DonutChart`, `FunnelChart`, `Heatmap`, `StackedBarChart`
+### Charts (11 types)
+`LineChart`, `BarChart`, `AreaChart`, `PieChart`, `DonutChart`, `FunnelChart`, `Heatmap`, `StackedBarChart`, `StackedAreaChart`, `LineChartCard`, `BarChartCard`
 
 ### AI & Chat
 `AiChat`, `AiChatInput`, `AiChatMessageList`, `AiChatSidebar`, `AiChatAttachmentPreview`
@@ -108,6 +109,7 @@ import { mode } from '@fabrk/design-system'
                               ←── @fabrk/email
                               ←── @fabrk/storage
                               ←── @fabrk/components
+                              ←── fabrk (meta-package: vinext + agents + tools)
 ```
 
 ## Example: Build a Dashboard

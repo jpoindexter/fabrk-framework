@@ -8,7 +8,7 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-13-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-109%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-824-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-858-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
   <img src="https://img.shields.io/badge/hooks-15-green" alt="Hooks" />
@@ -207,8 +207,8 @@ create-fabrk-app CLI (scaffolding)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 17 packages (12 libs + 5 examples)
-pnpm test           # Run 748 tests
+pnpm build          # Build all 18 packages (13 libs + 5 examples)
+pnpm test           # Run 858 tests
 pnpm type-check     # TypeScript validation
 pnpm dev            # Watch mode
 ```

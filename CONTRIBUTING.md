@@ -42,6 +42,7 @@ packages/
   storage/         # @fabrk/storage — S3, R2, local filesystem adapters
   security/        # @fabrk/security — CSRF, CSP, rate limiting, audit, GDPR
   store-prisma/    # @fabrk/store-prisma — Prisma database adapters
+  framework/       # fabrk — Meta-package: vinext + AI agents, tools, MCP, dashboard
   cli/             # create-fabrk-app — CLI scaffolding tool
 ```
 
@@ -52,6 +53,7 @@ config, design-system (foundational, no deps)
   -> core
     -> payments, auth, email, storage, security, store-prisma
     -> ai, components
+    -> framework (fabrk meta-package)
 ```
 
 ## Development Workflow
@@ -70,7 +72,7 @@ Turbo handles the build order automatically, so running `pnpm build` at the root
 ### Running Tests
 
 ```bash
-# Run all tests (748 across all test files)
+# Run all tests (858 across all test files)
 pnpm test
 
 # Watch mode

@@ -53,11 +53,9 @@ const InputNumber = React.forwardRef<HTMLInputElement, InputNumberProps>(
 
       let finalValue = newValue;
 
-      // Apply min/max constraints
       if (min !== undefined && finalValue < min) finalValue = min;
       if (max !== undefined && finalValue > max) finalValue = max;
 
-      // Apply precision
       if (precision !== undefined) {
         finalValue = parseFloat(finalValue.toFixed(precision));
       }

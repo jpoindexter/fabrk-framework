@@ -103,7 +103,6 @@ interface DatePickerProps {
   onMultipleChange?: (dates: Date[] | undefined) => void;
   /** Placeholder text */
   placeholder?: string;
-  /** Disable the picker */
   disabled?: boolean;
   /** Minimum selectable date */
   minDate?: Date;
@@ -451,7 +450,6 @@ function DatePicker({
   const [open, setOpen] = React.useState(false);
   const [month, setMonthState] = React.useState<Date>(value || rangeValue?.from || new Date());
 
-  // Time state (for showTime mode)
   const [hours, setHours] = React.useState<string>(
     value ? format(value, use24Hour ? 'HH' : 'hh') : '12'
   );
@@ -558,7 +556,6 @@ function DatePicker({
     setMonthState(newDate);
   };
 
-  // Time increment/decrement
   const incrementHours = () => {
     const maxHours = use24Hour ? 23 : 12;
     const minHours = use24Hour ? 0 : 1;

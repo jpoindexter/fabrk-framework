@@ -112,7 +112,6 @@ const inputGroupButtonVariants = cva(cn('flex items-center gap-2 text-xs shadow-
     size: {
       xs: cn("h-6 gap-1 px-2 has-[>svg]:px-2 [&>svg:not([class*='size-'])]:size-3.5", mode.radius),
       sm: cn('h-8 gap-2 px-2.5 has-[>svg]:px-2.5', mode.radius),
-      // Industry standard: Minimal padding p-1 for icon buttons
       'icon-xs': cn('size-6 p-1 has-[>svg]:p-1', mode.radius),
       'icon-sm': cn('size-8 p-1 has-[>svg]:p-1', mode.radius),
     },

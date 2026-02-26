@@ -4,7 +4,6 @@ import { Toast, ToastProvider } from './toast';
 import * as React from 'react';
 import { useToast } from '@fabrk/core';
 
-// Types
 interface ToastActionInnerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
   altText?: string;

@@ -75,7 +75,6 @@ export function TokenCounter({
     )
   }
 
-  // Default variant
   return (
     <div
       className={cn(

@@ -66,9 +66,7 @@ export interface BarChartProps {
   height?: number;
   /** Show grid lines */
   showGrid?: boolean;
-  /** Show legend */
   showLegend?: boolean;
-  /** Show tooltip */
   showTooltip?: boolean;
   /** Horizontal layout */
   horizontal?: boolean;

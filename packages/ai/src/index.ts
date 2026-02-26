@@ -7,12 +7,8 @@
  * @module ai
  */
 
-// API response types
 export type { APIResponse } from './types';
 
-// AI DEVELOPMENT TOOLS
-
-// Cost tracking — types
 export {
   type AICostEvent,
   type CostSummary,
@@ -21,13 +17,11 @@ export {
   type CostStore,
 } from './cost-types';
 
-// Cost tracking — pricing
 export {
   calculateCost as calculateModelCost,
   MODEL_PRICING,
 } from './pricing';
 
-// Cost tracking — tracker
 export {
   AICostTracker,
   InMemoryCostStore,
@@ -35,19 +29,14 @@ export {
   setCostStore,
 } from './tracker';
 
-
-// AI Integrations (unified interface)
 export {
-  // Types
   type GenerateOptions,
   type GenerateResult,
-  // Providers
   ai,
   claude,
   openai,
 } from './integrations';
 
-// Streaming utilities
 export {
   streamToString,
   parseStreamChunks,
@@ -58,27 +47,20 @@ export {
   fromReadableStream,
 } from './streaming/stream-text';
 
-// Prompt management
 export {
-  // Types
   type PromptTemplate,
-  // Functions
   createPromptTemplate,
   composePrompts,
   createMessagePair,
 } from './prompts/template';
 
 export {
-  // Types
   type BuiltPrompt,
-  // Classes
   PromptBuilder,
 } from './prompts/builder';
 
-// Prisma cost store (reference implementation)
 export { PrismaCostStore } from './cost-store-prisma'
 
-// LLM Provider Abstraction
 export {
   getLLMClient,
   OpenAIClient,
@@ -95,7 +77,6 @@ export type {
   TaskComplexity,
 } from './llm'
 
-// Embeddings & Similarity
 export {
   getEmbeddingProvider,
   OpenAIEmbeddingProvider,
@@ -114,7 +95,6 @@ export type {
   SimilarityResult,
 } from './embeddings';
 
-// AI Middleware (budget enforcement, provider fallback)
 export {
   createAIMiddleware,
   budgetEnforcement,

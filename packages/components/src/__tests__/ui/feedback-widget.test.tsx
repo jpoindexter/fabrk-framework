@@ -33,13 +33,10 @@ describe('FeedbackWidget', () => {
 
   it('closes the form when close button is clicked', async () => {
     const { user } = render(<FeedbackWidget {...defaultProps} />)
-    // Open
     await user.click(screen.getByText('> FEEDBACK'))
     expect(screen.getByText('[ SEND FEEDBACK ]')).toBeInTheDocument()
 
-    // Close
     await user.click(screen.getByText('x'))
-    // Should be back to trigger state
     expect(screen.getByText('> FEEDBACK')).toBeInTheDocument()
   })
 
@@ -65,19 +62,10 @@ describe('FeedbackWidget', () => {
     const onSubmit = vi.fn()
     const { user } = render(<FeedbackWidget onSubmit={onSubmit} />)
 
-    // Open widget
     await user.click(screen.getByText('> FEEDBACK'))
-
-    // Select bug type
     await user.click(screen.getByText('[BUG]'))
-
-    // Enter message
     await user.type(screen.getByPlaceholderText('Describe your feedback...'), 'Found a bug')
-
-    // Enter email
     await user.type(screen.getByPlaceholderText('Email (optional)'), 'test@test.com')
-
-    // Submit
     await user.click(screen.getByText('> SUBMIT'))
 
     expect(onSubmit).toHaveBeenCalledWith({

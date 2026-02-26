@@ -10,8 +10,6 @@ import { createMiddleware, compose } from '../middleware'
 import { InMemoryTeamStore } from '../teams/memory-store'
 import type { FabrkConfigInput } from '../types'
 
-// Test 1: Auto-Wiring Integration
-
 describe('Auto-Wiring Integration', () => {
   it('should return a registry and features from autoWire with minimal config', async () => {
     const config: FabrkConfigInput = {}
@@ -154,8 +152,6 @@ describe('Auto-Wiring Integration', () => {
   })
 })
 
-// Test 2: Dev Defaults
-
 describe('Dev Defaults', () => {
   it('should detect dev environment', () => {
     // In test environment, isDev() should return true
@@ -207,8 +203,6 @@ describe('Dev Defaults', () => {
     expect(result.features.teams).not.toBeNull()
   })
 })
-
-// Test 3: Plugin Registry
 
 describe('PluginRegistry', () => {
   it('should register and retrieve adapters by type', () => {
@@ -280,8 +274,6 @@ describe('PluginRegistry', () => {
     expect(log).toEqual(['initialized', 'destroyed'])
   })
 })
-
-// Test 4: Middleware System
 
 describe('Middleware System', () => {
   it('should run middleware in order', async () => {
@@ -371,8 +363,6 @@ describe('Middleware System', () => {
   })
 })
 
-// Test 5: Feature Modules (Notifications, Feature Flags, Jobs)
-
 describe('Feature Modules via autoWire', () => {
   let result: AutoWireResult
 
@@ -394,14 +384,11 @@ describe('Feature Modules via autoWire', () => {
     expect(notification.title).toBe('Test Notification')
     expect(notification.read).toBe(false)
 
-    // Check unread count
     const count = await nm.getUnreadCount('any-user')
     expect(count).toBeGreaterThanOrEqual(1)
 
-    // Mark as read
     await nm.markRead(notification.id, 'any-user')
 
-    // Subscribe to notifications
     let received: any = null
     const unsubscribe = nm.subscribe((n) => {
       received = n
@@ -426,23 +413,17 @@ describe('Feature Modules via autoWire', () => {
 
     const ff = result.features.featureFlags!
 
-    // Set a flag
     await ff.set({ name: 'dark-mode', enabled: true })
-
-    // Check flag
     const enabled = await ff.isEnabled('dark-mode')
     expect(enabled).toBe(true)
 
-    // Check non-existent flag
     const missing = await ff.isEnabled('non-existent')
     expect(missing).toBe(false)
 
-    // Disable flag
     await ff.set({ name: 'dark-mode', enabled: false })
     const disabled = await ff.isEnabled('dark-mode')
     expect(disabled).toBe(false)
 
-    // User targeting
     await ff.set({
       name: 'beta-feature',
       enabled: true,
@@ -452,11 +433,9 @@ describe('Feature Modules via autoWire', () => {
     const forUser1 = await ff.isEnabled('beta-feature', { userId: 'user-1' })
     expect(forUser1).toBe(true)
 
-    // Get all flags
     const allFlags = await ff.getAll()
     expect(allFlags.length).toBeGreaterThanOrEqual(2)
 
-    // Delete a flag
     await ff.delete('dark-mode')
     const deleted = await ff.get('dark-mode')
     expect(deleted).toBeNull()
@@ -469,7 +448,6 @@ describe('Feature Modules via autoWire', () => {
 
     const queue = result.features.jobs!
 
-    // Enqueue a job
     const job = await queue.enqueue({
       type: 'send-email',
       payload: { to: 'user@example.com', subject: 'Test' },
@@ -481,12 +459,10 @@ describe('Feature Modules via autoWire', () => {
     expect(job.type).toBe('send-email')
     expect(job.payload).toEqual({ to: 'user@example.com', subject: 'Test' })
 
-    // Get job by ID
     const retrieved = await queue.getJob(job.id)
     expect(retrieved).not.toBeNull()
     expect(retrieved!.id).toBe(job.id)
 
-    // Get jobs by status
     const pending = await queue.getByStatus('pending')
     expect(pending.length).toBeGreaterThanOrEqual(1)
     expect(pending.some((j) => j.id === job.id)).toBe(true)
@@ -499,7 +475,6 @@ describe('Feature Modules via autoWire', () => {
 
     const teams = result.features.teams!
 
-    // Create an organization
     const org = await teams.createOrg({
       name: 'Acme Corp',
       slug: 'acme-corp',
@@ -512,32 +487,26 @@ describe('Feature Modules via autoWire', () => {
     expect(org.slug).toBe('acme-corp')
     expect(org.ownerId).toBe('owner-1')
 
-    // Get org by ID
     const retrieved = await teams.getOrg(org.id)
     expect(retrieved).not.toBeNull()
     expect(retrieved!.name).toBe('Acme Corp')
 
-    // Get org by slug
     const bySlug = await teams.getOrgBySlug('acme-corp')
     expect(bySlug).not.toBeNull()
     expect(bySlug!.id).toBe(org.id)
 
-    // Add a member
     await teams.addMember(org.id, 'member-1', 'member', {
       name: 'Jane Doe',
       email: 'jane@acme.com',
     })
 
-    // Get members (owner is auto-added + the new member)
     const members = await teams.getMembers(org.id)
     expect(members.length).toBe(2)
 
-    // Create invite
     const invite = await teams.createInvite(org.id, 'new@acme.com', 'member', 'owner-1')
     expect(invite.token).toBeDefined()
     expect(invite.email).toBe('new@acme.com')
 
-    // Accept invite
     const accepted = await teams.acceptInvite(invite.token, 'new-user-id')
     expect(accepted).not.toBeNull()
     expect(accepted!.email).toBe(invite.email)

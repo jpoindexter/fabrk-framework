@@ -22,7 +22,6 @@ describe("E2E integration", () => {
   });
 
   it("full agent flow: scan → define → handle → respond", async () => {
-    // Create agent file
     const agentDir = path.join(tmpDir, "agents", "chat");
     fs.mkdirSync(agentDir, { recursive: true });
     fs.writeFileSync(
@@ -30,19 +29,16 @@ describe("E2E integration", () => {
       "export default { model: 'test-model' }"
     );
 
-    // Scan
     const agents = scanAgents(tmpDir);
     expect(agents).toHaveLength(1);
     expect(agents[0].name).toBe("chat");
 
-    // Define
     const agentDef = defineAgent({
       model: "test-model",
       tools: ["search"],
       auth: "none",
     });
 
-    // Handle
     const handler = createAgentHandler({
       ...agentDef,
       _llmCall: async (msgs) => ({
@@ -68,7 +64,6 @@ describe("E2E integration", () => {
   });
 
   it("full tool flow: scan → define → execute", async () => {
-    // Create tool file
     const toolsDir = path.join(tmpDir, "tools");
     fs.mkdirSync(toolsDir, { recursive: true });
     fs.writeFileSync(
@@ -76,12 +71,10 @@ describe("E2E integration", () => {
       "export default {}"
     );
 
-    // Scan
     const tools = scanTools(tmpDir);
     expect(tools).toHaveLength(1);
     expect(tools[0].name).toBe("search");
 
-    // Define and execute
     const tool = defineTool({
       name: "search",
       description: "Search docs",
@@ -110,11 +103,9 @@ describe("E2E integration", () => {
       "- Be helpful\n- Be concise"
     );
 
-    // Load with partials resolved
     const template = await loadPrompt(tmpDir, "system.md");
     expect(template).toContain("- Be helpful");
 
-    // Interpolate variables
     const result = interpolatePrompt(template, { role: "an AI assistant" });
     expect(result).toBe(
       "You are an AI assistant.\n- Be helpful\n- Be concise"

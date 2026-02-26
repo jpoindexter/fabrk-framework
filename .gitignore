@@ -103,5 +103,20 @@ storybook-static/
 *.pid
 *.pid.lock
 
+# Private keys & certificates
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+
 # Generated API docs
 docs/api/
+
+# Local tooling caches
+.playwright-mcp/
+.agentsmithrc.json
+
+# Internal development files
+tasks/
+docs/plans/

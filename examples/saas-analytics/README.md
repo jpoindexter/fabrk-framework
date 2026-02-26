@@ -114,4 +114,4 @@ Perfect starting point for:
 - Subscription management UIs
 - Financial reporting interfaces
 
-Built with FABRK Framework - [github.com/fabrkframework/fabrk](https://github.com/fabrkframework/fabrk)
+Built with FABRK Framework - [github.com/jpoindexter/fabrk-framework](https://github.com/jpoindexter/fabrk-framework)

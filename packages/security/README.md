@@ -54,7 +54,7 @@ await audit.log({
 - **GDPR compliance** - Email and IP anonymization, field redaction, and consent management with purpose tracking
 - **Bot protection** - Heuristic-based bot detection via User-Agent analysis and honeypot field validation
 - **CORS handler** - Origin validation, preflight handling, and response header application with credentials support
-- **Input sanitization** - HTML escaping, HTML stripping, SQL input sanitization, URL validation, and open-redirect prevention
+- **Input sanitization** - HTML escaping, HTML stripping, URL validation, and open-redirect prevention
 
 ## API
 
@@ -78,7 +78,6 @@ await audit.log({
 | `createCorsHandler(config)` | Create a CORS handler for preflight and response headers |
 | `escapeHtml(input)` | Escape HTML entities |
 | `stripHtml(input)` | Strip all HTML tags |
-| `sanitizeSqlInput(input)` | Basic SQL input sanitization |
 | `sanitizeUrl(input)` | Validate and sanitize a URL (http/https only) |
 | `sanitizeRedirectUrl(input, allowedHosts)` | Prevent open redirect attacks |
 | `InMemoryAuditStore` | In-memory audit store for dev/testing |

@@ -4,7 +4,7 @@
 
 ## TL;DR
 
-- **What**: AI-first React UI framework — 12 packages, 105+ components, 18 themes
+- **What**: AI-first React UI framework — 12 packages, 109+ components, 18 themes
 - **Stack**: TypeScript 5.x • React 19 • Next.js 16 • pnpm workspaces • Turbo
 - **Package manager**: pnpm (NOT npm, NOT yarn)
 - **Rule #1**: USE EXISTING COMPONENTS — don't rebuild what's already here
@@ -13,9 +13,9 @@
 
 ```bash
 pnpm install          # Install all dependencies
-pnpm build            # Build all 16 packages (12 libs + 4 examples)
+pnpm build            # Build all 17 packages (12 libs + 5 examples)
 pnpm dev              # Watch mode
-pnpm test             # Run 763 tests
+pnpm test             # Run 748 tests
 pnpm type-check       # TypeScript validation
 pnpm lint             # Lint all packages
 pnpm size             # Bundle size tracking
@@ -26,17 +26,17 @@ pnpm size             # Bundle size tracking
 | Package | Purpose | Key Exports |
 |---------|---------|-------------|
 | `@fabrk/core` | Runtime, plugins, middleware, teams, jobs, flags | `cn()`, `createPlugin()`, `defineMiddleware()` |
-| `@fabrk/components` | 105+ UI components, 8 charts, dashboard shell, component registry | `DashboardShell`, `KPICard`, `DataTable`, `LineChart` |
+| `@fabrk/components` | 109+ UI components, 11 chart types, dashboard shell, 15 hooks | `DashboardShell`, `KpiCard`, `DataTable`, `LineChart` |
 | `@fabrk/design-system` | 18 themes, design tokens | `mode` (radius, font, etc.), theme CSS vars |
-| `@fabrk/config` | Type-safe config (12 sections, Zod) | `defineFabrkConfig()`, section schemas |
-| `@fabrk/ai` | AI toolkit: LLM providers, streaming, cost tracking | `chatWithClaude()`, `AICostTracker`, `PromptBuilder` |
-| `@fabrk/auth` | NextAuth, API keys, MFA (TOTP + backup codes) | `withAuth()`, `createApiKey()`, `verifyTotp()` |
-| `@fabrk/payments` | Stripe, Polar, Lemon Squeezy adapters | `createPaymentAdapter()`, `handleWebhook()` |
-| `@fabrk/security` | CSRF, CSP, rate limiting, audit, GDPR, CORS | `csrfProtection()`, `rateLimiter()`, `auditLog()` |
-| `@fabrk/email` | Resend adapter + templates | `sendEmail()`, email templates |
-| `@fabrk/storage` | S3, R2, local filesystem adapters | `createStorageAdapter()`, `uploadFile()` |
-| `@fabrk/store-prisma` | 7 Prisma store adapters | `createPrismaStore()` |
-| `create-fabrk-app` | CLI scaffolding tool | `fabrk dev`, `fabrk build` |
+| `@fabrk/config` | Type-safe config (13 sections, Zod) | `defineFabrkConfig()`, section schemas |
+| `@fabrk/ai` | AI toolkit: LLM providers, streaming, cost tracking | `ai.generate()`, `claude`, `openai`, `AICostTracker` |
+| `@fabrk/auth` | NextAuth, API keys, MFA (TOTP + backup codes) | `createNextAuthAdapter()`, `generateApiKey()`, `verifyTotp()` |
+| `@fabrk/payments` | Stripe, Polar, Lemon Squeezy adapters | `createStripeAdapter()`, `createPolarAdapter()` |
+| `@fabrk/security` | CSRF, CSP, rate limiting, audit, GDPR, CORS | `createCsrfProtection()`, `createMemoryRateLimiter()`, `createAuditLogger()` |
+| `@fabrk/email` | Resend adapter + templates | `createResendAdapter()`, `createConsoleAdapter()` |
+| `@fabrk/storage` | S3, R2, local filesystem adapters | `createS3Adapter()`, `createR2Adapter()`, `createLocalAdapter()` |
+| `@fabrk/store-prisma` | 7 Prisma store adapters | `PrismaTeamStore`, `PrismaAuditStore`, `PrismaJobStore` |
+| `create-fabrk-app` | CLI scaffolding tool | `npx create-fabrk-app` |
 
 ## Component Categories
 
@@ -52,10 +52,10 @@ When a user asks you to build UI, check these first:
 `LineChart`, `BarChart`, `AreaChart`, `PieChart`, `DonutChart`, `FunnelChart`, `Heatmap`, `StackedBarChart`
 
 ### AI & Chat
-`AiChat`, `ChatInput`, `ChatMessageList`, `ModelSelector`
+`AiChat`, `AiChatInput`, `AiChatMessageList`, `AiChatSidebar`, `AiChatAttachmentPreview`
 
 ### Admin
-`AuditLog`, `MetricsCard`, `SystemHealth`, `WebhookLog`
+`AuditLog`, `AdminMetricsCard`, `SystemHealthWidget`
 
 ### Security
 `MfaCard`, `MfaSetupDialog`, `BackupCodesModal`

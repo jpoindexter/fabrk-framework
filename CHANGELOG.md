@@ -4,7 +4,7 @@
 
 ### Package Consolidation
 
-Consolidated from 17 packages down to 12 focused packages (~43K source lines, 763 tests).
+Consolidated from 17 packages down to 12 focused packages (~43K source lines, 748 tests).
 
 **Removed packages:**
 - `@fabrk/themes` -- merged into `@fabrk/design-system`
@@ -25,10 +25,10 @@ First release of the FABRK Framework -- the first UI framework designed for AI c
 
 #### Packages
 
-- **`@fabrk/config` v0.1.0** -- Type-safe configuration builder with 12 sections and Zod validation
+- **`@fabrk/config` v0.1.0** -- Type-safe configuration builder with 13 sections and Zod validation
 - **`@fabrk/design-system` v0.1.0** -- Terminal-inspired design system with 18 themes and design tokens
 - **`@fabrk/core` v0.1.0** -- Framework runtime with plugins, middleware, teams, jobs, feature flags, and auto-wiring
-- **`@fabrk/components` v0.1.0** -- 105+ production-ready UI components, 8 charts, dashboard shell, AI chat, admin, and security views
+- **`@fabrk/components` v0.1.0** -- 109+ production-ready UI components, 11 chart types, dashboard shell, AI chat, admin, and security views
 - **`@fabrk/ai` v0.1.0** -- AI development toolkit with cost tracking, validation, streaming, prompt builder, and LLM provider support
 - **`@fabrk/payments` v0.1.0** -- Payment adapters for Stripe, Polar, and Lemon Squeezy
 - **`@fabrk/auth` v0.1.0** -- Authentication adapters for NextAuth, API keys (SHA-256), and MFA (TOTP + backup codes)
@@ -40,15 +40,15 @@ First release of the FABRK Framework -- the first UI framework designed for AI c
 
 #### Highlights
 
-- **105+ UI components** including charts, dashboard shell, data tables, AI chat, and admin views
-- **8 chart types** powered by Recharts (bar, line, area, pie, donut, radar, scatter, funnel)
+- **109+ UI components** including charts, dashboard shell, data tables, AI chat, and admin views
+- **11 chart types** powered by Recharts (bar, stacked bar, line, area, pie, donut, funnel, gauge, sparkline)
 - **18 themes** with runtime switching via CSS variables
 - **12 packages** publish-ready for npm
 - **Adapter pattern** for all external services (payments, auth, email, storage, security)
 - **In-memory defaults** for every store, enabling zero-config development
 - **Auto-wiring** via `fabrk.config.ts` convention -- one config file creates all adapters
 - **AI agent optimized** -- each package includes `AGENTS.md` with component props and usage examples
-- **16 React hooks** -- useMediaQuery, useDebounce, useLocalStorage, useToast, useKeyboardShortcut, useEditLock, and more
+- **15 React hooks** -- useMediaQuery, useDebounce, useLocalStorage, useClickOutside, useCopyToClipboard, useBodyScrollLock, useIntersectionObserver, useWindowSize, usePrevious, useListKeyboardNav, useViewHistory, useCookieConsent, and more
 - **Accessibility** -- All custom interactive components pass axe scans with keyboard navigation
 - **Tree-shakeable** -- `sideEffects: false` on all publishable packages
 - **JSDoc** -- 27 top components documented with @example blocks

@@ -136,7 +136,6 @@ export type { BreadcrumbsProps, BreadcrumbItem as SeoBreadcrumbItem } from './se
 export * from './hooks'
 
 // Utilities
-export { cn } from '@fabrk/core'
 export { sanitizeHref } from './utils'
 
 // Component Registry — internal only, used by CLI.

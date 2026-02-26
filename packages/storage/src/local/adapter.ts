@@ -1,21 +1,10 @@
 import type { StorageAdapter } from '@fabrk/core'
 import type { UploadOptions, UploadResult, SignedUrlOptions, SignedUrlResult } from '@fabrk/core'
 import type { LocalAdapterConfig } from '../types'
-import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath } from '../validation'
+import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath, sanitizeFilename } from '../validation'
 import { promises as fs } from 'fs'
 import { dirname, resolve, sep } from 'path'
 import { createHmac, randomBytes } from 'crypto'
-
-/**
- * Sanitize a filename component only (no path separators, no timestamp prefix).
- * Used when the caller provides an explicit path so the filename is sanitized
- * without adding the timestamp that generateStorageKey() appends.
- */
-function sanitizeFilename(filename: string): string {
-  return filename
-    .replace(/[^a-zA-Z0-9._-]/g, '_')
-    .replace(/_{2,}/g, '_')
-}
 
 export function createLocalAdapter(config: LocalAdapterConfig): StorageAdapter {
   const baseDir = resolve(config.directory)

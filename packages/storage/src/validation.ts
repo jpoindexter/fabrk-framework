@@ -134,6 +134,17 @@ export function generateStorageKey(
 }
 
 /**
+ * Sanitize a filename component only (no path separators, no timestamp prefix).
+ * Used when the caller provides an explicit path so the filename is sanitized
+ * without adding the timestamp that generateStorageKey() appends.
+ */
+export function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_{2,}/g, '_')
+}
+
+/**
  * Sanitize a storage path to prevent directory traversal attacks.
  *
  * - Normalizes backslashes to forward slashes

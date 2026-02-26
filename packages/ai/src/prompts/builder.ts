@@ -80,17 +80,14 @@ export class PromptBuilder {
   build(): BuiltPrompt {
     const systemSections: string[] = [];
 
-    // System prompt
     if (this.systemParts.length > 0) {
       systemSections.push(this.systemParts.join('\n'));
     }
 
-    // Context
     if (this.contextParts.length > 0) {
       systemSections.push('## Context\n' + this.contextParts.join('\n'));
     }
 
-    // Instructions
     if (this.instructions.length > 0) {
       systemSections.push(
         '## Instructions\n' +
@@ -98,7 +95,6 @@ export class PromptBuilder {
       );
     }
 
-    // Constraints
     if (this.constraints.length > 0) {
       systemSections.push(
         '## Constraints\n' +
@@ -106,7 +102,6 @@ export class PromptBuilder {
       );
     }
 
-    // Examples
     if (this.examples.length > 0) {
       const exampleStr = this.examples
         .map(
@@ -117,7 +112,6 @@ export class PromptBuilder {
       systemSections.push('## Examples\n' + exampleStr);
     }
 
-    // Output format
     if (this.outputFormatStr) {
       systemSections.push('## Output Format\n' + this.outputFormatStr);
     }

@@ -71,7 +71,7 @@ export const claude = {
     try {
       // Dynamic import to avoid requiring SDK at build time
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mod = await import('@anthropic-ai/sdk' as any);
+      const mod = await import('@anthropic-ai/sdk');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Anthropic = mod.default || (mod as any).Anthropic || mod;
       const client = new Anthropic();
@@ -114,7 +114,7 @@ export const claude = {
    * Check if Claude is available (API key configured)
    */
   isAvailable(): boolean {
-    return !!process.env.ANTHROPIC_API_KEY;
+    return !!(globalThis as any).process?.env?.ANTHROPIC_API_KEY;
   },
 };
 
@@ -146,7 +146,7 @@ export const openai = {
     try {
       // Dynamic import to avoid requiring SDK at build time
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mod = await import('openai' as any);
+      const mod = await import('openai');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const OpenAI = mod.default || (mod as any).OpenAI || mod;
       const client = new OpenAI();
@@ -166,12 +166,13 @@ export const openai = {
           }
           messages.push({ role: 'user', content: prompt });
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return client.chat.completions.create({
             model,
             max_tokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
             temperature,
             messages,
-          });
+          }) as any;
         },
       });
 
@@ -196,7 +197,7 @@ export const openai = {
   ): Promise<APIResponse<number[][]>> {
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mod = await import('openai' as any);
+      const mod = await import('openai');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const OpenAI = mod.default || (mod as any).OpenAI || mod;
       const client = new OpenAI();
@@ -221,7 +222,7 @@ export const openai = {
    * Check if OpenAI is available (API key configured)
    */
   isAvailable(): boolean {
-    return !!process.env.OPENAI_API_KEY;
+    return !!(globalThis as any).process?.env?.OPENAI_API_KEY;
   },
 };
 

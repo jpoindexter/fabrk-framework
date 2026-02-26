@@ -86,7 +86,7 @@ export function createNotificationManager(
 
     async markRead(id: string, userId: string): Promise<void> {
       if (store) {
-        await store.markRead(id)
+        await store.markRead(id, userId)
         return
       }
       const n = memoryStore.find((n) => n.id === id && (!n.userIds || n.userIds.includes(userId)))
@@ -103,7 +103,7 @@ export function createNotificationManager(
 
     async dismiss(id: string, userId: string): Promise<void> {
       if (store) {
-        await store.dismiss(id)
+        await store.dismiss(id, userId)
         return
       }
       const n = memoryStore.find((n) => n.id === id && (!n.userIds || n.userIds.includes(userId)))

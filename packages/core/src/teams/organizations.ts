@@ -50,7 +50,6 @@ export function createTeamManager(store: TeamStore): TeamManager {
 
       await store.createOrg(org)
 
-      // Add owner as member
       await store.addMember({
         userId: options.ownerId,
         orgId: org.id,

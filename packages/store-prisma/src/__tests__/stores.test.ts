@@ -165,8 +165,8 @@ describe('PrismaApiKeyStore', () => {
 
     await store.create({
       id: 'key-1', prefix: 'fabrk_live_abc', hash: 'sha256-hash',
-      name: 'Key', scopes: ['read'], active: true, createdAt: new Date(),
-    } as ApiKeyInfo & { hash: string })
+      name: 'Key', scopes: ['read'], active: true, createdAt: new Date(), userId: 'user-1',
+    } as ApiKeyInfo & { hash: string; userId: string })
     expect(prisma.apiKey.create).toHaveBeenCalled()
 
     await store.revoke('key-1')
@@ -256,13 +256,13 @@ describe('PrismaNotificationStore', () => {
     prisma.notification.updateMany.mockResolvedValue({ count: 5 })
     prisma.notification.count.mockResolvedValue(7)
 
-    await store.markRead('n1')
-    expect(prisma.notification.update).toHaveBeenCalledWith({ where: { id: 'n1' }, data: { read: true } })
+    await store.markRead('n1', 'user-1')
+    expect(prisma.notification.updateMany).toHaveBeenCalledWith({ where: { id: 'n1', userIds: { has: 'user-1' } }, data: { read: true } })
 
     await store.markAllRead('user-1')
     expect(prisma.notification.updateMany).toHaveBeenCalled()
 
-    await store.dismiss('n1')
+    await store.dismiss('n1', 'user-1')
 
     expect(await store.getUnreadCount('user-1')).toBe(7)
   })

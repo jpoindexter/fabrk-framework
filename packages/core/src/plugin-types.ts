@@ -327,15 +327,6 @@ export interface FeatureFlagOptions {
   metadata?: Record<string, unknown>
 }
 
-export interface FeatureFlagResult {
-  /** Flag name */
-  name: string
-  /** Whether enabled for this context */
-  enabled: boolean
-  /** Variant value (for multivariate flags) */
-  variant?: string
-}
-
 // JOB QUEUE
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed'
@@ -519,7 +510,7 @@ export interface AuthStore {
 
 export interface ApiKeyStore {
   getByHash(hash: string): Promise<ApiKeyInfo | null>
-  create(key: ApiKeyInfo & { hash: string }): Promise<void>
+  create(key: ApiKeyInfo & { hash: string; userId: string }): Promise<void>
   revoke(id: string): Promise<void>
   listByUser(userId: string): Promise<ApiKeyInfo[]>
   updateLastUsed(id: string): Promise<void>
@@ -528,9 +519,9 @@ export interface ApiKeyStore {
 export interface NotificationStore {
   create(notification: Notification): Promise<void>
   getByUser(userId: string, options?: { unreadOnly?: boolean; limit?: number }): Promise<Notification[]>
-  markRead(id: string): Promise<void>
+  markRead(id: string, userId: string): Promise<void>
   markAllRead(userId: string): Promise<void>
-  dismiss(id: string): Promise<void>
+  dismiss(id: string, userId: string): Promise<void>
   getUnreadCount(userId: string): Promise<number>
 }
 
@@ -558,8 +549,6 @@ export interface WebhookStore {
   update(id: string, updates: Partial<WebhookConfig>): Promise<void>
   delete(id: string): Promise<void>
   recordDelivery(delivery: WebhookDelivery): Promise<void>
-  /** Retrieve the raw secret for a webhook (for signature verification). */
-  getSecret?(id: string): Promise<string | null>
 }
 
 export interface TeamStore {

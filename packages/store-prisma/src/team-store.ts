@@ -127,7 +127,6 @@ export class PrismaTeamStore implements TeamStore {
       data: { acceptedAt: now },
     })
     if (result.count === 0) return null
-    // Fetch the accepted invite to return
     const raw = await this.prisma.organizationInvite.findUnique({ where: { token } })
     if (!raw) return null
     return mapInvite(raw)

@@ -48,13 +48,11 @@ export {
   themeClasses,
   THEME_NAMES,
   DEFAULT_THEME,
-  CURRENT_THEME,
   terminalTheme,
   terminalClasses,
   formatButtonText,
   formatLabelText,
   formatCardHeader,
-  formatStatusText,
 } from './themes';
 
 export type { ThemeName } from './themes';
@@ -74,13 +72,6 @@ export type {
   ThemeScriptProps,
   ColorThemeName,
 } from './providers';
-
-// PRESET EXPORTS
-
-export {
-  hashmarkVariables,
-  generateHashmarkCss,
-} from './presets';
 
 import {
   terminalClasses,

@@ -3,8 +3,6 @@
  *
  * Pure TypeScript implementations for cosine similarity, distance,
  * k-nearest-neighbors search, and centroid calculation.
- *
- * Extracted from wisp's embeddings package.
  */
 
 import type { SimilarityResult } from './types'

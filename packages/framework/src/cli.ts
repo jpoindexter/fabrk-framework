@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs";
 
@@ -26,14 +27,30 @@ function resolveVinextBin(): string {
   const localBin = path.join(process.cwd(), "node_modules", ".bin", "vinext");
   if (fs.existsSync(localBin)) return localBin;
 
+  // In pnpm workspaces, vinext is installed under the framework package, not the app
+  const frameworkDir = path.resolve(new URL(".", import.meta.url).pathname, "..");
+  const frameworkBin = path.join(frameworkDir, "node_modules", ".bin", "vinext");
+  if (fs.existsSync(frameworkBin)) return frameworkBin;
+
   try {
-    const vinextPkg = require.resolve("vinext/package.json");
-    const vinextDir = path.dirname(vinextPkg);
-    const vinextPkgJson = JSON.parse(fs.readFileSync(path.join(vinextDir, "package.json"), "utf-8"));
-    const binEntry = typeof vinextPkgJson.bin === "string"
-      ? vinextPkgJson.bin
-      : vinextPkgJson.bin?.vinext;
-    if (binEntry) return path.join(vinextDir, binEntry);
+    const esmRequire = createRequire(import.meta.url);
+    const vinextEntry = esmRequire.resolve("vinext");
+    // Walk up from the resolved entry to find the package bin
+    let dir = path.dirname(vinextEntry);
+    for (let i = 0; i < 5; i++) {
+      const pkgPath = path.join(dir, "package.json");
+      if (fs.existsSync(pkgPath)) {
+        const pkgJson = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
+        if (pkgJson.name === "vinext") {
+          const binEntry = typeof pkgJson.bin === "string"
+            ? pkgJson.bin
+            : pkgJson.bin?.vinext;
+          if (binEntry) return path.join(dir, binEntry);
+          break;
+        }
+      }
+      dir = path.dirname(dir);
+    }
   } catch (err: unknown) {
     if ((err as { code?: string }).code !== "MODULE_NOT_FOUND") {
       console.warn("[fabrk] Unexpected error resolving vinext:", err);

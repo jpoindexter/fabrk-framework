@@ -175,9 +175,9 @@ create-fabrk-app CLI (scaffolding)
 # Prerequisites: Node.js 22+, pnpm 9+
 
 pnpm install        # Install dependencies
-pnpm build          # Build all 18 packages (13 libs + 5 examples)
+pnpm build          # Build all 19 packages (13 libs + 6 examples)
 pnpm test           # Run 858 tests
-pnpm type-check     # TypeScript validation across 21 packages
+pnpm type-check     # TypeScript validation across 22 packages
 pnpm dev            # Watch mode
 ```
 

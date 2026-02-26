@@ -1,0 +1,104 @@
+{
+  "name": "fabrk",
+  "version": "0.1.0",
+  "description": "AI-first full-stack framework built on vinext — 105+ components, AI agents, auth, payments, 18 themes",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "fabrk": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./client/use-agent": {
+      "import": "./dist/client/use-agent.js",
+      "types": "./dist/client/use-agent.d.ts"
+    },
+    "./components": {
+      "import": "./dist/components.js",
+      "types": "./dist/components.d.ts"
+    },
+    "./themes": {
+      "import": "./dist/themes.js",
+      "types": "./dist/themes.d.ts"
+    },
+    "./fabrk": {
+      "import": "./dist/fabrk.js",
+      "types": "./dist/fabrk.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "AGENTS.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "author": "Jason Poindexter",
+  "keywords": [
+    "fabrk",
+    "vinext",
+    "vite",
+    "react",
+    "cloudflare-workers",
+    "ai-agents",
+    "framework",
+    "nextjs",
+    "typescript",
+    "mcp",
+    "llm",
+    "ui-components"
+  ],
+  "homepage": "https://framework.fabrk.dev",
+  "bugs": {
+    "url": "https://github.com/jpoindexter/fabrk-framework/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jpoindexter/fabrk-framework.git",
+    "directory": "packages/framework"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=19.2.0",
+    "react-dom": ">=19.2.0",
+    "vite": "^7.0.0"
+  },
+  "dependencies": {
+    "vinext": "^0.0.5",
+    "@fabrk/ai": "workspace:*",
+    "@fabrk/auth": "workspace:*",
+    "@fabrk/components": "workspace:*",
+    "@fabrk/config": "workspace:*",
+    "@fabrk/core": "workspace:*",
+    "@fabrk/design-system": "workspace:*",
+    "@fabrk/security": "workspace:*",
+    "glob": "^11.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vite": "^7.3.1",
+    "vitest": "^3.2.1"
+  }
+}

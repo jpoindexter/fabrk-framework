@@ -12,7 +12,8 @@
     "packages/payments",
     "packages/security",
     "packages/storage",
-    "packages/store-prisma"
+    "packages/store-prisma",
+    "packages/framework"
   ],
   "out": "docs/api",
   "plugin": [

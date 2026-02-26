@@ -6,9 +6,9 @@
 <p align="center">
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
-  <img src="https://img.shields.io/badge/packages-12-green" alt="Packages" />
+  <img src="https://img.shields.io/badge/packages-13-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-109%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-748-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-824-green" alt="Tests" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
   <img src="https://img.shields.io/badge/hooks-15-green" alt="Hooks" />
@@ -83,11 +83,17 @@ FABRK is a modular monorepo — install only what you need.
 | [`@fabrk/security`](packages/security) | CSRF, CSP, rate limiting, audit logging, GDPR, bot protection, CORS |
 | [`@fabrk/store-prisma`](packages/store-prisma) | Prisma store adapters for teams, API keys, audit, notifications, jobs, webhooks, feature flags |
 
+### Framework
+
+| Package | Description |
+|---------|-------------|
+| [`fabrk`](packages/framework) | Full-stack framework built on [vinext](https://github.com/cloudflare/vinext) — AI agents, tools, MCP, CLI |
+
 ### CLI
 
 | Package | Description |
 |---------|-------------|
-| [`create-fabrk-app`](packages/cli) | Project scaffolding + `fabrk` dev CLI |
+| [`create-fabrk-app`](packages/cli) | Project scaffolding CLI |
 
 ## Configuration
 

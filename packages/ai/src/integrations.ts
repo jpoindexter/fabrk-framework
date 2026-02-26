@@ -69,8 +69,6 @@ export const claude = {
     } = options;
 
     try {
-      // Dynamic import to avoid requiring SDK at build time
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mod = await import('@anthropic-ai/sdk');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const Anthropic = mod.default || (mod as any).Anthropic || mod;
@@ -137,15 +135,13 @@ export const openai = {
       prompt,
       feature,
       userId,
-      model = 'gpt-4o',
+      model = LLM_DEFAULTS.openaiModel,
       maxTokens = 1024,
       temperature = 0.7,
       systemPrompt,
     } = options;
 
     try {
-      // Dynamic import to avoid requiring SDK at build time
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mod = await import('openai');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const OpenAI = mod.default || (mod as any).OpenAI || mod;
@@ -166,13 +162,14 @@ export const openai = {
           }
           messages.push({ role: 'user', content: prompt });
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return client.chat.completions.create({
+          const response = await client.chat.completions.create({
             model,
             max_tokens: Math.min(maxTokens, MAX_TOKENS_LIMIT),
             temperature,
             messages,
-          }) as any;
+          });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          return response as any;
         },
       });
 
@@ -196,7 +193,6 @@ export const openai = {
     model = 'text-embedding-3-small'
   ): Promise<APIResponse<number[][]>> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mod = await import('openai');
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const OpenAI = mod.default || (mod as any).OpenAI || mod;
@@ -207,8 +203,7 @@ export const openai = {
         input: text,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const embeddings = response.data.map((d: any) => d.embedding);
+      const embeddings = response.data.map((d: { embedding: number[] }) => d.embedding);
       return successResponse(embeddings);
     } catch (error) {
       return errorResponse(

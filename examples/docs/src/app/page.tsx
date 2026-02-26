@@ -29,6 +29,7 @@ const features = [
 ]
 
 const quickLinks = [
+  { label: '> LIVE DEMO', href: '/demo', description: 'See a full CodeScan dashboard built entirely with FABRK components' },
   { label: '> GET STARTED', href: '/getting-started', description: 'Create your first FABRK app in 5 minutes' },
   { label: '> PACKAGES', href: '/packages', description: `Explore ${STATS.packages} modular packages` },
   { label: '> COMPONENTS', href: '/components', description: `Browse ${STATS.components} UI components` },

@@ -112,7 +112,7 @@ export function TableOfContents() {
   if (headings.length === 0) return null
 
   return (
-    <aside className="hidden xl:block w-56 shrink-0 sticky top-0 h-screen overflow-y-auto py-12 pr-4">
+    <aside data-toc className="hidden xl:block w-56 shrink-0 sticky top-0 h-screen overflow-y-auto py-12 pr-4">
       <div className={cn('text-xs font-bold text-muted-foreground uppercase mb-3', mode.font)}>
         [ON THIS PAGE]
       </div>

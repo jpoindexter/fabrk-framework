@@ -9,39 +9,60 @@
   <img src="https://img.shields.io/badge/packages-13-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-109%2B-green" alt="Components" />
   <img src="https://img.shields.io/badge/tests-858-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/themes-18-green" alt="Themes" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/hooks-15-green" alt="Hooks" />
+</p>
+
+<p align="center">
+  <a href="https://framework.fabrk.dev">Docs</a> &middot;
+  <a href="https://framework.fabrk.dev/demo">Live Demo</a> &middot;
+  <a href="https://framework.fabrk.dev/components">Components</a> &middot;
+  <a href="https://framework.fabrk.dev/about">About</a>
 </p>
 
 ---
 
+## The Story
+
+FABRK started as a production boilerplate called [fabrk.dev](https://fabrk.dev) — a Next.js starter built and refined over years of shipping real SaaS products. Every new project pulled in the same patterns: auth flows, payment integrations, dashboard shells, data tables, theme systems, AI tooling. The boilerplate grew into something genuinely useful — 109+ components, 18 themes, auth with MFA, three payment providers, AI cost tracking, security hardening — all battle-tested in production.
+
+Copying a boilerplate works until it doesn't. Bug fixes in one project didn't propagate to others. So the extraction began: components became `@fabrk/components`, auth became `@fabrk/auth`, payments, email, storage, security — each concern got its own package. The monorepo took shape: 13 packages, each with a focused responsibility.
+
+The framework layer — routing, SSR, Cloudflare Workers deployment — was being built from scratch when Cloudflare released [**vinext**](https://github.com/cloudflare/vinext). Vinext did almost exactly what FABRK was building for the runtime and server layer: Vite-based SSR on Workers, Next.js API shims, MIT licensed.
+
+Rather than compete with Cloudflare on runtime infrastructure, FABRK pivoted to where the unique value lived — everything else. The [`fabrk`](packages/framework) meta-package now depends on vinext for the runtime and layers on AI agents, tools, MCP, 109+ components, auth, payments, and the design system on top.
+
+**`fabrk = vinext (runtime) + batteries (everything else)`**
+
+---
+
+## What It Does
+
 Stop generating 500 lines of custom components from scratch. Import pre-built, theme-aware components and tools. Ship full-stack apps in minutes, not hours.
 
 ```typescript
-// When a user says: "Build me a dashboard"
-// The AI generates this:
-import { BarChart, KPICard, DataTable } from '@fabrk/components'
-import { AICostTracker } from '@fabrk/ai'
+import { DashboardShell, KpiCard, BarChart, DataTable, Badge } from '@fabrk/components'
 import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
 export default function Dashboard() {
   return (
-    <div className="grid gap-4 p-6">
-      <KPICard title="REVENUE" value="$12,340" trend={12.5} />
-      <Card className={cn("border border-border p-4", mode.radius)}>
-        <BarChart data={chartData} />
-      </Card>
-    </div>
+    <DashboardShell sidebarItems={items} user={user} onSignOut={signOut}>
+      <div className="grid grid-cols-4 gap-3 p-4">
+        <KpiCard title="REVENUE" value="$12,340" change={12.5} trend="up" />
+        <KpiCard title="USERS" value="1,572" change={8.3} trend="up" />
+      </div>
+      <BarChart data={chartData} xAxisKey="month" series={[{ dataKey: 'revenue', name: 'Revenue' }]} />
+      <DataTable columns={columns} data={users} searchKey="name" />
+    </DashboardShell>
   )
 }
 ```
 
-**Result:** 2 minutes. Consistent design. Built-in features. Happy user.
+**Result:** Full dashboard with sidebar, KPIs, charts, and data table. 2 minutes. Consistent design across 18 themes.
 
-<!-- Add a screenshot of your dashboard or docs site here -->
-<!-- <p align="center"><img src="docs/assets/screenshot.png" alt="FABRK Dashboard" width="720" /></p> -->
+See the [live demo](https://framework.fabrk.dev/demo) — a complete CodeScan dashboard built entirely with FABRK components.
 
 ## Quick Start
 
@@ -87,64 +108,24 @@ FABRK is a modular monorepo — install only what you need.
 
 | Package | Description |
 |---------|-------------|
-| [`fabrk`](packages/framework) | Full-stack framework built on [vinext](https://github.com/cloudflare/vinext) — AI agents, tools, MCP, CLI |
+| [`fabrk`](packages/framework) | Full-stack framework built on [vinext](https://github.com/cloudflare/vinext) — AI agents, tools, MCP, dashboard, CLI |
 
 ### CLI
 
 | Package | Description |
 |---------|-------------|
-| [`create-fabrk-app`](packages/cli) | Project scaffolding CLI |
+| [`create-fabrk-app`](packages/cli) | Project scaffolding CLI with 3 starter templates |
 
-## Configuration
+## Built for AI Agents
 
-One config file controls everything:
+FABRK is designed to be consumed by AI coding assistants. Every package includes:
 
-```typescript
-// fabrk.config.ts
-import { defineFabrkConfig } from '@fabrk/config'
+- **`AGENTS.md`** — AI-readable docs with all components, props, and usage examples
+- **AI cost tracking** — Built-in `AICostTracker` with budget enforcement middleware
+- **Provider fallback** — Automatic LLM failover across providers
+- **Type-safe interfaces** — Discoverable by LLMs reading type signatures
 
-export default defineFabrkConfig({
-  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
-  theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
-  ai: { costTracking: true, budget: { daily: 50 } },
-  auth: { adapter: 'nextauth', mfa: { enabled: true }, apiKeys: { enabled: true } },
-  payments: { adapter: 'stripe', mode: 'test' },
-  email: { adapter: 'resend' },
-  security: { csrf: { enabled: true }, rateLimit: { enabled: true }, csp: { enabled: true } },
-  notifications: { enabled: true },
-  teams: { enabled: true },
-  featureFlags: { enabled: true },
-})
-```
-
-## CLI Commands
-
-```bash
-# Scaffold
-npx create-fabrk-app my-app --template ai-saas
-
-# Development
-fabrk dev                          # Dev server (generates .fabrk/ configs, wraps next dev)
-fabrk build                        # Production build
-fabrk lint                         # Design system compliance checks
-
-# Code Generation
-fabrk generate component MetricsCard   # React component with design tokens
-fabrk generate page settings           # Next.js page
-fabrk generate api webhooks            # Next.js API route
-fabrk generate ai-rules                # CLAUDE.md / cursor rules from config
-
-# Info
-fabrk info                         # Project info + installed packages
-```
-
-## Templates
-
-| Template | What you get |
-|----------|-------------|
-| **basic** | Clean starting point with `@fabrk/core` and `@fabrk/design-system` |
-| **ai-saas** | AI-powered SaaS with cost tracking, API keys, streaming |
-| **dashboard** | Admin dashboard with teams, feature flags, webhooks, audit logging |
+Works with **Claude Code**, **Cursor**, **GitHub Copilot**, **v0.dev**, **Windsurf**, and **Cline**.
 
 ## Design System
 
@@ -160,24 +141,10 @@ import { mode } from '@fabrk/design-system'
 // Buttons — UPPERCASE with > prefix
 <Button>> SUBMIT</Button>
 
-// Labels — UPPERCASE in brackets
-<Badge>[ACTIVE]</Badge>
-
 // Design tokens — never hardcode colors
 className="bg-primary text-primary-foreground"  // correct
 className="bg-blue-500 text-white"              // wrong
 ```
-
-## Built for AI Agents
-
-FABRK is designed to be consumed by AI coding assistants. Every package includes:
-
-- **`AGENTS.md`** — AI-readable docs with all components, props, and usage examples
-- **`.fabrk/manifest.json`** — Auto-generated component/feature inventory for agent discovery
-- **AI cost tracking** — Built-in `AICostTracker` with budget enforcement middleware
-- **Provider fallback** — Automatic LLM failover across providers
-
-Works with **Claude Code**, **Cursor**, **GitHub Copilot**, **v0.dev**, **Windsurf**, and **Cline**.
 
 ## Architecture
 
@@ -192,14 +159,15 @@ Works with **Claude Code**, **Cursor**, **GitHub Copilot**, **v0.dev**, **Windsu
 @fabrk/components (109+ UI components, charts, dashboard)
 @fabrk/store-prisma (Prisma database adapters)
     |
+fabrk (vinext runtime + AI agents + tools + MCP)
 create-fabrk-app CLI (scaffolding)
 ```
 
 **Key patterns:**
 - **Adapter pattern** — All external services behind provider-agnostic interfaces
 - **Store pattern** — Injectable stores with in-memory defaults for dev/testing
-- **Web Crypto API** — Used throughout (no Node.js crypto dependency)
-- **Config-driven** — `fabrk.config.ts` at project root, like `next.config.js`
+- **Web Crypto API** — Used throughout (no Node.js crypto — runs on edge runtimes)
+- **Config-driven** — `fabrk.config.ts` at project root, validated by Zod
 
 ## Development
 
@@ -209,29 +177,32 @@ create-fabrk-app CLI (scaffolding)
 pnpm install        # Install dependencies
 pnpm build          # Build all 18 packages (13 libs + 5 examples)
 pnpm test           # Run 858 tests
-pnpm type-check     # TypeScript validation
+pnpm type-check     # TypeScript validation across 21 packages
 pnpm dev            # Watch mode
 ```
 
-## Docs Site
+## Documentation
 
-The documentation lives in `examples/docs/` and dogfoods FABRK packages.
+The docs site lives at [framework.fabrk.dev](https://framework.fabrk.dev) and dogfoods FABRK packages. It includes:
+
+- 40+ documentation pages with Cmd+K search
+- 30 component doc pages with live previews
+- Interactive 18-theme switcher
+- Tutorials for dashboards, auth, and payments
+- [Live demo dashboard](https://framework.fabrk.dev/demo)
 
 ```bash
 cd examples/docs
-pnpm dev    # Local development at localhost:3000
+pnpm dev    # localhost:3001
 ```
-
-### Deploy to Vercel
-
-1. Import the repo on [vercel.com](https://vercel.com)
-2. Set Root Directory to `examples/docs`
-3. Framework Preset: Next.js
-4. Deploy
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, workflow, and commit conventions.
+
+## Who Built This
+
+Built by [Jason Poindexter](https://github.com/jpoindexter). FABRK is the distillation of years of shipping SaaS products — every pattern that worked, extracted and packaged so the next project starts further ahead.
 
 ## License
 

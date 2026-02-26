@@ -97,7 +97,7 @@ export function MobileNav() {
   const [open, setOpen] = useState(false)
 
   return (
-    <>
+    <div data-mobile-nav>
       <button
         type="button"
         className={cn(
@@ -157,6 +157,6 @@ export function MobileNav() {
           </div>
         </div>
       </aside>
-    </>
+    </div>
   )
 }

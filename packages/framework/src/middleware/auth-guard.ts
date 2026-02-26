@@ -1,4 +1,4 @@
-import { buildSecurityHeaders } from "./security.js";
+import { buildSecurityHeaders } from "./security";
 
 type AuthMode = "required" | "optional" | "none";
 

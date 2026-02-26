@@ -1,7 +1,7 @@
 import type { Plugin } from "vite";
 import vinext from "vinext";
-import { agentPlugin } from "./agents/vite-plugin.js";
-import { dashboardPlugin } from "./dashboard/vite-plugin.js";
+import { agentPlugin } from "./agents/vite-plugin";
+import { dashboardPlugin } from "./dashboard/vite-plugin";
 
 export interface FabrkOptions {
   vinext?: Parameters<typeof vinext>[0];
@@ -23,8 +23,8 @@ export default function fabrk(options: FabrkOptions = {}): Plugin[] {
   return [...vinextPlugins, ...plugins];
 }
 
-export { defineAgent } from "./agents/define-agent.js";
-export type { AgentDefinition } from "./agents/define-agent.js";
-export { defineTool, textResult } from "./tools/define-tool.js";
-export type { ToolDefinition, ToolResult } from "./tools/define-tool.js";
-export { loadFabrkConfig } from "./config/fabrk-config.js";
+export { defineAgent } from "./agents/define-agent";
+export type { AgentDefinition } from "./agents/define-agent";
+export { defineTool, textResult } from "./tools/define-tool";
+export type { ToolDefinition, ToolResult } from "./tools/define-tool";
+export { loadFabrkConfig } from "./config/fabrk-config";

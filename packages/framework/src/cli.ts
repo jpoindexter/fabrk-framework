@@ -47,12 +47,12 @@ async function dev(): Promise<void> {
   console.log(`\n  fabrk dev v${VERSION}  (powered by vinext)\n`);
 
   try {
-    const { scanTools } = await import("./tools/scanner.js");
-    const { loadToolDefinitions } = await import("./tools/loader.js");
+    const { scanTools } = await import("./tools/scanner");
+    const { loadToolDefinitions } = await import("./tools/loader");
     const scanned = scanTools(process.cwd());
     if (scanned.length > 0) {
       const toolDefs = await loadToolDefinitions(scanned);
-      const { startMcpDevServer } = await import("./tools/mcp-dev-server.js");
+      const { startMcpDevServer } = await import("./tools/mcp-dev-server");
       await startMcpDevServer(toolDefs);
       console.log(`  MCP server started with ${scanned.length} tool(s)\n`);
     }
@@ -61,7 +61,7 @@ async function dev(): Promise<void> {
   }
 
   try {
-    const { scanAgents } = await import("./agents/scanner.js");
+    const { scanAgents } = await import("./agents/scanner");
     const agents = scanAgents(process.cwd());
     if (agents.length > 0) {
       console.log(
@@ -81,14 +81,14 @@ async function build(): Promise<void> {
   vinextPassthrough("build", rawArgs);
 
   try {
-    const { scanAgents } = await import("./agents/scanner.js");
-    const { scanTools } = await import("./tools/scanner.js");
+    const { scanAgents } = await import("./agents/scanner");
+    const { scanTools } = await import("./tools/scanner");
 
     const scannedAgents = scanAgents(process.cwd());
     const scannedTools = scanTools(process.cwd());
 
     if (scannedAgents.length > 0 || scannedTools.length > 0) {
-      const { generateAgentsMd } = await import("./build/agents-md.js");
+      const { generateAgentsMd } = await import("./build/agents-md");
 
       const md = generateAgentsMd({
         agents: scannedAgents.map((a) => ({
@@ -121,8 +121,8 @@ async function info(): Promise<void> {
   console.log(`\n  fabrk info v${VERSION}\n`);
 
   try {
-    const { scanAgents } = await import("./agents/scanner.js");
-    const { scanTools } = await import("./tools/scanner.js");
+    const { scanAgents } = await import("./agents/scanner");
+    const { scanTools } = await import("./tools/scanner");
 
     const agents = scanAgents(root);
     const tools = scanTools(root);

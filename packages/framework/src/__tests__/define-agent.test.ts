@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { defineAgent } from "../agents/define-agent.js";
+import { defineAgent } from "../agents/define-agent";
 
 describe("defineAgent", () => {
   it("returns a valid agent definition", () => {

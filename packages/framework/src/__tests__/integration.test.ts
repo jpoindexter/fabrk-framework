@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { scanAgents } from "../agents/scanner.js";
-import { defineAgent } from "../agents/define-agent.js";
-import { createAgentHandler } from "../agents/route-handler.js";
-import { scanTools } from "../tools/scanner.js";
-import { defineTool, textResult } from "../tools/define-tool.js";
-import { loadPrompt, interpolatePrompt } from "../prompts/loader.js";
-import { generateAgentsMd } from "../build/agents-md.js";
+import { scanAgents } from "../agents/scanner";
+import { defineAgent } from "../agents/define-agent";
+import { createAgentHandler } from "../agents/route-handler";
+import { scanTools } from "../tools/scanner";
+import { defineTool, textResult } from "../tools/define-tool";
+import { loadPrompt, interpolatePrompt } from "../prompts/loader";
+import { generateAgentsMd } from "../build/agents-md";
 
 describe("E2E integration", () => {
   let tmpDir: string;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createLLMBridge } from "../agents/llm-bridge.js";
+import { createLLMBridge } from "../agents/llm-bridge";
 
 describe("createLLMBridge", () => {
   it("creates a bridge with model and provider", () => {

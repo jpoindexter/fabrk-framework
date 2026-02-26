@@ -1,10 +1,10 @@
 import type { Plugin, ViteDevServer } from "vite";
-import { scanAgents } from "./scanner.js";
-import { createAgentHandler } from "./route-handler.js";
-import type { AgentDefinition } from "./define-agent.js";
-import { scanTools } from "../tools/scanner.js";
-import { setAgents, setTools, recordCall } from "../dashboard/vite-plugin.js";
-import { buildSecurityHeaders } from "../middleware/security.js";
+import { scanAgents } from "./scanner";
+import { createAgentHandler } from "./route-handler";
+import type { AgentDefinition } from "./define-agent";
+import { scanTools } from "../tools/scanner";
+import { setAgents, setTools, recordCall } from "../dashboard/vite-plugin";
+import { buildSecurityHeaders } from "../middleware/security";
 
 export function agentPlugin(): Plugin {
   let root: string;

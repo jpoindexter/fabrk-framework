@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createAgentHandler } from "../agents/route-handler.js";
+import { createAgentHandler } from "../agents/route-handler";
 
 describe("createAgentHandler", () => {
   it("returns a request handler function", () => {

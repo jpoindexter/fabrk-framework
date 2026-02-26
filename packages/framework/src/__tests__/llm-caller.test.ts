@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { LLMCallResult } from "../agents/llm-caller.js";
+import type { LLMCallResult } from "../agents/llm-caller";
 
 describe("LLMCallResult type", () => {
   it("has the expected shape", () => {
@@ -19,7 +19,7 @@ describe("LLMCallResult type", () => {
 describe("callWithFallback (via route handler)", () => {
   it("returns result from _llmCall override", async () => {
     // Test the integration through createAgentHandler's _llmCall path
-    const { createAgentHandler } = await import("../agents/route-handler.js");
+    const { createAgentHandler } = await import("../agents/route-handler");
 
     const handler = createAgentHandler({
       model: "test/model",
@@ -48,7 +48,7 @@ describe("callWithFallback (via route handler)", () => {
   });
 
   it("calls onCallComplete after successful call", async () => {
-    const { createAgentHandler } = await import("../agents/route-handler.js");
+    const { createAgentHandler } = await import("../agents/route-handler");
 
     let callRecord: { agent: string; model: string; tokens: number; cost: number } | null = null;
 

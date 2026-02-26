@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import type { SSEEvent } from "../agents/sse-stream.js";
+import type { SSEEvent } from "../agents/sse-stream";
 
 export interface AgentMessage {
   role: "user" | "assistant";

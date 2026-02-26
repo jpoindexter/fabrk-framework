@@ -1,9 +1,9 @@
-import type { AgentDefinition } from "./define-agent.js";
-import { createLLMBridge } from "./llm-bridge.js";
-import { callWithFallback, type LLMCallResult } from "./llm-caller.js";
-import { checkBudget, recordCost } from "./budget-guard.js";
-import { createAuthGuard } from "../middleware/auth-guard.js";
-import { buildSecurityHeaders } from "../middleware/security.js";
+import type { AgentDefinition } from "./define-agent";
+import { createLLMBridge } from "./llm-bridge";
+import { callWithFallback, type LLMCallResult } from "./llm-caller";
+import { checkBudget, recordCost } from "./budget-guard";
+import { createAuthGuard } from "../middleware/auth-guard";
+import { buildSecurityHeaders } from "../middleware/security";
 
 export interface AgentHandlerOptions
   extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt" | "stream" | "tools"> {

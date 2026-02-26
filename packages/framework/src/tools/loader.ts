@@ -1,5 +1,5 @@
-import type { ScannedTool } from "./scanner.js";
-import type { ToolDefinition } from "./define-tool.js";
+import type { ScannedTool } from "./scanner";
+import type { ToolDefinition } from "./define-tool";
 
 export async function loadToolDefinitions(
   scanned: ScannedTool[]

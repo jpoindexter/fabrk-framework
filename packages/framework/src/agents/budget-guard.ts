@@ -1,4 +1,4 @@
-import type { AgentBudget } from "./define-agent.js";
+import type { AgentBudget } from "./define-agent";
 
 const MAX_SESSIONS = 10_000;
 const MAX_AGENTS = 1_000;

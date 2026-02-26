@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildMcpTools } from "../tools/mcp-dev-server.js";
-import { defineTool, textResult } from "../tools/define-tool.js";
+import { buildMcpTools } from "../tools/mcp-dev-server";
+import { defineTool, textResult } from "../tools/define-tool";
 
 describe("buildMcpTools", () => {
   it("converts framework tool definitions to MCP format", () => {

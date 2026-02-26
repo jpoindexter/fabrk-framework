@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "fabrk dev",
-    "build": "fabrk build",
+    "dev": "pnpm exec fabrk dev",
+    "build": "pnpm exec fabrk build",
     "preview": "vite preview",
     "type-check": "tsc --noEmit"
   },

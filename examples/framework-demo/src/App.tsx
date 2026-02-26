@@ -2,10 +2,8 @@ import { ColumnDef } from '@tanstack/react-table'
 import {
   DashboardShell,
   DashboardHeader,
-  StatsGrid,
-  KpiCard,
+  AreaChart,
   BarChart,
-  LineChart,
   DataTable,
   Badge,
   Card,
@@ -14,79 +12,64 @@ import {
   Button,
 } from 'fabrk/components'
 import {
-  GitBranch,
-  ShieldAlert,
-  GitPullRequest,
-  Code2,
-  Settings,
-  LayoutDashboard,
-  TrendingUp,
-  Clock,
+  LayoutGrid,
+  Layers,
   AlertTriangle,
-  CheckCircle2,
-  Plus,
+  ShieldAlert,
+  RefreshCw,
+  Timer,
+  FileCode2,
+  Code2,
+  Gavel,
+  Radar,
+  Bug,
+  ShieldCheck,
+  ArrowDown,
+  ArrowUp,
 } from 'lucide-react'
 
 // --- Mock Data ---
 
-const weeklyScans = [
-  { day: 'Mon', scans: 312 },
-  { day: 'Tue', scans: 398 },
-  { day: 'Wed', scans: 421 },
-  { day: 'Thu', scans: 387 },
-  { day: 'Fri', scans: 456 },
-  { day: 'Sat', scans: 203 },
-  { day: 'Sun', scans: 174 },
+const issuesTrend = [
+  { date: 'Sep 25', issues: 142 },
+  { date: 'Oct 02', issues: 128 },
+  { date: 'Oct 09', issues: 135 },
+  { date: 'Oct 16', issues: 98 },
+  { date: 'Oct 23', issues: 72 },
+  { date: 'Today', issues: 54 },
 ]
 
-const complexityTrend = [
-  { week: 'W1', complexity: 68, coverage: 71 },
-  { week: 'W2', complexity: 71, coverage: 74 },
-  { week: 'W3', complexity: 69, coverage: 76 },
-  { week: 'W4', complexity: 74, coverage: 73 },
-  { week: 'W5', complexity: 72, coverage: 78 },
-  { week: 'W6', complexity: 70, coverage: 82 },
-  { week: 'W7', complexity: 67, coverage: 85 },
-  { week: 'W8', complexity: 64, coverage: 87 },
+const weeklyCoverage = [
+  { day: 'M', coverage: 60 },
+  { day: 'T', coverage: 75 },
+  { day: 'W', coverage: 65 },
+  { day: 'T', coverage: 85 },
+  { day: 'F', coverage: 70 },
+  { day: 'S', coverage: 50 },
+  { day: 'S', coverage: 92 },
 ]
 
-const issuesByType = [
-  { type: 'Security', critical: 3, high: 12, medium: 28 },
-  { type: 'Quality', critical: 0, high: 7, medium: 41 },
-  { type: 'Coverage', critical: 1, high: 4, medium: 19 },
-  { type: 'Duplication', critical: 0, high: 2, medium: 15 },
-]
-
-interface RepoRow {
-  name: string
+interface ScanRow {
+  project: string
   language: string
   issues: number
-  coverage: string
-  complexity: string
-  lastScan: string
   status: 'passing' | 'warning' | 'failing'
 }
 
-const repos: RepoRow[] = [
-  { name: 'api-gateway', language: 'TypeScript', issues: 4, coverage: '91%', complexity: 'A', lastScan: '3 min ago', status: 'passing' },
-  { name: 'auth-service', language: 'TypeScript', issues: 2, coverage: '88%', complexity: 'A', lastScan: '7 min ago', status: 'passing' },
-  { name: 'payment-processor', language: 'Go', issues: 15, coverage: '74%', complexity: 'B', lastScan: '12 min ago', status: 'warning' },
-  { name: 'data-pipeline', language: 'Python', issues: 31, coverage: '52%', complexity: 'C', lastScan: '18 min ago', status: 'failing' },
-  { name: 'web-frontend', language: 'TypeScript', issues: 7, coverage: '83%', complexity: 'B', lastScan: '22 min ago', status: 'warning' },
-  { name: 'infra-scripts', language: 'Shell', issues: 0, coverage: 'N/A', complexity: 'A', lastScan: '31 min ago', status: 'passing' },
-  { name: 'ml-inference', language: 'Python', issues: 9, coverage: '61%', complexity: 'B', lastScan: '45 min ago', status: 'warning' },
-  { name: 'notification-svc', language: 'TypeScript', issues: 1, coverage: '94%', complexity: 'A', lastScan: '1 hr ago', status: 'passing' },
+const scans: ScanRow[] = [
+  { project: 'api-gateway', language: 'Go', issues: 3, status: 'passing' },
+  { project: 'auth-service', language: 'Rust', issues: 12, status: 'failing' },
+  { project: 'dashboard-ui', language: 'TypeScript', issues: 45, status: 'warning' },
+  { project: 'data-pipeline', language: 'Python', issues: 8, status: 'passing' },
+  { project: 'ml-inference', language: 'Python', issues: 22, status: 'warning' },
 ]
 
-const columns: ColumnDef<RepoRow>[] = [
+const scanColumns: ColumnDef<ScanRow>[] = [
   {
-    accessorKey: 'name',
-    header: 'REPOSITORY',
+    accessorKey: 'project',
+    header: 'PROJECT',
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <GitBranch className="size-3.5 text-muted-foreground" />
-        <span className="font-medium">{row.original.name}</span>
-      </div>
+      <span className="font-bold text-foreground">{row.original.project}</span>
     ),
   },
   {
@@ -100,29 +83,9 @@ const columns: ColumnDef<RepoRow>[] = [
     accessorKey: 'issues',
     header: 'ISSUES',
     cell: ({ row }) => (
-      <span className={row.original.issues > 10 ? 'text-destructive font-semibold' : ''}>
+      <span className={row.original.issues > 10 ? 'text-destructive font-bold' : ''}>
         {row.original.issues}
       </span>
-    ),
-  },
-  { accessorKey: 'coverage', header: 'COVERAGE' },
-  {
-    accessorKey: 'complexity',
-    header: 'GRADE',
-    cell: ({ row }) => {
-      const grade = row.original.complexity
-      return (
-        <Badge variant={grade === 'A' ? 'default' : grade === 'B' ? 'secondary' : 'destructive'}>
-          {grade}
-        </Badge>
-      )
-    },
-  },
-  {
-    accessorKey: 'lastScan',
-    header: 'LAST SCAN',
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.original.lastScan}</span>
     ),
   },
   {
@@ -140,13 +103,91 @@ const columns: ColumnDef<RepoRow>[] = [
 ]
 
 const sidebarItems = [
-  { id: 'overview', label: 'Overview', icon: <LayoutDashboard className="size-4" />, href: '/', active: true },
-  { id: 'repos', label: 'Repositories', icon: <GitBranch className="size-4" />, href: '/', badge: 8 },
-  { id: 'security', label: 'Security', icon: <ShieldAlert className="size-4" />, href: '/', badge: 3 },
-  { id: 'prs', label: 'Pull Requests', icon: <GitPullRequest className="size-4" />, href: '/' },
-  { id: 'trends', label: 'Trends', icon: <TrendingUp className="size-4" />, href: '/' },
-  { id: 'settings', label: 'Settings', icon: <Settings className="size-4" />, href: '/' },
+  { id: 'overview', label: 'Overview', icon: <LayoutGrid className="size-4" />, href: '/', active: true },
+  { id: 'projects', label: 'Projects', icon: <Layers className="size-4" />, href: '/' },
+  { id: 'issues', label: 'Issues', icon: <AlertTriangle className="size-4" />, href: '/' },
+  { id: 'security', label: 'Security', icon: <ShieldAlert className="size-4" />, href: '/' },
 ]
+
+// --- Severity Bar Component ---
+
+function SeverityBar({ label, critical, high, medium, total }: {
+  label: string
+  critical: number
+  high: number
+  medium: number
+  total: number
+}) {
+  const pct = (v: number) => `${Math.round((v / total) * 100)}%`
+  return (
+    <div className="grid grid-cols-12 items-center">
+      <span className="col-span-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{label}</span>
+      <div className="col-span-9 h-1.5 bg-muted rounded-full flex overflow-hidden mx-4">
+        <div className="bg-destructive" style={{ width: pct(critical) }} />
+        <div className="bg-orange-400" style={{ width: pct(high) }} />
+        <div className="bg-yellow-400" style={{ width: pct(medium) }} />
+      </div>
+      <span className="col-span-1 text-[10px] font-bold text-muted-foreground text-right">
+        {Math.round(((critical + high + medium) / total) * 100)}%
+      </span>
+    </div>
+  )
+}
+
+// --- Mini Stat Widget ---
+
+function MiniStat({ label, value, delta, icon }: {
+  label: string
+  value: string
+  delta?: string
+  icon: React.ReactNode
+}) {
+  return (
+    <Card size="auto">
+      <CardContent padding="sm">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
+          <span className="text-muted-foreground">{icon}</span>
+        </div>
+        <div className="flex items-baseline justify-between">
+          <span className="text-lg font-bold text-foreground">{value}</span>
+          {delta && (
+            <span className="text-[9px] font-bold text-success bg-success/10 px-1 rounded">{delta}</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// --- Metric Card ---
+
+function MetricCard({ label, value, delta, deltaDown, icon, iconBg }: {
+  label: string
+  value: string
+  delta: string
+  deltaDown?: boolean
+  icon: React.ReactNode
+  iconBg: string
+}) {
+  return (
+    <Card size="auto">
+      <CardContent padding="md">
+        <div className="flex items-center gap-3 mb-3">
+          <div className={`p-2 rounded ${iconBg}`}>{icon}</div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold text-foreground">{value}</span>
+          <span className={`text-xs font-bold flex items-center ${deltaDown ? 'text-success' : 'text-destructive'}`}>
+            {deltaDown ? <ArrowDown className="size-3" /> : <ArrowUp className="size-3" />}
+            {delta}
+          </span>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export default function App() {
   return (
@@ -154,157 +195,205 @@ export default function App() {
       sidebarItems={sidebarItems}
       title="CodeScan"
       logo={
-        <div className="flex size-7 items-center justify-center rounded-md bg-accent text-accent-foreground text-[10px] font-bold">
-          CS
+        <div className="flex size-7 items-center justify-center rounded bg-accent text-accent-foreground text-[10px] font-bold">
+          {'</>'}
         </div>
       }
-      user={{ name: 'Alex Rivera', tier: 'pro' }}
+      user={{ name: 'John Doe', tier: 'enterprise' }}
       onSignOut={() => {}}
     >
       {/* Header */}
       <DashboardHeader
         title="OVERVIEW"
-        subtitle="Last scan: 3 minutes ago — all repos healthy"
+        subtitle="Updated 14:30 EST — Instance-04"
         actions={
           <Button size="sm">
-            <Plus className="size-3.5" />
-            &gt; ADD REPO
+            <RefreshCw className="size-3.5" />
+            {'> RUN NEW SCAN'}
           </Button>
         }
       />
 
-      {/* Stats strip */}
-      <StatsGrid
-        items={[
-          { label: 'Repos Connected', value: 8, icon: <GitBranch className="size-4" />, change: '+2 this week' },
-          { label: 'Issues Found', value: 69, icon: <AlertTriangle className="size-4" /> },
-          { label: 'Critical', value: 4, icon: <ShieldAlert className="size-4" /> },
-          { label: 'Avg Coverage', value: '78%', icon: <Code2 className="size-4" />, change: '+6% this month' },
-        ]}
-        columns={4}
-      />
+      {/* Main 12-col grid */}
+      <div className="grid grid-cols-12 gap-3 px-4 pb-6 auto-rows-min">
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 gap-3 p-4 lg:grid-cols-4">
-        <KpiCard
-          title="PR CYCLE TIME"
-          value="1.8d"
-          change={14}
-          trend="down"
-          subtitle="vs last month"
-          icon={<Clock className="size-3.5 text-muted-foreground" />}
-        />
-        <KpiCard
-          title="SCANS TODAY"
-          value="2,341"
-          change={8.2}
-          trend="up"
-          subtitle="vs yesterday"
-          icon={<Code2 className="size-3.5 text-muted-foreground" />}
-        />
-        <KpiCard
-          title="PASSING REPOS"
-          value="5 / 8"
-          change={0}
-          trend="neutral"
-          subtitle="3 need attention"
-          icon={<CheckCircle2 className="size-3.5 text-muted-foreground" />}
-        />
-        <KpiCard
-          title="SECRETS CAUGHT"
-          value="12"
-          change={3}
-          trend="up"
-          subtitle="this month"
-          icon={<ShieldAlert className="size-3.5 text-muted-foreground" />}
-        />
-      </div>
+        {/* Technical Debt — hero card, spans 2 rows */}
+        <div className="col-span-12 lg:col-span-4 lg:row-span-2">
+          <Card size="full">
+            <CardContent padding="md">
+              <div className="flex flex-col justify-between h-full">
+                <div>
+                  <div className="flex justify-between items-start mb-4">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">[TECH_DEBT]</span>
+                    <div className="p-1.5 bg-orange-100 text-orange-600 rounded">
+                      <Timer className="size-4" />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-5xl font-bold text-foreground tracking-tighter">42d</span>
+                    <span className="text-xs font-bold text-success flex items-center">
+                      <ArrowDown className="size-3" />4.5%
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-2 font-medium uppercase tracking-wider">Calculated remediation effort</p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-border">
+                  <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
+                    <span>Refactor Progress</span>
+                    <span>65%</span>
+                  </div>
+                  <div className="w-full bg-muted h-1.5 mt-2 rounded-full overflow-hidden">
+                    <div className="bg-accent h-full rounded-full" style={{ width: '65%' }} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 gap-3 px-4 lg:grid-cols-2">
-        <Card size="auto">
-          <CardHeader
-            title="COMPLEXITY VS COVERAGE — 8 WEEKS"
-            icon={<TrendingUp className="size-3.5 text-muted-foreground" />}
-            meta="8W"
-          />
-          <CardContent padding="md">
-            <LineChart
-              data={complexityTrend}
-              xAxisKey="week"
-              series={[
-                { dataKey: 'complexity', name: 'Avg Complexity', type: 'monotone' },
-                { dataKey: 'coverage', name: 'Test Coverage %', type: 'monotone' },
-              ]}
-              height={220}
-              showLegend
-              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+        {/* Issues Over Time — area chart, spans 2 rows */}
+        <div className="col-span-12 lg:col-span-8 lg:row-span-2">
+          <Card size="full">
+            <CardHeader
+              title="[ISSUES_OVER_TIME]"
+              meta={
+                <div className="flex gap-2">
+                  <Badge variant="outline">30D</Badge>
+                  <Badge variant="default">LIVE</Badge>
+                </div>
+              }
             />
-          </CardContent>
-        </Card>
+            <CardContent padding="md">
+              <AreaChart
+                data={issuesTrend}
+                xAxisKey="date"
+                series={[
+                  { dataKey: 'issues', name: 'Issues', type: 'monotone', fillOpacity: 0.1, strokeWidth: 2 },
+                ]}
+                height={180}
+                gradient
+                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+              />
+            </CardContent>
+          </Card>
+        </div>
 
-        <Card size="auto">
-          <CardHeader
-            title="SCANS PER DAY — THIS WEEK"
-            icon={<Code2 className="size-3.5 text-muted-foreground" />}
-            meta="7D"
-          />
-          <CardContent padding="md">
-            <BarChart
-              data={weeklyScans}
-              xAxisKey="day"
-              series={[{ dataKey: 'scans', name: 'Scans', radius: [3, 3, 0, 0] }]}
-              height={220}
-              yAxisFormatter={(v) => v.toLocaleString()}
-              tooltipFormatter={(v) => v.toLocaleString()}
-              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        {/* 4 Mini Stats */}
+        <div className="col-span-6 md:col-span-3">
+          <MiniStat label="Files" value="1,240" delta="+12" icon={<FileCode2 className="size-4" />} />
+        </div>
+        <div className="col-span-6 md:col-span-3">
+          <MiniStat label="LOC" value="458k" delta="+2.3k" icon={<Code2 className="size-4" />} />
+        </div>
+        <div className="col-span-6 md:col-span-3">
+          <MiniStat label="Rules" value="342" icon={<Gavel className="size-4" />} />
+        </div>
+        <div className="col-span-6 md:col-span-3">
+          <MiniStat label="Scans" value="12" delta="+4" icon={<Radar className="size-4" />} />
+        </div>
 
-      {/* Issues by Type */}
-      <div className="px-4 py-3">
-        <Card size="auto">
-          <CardHeader
-            title="ISSUES BY TYPE — CURRENT"
-            icon={<AlertTriangle className="size-3.5 text-muted-foreground" />}
-            meta="LIVE"
+        {/* 3 Metric Cards */}
+        <div className="col-span-12 md:col-span-4">
+          <MetricCard
+            label="[CODE_SMELLS]"
+            value="1,832"
+            delta="6.1%"
+            deltaDown
+            icon={<Bug className="size-4" />}
+            iconBg="bg-purple-100 text-purple-600"
           />
-          <CardContent padding="md">
-            <BarChart
-              data={issuesByType}
-              xAxisKey="type"
-              series={[
-                { dataKey: 'critical', name: 'Critical', stackId: 'stack', radius: 0 },
-                { dataKey: 'high', name: 'High', stackId: 'stack', radius: 0 },
-                { dataKey: 'medium', name: 'Medium', stackId: 'stack', radius: [3, 3, 0, 0] },
-              ]}
-              height={180}
-              showLegend
-              margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
-            />
-          </CardContent>
-        </Card>
-      </div>
+        </div>
+        <div className="col-span-12 md:col-span-4">
+          <MetricCard
+            label="[ACTIVE_BUGS]"
+            value="14"
+            delta="16%"
+            icon={<AlertTriangle className="size-4" />}
+            iconBg="bg-red-100 text-red-600"
+          />
+        </div>
+        <div className="col-span-12 md:col-span-4">
+          <Card size="auto">
+            <CardContent padding="md">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2 rounded bg-blue-100 text-blue-600">
+                  <ShieldCheck className="size-4" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">[VULNERABILITIES]</span>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-foreground">0</span>
+                <Badge variant="default">HEALTHY</Badge>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Repo Table */}
-      <div className="px-4 pb-6">
-        <Card size="auto">
-          <CardHeader
-            title="ALL REPOSITORIES"
-            meta={`${repos.length} repos`}
-            icon={<GitBranch className="size-3.5 text-muted-foreground" />}
-          />
-          <CardContent padding="sm">
-            <DataTable
-              columns={columns}
-              data={repos}
-              searchKey="name"
-              searchPlaceholder="Search repositories..."
+        {/* Issue Severity & Density */}
+        <div className="col-span-12">
+          <Card size="auto">
+            <CardHeader
+              title="[SEVERITY_DENSITY]"
+              meta={
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-destructive" />
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase">Critical</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-orange-400" />
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase">High</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-yellow-400" />
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase">Medium</span>
+                  </div>
+                </div>
+              }
             />
-          </CardContent>
-        </Card>
+            <CardContent padding="md">
+              <div className="space-y-5">
+                <SeverityBar label="Security" critical={15} high={20} medium={10} total={100} />
+                <SeverityBar label="Quality" critical={5} high={15} medium={50} total={100} />
+                <SeverityBar label="Coverage" critical={2} high={8} medium={30} total={100} />
+                <SeverityBar label="Duplicate" critical={0} high={5} medium={20} total={100} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Weekly Coverage bar chart */}
+        <div className="col-span-12 lg:col-span-5">
+          <Card size="auto">
+            <CardHeader title="[WEEKLY_COVERAGE]" meta="7D" />
+            <CardContent padding="md">
+              <BarChart
+                data={weeklyCoverage}
+                xAxisKey="day"
+                series={[{ dataKey: 'coverage', name: 'Coverage %', radius: [3, 3, 0, 0] }]}
+                height={160}
+                yAxisFormatter={(v) => `${v}%`}
+                margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Scan Pipeline table */}
+        <div className="col-span-12 lg:col-span-7">
+          <Card size="auto">
+            <CardHeader title="[SCAN_PIPELINE]" />
+            <CardContent padding="sm">
+              <DataTable
+                columns={scanColumns}
+                data={scans}
+                searchKey="project"
+                searchPlaceholder="Filter..."
+              />
+            </CardContent>
+          </Card>
+        </div>
+
       </div>
     </DashboardShell>
   )

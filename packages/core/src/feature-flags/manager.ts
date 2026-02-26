@@ -84,7 +84,6 @@ export function createFeatureFlagManager(
           crypto.getRandomValues(buf)
           return (buf[0] / 0x100000000) * 100 < flag.rolloutPercent
         }
-        // Deterministic hash for consistent experience
         const bucket = hashString(`${name}:${context.userId}`) % 100
         return bucket < flag.rolloutPercent
       }

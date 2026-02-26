@@ -107,22 +107,16 @@ export function ThemeProvider({
       (legacyColorKey ? localStorage.getItem(legacyColorKey) : null);
 
     if (storedColor && ALL_THEMES.includes(storedColor as ColorThemeName)) {
-      // User has a stored preference - use it
       setColorThemeState(storedColor as ColorThemeName);
     } else {
-      // No stored preference - detect system preference.
-      // Use a fixed default dark theme to match the ThemeScript server render
-      // and avoid hydration mismatch (Math.random() produces different values).
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       const systemTheme = prefersDark ? defaultColorTheme : LIGHT_THEME;
       setColorThemeState(systemTheme);
-      // Don't persist system-detected theme until user explicitly changes it
     }
 
     setMounted(true);
   }, [colorKey, legacyColorKey, persist, defaultColorTheme]);
 
-  // Update localStorage and DOM when theme changes
   useEffect(() => {
     if (!mounted) return;
 

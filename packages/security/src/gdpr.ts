@@ -21,12 +21,10 @@ export function anonymizeEmail(email: string): string {
 
 export function anonymizeIp(ip: string): string {
   if (ip.includes(':')) {
-    // IPv6 — zero last 80 bits
     const parts = ip.split(':')
     return parts.slice(0, 3).join(':') + '::0'
   }
 
-  // IPv4 — zero last octet
   const parts = ip.split('.')
   if (parts.length !== 4) return '0.0.0.0'
   parts[3] = '0'
@@ -84,7 +82,7 @@ export function createConsentManager(options: {
           third_party: false,
           ...options.defaultConsent,
           ...purposes,
-          necessary: true, // Always required, cannot be overridden
+          necessary: true,
         },
         timestamp: new Date(),
         ipAddress,

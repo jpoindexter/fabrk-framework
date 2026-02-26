@@ -51,7 +51,6 @@ function Progress({
   const chars = PROGRESS_CHARS[variant];
   const percentage = `${Math.round(clampedValue)}%`;
 
-  // Build the progress bar string
   let bar = '';
   if (variant === 'arrow') {
     const arrowChars = chars as typeof PROGRESS_CHARS.arrow;

@@ -122,7 +122,6 @@ export function budgetEnforcement(config: BudgetConfig): AIMiddlewareFunction {
   const alertThreshold = config.alertThreshold ?? 0.8
 
   return async (context: AIRequestContext, next: () => Promise<void>) => {
-    // Check daily budget
     if (config.daily) {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -142,7 +141,6 @@ export function budgetEnforcement(config: BudgetConfig): AIMiddlewareFunction {
       }
     }
 
-    // Check monthly budget
     if (config.monthly) {
       const now = new Date()
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
@@ -214,7 +212,6 @@ export function providerFallback(config: FallbackConfig): AIMiddlewareFunction {
       const provider = config.providers[i]
       const model = config.models?.[provider] ?? DEFAULT_MODELS[provider]
 
-      // Set the provider and model for this attempt
       context.provider = provider === 'claude' ? 'anthropic' : provider === 'openai' ? 'openai' : 'other'
       context.model = model
 
@@ -233,7 +230,6 @@ export function providerFallback(config: FallbackConfig): AIMiddlewareFunction {
         }
       }
 
-      // Provider failed after retries
       if (lastError) {
         errors.push({ provider, error: lastError })
 
@@ -245,7 +241,6 @@ export function providerFallback(config: FallbackConfig): AIMiddlewareFunction {
       }
     }
 
-    // All providers failed
     const errorSummary = errors.map(e => `${e.provider}: ${e.error.message}`).join('; ')
     context.blocked = true
     context.blockReason = `All providers failed: ${errorSummary}`

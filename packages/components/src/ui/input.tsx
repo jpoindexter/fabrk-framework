@@ -21,7 +21,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           disabled={disabled || loading}
           className={cn(
-            // Base styles - uses mode tokens for consistent theming
             'flex h-8 w-full border transition-colors',
             mode.color.bg.base,
             mode.color.text.primary,
@@ -31,31 +30,24 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             mode.radius,
             mode.font,
 
-            // Focus state - uses mode state tokens
             'focus-visible:outline-none',
             mode.state.focus.ring,
 
-            // File input styles - uses mode tokens
             'file:border-0 file:bg-transparent',
             mode.color.text.primary.replace('text-', 'file:text-'),
             mode.typography.input.replace('text-', 'file:text-'),
             mode.font.replace('font-', 'file:font-'),
 
-            // Placeholder styles
             mode.color.text.muted.replace('text-', 'placeholder:text-'),
             'placeholder:font-normal',
 
-            // Disabled state - uses mode state tokens
             mode.state.disabled.cursor,
             mode.state.disabled.opacity,
 
-            // Loading state - Add padding for spinner
             loading && 'pr-10',
 
-            // Error state - uses mode danger tokens
             error && cn(mode.color.border.danger, 'focus-visible:ring-destructive'),
 
-            // Success state - uses mode success tokens
             success && 'focus-visible:ring-success',
 
             className

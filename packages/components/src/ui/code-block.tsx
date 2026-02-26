@@ -123,7 +123,6 @@ export function CodeBlock({
                     </span>
                   )}
                   <span className="flex-1">
-                    {/* Add $ prompt for shell commands */}
                     {isShell && i === 0 && (
                       <span className={cn('mr-2 select-none', mode.color.text.accent)}>$</span>
                     )}

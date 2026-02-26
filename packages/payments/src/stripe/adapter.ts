@@ -46,7 +46,6 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
       } catch {
         throw new Error('@fabrk/payments: stripe package is required. Run: npm install stripe')
       }
-      // Let constructor errors propagate naturally (invalid key format, etc.)
       stripe = new StripeClass(config.secretKey, { apiVersion: config.apiVersion ?? '2024-12-18.acacia' })
     }
     return stripe

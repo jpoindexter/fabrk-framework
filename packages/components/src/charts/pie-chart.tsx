@@ -100,7 +100,6 @@ export function PieChart({
     };
   };
 
-  // Calculate angles without mutation (industry-standard pattern)
   const segmentsWithAngles = segments.reduce<
     Array<(typeof segments)[0] & { startAngle: number; endAngle: number }>
   >((acc, segment) => {

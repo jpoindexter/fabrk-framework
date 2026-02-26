@@ -126,14 +126,12 @@ export async function autoWire(
 ): Promise<AutoWireResult> {
   const registry = new PluginRegistry()
 
-  // Wire user-provided adapters first (take priority)
   if (overrides?.payment) registry.register('payment', overrides.payment)
   if (overrides?.auth) registry.register('auth', overrides.auth)
   if (overrides?.email) registry.register('email', overrides.email)
   if (overrides?.storage) registry.register('storage', overrides.storage)
   if (overrides?.rateLimit) registry.register('rateLimit', overrides.rateLimit)
 
-  // Auto-detect from installed packages when no override is provided
   if (!overrides?.payment && config.payments) {
     await wirePayment(config, registry)
   }
@@ -146,7 +144,6 @@ export async function autoWire(
     await wireStorage(config, registry)
   }
 
-  // Wire feature modules (sync, no external deps)
   const features = wireFeatures(config, stores)
 
   await registry.initialize()

@@ -123,7 +123,6 @@ export class InMemoryAuditStore implements AuditStore {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (options.to) filtered = filtered.filter((e) => e.timestamp <= options.to!)
 
-    // Sort by timestamp descending
     filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
 
     const offset = options.offset ?? 0

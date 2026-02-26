@@ -11,8 +11,8 @@ export const FRAMEWORK_VERSION =
 
 export const STATS = {
   version: FRAMEWORK_VERSION,
-  packages: 12,
-  components: '105+',
+  packages: 13,
+  components: '109+',
   themes: 18,
-  tests: 764,
+  tests: 858,
 } as const

@@ -4,53 +4,72 @@ export default function GuidesPage() {
   return (
     <DocLayout
       title="GUIDES"
-      description="Step-by-step guides for common integration patterns. Build a dashboard, add auth, integrate payments, set up AI, and deploy."
+      description="Production-grade guides for building with FABRK. Each guide explains architecture decisions, includes complete code, and covers what to watch out for in production."
     >
       {/* Guide index */}
       <Section title="GUIDE INDEX">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <a href="#dashboard" className="block border border-border bg-card p-4 transition-colors hover:border-primary">
             <div className="text-xs font-bold text-primary uppercase">BUILD A DASHBOARD</div>
-            <div className="text-xs text-muted-foreground mt-1">KPIs, charts, data tables, sidebar navigation</div>
+            <div className="text-xs text-muted-foreground mt-1">KPIs, charts with xAxisKey/series, data tables, sidebar navigation, responsive layout</div>
           </a>
           <a href="#auth" className="block border border-border bg-card p-4 transition-colors hover:border-primary">
             <div className="text-xs font-bold text-primary uppercase">AUTHENTICATION</div>
-            <div className="text-xs text-muted-foreground mt-1">NextAuth, API keys, MFA setup</div>
+            <div className="text-xs text-muted-foreground mt-1">Session handling, API keys with SHA-256, MFA (TOTP + backup codes), middleware chains, protected routes</div>
           </a>
           <a href="#payments" className="block border border-border bg-card p-4 transition-colors hover:border-primary">
             <div className="text-xs font-bold text-primary uppercase">PAYMENTS</div>
-            <div className="text-xs text-muted-foreground mt-1">Stripe checkout, webhooks, pricing page</div>
+            <div className="text-xs text-muted-foreground mt-1">Checkout, subscriptions, plan switching, webhooks with replay protection, billing portal</div>
           </a>
           <a href="#ai" className="block border border-border bg-card p-4 transition-colors hover:border-primary">
             <div className="text-xs font-bold text-primary uppercase">AI INTEGRATION</div>
-            <div className="text-xs text-muted-foreground mt-1">LLM providers, cost tracking, chat UI</div>
+            <div className="text-xs text-muted-foreground mt-1">LLM providers, streaming, cost tracking, budget enforcement, prompt composition, provider fallback</div>
           </a>
           <a href="#deployment" className="block border border-border bg-card p-4 transition-colors hover:border-primary">
             <div className="text-xs font-bold text-primary uppercase">DEPLOYMENT</div>
-            <div className="text-xs text-muted-foreground mt-1">Vercel, database, production checklist</div>
+            <div className="text-xs text-muted-foreground mt-1">Vercel deploy, staging vs production, health checks, CI/CD, security checklist, monitoring</div>
           </a>
         </div>
       </Section>
 
+      {/* ──────────────────────────────────────────────────────────────── */}
+      {/* DASHBOARD GUIDE                                                 */}
+      {/* ──────────────────────────────────────────────────────────────── */}
       <Section id="dashboard" title="BUILD A DASHBOARD">
         <p className="text-sm text-muted-foreground mb-4">
           Build a complete admin dashboard with KPIs, charts, data tables, and sidebar
-          navigation in under 10 minutes using FABRK components.
+          navigation. This guide covers the full flow from project setup through responsive
+          layout, and explains the design system rules that keep your UI consistent across
+          all 18 themes.
         </p>
+
+        <InfoCard title="WHY THIS APPROACH">
+          FABRK components use the <code>mode</code> design system for theme-aware styling
+          through CSS variables. This means your dashboard works with all 18 built-in themes
+          without any code changes. The key rule: full borders (like <code>border</code>) always
+          get <code>mode.radius</code>, while partial borders (like <code>border-r</code> on the
+          sidebar) never do. Table cells also never get radius.
+        </InfoCard>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           1. SCAFFOLD THE PROJECT
         </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The dashboard template includes pre-configured sidebar, theme support, and example pages.
+          If you already have a Next.js project, skip to step 2 and install the packages manually.
+        </p>
         <CodeBlock title="terminal">{`npx create-fabrk-app my-dashboard --template dashboard
 cd my-dashboard
 pnpm install`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          2. CREATE THE DASHBOARD LAYOUT
+          2. CREATE THE SIDEBAR LAYOUT
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Use a sidebar layout with navigation items. The sidebar uses partial borders
-          (border-r) so it does NOT get mode.radius.
+          The sidebar uses a partial border (<code>border-r</code>) which means it does NOT get{' '}
+          <code>mode.radius</code>. This is a critical design system rule: partial borders define
+          edges, not containers, so rounded corners would look broken. Active nav items use a
+          left border accent (<code>border-l-2</code>) which is also partial and stays sharp.
         </p>
         <CodeBlock title="src/app/dashboard/layout.tsx">{`'use client'
 
@@ -72,11 +91,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen">
       {/* Sidebar — partial border (border-r), NO mode.radius */}
-      <aside className="w-64 border-r border-border bg-card p-4 shrink-0">
+      <aside className="hidden md:flex w-64 border-r border-border bg-card p-4 shrink-0 flex-col">
         <div className={cn('text-primary font-bold text-lg mb-8', mode.font)}>
           {'>'} MY APP
         </div>
-        <nav className="space-y-1">
+        <nav className="space-y-1 flex-1">
           {navItems.map((item) => (
             <Link
               key={item.id}
@@ -93,21 +112,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           ))}
         </nav>
+        <div className="text-xs text-muted-foreground border-t border-border pt-3">
+          [v1.0.0]
+        </div>
       </aside>
       <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   )
 }`}</CodeBlock>
 
+        <InfoCard title="RESPONSIVE TIP">
+          The sidebar uses <code>hidden md:flex</code> to collapse on mobile. For mobile
+          navigation, use the <code>MobileNav</code> component from <code>@fabrk/components</code>{' '}
+          which provides a slide-out drawer with the same nav items.
+        </InfoCard>
+
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          3. ADD KPI CARDS
+          3. ADD KPI CARDS AND CHARTS
         </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          This is the main dashboard page. It combines KPI cards for at-a-glance metrics,
+          a BarChart for categorical data, a LineChart for trends, and a DataTable for
+          detailed records. Pay close attention to the chart props.
+        </p>
+
+        <InfoCard title="CHART API EXPLAINED">
+          Both <code>BarChart</code> and <code>LineChart</code> require three props:{' '}
+          <code>data</code> (array of objects), <code>xAxisKey</code> (string identifying which
+          key in each data object maps to the X axis), and <code>series</code> (array of{' '}
+          <code>{`{ dataKey, name }`}</code> objects defining each line or bar). The <code>dataKey</code>{' '}
+          must match a numeric key in your data objects. The <code>name</code> appears in tooltips
+          and legends. Optional props include <code>showLegend</code>, <code>showGrid</code>,{' '}
+          <code>height</code>, and formatter functions for axes and tooltips.
+        </InfoCard>
+
         <CodeBlock title="src/app/dashboard/page.tsx">{`'use client'
 
 import { KPICard, Card, Badge, BarChart, LineChart, DataTable } from '@fabrk/components'
 import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 
+// KPI data — in production, fetch this from your API
 const stats = [
   { title: 'REVENUE', value: '$48,290', trend: 12.5 },
   { title: 'USERS', value: '3,847', trend: 8.3 },
@@ -115,20 +160,36 @@ const stats = [
   { title: 'UPTIME', value: '99.97%', trend: 0.1 },
 ]
 
-const revenueData = [
-  { label: 'Mon', value: 6200 },
-  { label: 'Tue', value: 7800 },
-  { label: 'Wed', value: 5400 },
-  { label: 'Thu', value: 8200 },
-  { label: 'Fri', value: 9100 },
-  { label: 'Sat', value: 4300 },
-  { label: 'Sun', value: 3800 },
+// Bar chart data — each object has an X-axis key and numeric value keys.
+// xAxisKey="day" tells the chart which field labels the X axis.
+// series=[{ dataKey: 'revenue', name: 'Revenue' }] tells it which field(s) to plot as bars.
+const revenueByDay = [
+  { day: 'Mon', revenue: 6200, costs: 2100 },
+  { day: 'Tue', revenue: 7800, costs: 2400 },
+  { day: 'Wed', revenue: 5400, costs: 1900 },
+  { day: 'Thu', revenue: 8200, costs: 2800 },
+  { day: 'Fri', revenue: 9100, costs: 3100 },
+  { day: 'Sat', revenue: 4300, costs: 1500 },
+  { day: 'Sun', revenue: 3800, costs: 1200 },
 ]
 
-const users = [
-  { name: 'Jason', email: 'jason@example.com', role: 'Admin', status: 'Active' },
-  { name: 'Sarah', email: 'sarah@example.com', role: 'Editor', status: 'Active' },
-  { name: 'Mike', email: 'mike@example.com', role: 'Viewer', status: 'Invited' },
+// Line chart data — uses the same xAxisKey/series pattern.
+// Multiple series overlay lines on the same chart.
+const trafficTrend = [
+  { date: 'Jan', pageViews: 12400, uniqueVisitors: 4200 },
+  { date: 'Feb', pageViews: 15800, uniqueVisitors: 5100 },
+  { date: 'Mar', pageViews: 14200, uniqueVisitors: 4800 },
+  { date: 'Apr', pageViews: 18900, uniqueVisitors: 6300 },
+  { date: 'May', pageViews: 22100, uniqueVisitors: 7600 },
+  { date: 'Jun', pageViews: 19800, uniqueVisitors: 6900 },
+]
+
+// Table data
+const recentUsers = [
+  { name: 'Jason Poindexter', email: 'jason@example.com', role: 'Admin', status: 'Active', joined: '2025-01-15' },
+  { name: 'Sarah Chen', email: 'sarah@example.com', role: 'Editor', status: 'Active', joined: '2025-02-03' },
+  { name: 'Mike Torres', email: 'mike@example.com', role: 'Viewer', status: 'Invited', joined: '2025-02-20' },
+  { name: 'Lisa Park', email: 'lisa@example.com', role: 'Editor', status: 'Active', joined: '2025-02-18' },
 ]
 
 const columns = [
@@ -136,6 +197,7 @@ const columns = [
   { key: 'email', label: 'EMAIL', sortable: true },
   { key: 'role', label: 'ROLE' },
   { key: 'status', label: 'STATUS' },
+  { key: 'joined', label: 'JOINED', sortable: true },
 ]
 
 export default function DashboardPage() {
@@ -147,93 +209,206 @@ export default function DashboardPage() {
         <p className="text-sm text-muted-foreground">Your dashboard at a glance.</p>
       </div>
 
-      {/* KPI row */}
+      {/* KPI row — responsive: 2 columns on mobile, 4 on desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
           <KPICard key={s.title} title={s.title} value={s.value} trend={s.trend} />
         ))}
       </div>
 
-      {/* Charts row */}
+      {/* Charts row — stacks vertically on mobile, side-by-side on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* BarChart: revenue + costs by day of week */}
         <Card className={cn('p-6 border border-border', mode.radius)}>
           <h3 className={cn('text-xs uppercase text-muted-foreground mb-4', mode.font)}>
-            [WEEKLY REVENUE]
+            [WEEKLY REVENUE VS COSTS]
           </h3>
-          <BarChart data={revenueData} />
+          <BarChart
+            data={revenueByDay}
+            xAxisKey="day"
+            series={[
+              { dataKey: 'revenue', name: 'Revenue' },
+              { dataKey: 'costs', name: 'Costs' },
+            ]}
+            showLegend
+            yAxisFormatter={(value) => \`$\${(value / 1000).toFixed(0)}k\`}
+            tooltipFormatter={(value) => \`$\${value.toLocaleString()}\`}
+          />
         </Card>
+
+        {/* LineChart: traffic trend with two series */}
         <Card className={cn('p-6 border border-border', mode.radius)}>
           <h3 className={cn('text-xs uppercase text-muted-foreground mb-4', mode.font)}>
-            [TREND]
+            [TRAFFIC TREND]
           </h3>
-          <LineChart data={revenueData} />
+          <LineChart
+            data={trafficTrend}
+            xAxisKey="date"
+            series={[
+              { dataKey: 'pageViews', name: 'Page Views' },
+              { dataKey: 'uniqueVisitors', name: 'Unique Visitors', dashed: true },
+            ]}
+            showLegend
+            yAxisFormatter={(value) => \`\${(value / 1000).toFixed(0)}k\`}
+          />
         </Card>
       </div>
 
-      {/* Data table */}
+      {/* Data table — Card gets mode.radius because it has a full border */}
       <Card className={cn('border border-border', mode.radius)}>
         <div className="p-4 border-b border-border flex items-center justify-between">
           <h3 className={cn('text-xs uppercase text-muted-foreground', mode.font)}>
             [RECENT USERS]
           </h3>
-          <Badge variant="secondary">[{users.length} TOTAL]</Badge>
+          <Badge variant="secondary">[{recentUsers.length} TOTAL]</Badge>
         </div>
-        <DataTable columns={columns} data={users} />
+        <DataTable columns={columns} data={recentUsers} />
       </Card>
     </div>
   )
 }`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          4. ADD FEATURE FLAGS
+          4. CHART VARIATIONS
         </h3>
-        <CodeBlock title="conditional features">{`import { useFeatureFlag } from '@fabrk/core'
+        <p className="text-sm text-muted-foreground mb-3">
+          Both chart components support extensive customization. Here are common patterns
+          you will use in production dashboards.
+        </p>
+        <CodeBlock title="chart variations">{`// Stacked bar chart — group bars by a shared stackId
+<BarChart
+  data={revenueByDay}
+  xAxisKey="day"
+  series={[
+    { dataKey: 'revenue', name: 'Revenue', stackId: 'money' },
+    { dataKey: 'costs', name: 'Costs', stackId: 'money' },
+  ]}
+  showLegend
+/>
+
+// Horizontal bar chart — useful for ranking/leaderboard views
+<BarChart
+  data={topPages}
+  xAxisKey="page"
+  series={[{ dataKey: 'views', name: 'Views' }]}
+  horizontal
+  height={400}
+/>
+
+// Color each bar differently by index (no series colors needed)
+<BarChart
+  data={categoryBreakdown}
+  xAxisKey="category"
+  series={[{ dataKey: 'value', name: 'Value' }]}
+  colorByIndex
+/>
+
+// Line chart with stepped interpolation (good for pricing tiers, discrete values)
+<LineChart
+  data={pricingHistory}
+  xAxisKey="month"
+  series={[
+    { dataKey: 'price', name: 'Price', type: 'step', showDots: true, dotSize: 6 },
+  ]}
+  yAxisFormatter={(v) => \`$\${v}\`}
+/>
+
+// Card-wrapped chart using the built-in BarChartCard/LineChartCard
+// These add a terminal-style header with code prefix and title
+import { BarChartCard, LineChartCard } from '@fabrk/components'
+
+<BarChartCard
+  title="Revenue"
+  code="0xA1"
+  data={revenueByDay}
+  xAxisKey="day"
+  series={[{ dataKey: 'revenue', name: 'Revenue' }]}
+/>
+
+<LineChartCard
+  title="Traffic"
+  code="0xB2"
+  description="Last 6 months"
+  data={trafficTrend}
+  xAxisKey="date"
+  series={[{ dataKey: 'pageViews', name: 'Page Views' }]}
+/>`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          5. ADD FEATURE FLAGS AND NOTIFICATIONS
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Feature flags let you ship dark features and gradually roll them out. The notification
+          center gives users real-time updates without leaving the dashboard.
+        </p>
+        <CodeBlock title="feature flags + notifications">{`import { useFeatureFlag, useNotifications } from '@fabrk/core'
+import { NotificationCenter } from '@fabrk/components'
 
 function DashboardPage() {
   const { enabled: showAnalytics } = useFeatureFlag('advanced-analytics')
+  const { manager, notifications } = useNotifications()
 
   return (
     <div className="p-6 space-y-6">
+      {/* Header with notification center */}
+      <div className="flex items-center justify-between">
+        <h1 className={cn('text-xl font-bold uppercase', mode.font)}>OVERVIEW</h1>
+        <NotificationCenter
+          notifications={notifications}
+          onMarkRead={(id) => manager.markRead(id, userId)}
+          onMarkAllRead={() => manager.markAllRead()}
+        />
+      </div>
+
       <KPICards />
       <Charts />
+
+      {/* Only render when feature flag is enabled */}
       {showAnalytics && <AdvancedAnalytics />}
+
       <RecentUsers />
     </div>
   )
 }`}</CodeBlock>
 
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          5. ADD NOTIFICATIONS
-        </h3>
-        <CodeBlock title="notification center in header">{`import { NotificationCenter } from '@fabrk/components'
-import { useNotifications } from '@fabrk/core'
-
-function DashboardHeader() {
-  const { manager } = useNotifications()
-
-  return (
-    <div className="flex items-center justify-between p-4 border-b border-border">
-      <h1 className="text-lg font-bold uppercase">DASHBOARD</h1>
-      <NotificationCenter
-        notifications={notifications}
-        onMarkRead={(id) => manager.markRead(id, userId)}
-        onMarkAllRead={() => manager.markAllRead()}
-      />
-    </div>
-  )
-}`}</CodeBlock>
-
-        <InfoCard title="RESULT">
-          You now have a full dashboard with sidebar navigation, KPI cards,
-          bar + line charts, a sortable data table, feature flags for gradual rollout,
-          and a notification center. Total time: under 10 minutes.
+        <InfoCard title="DESIGN SYSTEM RULES SUMMARY">
+          <ul className="space-y-1 mt-1">
+            <li>Full borders (<code>border</code>, <code>border-2</code>) ALWAYS get <code>mode.radius</code></li>
+            <li>Partial borders (<code>border-t</code>, <code>border-b</code>, <code>border-l</code>, <code>border-r</code>) NEVER get <code>mode.radius</code></li>
+            <li>Table cells (<code>th</code>, <code>td</code>) NEVER get <code>mode.radius</code></li>
+            <li>Use design tokens (<code>bg-card</code>, <code>text-foreground</code>, <code>border-border</code>) not hardcoded colors</li>
+            <li>Headlines and labels are UPPERCASE, body text is sentence case</li>
+            <li>Buttons use <code>{'>'}</code> prefix: <code>{'>'} SUBMIT</code></li>
+          </ul>
         </InfoCard>
       </Section>
 
+      {/* ──────────────────────────────────────────────────────────────── */}
+      {/* AUTHENTICATION GUIDE                                            */}
+      {/* ──────────────────────────────────────────────────────────────── */}
       <Section id="auth" title="AUTHENTICATION SETUP">
         <p className="text-sm text-muted-foreground mb-4">
-          Set up authentication with NextAuth, API keys, and MFA.
+          FABRK auth provides three layers: session-based auth (NextAuth), API key auth
+          (SHA-256 hashed), and MFA (TOTP RFC 6238 with backup codes). This guide covers all
+          three, including the middleware chain that protects your routes, and explains the
+          security decisions behind each layer.
         </p>
+
+        <InfoCard title="ARCHITECTURE DECISIONS">
+          <strong>Why SHA-256 for API keys?</strong> API keys are hashed before storage using
+          Web Crypto SHA-256. The raw key is returned exactly once at creation time. If your
+          database is compromised, attackers cannot recover working keys from the hashes. We use
+          Web Crypto (not Node.js <code>crypto</code>) for edge runtime compatibility.
+          <br /><br />
+          <strong>Why the adapter pattern?</strong> All auth operations go through the{' '}
+          <code>AuthAdapter</code> interface. You can swap NextAuth for Clerk, Auth0, or any
+          custom provider by implementing the same interface. Your route handlers never change.
+          <br /><br />
+          <strong>Why callback props on MFA components?</strong> Components like{' '}
+          <code>MfaSetupDialog</code> accept callbacks (<code>onSetup</code>) instead of making
+          API calls directly. This keeps the component package free of server dependencies
+          and lets you control exactly how secrets are stored.
+        </InfoCard>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           1. CONFIGURE AUTH
@@ -249,88 +424,269 @@ export default defineFabrkConfig({
       providers: ['google', 'credentials'],
     },
   },
+
+  // Rate limiting protects login endpoints from brute-force attacks
+  security: {
+    rateLimit: true,
+  },
 })`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          2. SET UP API KEYS
+          2. PROTECT ROUTES WITH MIDDLEWARE
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          API keys use SHA-256 hashing with a <code>fabrk_</code> prefix. The raw key
-          is shown to the user once; only the hash is stored.
+          FABRK provides three middleware wrappers: <code>withAuth</code> (session only),{' '}
+          <code>withApiKey</code> (API key only), and <code>withAuthOrApiKey</code> (either).
+          Each wraps your route handler and returns 401/403 automatically if auth fails.
+          The API key middleware also supports scope checking.
         </p>
-        <CodeBlock title="src/app/api/keys/route.ts">{`import { generateApiKey, hashApiKey, validateApiKey } from '@fabrk/auth'
+        <CodeBlock title="src/app/api/dashboard/stats/route.ts">{`import { withAuth, withApiKey, withAuthOrApiKey } from '@fabrk/auth'
+import { createNextAuthAdapter } from '@fabrk/auth'
 
-// POST /api/keys — Create a new API key
-export async function POST(req: Request) {
-  const { name } = await req.json()
-  const { key, hash } = await generateApiKey('live')
+const auth = createNextAuthAdapter({ /* your NextAuth config */ })
 
-  // Store hash in database, return raw key to user (shown once)
-  await db.apiKey.create({
-    data: { hash, userId: session.user.id, name }
+// Session-only: only browser users with active sessions
+export const GET = withAuth(auth, async (req, session) => {
+  // session has: { userId, email, role }
+  const stats = await db.stats.findFirst({
+    where: { teamId: session.userId },
+  })
+  return Response.json(stats)
+})
+
+// API key only: for external integrations and CLI tools
+// Requires 'read:stats' scope — returns 403 if the key lacks it
+export const POST = withApiKey(auth, async (req, keyInfo) => {
+  // keyInfo has: { id, name, scopes, userId, active, expiresAt }
+  const body = await req.json()
+  return Response.json({ received: body })
+}, { requiredScopes: ['read:stats'] })
+
+// Either session OR API key: flexible endpoints used by both web and API
+export const PUT = withAuthOrApiKey(auth, async (req, { session, apiKey }) => {
+  // Exactly one of session or apiKey will be defined
+  const userId = session?.userId ?? apiKey?.userId
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'No user context' }), { status: 401 })
+  }
+
+  // For session auth, check role manually (scopes only apply to API keys)
+  if (session && session.role !== 'admin') {
+    return new Response(JSON.stringify({ error: 'Admin required' }), { status: 403 })
+  }
+
+  return Response.json({ ok: true })
+})`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          3. GENERATE AND VALIDATE API KEYS
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          API keys use the format <code>fabrk_live_xxxx</code> (or <code>fabrk_test_xxxx</code>).
+          The random part uses base62 encoding with rejection sampling to eliminate modulo bias.
+          Keys are at least 16 bytes of entropy. The hash prefix (<code>sha256:</code>) is stored
+          alongside the hex digest for future algorithm upgrades.
+        </p>
+        <CodeBlock title="src/app/api/keys/route.ts">{`import { generateApiKey, hashApiKey, createApiKeyValidator } from '@fabrk/auth'
+import { withAuth } from '@fabrk/auth'
+
+const auth = createNextAuthAdapter({ /* config */ })
+
+// POST /api/keys — Create a new API key (session-authenticated users only)
+export const POST = withAuth(auth, async (req, session) => {
+  const { name, scopes = ['*'] } = await req.json()
+
+  // Generate a secure key — returns { key, prefix, hash }
+  // key:    "fabrk_live_a1b2c3d4e5f6..." (shown to user ONCE)
+  // prefix: "fabrk_live_a1b2c3"          (stored for display in settings)
+  // hash:   "sha256:abcdef..."            (stored for validation)
+  const { key, prefix, hash } = await generateApiKey({
+    prefix: 'fabrk',
+    environment: 'live',
+    keyLength: 32,  // 32 bytes of entropy (default)
   })
 
-  return Response.json({ key }) // fabrk_live_xxx
-}
+  // Store the hash (NEVER the raw key) and metadata
+  await db.apiKey.create({
+    data: {
+      hash,
+      prefix,
+      userId: session.userId,
+      name,
+      scopes,
+      active: true,
+      // Optional: set expiration for time-limited keys
+      // expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+    },
+  })
 
-// Middleware: validate API key from Authorization header
-export async function validateRequest(req: Request) {
-  const authHeader = req.headers.get('Authorization')
-  const key = authHeader?.replace('Bearer ', '')
-  if (!key) return null
+  // Return the raw key exactly once. After this, it cannot be recovered.
+  return Response.json({
+    key,
+    prefix,
+    name,
+    message: 'Save this key now. It will not be shown again.',
+  })
+})
 
-  const apiKeys = await db.apiKey.findMany({ where: { userId: req.userId } })
-  for (const stored of apiKeys) {
-    if (await validateApiKey(key, stored.hash)) return stored
+// DELETE /api/keys/[id] — Revoke an API key
+export const DELETE = withAuth(auth, async (req, session) => {
+  const id = new URL(req.url).searchParams.get('id')
+  if (!id) {
+    return new Response(JSON.stringify({ error: 'Missing key ID' }), { status: 400 })
   }
-  return null
+
+  // Ensure the user owns this key
+  const key = await db.apiKey.findFirst({
+    where: { id, userId: session.userId },
+  })
+
+  if (!key) {
+    return new Response(JSON.stringify({ error: 'Key not found' }), { status: 404 })
+  }
+
+  await db.apiKey.update({
+    where: { id },
+    data: { active: false },
+  })
+
+  return Response.json({ revoked: true })
+})`}</CodeBlock>
+
+        <InfoCard title="PRODUCTION WARNING: EXPIRED KEY HANDLING">
+          When querying API keys by hash, always filter for expiration in the database query:
+          <code className="block mt-2 text-xs">
+            {`WHERE hash = ? AND active = true AND (expires_at IS NULL OR expires_at > NOW())`}
+          </code>
+          Checking <code>active: true</code> alone does not exclude expired keys. The FABRK
+          validator handles this correctly, but if you write custom queries, include the
+          expiration check.
+        </InfoCard>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          4. ADD RATE LIMITING TO AUTH ENDPOINTS
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Login and API key endpoints are prime targets for brute-force attacks. Apply rate
+          limiting before authentication, not after.
+        </p>
+        <CodeBlock title="src/app/api/auth/login/route.ts">{`import { createMemoryRateLimiter } from '@fabrk/security'
+
+// In production, use UpstashRateLimiter for distributed rate limiting
+// across multiple server instances. Memory rate limiter only works for
+// single-server deployments.
+const rateLimit = createMemoryRateLimiter({
+  defaultMax: 5,              // 5 attempts
+  defaultWindowSeconds: 300,  // per 5-minute window
+})
+
+export async function POST(req: Request) {
+  // Rate limit by IP address
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const result = await rateLimit.check({
+    identifier: ip,
+    limit: 'login',
+    max: 5,
+    windowSeconds: 300,
+  })
+
+  if (!result.allowed) {
+    return new Response(
+      JSON.stringify({
+        error: 'Too many login attempts. Try again later.',
+        retryAfter: result.retryAfter,
+      }),
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(result.retryAfter),
+          'X-RateLimit-Limit': String(result.limit),
+          'X-RateLimit-Remaining': String(result.remaining),
+        },
+      }
+    )
+  }
+
+  // Proceed with authentication...
+  const { email, password } = await req.json()
+  const user = await authenticateUser(email, password)
+
+  if (!user) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid credentials' }),
+      { status: 401 }
+    )
+  }
+
+  // Reset rate limit on successful login
+  await rateLimit.reset(ip, 'login')
+
+  return Response.json({ session: user.sessionToken })
 }`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          3. ENABLE MFA
+          5. ENABLE MFA (TOTP + BACKUP CODES)
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          MFA uses TOTP (RFC 6238) with QR code setup and backup codes.
-          Components accept callbacks (no API calls baked in) and render props for
-          optional dependencies like QR code libraries.
+          MFA uses TOTP (RFC 6238) with a 30-second window and 6-digit codes. The{' '}
+          <code>MfaSetupDialog</code> component accepts a <code>renderQrCode</code> render prop
+          so you can use any QR library (it is not bundled to keep the package small). Backup
+          codes are hex-encoded from cryptographically random bytes.
         </p>
         <CodeBlock title="src/app/settings/mfa.tsx">{`'use client'
 
+import { useState } from 'react'
 import { MfaSetupDialog, BackupCodesModal, MfaCard } from '@fabrk/components'
-import { generateTOTP, verifyTOTP, generateBackupCodes } from '@fabrk/auth'
 
-function MFASettings() {
+// QR code library is optional — pass it via render prop
+import QRCode from 'qrcode.react'
+
+export default function MFASettings({ user }: { user: { mfaEnabled: boolean } }) {
   const [mfaEnabled, setMfaEnabled] = useState(user.mfaEnabled)
   const [showSetup, setShowSetup] = useState(false)
   const [backupCodes, setBackupCodes] = useState<string[]>([])
 
   return (
     <div className="space-y-4">
+      {/* Status card — shows current MFA state with enable/disable toggle */}
       <MfaCard
         enabled={mfaEnabled}
         onEnable={() => setShowSetup(true)}
         onDisable={async () => {
-          await api.post('/api/mfa/disable')
-          setMfaEnabled(false)
+          const res = await fetch('/api/mfa/disable', { method: 'POST' })
+          if (res.ok) setMfaEnabled(false)
         }}
       />
 
+      {/* Setup dialog — walks the user through scanning a QR code */}
       <MfaSetupDialog
         open={showSetup}
         onOpenChange={setShowSetup}
         onSetup={async (secret) => {
-          const codes = await api.post('/api/mfa/enable', { secret })
+          // POST the TOTP secret to your backend for storage
+          const res = await fetch('/api/mfa/enable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ secret }),
+          })
+          if (!res.ok) throw new Error('Failed to enable MFA')
+
+          const { codes } = await res.json()
           setBackupCodes(codes)
           setMfaEnabled(true)
         }}
-        renderQrCode={(uri) => <QRCode value={uri} />}
+        renderQrCode={(uri) => (
+          <QRCode value={uri} size={200} level="M" />
+        )}
       />
 
+      {/* Backup codes modal — shown once after MFA setup */}
       {backupCodes.length > 0 && (
         <BackupCodesModal
           codes={backupCodes}
           onRegenerate={async () => {
-            const codes = await api.post('/api/mfa/regenerate')
+            const res = await fetch('/api/mfa/regenerate-backup-codes', { method: 'POST' })
+            const { codes } = await res.json()
             setBackupCodes(codes)
           }}
         />
@@ -338,110 +694,424 @@ function MFASettings() {
     </div>
   )
 }`}</CodeBlock>
-      </Section>
-
-      <Section id="payments" title="PAYMENTS INTEGRATION">
-        <p className="text-sm text-muted-foreground mb-4">
-          Integrate payments with Stripe, Polar, or Lemon Squeezy. The adapter pattern
-          means you can switch providers by changing one line in your config.
-        </p>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          1. CONFIGURE PAYMENTS
+          6. MFA VERIFICATION IN API ROUTES
         </h3>
-        <CodeBlock title="fabrk.config.ts">{`export default defineFabrkConfig({
-  payments: {
-    adapter: 'stripe',          // or 'polar' or 'lemonsqueezy'
-    mode: 'test',               // 'test' | 'live'
-    config: {
-      secretKey: process.env.STRIPE_SECRET_KEY,
-      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    },
-  },
+        <CodeBlock title="src/app/api/mfa/verify/route.ts">{`import { verifyTOTP } from '@fabrk/auth'
+
+export async function POST(req: Request) {
+  const { code, userId } = await req.json()
+
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { mfaSecret: true, mfaEnabled: true },
+  })
+
+  if (!user?.mfaEnabled || !user.mfaSecret) {
+    return new Response(
+      JSON.stringify({ error: 'MFA not enabled' }),
+      { status: 400 }
+    )
+  }
+
+  // verifyTOTP checks the current and adjacent time windows
+  // to handle clock drift (standard RFC 6238 tolerance)
+  const valid = verifyTOTP(code, user.mfaSecret)
+
+  if (!valid) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid verification code' }),
+      { status: 401 }
+    )
+  }
+
+  // Mark session as MFA-verified
+  await db.session.update({
+    where: { userId },
+    data: { mfaVerified: true, mfaVerifiedAt: new Date() },
+  })
+
+  return Response.json({ verified: true })
+}`}</CodeBlock>
+
+        <InfoCard title="PRODUCTION CHECKLIST: AUTH">
+          <ul className="space-y-1 mt-1">
+            <li>Generate <code>NEXTAUTH_SECRET</code> with <code>openssl rand -base64 32</code></li>
+            <li>Set <code>NEXTAUTH_URL</code> to your production domain (not localhost)</li>
+            <li>Use Upstash rate limiter in production (memory limiter is single-server only)</li>
+            <li>API key expiration: set a TTL, or require periodic rotation</li>
+            <li>Audit log all auth events (login, logout, MFA enable/disable, key creation)</li>
+            <li>Use <code>PrismaApiKeyStore</code> in production, not in-memory store</li>
+          </ul>
+        </InfoCard>
+      </Section>
+
+      {/* ──────────────────────────────────────────────────────────────── */}
+      {/* PAYMENTS GUIDE                                                  */}
+      {/* ──────────────────────────────────────────────────────────────── */}
+      <Section id="payments" title="PAYMENTS INTEGRATION">
+        <p className="text-sm text-muted-foreground mb-4">
+          Integrate Stripe (or Polar, or Lemon Squeezy) with proper webhook verification,
+          subscription lifecycle management, and plan switching. The adapter pattern means your
+          route handlers work identically regardless of which payment provider you use.
+        </p>
+
+        <InfoCard title="WHY THE ADAPTER PATTERN">
+          All payment providers implement the same <code>PaymentAdapter</code> interface from{' '}
+          <code>@fabrk/core</code>. This means <code>createCheckout</code>,{' '}
+          <code>handleWebhook</code>, <code>getSubscription</code>, and{' '}
+          <code>cancelSubscription</code> all have the same signatures. To switch from Stripe to
+          Polar, you change one line in your config. Your route handlers, webhook processing,
+          and UI code stay exactly the same.
+        </InfoCard>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          1. CONFIGURE THE PAYMENT ADAPTER
+        </h3>
+        <CodeBlock title="src/lib/payments.ts">{`import { createStripeAdapter } from '@fabrk/payments'
+
+// Initialize once and export for use across route handlers.
+// The adapter lazy-loads the stripe SDK on first use, so this
+// is safe to import in edge functions.
+export const payments = createStripeAdapter({
+  secretKey: process.env.STRIPE_SECRET_KEY!,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+  // apiVersion defaults to '2024-12-18.acacia'
+})
+
+// To switch providers, change one line:
+// import { createPolarAdapter } from '@fabrk/payments'
+// export const payments = createPolarAdapter({ ... })
+//
+// import { createLemonSqueezyAdapter } from '@fabrk/payments'
+// export const payments = createLemonSqueezyAdapter({ ... })`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          2. CREATE A CHECKOUT SESSION
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The checkout flow creates a Stripe Checkout session and redirects the user to the
+          hosted payment page. Pass metadata to associate the payment with your internal records.
+        </p>
+        <CodeBlock title="src/app/api/checkout/route.ts">{`import { payments } from '@/lib/payments'
+import { withAuth } from '@fabrk/auth'
+
+const auth = createNextAuthAdapter({ /* config */ })
+
+export const POST = withAuth(auth, async (req, session) => {
+  const { priceId, plan } = await req.json()
+
+  if (!priceId || typeof priceId !== 'string') {
+    return new Response(
+      JSON.stringify({ error: 'Invalid price ID' }),
+      { status: 400 }
+    )
+  }
+
+  try {
+    const checkout = await payments.createCheckout({
+      priceId,
+      customerId: session.stripeCustomerId,  // undefined for new customers
+      customerEmail: session.email,           // fallback for new customers
+      subscription: true,                     // create a subscription, not one-time payment
+      trialDays: 14,                          // optional free trial
+      successUrl: \`\${process.env.NEXTAUTH_URL}/dashboard?upgraded=true\`,
+      cancelUrl: \`\${process.env.NEXTAUTH_URL}/pricing\`,
+      metadata: {
+        userId: session.userId,
+        plan,
+      },
+    })
+
+    // checkout.id   — Stripe session ID (for recovery)
+    // checkout.url  — redirect URL for the user
+    // checkout.raw  — full Stripe session object (if you need it)
+    return Response.json({ url: checkout.url })
+  } catch (err) {
+    // Do not leak Stripe error details to the client
+    console.error('Checkout creation failed:', err)
+    return new Response(
+      JSON.stringify({ error: 'Unable to create checkout session' }),
+      { status: 500 }
+    )
+  }
 })`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          2. CREATE CHECKOUT
+          3. HANDLE WEBHOOKS SECURELY
         </h3>
-        <CodeBlock title="src/app/api/checkout/route.ts">{`import { StripePaymentAdapter } from '@fabrk/payments'
+        <p className="text-sm text-muted-foreground mb-3">
+          Webhook verification is critical. The FABRK Stripe adapter performs three security
+          checks: (1) cryptographic signature verification via <code>stripe.webhooks.constructEvent</code>,
+          (2) two-sided timestamp validation that rejects events older than 5 minutes AND events
+          with future timestamps (this prevents replay attacks where an attacker sets a
+          far-future timestamp to keep the event "valid" forever), and (3) idempotency checking
+          to reject duplicate event IDs.
+        </p>
+        <CodeBlock title="src/app/api/webhooks/stripe/route.ts">{`import { payments } from '@/lib/payments'
 
-const stripe = new StripePaymentAdapter({
-  secretKey: process.env.STRIPE_SECRET_KEY!,
-})
-
-export async function POST(req: Request) {
-  const { priceId } = await req.json()
-
-  const checkout = await stripe.createCheckout({
-    priceId,
-    customerId: session.user.stripeCustomerId,
-    successUrl: \`\${process.env.NEXTAUTH_URL}/success\`,
-    cancelUrl: \`\${process.env.NEXTAUTH_URL}/pricing\`,
-  })
-
-  return Response.json({ url: checkout.url })
-}`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          3. HANDLE WEBHOOKS
-        </h3>
-        <CodeBlock title="src/app/api/webhooks/stripe/route.ts">{`import { StripePaymentAdapter } from '@fabrk/payments'
-
+// IMPORTANT: Do not apply body parsing middleware to webhook routes.
+// You need the raw body string for signature verification.
 export async function POST(req: Request) {
   const body = await req.text()
-  const signature = req.headers.get('stripe-signature')!
+  const signature = req.headers.get('stripe-signature')
 
-  const event = await stripe.handleWebhook(body, signature)
+  if (!signature) {
+    return new Response(
+      JSON.stringify({ error: 'Missing signature' }),
+      { status: 400 }
+    )
+  }
+
+  // handleWebhook performs all three security checks:
+  // 1. Cryptographic signature verification
+  // 2. Two-sided timestamp check (rejects > 5min old AND future-dated)
+  // 3. Idempotency: rejects duplicate event IDs
+  const result = await payments.handleWebhook(body, signature)
+
+  if (!result.verified) {
+    console.error('Webhook verification failed:', result.error)
+    return new Response(
+      JSON.stringify({ error: 'Webhook verification failed' }),
+      { status: 400 }
+    )
+  }
+
+  // Duplicate events are verified but should be skipped
+  if (result.duplicate) {
+    return Response.json({ received: true, duplicate: true })
+  }
+
+  const event = result.event!
 
   switch (event.type) {
-    case 'checkout.session.completed':
+    case 'checkout.session.completed': {
+      const data = event.data as Record<string, any>
       await db.subscription.create({
         data: {
-          userId: event.data.metadata.userId,
-          stripeSubscriptionId: event.data.subscriptionId,
-          plan: event.data.metadata.plan,
+          userId: data.metadata?.userId,
+          stripeSubscriptionId: data.subscription,
+          stripeCustomerId: data.customer,
+          plan: data.metadata?.plan ?? 'pro',
           status: 'active',
         },
       })
+
+      // Also update user record with Stripe customer ID
+      if (data.metadata?.userId && data.customer) {
+        await db.user.update({
+          where: { id: data.metadata.userId },
+          data: { stripeCustomerId: data.customer },
+        })
+      }
       break
-    case 'customer.subscription.deleted':
+    }
+
+    case 'customer.subscription.updated': {
+      const data = event.data as Record<string, any>
       await db.subscription.update({
-        where: { stripeSubscriptionId: event.data.subscriptionId },
+        where: { stripeSubscriptionId: data.id },
+        data: {
+          status: data.status,
+          cancelAtPeriodEnd: data.cancel_at_period_end ?? false,
+          currentPeriodEnd: data.current_period_end
+            ? new Date(data.current_period_end * 1000)
+            : undefined,
+        },
+      })
+      break
+    }
+
+    case 'customer.subscription.deleted': {
+      const data = event.data as Record<string, any>
+      await db.subscription.update({
+        where: { stripeSubscriptionId: data.id },
         data: { status: 'canceled' },
       })
       break
+    }
+
+    case 'invoice.payment_failed': {
+      const data = event.data as Record<string, any>
+      // Notify the user that their payment failed
+      await db.subscription.update({
+        where: { stripeCustomerId: data.customer },
+        data: { status: 'past_due' },
+      })
+      // Send email notification
+      break
+    }
   }
 
   return Response.json({ received: true })
 }`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          4. PRICING UI
+          4. SUBSCRIPTION MANAGEMENT
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          After checkout, you need to handle plan switching, cancellation, and the billing
+          portal. The adapter provides methods for all of these.
+        </p>
+        <CodeBlock title="src/app/api/subscription/route.ts">{`import { payments } from '@/lib/payments'
+import { withAuth } from '@fabrk/auth'
+
+// GET /api/subscription — Get current subscription status
+export const GET = withAuth(auth, async (req, session) => {
+  const sub = await db.subscription.findFirst({
+    where: { userId: session.userId, status: { in: ['active', 'trialing', 'past_due'] } },
+  })
+
+  if (!sub) {
+    return Response.json({ subscription: null, plan: 'free' })
+  }
+
+  // Fetch live status from Stripe (includes current_period_end, cancel_at_period_end)
+  const stripeInfo = await payments.getSubscription(sub.stripeSubscriptionId)
+
+  return Response.json({
+    subscription: {
+      id: sub.id,
+      plan: sub.plan,
+      status: stripeInfo?.status ?? sub.status,
+      currentPeriodEnd: stripeInfo?.currentPeriodEnd,
+      cancelAtPeriodEnd: stripeInfo?.cancelAtPeriodEnd ?? false,
+    },
+  })
+})
+
+// POST /api/subscription/cancel — Cancel at end of billing period
+export const POST = withAuth(auth, async (req, session) => {
+  const sub = await db.subscription.findFirst({
+    where: { userId: session.userId, status: 'active' },
+  })
+
+  if (!sub) {
+    return new Response(
+      JSON.stringify({ error: 'No active subscription' }),
+      { status: 404 }
+    )
+  }
+
+  // Cancel at period end — user keeps access until the billing period expires
+  await payments.cancelSubscription(sub.stripeSubscriptionId, {
+    atPeriodEnd: true,
+  })
+
+  await db.subscription.update({
+    where: { id: sub.id },
+    data: { cancelAtPeriodEnd: true },
+  })
+
+  return Response.json({ canceled: true, effectiveDate: sub.currentPeriodEnd })
+})`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          5. BILLING PORTAL FOR SELF-SERVICE
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Instead of building your own invoice and payment method management UI, redirect
+          users to the Stripe Billing Portal. It handles updating payment methods, downloading
+          invoices, and changing plans.
+        </p>
+        <CodeBlock title="src/app/api/billing-portal/route.ts">{`import { payments } from '@/lib/payments'
+import { withAuth } from '@fabrk/auth'
+
+export const POST = withAuth(auth, async (req, session) => {
+  if (!session.stripeCustomerId) {
+    return new Response(
+      JSON.stringify({ error: 'No billing account found' }),
+      { status: 404 }
+    )
+  }
+
+  // Creates a one-time-use URL to the Stripe billing portal
+  const portalUrl = await payments.createPortalSession(
+    session.stripeCustomerId,
+    \`\${process.env.NEXTAUTH_URL}/dashboard/settings\`  // return URL
+  )
+
+  return Response.json({ url: portalUrl })
+})`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          6. PRICING PAGE UI
         </h3>
         <CodeBlock title="src/app/pricing/page.tsx">{`'use client'
 
-import { PricingCard, UpgradeCTA } from '@fabrk/components'
+import { useState } from 'react'
+import { PricingCard } from '@fabrk/components'
 
 const plans = [
   {
-    name: 'FREE', price: '$0', period: '/month',
+    name: 'FREE',
+    price: '$0',
+    period: '/month',
     features: ['5 projects', '1GB storage', 'Community support'],
+    priceId: null,
   },
   {
-    name: 'PRO', price: '$29', period: '/month',
+    name: 'PRO',
+    price: '$29',
+    period: '/month',
     features: ['Unlimited projects', '100GB storage', 'Priority support', 'API access'],
     highlighted: true,
+    priceId: process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID,
   },
   {
-    name: 'ENTERPRISE', price: 'Custom',
-    features: ['Everything in Pro', 'SSO/SAML', 'Dedicated support', 'SLA'],
+    name: 'ENTERPRISE',
+    price: 'Custom',
+    features: ['Everything in Pro', 'SSO/SAML', 'Dedicated support', 'SLA', 'Custom integrations'],
+    priceId: null,
   },
 ]
 
 export default function PricingPage() {
+  const [loading, setLoading] = useState<string | null>(null)
+
+  async function handleSelect(plan: typeof plans[0]) {
+    if (!plan.priceId) {
+      // Free plan needs no checkout; Enterprise goes to contact form
+      if (plan.name === 'ENTERPRISE') {
+        window.location.href = '/contact'
+      }
+      return
+    }
+
+    setLoading(plan.name)
+
+    try {
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: plan.priceId,
+          plan: plan.name.toLowerCase(),
+        }),
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.message ?? 'Checkout failed')
+      }
+
+      const { url } = await res.json()
+      window.location.href = url
+    } catch (err) {
+      console.error('Checkout error:', err)
+      // Show error toast to user
+    } finally {
+      setLoading(null)
+    }
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
-      <h1 className="text-2xl font-bold uppercase text-center mb-8">PRICING</h1>
+      <h1 className="text-2xl font-bold uppercase text-center mb-2">PRICING</h1>
+      <p className="text-sm text-muted-foreground text-center mb-8">
+        Start free. Upgrade when you need more.
+      </p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {plans.map((plan) => (
           <PricingCard
@@ -451,113 +1121,422 @@ export default function PricingPage() {
             period={plan.period}
             features={plan.features}
             highlighted={plan.highlighted}
-            onSelect={() => checkout(plan.name.toLowerCase())}
+            onSelect={() => handleSelect(plan)}
           />
         ))}
       </div>
     </div>
   )
 }`}</CodeBlock>
+
+        <InfoCard title="PRODUCTION CHECKLIST: PAYMENTS">
+          <ul className="space-y-1 mt-1">
+            <li>Use <code>mode: &apos;test&apos;</code> during development, <code>&apos;live&apos;</code> in production</li>
+            <li>Register your webhook URL in Stripe Dashboard (Settings &gt; Webhooks)</li>
+            <li>Handle <code>invoice.payment_failed</code> to notify users of billing issues</li>
+            <li>Store Stripe customer IDs on your user records for portal session creation</li>
+            <li>Use <code>cancelSubscription(id, {`{ atPeriodEnd: true }`})</code> so users keep access until period ends</li>
+            <li>Test webhook signatures locally with <code>stripe listen --forward-to localhost:3000/api/webhooks/stripe</code></li>
+            <li>Webhook replay protection: the adapter rejects events older than 5 minutes and future-dated events</li>
+          </ul>
+        </InfoCard>
       </Section>
 
+      {/* ──────────────────────────────────────────────────────────────── */}
+      {/* AI INTEGRATION GUIDE                                            */}
+      {/* ──────────────────────────────────────────────────────────────── */}
       <Section id="ai" title="AI INTEGRATION">
         <p className="text-sm text-muted-foreground mb-4">
-          Add AI capabilities with cost tracking, streaming, and prompt management.
-          Works with Claude, OpenAI, and Ollama (local).
+          Add AI capabilities with cost tracking, streaming, provider fallback, budget
+          enforcement, and prompt composition. FABRK supports Claude (Anthropic), OpenAI,
+          and Ollama (local) through a unified <code>LLMClient</code> interface.
         </p>
 
+        <InfoCard title="ARCHITECTURE OVERVIEW">
+          The AI package has four layers:
+          <ul className="space-y-1 mt-2">
+            <li><strong>LLM Client</strong> (<code>getLLMClient</code>) — Unified interface to all providers. Every provider
+            implements <code>generate(opts): Promise&lt;string&gt;</code>. You switch providers
+            by changing config, not code.</li>
+            <li><strong>Cost Tracker</strong> (<code>AICostTracker</code>) — Wraps API calls to record token usage,
+            latency, and cost in USD. Stores events via an injectable <code>CostStore</code> (in-memory
+            for dev, Prisma for production).</li>
+            <li><strong>AI Middleware</strong> (<code>createAIMiddleware</code>) — Composable pipeline for budget enforcement
+            and provider fallback. Runs before the LLM call.</li>
+            <li><strong>Prompt Templates</strong> — Reusable templates with <code>{`{{variable}}`}</code> interpolation
+            and a fluent <code>PromptBuilder</code> for complex multi-section prompts.</li>
+          </ul>
+        </InfoCard>
+
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          1. CONFIGURE AI
+          1. SET UP THE LLM CLIENT
         </h3>
-        <CodeBlock title="fabrk.config.ts">{`export default defineFabrkConfig({
-  ai: {
-    costTracking: true,
-    validation: 'strict',
-    providers: ['claude', 'openai'],
-    budget: { daily: 50, monthly: 1000 },
-  },
+        <p className="text-sm text-muted-foreground mb-3">
+          The <code>getLLMClient</code> factory returns a client for the configured provider.
+          All three providers have the same interface: <code>generate({`{ prompt, system?, maxTokens?, temperature? }`})</code>{' '}
+          returns a <code>Promise&lt;string&gt;</code>. This simplicity is intentional; for
+          structured output, parse the response yourself.
+        </p>
+        <CodeBlock title="src/lib/ai.ts">{`import { getLLMClient, AICostTracker, InMemoryCostStore } from '@fabrk/ai'
+
+// Initialize the LLM client. Reads API keys from environment variables:
+// - OPENAI_API_KEY for OpenAI
+// - ANTHROPIC_API_KEY for Anthropic
+// - Ollama needs no key (runs locally)
+export const llm = getLLMClient({
+  provider: 'anthropic',
+  anthropicModel: 'claude-sonnet-4-5-20250929',
+  maxTokens: 4000,
+  temperature: 0.3,
+  timeoutMs: 90000,  // 90s timeout
+})
+
+// For dev/testing, InMemoryCostStore is fine.
+// In production, use PrismaCostStore from @fabrk/ai.
+const costStore = new InMemoryCostStore()
+export const costTracker = new AICostTracker(costStore, {
+  dailyBudget: 50,  // $50/day budget cap
+})
+
+// Simple generate helper
+export async function generate(prompt: string, system?: string): Promise<string> {
+  return llm.generate({ prompt, system })
+}
+
+// Hybrid routing: use cloud for complex tasks, local Ollama for simple ones
+// This is useful when you have Ollama running locally for cost savings
+import { getLLMClient as createClient } from '@fabrk/ai'
+
+export const simpleLLM = createClient({ provider: 'ollama' }, 'simple')
+export const complexLLM = createClient({ provider: 'ollama' }, 'complex')
+// complexLLM automatically upgrades to OpenAI if OPENAI_API_KEY is set`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          2. COST TRACKING WITH PROVIDER-SPECIFIC WRAPPERS
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The <code>AICostTracker</code> wraps your raw SDK calls and automatically extracts
+          token counts, calculates cost, and stores the event. It uses provider-specific
+          wrappers because Claude and OpenAI have different response shapes. The tracker also
+          enforces budget limits before making the call.
+        </p>
+        <CodeBlock title="src/app/api/chat/route.ts">{`import { costTracker } from '@/lib/ai'
+import { withAuth } from '@fabrk/auth'
+import Anthropic from '@anthropic-ai/sdk'
+
+const anthropic = new Anthropic()
+
+export const POST = withAuth(auth, async (req, session) => {
+  const { messages } = await req.json()
+
+  // Check budget BEFORE making the API call
+  const budget = await costTracker.checkBudget(session.userId)
+  // budget: { withinBudget, currentCost, budget, percentUsed, remainingBudget }
+
+  if (!budget.withinBudget) {
+    return new Response(
+      JSON.stringify({
+        error: 'Daily AI budget exceeded',
+        currentCost: budget.currentCost.toFixed(2),
+        budget: budget.budget,
+        resetTime: 'Midnight UTC',
+      }),
+      { status: 429 }
+    )
+  }
+
+  try {
+    // trackClaudeCall wraps the Anthropic SDK call:
+    // 1. Checks budget (throws if exceeded)
+    // 2. Times the call
+    // 3. Extracts tokens from response.usage.input_tokens / output_tokens
+    // 4. Calculates cost using built-in pricing table
+    // 5. Stores the cost event
+    // 6. Returns the text content from the response
+    const content = await costTracker.trackClaudeCall<string>({
+      model: 'claude-sonnet-4-5-20250929',
+      feature: 'chat',
+      userId: session.userId,
+      prompt: messages[messages.length - 1]?.content,
+      fn: () =>
+        anthropic.messages.create({
+          model: 'claude-sonnet-4-5-20250929',
+          max_tokens: 4096,
+          messages,
+        }),
+    })
+
+    return Response.json({ content })
+  } catch (err) {
+    // Budget exceeded errors and API errors are both caught here.
+    // The tracker records failed calls too (with costUSD: 0).
+    if (err instanceof Error && err.message.includes('budget exceeded')) {
+      return new Response(
+        JSON.stringify({ error: err.message }),
+        { status: 429 }
+      )
+    }
+
+    console.error('AI call failed:', err)
+    return new Response(
+      JSON.stringify({ error: 'AI request failed. Please try again.' }),
+      { status: 500 }
+    )
+  }
 })`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          2. SET UP THE LLM CLIENT
+          3. STREAMING RESPONSES
         </h3>
-        <CodeBlock title="src/lib/ai.ts">{`import { getLLMClient, AICostTracker, InMemoryCostStore } from '@fabrk/ai'
+        <p className="text-sm text-muted-foreground mb-3">
+          For chat UIs, streaming provides a much better user experience. The{' '}
+          <code>@fabrk/ai</code> streaming utilities convert async iterables to
+          ReadableStreams for use in Response objects, and provide callback-based parsing for
+          chunk-by-chunk processing.
+        </p>
+        <CodeBlock title="src/app/api/chat/stream/route.ts">{`import { toReadableStream, transformStream } from '@fabrk/ai'
+import { withAuth } from '@fabrk/auth'
 
-// Initialize provider
-export const llm = getLLMClient({
-  provider: 'anthropic',
-  model: 'claude-sonnet-4-5-20250514',
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+export const POST = withAuth(auth, async (req, session) => {
+  const { messages } = await req.json()
 
-// Initialize cost tracker
-export const costTracker = new AICostTracker(new InMemoryCostStore())
-
-// Helper: chat with cost tracking
-export async function chat(userId: string, messages: Array<{ role: string; content: string }>) {
-  const response = await llm.chat(messages)
-
-  // Track cost automatically
-  await costTracker.track({
-    userId,
-    model: 'claude-sonnet-4-5-20250514',
-    provider: 'anthropic',
-    inputTokens: response.usage.inputTokens,
-    outputTokens: response.usage.outputTokens,
-    feature: 'chat',
+  // Create the Anthropic streaming response
+  const anthropic = new Anthropic()
+  const stream = anthropic.messages.stream({
+    model: 'claude-sonnet-4-5-20250929',
+    max_tokens: 4096,
+    messages,
   })
 
-  return response
+  // Convert the Anthropic stream to an async iterable of text chunks
+  async function* extractText() {
+    for await (const event of stream) {
+      if (
+        event.type === 'content_block_delta' &&
+        event.delta.type === 'text_delta'
+      ) {
+        yield event.delta.text
+      }
+    }
+  }
+
+  // Transform to SSE format for the client
+  const sseStream = transformStream(extractText(), (chunk) =>
+    \`data: \${JSON.stringify({ text: chunk })}\\n\\n\`
+  )
+
+  // Convert async iterable to ReadableStream for the Response
+  return new Response(toReadableStream(sseStream), {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    },
+  })
+})`}</CodeBlock>
+
+        <CodeBlock title="client-side: consuming the stream">{`// In your React component
+async function handleSendStreaming(content: string) {
+  setMessages((prev) => [...prev, { role: 'user', content }])
+  setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
+  setLoading(true)
+
+  const res = await fetch('/api/chat/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: [...messages, { role: 'user', content }] }),
+  })
+
+  if (!res.ok || !res.body) {
+    setLoading(false)
+    return
+  }
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    const text = decoder.decode(value, { stream: true })
+    // Parse SSE events
+    const lines = text.split('\\n')
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const { text: chunk } = JSON.parse(line.slice(6))
+          setMessages((prev) => {
+            const updated = [...prev]
+            const last = updated[updated.length - 1]
+            updated[updated.length - 1] = { ...last, content: last.content + chunk }
+            return updated
+          })
+        } catch { /* skip malformed lines */ }
+      }
+    }
+  }
+
+  setLoading(false)
 }`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          3. COST TRACKING AND BUDGETS
+          4. AI MIDDLEWARE: BUDGET + PROVIDER FALLBACK
         </h3>
-        <CodeBlock title="budget enforcement">{`import { costTracker } from '@/lib/ai'
+        <p className="text-sm text-muted-foreground mb-3">
+          The AI middleware pipeline runs before your LLM call and can block requests
+          (budget exceeded) or modify them (switch to a fallback provider). Middleware
+          functions follow the <code>(context, next) =&gt; Promise&lt;void&gt;</code> pattern
+          and compose like Express middleware.
+        </p>
+        <CodeBlock title="src/lib/ai-middleware.ts">{`import {
+  createAIMiddleware,
+  budgetEnforcement,
+  providerFallback,
+} from '@fabrk/ai'
 
-// Check budget before making API call
-const budget = await costTracker.getBudgetStatus(userId)
-// { withinBudget: true, todaysCost: 12.50, percentUsed: 25 }
+// Compose middleware into a pipeline
+export const aiPipeline = createAIMiddleware()
+  // Budget enforcement runs first — blocks requests if over budget
+  .use(budgetEnforcement({
+    daily: 50,                // $50/day
+    monthly: 1000,            // $1000/month
+    alertThreshold: 0.8,      // Log warning at 80% usage
+    onBudgetExceeded: (ctx, spent, budget) => {
+      console.warn(
+        \`[AI BUDGET] Blocked request from \${ctx.userId}: \` +
+        \`$\${spent.toFixed(2)} / $\${budget}\`
+      )
+    },
+    onBudgetAlert: (ctx, spent, budget, percent) => {
+      console.warn(
+        \`[AI BUDGET] Alert: \${(percent * 100).toFixed(0)}% used \` +
+        \`($\${spent.toFixed(2)} / $\${budget})\`
+      )
+    },
+  }))
+  // Provider fallback: try Claude first, fall back to OpenAI, then local Ollama
+  .use(providerFallback({
+    providers: ['claude', 'openai', 'ollama'],
+    models: {
+      claude: 'claude-sonnet-4-5-20250929',
+      openai: 'gpt-4o',
+      ollama: 'llama3.1:8b-instruct',
+    },
+    maxRetries: 1,
+    onFallback: (from, to, err) => {
+      console.warn(\`[AI FALLBACK] \${from} -> \${to}: \${err.message}\`)
+    },
+  }))
 
-if (!budget.withinBudget) {
-  return Response.json(
-    { error: 'Daily budget exceeded. Resets at midnight UTC.' },
-    { status: 429 }
+// Usage in an API route:
+export async function runWithMiddleware(prompt: string, userId: string) {
+  const result = await aiPipeline.run({
+    prompt,
+    model: 'claude-sonnet-4-5-20250929',
+    feature: 'chat',
+    userId,
+  })
+
+  if (result.blocked) {
+    throw new Error(result.blockReason ?? 'Request blocked by AI middleware')
+  }
+
+  return result.response
+}`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          5. PROMPT TEMPLATES AND COMPOSITION
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The prompt system has two APIs: <code>createPromptTemplate</code> for simple
+          variable interpolation (with <code>{`{{variable}}`}</code> syntax), and{' '}
+          <code>PromptBuilder</code> for building structured multi-section prompts with
+          system context, instructions, constraints, examples, and output formatting.
+        </p>
+        <CodeBlock title="prompt templates and builder">{`import {
+  createPromptTemplate,
+  composePrompts,
+  createMessagePair,
+  PromptBuilder,
+} from '@fabrk/ai'
+
+// --- Simple Templates ---
+// createPromptTemplate returns an object with render() and variables()
+
+const summarize = createPromptTemplate(
+  'Summarize the following {{contentType}} in {{style}} style:\\n\\n{{content}}',
+  { contentType: 'text', style: 'concise', content: '' }
+)
+
+// Render with defaults
+summarize.render({ content: articleText })
+// "Summarize the following text in concise style:\\n\\nHello world..."
+
+// Override any variable
+summarize.render({ content: articleText, style: 'bullet points', contentType: 'article' })
+
+// List template variables
+summarize.variables() // ['contentType', 'style', 'content']
+
+// --- Compose Multiple Sections ---
+// composePrompts joins non-empty strings with double newlines
+
+const systemPrompt = composePrompts(
+  'You are a helpful coding assistant.',
+  userPreferences ? \`User preferences: \${userPreferences}\` : null,
+  'Always respond in TypeScript.',
+)
+// null and empty strings are filtered out
+
+// --- Message Pairs ---
+// createMessagePair builds a [system, user] message array
+// Useful with chat APIs that expect message arrays
+
+const codeReviewTemplate = createPromptTemplate(
+  'You are a {{language}} code reviewer. Focus on {{focus}}.',
+  { language: 'TypeScript', focus: 'bugs, performance, and security' }
+)
+
+const messages = createMessagePair(
+  codeReviewTemplate,
+  \`Review this code:\\n\\\`\\\`\\\`typescript\\n\${userCode}\\n\\\`\\\`\\\`\`,
+  { focus: 'security vulnerabilities only' }
+)
+// [
+//   { role: 'system', content: 'You are a TypeScript code reviewer...' },
+//   { role: 'user', content: 'Review this code:\\n\`\`\`typescript\\n...' }
+// ]
+
+// --- PromptBuilder (structured multi-section prompts) ---
+
+const prompt = new PromptBuilder()
+  .system('You are an expert data analyst.')
+  .context('The user has a PostgreSQL database with sales data.')
+  .context('Tables: orders, products, customers, regions.')
+  .instruction('Write a SQL query to find the top 10 products by revenue.')
+  .instruction('Include the product name, total revenue, and order count.')
+  .constraint('Use CTEs for readability')
+  .constraint('Add comments explaining each section')
+  .constraint('Handle NULL values gracefully')
+  .example(
+    'Find total revenue',
+    'SELECT SUM(amount) as total_revenue FROM orders WHERE status = \\'completed\\''
   )
-}
+  .outputFormat('Return only the SQL query in a code block. No explanations.')
+  .build()
 
-// Get cost breakdown
-const summary = await costTracker.getSummary(userId, { period: 'week' })
-// { total: 87.30, byModel: { 'claude-sonnet-4-5-20250514': 62.10, 'gpt-4': 25.20 } }`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          4. PROMPT TEMPLATES
-        </h3>
-        <CodeBlock title="reusable prompts">{`import { createPromptTemplate, composePrompts } from '@fabrk/ai'
-
-const summarize = createPromptTemplate({
-  name: 'summarize',
-  template: 'Summarize the following text in {{style}} style:\\n\\n{{content}}',
-  variables: { style: 'concise', content: '' },
-})
-
-const codeReview = createPromptTemplate({
-  name: 'code-review',
-  template: 'Review this {{language}} code for {{focus}}:\\n\\n\`\`\`{{language}}\\n{{code}}\\n\`\`\`',
-  variables: { language: 'typescript', focus: 'bugs and performance', code: '' },
-})
-
-// Use templates
-const prompt = summarize({ content: articleText, style: 'bullet points' })
-const review = codeReview({ code: myCode, focus: 'security vulnerabilities' })`}</CodeBlock>
+// prompt.system  — the full system message (all sections combined)
+// prompt.user    — the user message (first instruction by default)
+// prompt.messages — array of { role, content } ready for chat APIs`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          5. CHAT UI
+          6. CHAT UI
         </h3>
         <CodeBlock title="src/app/chat/page.tsx">{`'use client'
 
 import { ChatInput, ChatMessageList, TokenCounter, UsageBar } from '@fabrk/components'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -567,21 +1546,53 @@ interface Message {
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
+  const [dailyUsage, setDailyUsage] = useState({ used: 0, limit: 50 })
 
-  async function handleSend(content: string) {
+  const handleSend = useCallback(async (content: string) => {
     const userMsg: Message = { role: 'user', content }
-    setMessages((prev) => [...prev, userMsg])
+    const newMessages = [...messages, userMsg]
+    setMessages(newMessages)
     setLoading(true)
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      body: JSON.stringify({ messages: [...messages, userMsg] }),
-    })
-    const data = await res.json()
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages }),
+      })
 
-    setMessages((prev) => [...prev, { role: 'assistant', content: data.content }])
-    setLoading(false)
-  }
+      if (!res.ok) {
+        const error = await res.json()
+        if (res.status === 429) {
+          // Budget exceeded — show the error inline
+          setMessages((prev) => [
+            ...prev,
+            { role: 'assistant', content: \`[BUDGET EXCEEDED] \${error.error}\` },
+          ])
+          return
+        }
+        throw new Error(error.error ?? 'Request failed')
+      }
+
+      const data = await res.json()
+      setMessages((prev) => [...prev, { role: 'assistant', content: data.content }])
+
+      // Update usage display
+      if (data.usage) {
+        setDailyUsage((prev) => ({
+          ...prev,
+          used: data.usage.dailyCost,
+        }))
+      }
+    } catch (err) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '[ERROR] Failed to get response. Please try again.' },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }, [messages])
 
   return (
     <div className="flex flex-col h-screen">
@@ -593,85 +1604,382 @@ export default function ChatPage() {
       <ChatMessageList messages={messages} loading={loading} className="flex-1" />
 
       <div className="p-4 border-t border-border space-y-2">
-        <UsageBar used={12.50} limit={50} label="DAILY BUDGET" />
-        <ChatInput onSend={handleSend} placeholder="Ask anything..." disabled={loading} />
+        <UsageBar
+          used={dailyUsage.used}
+          limit={dailyUsage.limit}
+          label="DAILY BUDGET"
+        />
+        <ChatInput
+          onSend={handleSend}
+          placeholder="Ask anything..."
+          disabled={loading}
+        />
       </div>
     </div>
   )
 }`}</CodeBlock>
+
+        <InfoCard title="PRODUCTION CHECKLIST: AI">
+          <ul className="space-y-1 mt-1">
+            <li>Use <code>PrismaCostStore</code> in production (in-memory caps at 10,000 events)</li>
+            <li>Set <code>AI_DAILY_BUDGET</code> env var for server-level budget enforcement (0 blocks all calls)</li>
+            <li>Configure provider fallback so a single provider outage does not take down your app</li>
+            <li>Budget checks have TOCTOU race conditions under high concurrency. For strict budgets, implement atomic reserve-and-deduct at the store level</li>
+            <li>Prompt templates escape regex special characters in variable names to prevent injection</li>
+            <li>The <code>maxTokens</code> parameter is capped at 100,000 to prevent runaway cost from untrusted input</li>
+          </ul>
+        </InfoCard>
       </Section>
 
+      {/* ──────────────────────────────────────────────────────────────── */}
+      {/* DEPLOYMENT GUIDE                                                */}
+      {/* ──────────────────────────────────────────────────────────────── */}
       <Section id="deployment" title="DEPLOYMENT">
         <p className="text-sm text-muted-foreground mb-4">
-          Deploy your FABRK app to Vercel, Railway, or any Node.js host.
+          Deploy your FABRK app to production with proper security, monitoring, and
+          environment management. This guide covers Vercel deployment, staging vs production
+          config, health check endpoints, CI/CD pipelines, and a comprehensive security
+          checklist.
         </p>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          VERCEL
+          1. ENVIRONMENT VARIABLE MANAGEMENT
         </h3>
-        <CodeBlock>{`# Install Vercel CLI
+        <p className="text-sm text-muted-foreground mb-3">
+          Keep three separate environment files. Never commit <code>.env.production</code>{' '}
+          to git. Use your deployment platform's secret manager for production secrets.
+        </p>
+        <CodeBlock title=".env.local (development)">{`# Auth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=dev-secret-do-not-use-in-production
+
+# Payments (Stripe test mode)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PRO_PRICE_ID=price_...
+
+# AI
+ANTHROPIC_API_KEY=sk-ant-...
+AI_DAILY_BUDGET=10
+
+# Email (console adapter in dev — prints to terminal)
+RESEND_API_KEY=
+
+# Database
+DATABASE_URL=postgresql://localhost:5432/myapp_dev`}</CodeBlock>
+
+        <CodeBlock title=".env.staging">{`# Auth
+NEXTAUTH_URL=https://staging.myapp.com
+NEXTAUTH_SECRET=  # Set via deployment platform secrets
+
+# Payments (Stripe test mode — still test keys in staging)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# AI (lower budget for staging)
+AI_DAILY_BUDGET=5
+
+# Database (separate staging database)
+DATABASE_URL=postgresql://...staging-db-url...`}</CodeBlock>
+
+        <InfoCard title="SECRETS MANAGEMENT">
+          Never store production secrets in files. Use your platform's secrets manager:
+          <ul className="space-y-1 mt-2">
+            <li>Vercel: <code>vercel env add VARIABLE_NAME</code> or Project Settings &gt; Environment Variables</li>
+            <li>Railway: Variables tab in project dashboard</li>
+            <li>AWS: Secrets Manager or Parameter Store</li>
+          </ul>
+          For <code>NEXTAUTH_SECRET</code>, generate a strong random value:{' '}
+          <code>openssl rand -base64 32</code>
+        </InfoCard>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          2. DEPLOY TO VERCEL
+        </h3>
+        <CodeBlock title="terminal">{`# Install Vercel CLI
 npm i -g vercel
 
-# Deploy
+# Link project and deploy
 vercel
 
-# Set environment variables
-vercel env add DATABASE_URL
-vercel env add NEXTAUTH_SECRET
-vercel env add NEXTAUTH_URL
-vercel env add STRIPE_SECRET_KEY
-vercel env add STRIPE_WEBHOOK_SECRET
-vercel env add RESEND_API_KEY
-vercel env add ANTHROPIC_API_KEY`}</CodeBlock>
+# Set production environment variables
+vercel env add NEXTAUTH_SECRET --environment production
+vercel env add NEXTAUTH_URL --environment production
+vercel env add DATABASE_URL --environment production
+vercel env add STRIPE_SECRET_KEY --environment production
+vercel env add STRIPE_WEBHOOK_SECRET --environment production
+vercel env add ANTHROPIC_API_KEY --environment production
+vercel env add AI_DAILY_BUDGET --environment production
+vercel env add RESEND_API_KEY --environment production
+
+# Deploy to production
+vercel --prod`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          DATABASE
+          3. DATABASE SETUP
         </h3>
-        <CodeBlock>{`# Push Prisma schema to production database
+        <CodeBlock title="database deployment">{`# Run Prisma migrations on your production database
 pnpm dlx prisma migrate deploy
 
-# For serverless, enable connection pooling:
-DATABASE_URL="postgresql://...?pgbouncer=true&connection_limit=1"
+# For serverless environments (Vercel, AWS Lambda), use connection pooling.
+# Without pooling, each invocation opens a new connection and you'll hit
+# the database connection limit quickly.
+DATABASE_URL="postgresql://user:pass@host:5432/db?pgbouncer=true&connection_limit=1"
+
+# If using Neon, Supabase, or PlanetScale, connection pooling is built-in.
+# Just use the pooled connection string from their dashboard.
 
 # Recommended providers:
-#   Neon    — serverless PostgreSQL, free tier
-#   Supabase — PostgreSQL + realtime
-#   PlanetScale — MySQL, branching`}</CodeBlock>
+#   Neon       — Serverless PostgreSQL, free tier, auto-scaling
+#   Supabase   — PostgreSQL + realtime + auth + storage
+#   PlanetScale — MySQL with branching (useful for staging)`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          UPDATE CONFIG FOR PRODUCTION
+          4. HEALTH CHECK ENDPOINT
         </h3>
-        <CodeBlock title="fabrk.config.ts changes for production">{`export default defineFabrkConfig({
-  // Switch payments to live mode
-  payments: { adapter: 'stripe', mode: 'live' },
+        <p className="text-sm text-muted-foreground mb-3">
+          Add a health check endpoint that your monitoring service can ping. Check database
+          connectivity and any critical external services.
+        </p>
+        <CodeBlock title="src/app/api/health/route.ts">{`export const dynamic = 'force-dynamic'
 
-  // Use real email delivery
-  email: { adapter: 'resend', from: 'hi@yourdomain.com' },
+export async function GET() {
+  const checks: Record<string, 'ok' | 'error'> = {}
+  let healthy = true
+
+  // Check database connectivity
+  try {
+    await db.$queryRaw\`SELECT 1\`
+    checks.database = 'ok'
+  } catch {
+    checks.database = 'error'
+    healthy = false
+  }
+
+  // Check Stripe configuration
+  try {
+    checks.payments = payments.isConfigured() ? 'ok' : 'error'
+  } catch {
+    checks.payments = 'error'
+    healthy = false
+  }
+
+  return Response.json(
+    {
+      status: healthy ? 'healthy' : 'degraded',
+      timestamp: new Date().toISOString(),
+      checks,
+      version: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? 'unknown',
+    },
+    { status: healthy ? 200 : 503 }
+  )
+}`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          5. PRODUCTION CONFIG
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The key differences between development and production config. In development, FABRK
+          uses in-memory stores, console email adapter, and test mode payments. In production,
+          switch to persistent stores, real email delivery, and live payments.
+        </p>
+        <CodeBlock title="fabrk.config.ts — production overrides">{`import { defineFabrkConfig } from '@fabrk/config'
+
+export default defineFabrkConfig({
+  // Switch payments to live mode
+  payments: {
+    adapter: 'stripe',
+    mode: 'live',
+    config: {
+      secretKey: process.env.STRIPE_SECRET_KEY!,
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+    },
+  },
+
+  // Use real email delivery (not console adapter)
+  email: {
+    adapter: 'resend',
+    from: 'notifications@yourdomain.com',
+  },
 
   // Enable all security features
   security: {
     csrf: true,
     csp: true,
-    rateLimit: true,     // Use UpstashRateLimiter in production
+    rateLimit: true,
     auditLog: true,
-    headers: true,
+    headers: true,       // Adds HSTS, X-Content-Type-Options, etc.
     cors: {
       origins: ['https://yourdomain.com'],
     },
   },
+
+  // Auth with real providers
+  auth: {
+    adapter: 'nextauth',
+    apiKeys: true,
+    mfa: true,
+  },
+
+  // AI with production budget
+  ai: {
+    costTracking: true,
+    budget: {
+      daily: Number(process.env.AI_DAILY_BUDGET ?? 50),
+      monthly: 1000,
+    },
+  },
 })`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          6. CI/CD PIPELINE
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          A GitHub Actions pipeline that runs type checking, tests, linting, and bundle size
+          tracking on every pull request, then auto-deploys on merge to main.
+        </p>
+        <CodeBlock title=".github/workflows/ci.yml">{`name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm type-check
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+  bundle-size:
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm size  # Fails if any package exceeds its size limit
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit || true  # Surface vulnerabilities without blocking`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          7. NEXT.JS SECURITY HEADERS
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The FABRK CLI templates include these headers by default. If you are adding FABRK
+          to an existing project, add them to your <code>next.config.js</code> directly.
+        </p>
+        <CodeBlock title="next.config.js — security headers">{`/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-XSS-Protection', value: '1; mode=block' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload',
+          },
+        ],
+      },
+    ]
+  },
+}
+
+module.exports = nextConfig`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          8. MONITORING AND OBSERVABILITY
+        </h3>
+        <CodeBlock title="monitoring setup">{`// Use your health check endpoint with an uptime monitor:
+// - UptimeRobot (free tier): ping /api/health every 5 minutes
+// - Better Uptime: monitors + incident pages
+// - Checkly: synthetic monitoring with Playwright
+
+// For error tracking, add Sentry or similar:
+// npm install @sentry/nextjs
+// Follow their Next.js setup wizard: npx @sentry/wizard@latest -i nextjs
+
+// For AI cost monitoring, query the cost tracker:
+const todaysCost = await costTracker.getTodaysCost()
+const featureCosts = await costTracker.getFeatureCosts({
+  startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // last 7 days
+})
+// Returns: [{ feature, totalCost, callCount, avgCostPerCall, successRate, lastUsed }]
+
+// For database monitoring with Prisma:
+// Add query logging in development
+// prisma.$on('query', (e) => { console.log(\`[\${e.duration}ms] \${e.query}\`) })`}</CodeBlock>
 
         <InfoCard title="PRODUCTION CHECKLIST">
           <ul className="space-y-1 mt-1">
-            <li>Set <code>payments.mode: &apos;live&apos;</code> in config</li>
-            <li>Set <code>email.adapter: &apos;resend&apos;</code> (not console)</li>
-            <li>Set <code>security.headers: true</code> for HSTS + CSP</li>
-            <li>Configure rate limiting with Upstash Redis for distributed limiting</li>
-            <li>Enable audit logging for compliance</li>
-            <li>Set up Stripe webhook endpoint in Stripe dashboard</li>
-            <li>Use <code>PrismaTeamStore</code>, <code>PrismaAuditStore</code> instead of in-memory stores</li>
-            <li>Set <code>NEXTAUTH_URL</code> to your production domain</li>
-            <li>Generate a strong <code>NEXTAUTH_SECRET</code> with <code>openssl rand -base64 32</code></li>
+            <li><strong>Auth:</strong> Set <code>NEXTAUTH_URL</code> to production domain, generate strong <code>NEXTAUTH_SECRET</code></li>
+            <li><strong>Payments:</strong> Switch to <code>mode: &apos;live&apos;</code>, register webhook URL in Stripe dashboard</li>
+            <li><strong>Email:</strong> Switch from console adapter to <code>resend</code></li>
+            <li><strong>Database:</strong> Enable connection pooling for serverless, run <code>prisma migrate deploy</code></li>
+            <li><strong>Rate limiting:</strong> Use Upstash Redis (distributed) instead of memory rate limiter</li>
+            <li><strong>Stores:</strong> Use <code>PrismaTeamStore</code>, <code>PrismaAuditStore</code>, <code>PrismaCostStore</code> instead of in-memory</li>
+            <li><strong>Security headers:</strong> Enable HSTS, CSP, CORS with production origins</li>
+            <li><strong>Audit logging:</strong> Enable for compliance (GDPR, SOC 2)</li>
+            <li><strong>AI budget:</strong> Set <code>AI_DAILY_BUDGET</code> env var, monitor feature-level costs</li>
+            <li><strong>Health checks:</strong> Add <code>/api/health</code> endpoint, configure uptime monitoring</li>
+            <li><strong>Error tracking:</strong> Set up Sentry or equivalent for production error visibility</li>
+            <li><strong>Bundle size:</strong> Run <code>pnpm size</code> in CI to catch size regressions</li>
+            <li><strong>Secrets:</strong> All secrets in platform secret manager, never in code or env files committed to git</li>
+          </ul>
+        </InfoCard>
+
+        <InfoCard title="STAGING VS PRODUCTION">
+          Key differences to configure between environments:
+          <ul className="space-y-1 mt-2">
+            <li><strong>Stripe:</strong> Use <code>sk_test_</code> keys in staging, <code>sk_live_</code> in production. Register separate webhook endpoints for each.</li>
+            <li><strong>Database:</strong> Separate databases with the same schema. Run migrations on staging first.</li>
+            <li><strong>AI budget:</strong> Lower budget in staging to avoid accidental spend ($5-10/day vs $50/day in prod).</li>
+            <li><strong>Email:</strong> Keep console adapter in staging to avoid sending real emails to test users.</li>
+            <li><strong>Rate limits:</strong> More lenient in staging for testing, stricter in production.</li>
           </ul>
         </InfoCard>
       </Section>

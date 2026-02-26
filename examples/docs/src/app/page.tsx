@@ -35,6 +35,7 @@ const quickLinks = [
   { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
   { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing Next.js app to FABRK' },
   { label: '> CLI REFERENCE', href: '/cli', description: 'create-fabrk-app and fabrk dev CLI' },
+  { label: '> ABOUT', href: '/about', description: 'The story behind FABRK — from boilerplate to framework' },
 ]
 
 export default function HomePage() {

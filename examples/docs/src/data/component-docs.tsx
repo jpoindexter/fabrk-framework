@@ -637,28 +637,36 @@ const columns = [
           const BarChart = C('BarChart')
           return React.createElement(BarChart, {
             data: [
-              { label: 'Jan', value: 4200 },
-              { label: 'Feb', value: 5100 },
-              { label: 'Mar', value: 4800 },
-              { label: 'Apr', value: 6300 },
+              { month: 'Jan', revenue: 4200 },
+              { month: 'Feb', revenue: 5100 },
+              { month: 'Mar', revenue: 4800 },
+              { month: 'Apr', revenue: 6300 },
             ],
+            xAxisKey: 'month',
+            series: [{ dataKey: 'revenue', name: 'Revenue' }],
           })
         },
         source: `<BarChart
   data={[
-    { label: 'Jan', value: 4200 },
-    { label: 'Feb', value: 5100 },
-    { label: 'Mar', value: 4800 },
-    { label: 'Apr', value: 6300 },
+    { month: 'Jan', revenue: 4200 },
+    { month: 'Feb', revenue: 5100 },
+    { month: 'Mar', revenue: 4800 },
+    { month: 'Apr', revenue: 6300 },
   ]}
+  xAxisKey="month"
+  series={[{ dataKey: 'revenue', name: 'Revenue' }]}
 />`,
       },
     ],
     props: [
-      { name: 'data', type: '{ label: string; value: number }[]', description: 'Chart data points' },
+      { name: 'data', type: 'Record<string, string | number>[]', description: 'Chart data points' },
+      { name: 'xAxisKey', type: 'string', description: 'Key in data used for the X axis' },
+      { name: 'series', type: '{ dataKey: string; name?: string; color?: string }[]', description: 'Bar series configuration' },
       { name: 'height', type: 'number', default: '300', description: 'Chart height in pixels' },
       { name: 'horizontal', type: 'boolean', default: 'false', description: 'Horizontal bars' },
       { name: 'colorByIndex', type: 'boolean', default: 'false', description: 'Different color per bar' },
+      { name: 'showLegend', type: 'boolean', default: 'false', description: 'Show chart legend' },
+      { name: 'showGrid', type: 'boolean', default: 'true', description: 'Show grid lines' },
     ],
     a11y: {
       aria: ['SVG chart with aria-label', 'Data also available in alt text'],
@@ -677,26 +685,34 @@ const columns = [
           const LineChart = C('LineChart')
           return React.createElement(LineChart, {
             data: [
-              { label: 'Mon', value: 120 },
-              { label: 'Tue', value: 180 },
-              { label: 'Wed', value: 150 },
-              { label: 'Thu', value: 210 },
-              { label: 'Fri', value: 190 },
+              { day: 'Mon', users: 120 },
+              { day: 'Tue', users: 180 },
+              { day: 'Wed', users: 150 },
+              { day: 'Thu', users: 210 },
+              { day: 'Fri', users: 190 },
             ],
+            xAxisKey: 'day',
+            series: [{ dataKey: 'users', name: 'Users' }],
           })
         },
         source: `<LineChart
   data={[
-    { label: 'Mon', value: 120 },
-    { label: 'Tue', value: 180 },
-    { label: 'Wed', value: 150 },
+    { day: 'Mon', users: 120 },
+    { day: 'Tue', users: 180 },
+    { day: 'Wed', users: 150 },
   ]}
+  xAxisKey="day"
+  series={[{ dataKey: 'users', name: 'Users' }]}
 />`,
       },
     ],
     props: [
-      { name: 'data', type: '{ label: string; value: number }[]', description: 'Chart data points' },
+      { name: 'data', type: 'Record<string, string | number>[]', description: 'Chart data points' },
+      { name: 'xAxisKey', type: 'string', description: 'Key in data used for the X axis' },
+      { name: 'series', type: '{ dataKey: string; name?: string; color?: string; dashed?: boolean }[]', description: 'Line series configuration' },
       { name: 'height', type: 'number', default: '300', description: 'Chart height' },
+      { name: 'showLegend', type: 'boolean', default: 'false', description: 'Show chart legend' },
+      { name: 'showGrid', type: 'boolean', default: 'true', description: 'Show grid lines' },
     ],
     a11y: { aria: ['SVG chart with aria-label'] },
   },
@@ -717,7 +733,7 @@ const columns = [
               { label: 'Mobile', value: 28 },
               { label: 'Tablet', value: 10 },
             ],
-            centerLabel: 'TRAFFIC',
+            centerContent: React.createElement('span', { className: 'text-sm font-bold uppercase text-foreground' }, 'TRAFFIC'),
           })
         },
         source: `<DonutChart
@@ -726,14 +742,16 @@ const columns = [
     { label: 'Mobile', value: 28 },
     { label: 'Tablet', value: 10 },
   ]}
-  centerLabel="TRAFFIC"
+  centerContent={<span className="text-sm font-bold uppercase">TRAFFIC</span>}
 />`,
       },
     ],
     props: [
-      { name: 'data', type: '{ label: string; value: number }[]', description: 'Chart segments' },
-      { name: 'centerLabel', type: 'string', description: 'Label in the center' },
-      { name: 'height', type: 'number', default: '300', description: 'Chart height' },
+      { name: 'data', type: '{ label: string; value: number; color?: string }[]', description: 'Chart segments' },
+      { name: 'centerContent', type: 'ReactNode', description: 'Content displayed in the center of the donut' },
+      { name: 'size', type: 'number', default: '300', description: 'Chart size in pixels' },
+      { name: 'thickness', type: 'number', default: '60', description: 'Ring thickness' },
+      { name: 'showLegend', type: 'boolean', default: 'true', description: 'Show chart legend' },
     ],
     a11y: { aria: ['SVG chart with aria-label'] },
   },

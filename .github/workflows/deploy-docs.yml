@@ -35,12 +35,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build all packages
-        run: pnpm build
-
-      - name: Build docs static export
-        working-directory: examples/docs
-        run: pnpm build
+      - name: Build docs and dependencies
+        run: pnpm turbo run build --filter=fabrk-docs...
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

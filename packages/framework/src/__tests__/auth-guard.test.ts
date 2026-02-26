@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createAuthGuard } from "../middleware/auth-guard.js";
+import { createAuthGuard } from "../middleware/auth-guard";
 
 describe("createAuthGuard", () => {
   it("passes when auth is 'none'", async () => {

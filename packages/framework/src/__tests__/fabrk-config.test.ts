@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadFabrkConfig, defineFabrkConfig } from "../config/fabrk-config.js";
+import { loadFabrkConfig, defineFabrkConfig } from "../config/fabrk-config";
 
 describe("fabrk config", () => {
   it("defineFabrkConfig returns typed config", () => {

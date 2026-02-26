@@ -1,4 +1,4 @@
-import type { LLMBridge } from "./llm-bridge.js";
+import type { LLMBridge } from "./llm-bridge";
 
 export interface LLMCallResult {
   content: string;

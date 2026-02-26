@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadToolDefinitions } from "../tools/loader.js";
+import { loadToolDefinitions } from "../tools/loader";
 
 describe("loadToolDefinitions", () => {
   it("returns empty array for empty input", async () => {

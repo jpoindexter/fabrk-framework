@@ -1,4 +1,4 @@
-import { buildSecurityHeaders } from "../middleware/security.js";
+import { buildSecurityHeaders } from "../middleware/security";
 
 export type SSEEvent =
   | { type: "text"; content: string }

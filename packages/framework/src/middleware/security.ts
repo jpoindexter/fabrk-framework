@@ -1,4 +1,4 @@
-import type { FabrkConfig } from "../config/fabrk-config.js";
+import type { FabrkConfig } from "../config/fabrk-config";
 
 export function buildSecurityHeaders(
   config?: FabrkConfig["security"]

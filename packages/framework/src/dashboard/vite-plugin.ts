@@ -1,5 +1,5 @@
 import type { Plugin, ViteDevServer } from "vite";
-import { buildSecurityHeaders } from "../middleware/security.js";
+import { buildSecurityHeaders } from "../middleware/security";
 
 interface CallRecord {
   timestamp: number;

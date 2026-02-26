@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { checkBudget, recordCost } from "../agents/budget-guard.js";
+import { checkBudget, recordCost } from "../agents/budget-guard";
 
 // Budget guard uses module-level Maps, so we need fresh state per test.
 // Since we can't reset the maps directly, we use unique agent/session names.

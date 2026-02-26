@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSecurityHeaders } from "../middleware/security.js";
+import { buildSecurityHeaders } from "../middleware/security";
 
 describe("buildSecurityHeaders", () => {
   it("returns default security headers", () => {

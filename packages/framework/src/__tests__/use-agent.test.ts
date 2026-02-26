@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseSSELine } from "../client/use-agent.js";
+import { parseSSELine } from "../client/use-agent";
 
 describe("parseSSELine", () => {
   it("parses a text event", () => {

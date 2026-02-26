@@ -1,4 +1,4 @@
-import type { ToolDefinition } from "./define-tool.js";
+import type { ToolDefinition } from "./define-tool";
 
 export interface McpToolDef {
   name: string;

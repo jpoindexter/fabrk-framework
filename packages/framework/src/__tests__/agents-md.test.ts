@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateAgentsMd } from "../build/agents-md.js";
+import { generateAgentsMd } from "../build/agents-md";
 
 describe("generateAgentsMd", () => {
   it("generates markdown with agents table", () => {

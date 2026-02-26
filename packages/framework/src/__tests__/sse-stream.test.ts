@@ -3,7 +3,7 @@ import {
   createSSEStream,
   createSSEResponse,
   formatSSEEvent,
-} from "../agents/sse-stream.js";
+} from "../agents/sse-stream";
 
 describe("SSE stream utilities", () => {
   it("formats a text event", () => {

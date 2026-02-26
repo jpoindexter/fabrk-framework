@@ -22,10 +22,6 @@ import type {
 } from './cost-types';
 import { calculateCost, MODEL_PRICING } from './pricing';
 
-/**
- * Simple in-memory store for development/testing
- * Replace with database implementation in production
- */
 export class InMemoryCostStore implements CostStore {
   private static readonly MAX_EVENTS = 10_000;
   private events: AICostEvent[] = [];
@@ -135,10 +131,6 @@ export class InMemoryCostStore implements CostStore {
 
 }
 
-/**
- * Main cost tracking class
- * Wraps AI API calls to automatically track costs
- */
 export class AICostTracker {
   private store: CostStore;
   private dailyBudget?: number;
@@ -150,17 +142,10 @@ export class AICostTracker {
     this.dailyBudget = options?.dailyBudget;
   }
 
-  /**
-   * Generate unique event ID using Web Crypto API
-   */
   private generateId(): string {
     return `cost_${crypto.randomUUID()}`;
   }
 
-  /**
-   * Generic tracking wrapper for any AI provider call.
-   * Handles timing, cost calculation, event persistence, and content extraction.
-   */
   private async trackCall<T>(options: {
     model: string;
     feature: string;
@@ -244,9 +229,6 @@ export class AICostTracker {
     }
   }
 
-  /**
-   * Track a Claude API call
-   */
   async trackClaudeCall<T>({
     model,
     feature,
@@ -288,9 +270,6 @@ export class AICostTracker {
     });
   }
 
-  /**
-   * Track an OpenAI API call
-   */
   async trackOpenAICall<T>({
     model,
     feature,
@@ -366,9 +345,6 @@ export class AICostTracker {
     };
   }
 
-  /**
-   * Get today's cost
-   */
   async getTodaysCost(userId?: string): Promise<number> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -403,10 +379,6 @@ function parseBudgetFromEnv(): number | undefined {
   return parsed;
 }
 
-/**
- * Get the default cost tracker instance.
- * Uses in-memory store by default, override with setCostStore().
- */
 export function getCostTracker(): AICostTracker {
   if (!defaultTracker) {
     defaultStore = defaultStore || new InMemoryCostStore();

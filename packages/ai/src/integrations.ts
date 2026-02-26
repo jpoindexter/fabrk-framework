@@ -1,11 +1,6 @@
 /**
  * AI-Friendly Integration Helpers
  *
- * Pre-configured wrappers for common integrations that:
- * - Include proper error handling
- * - Track costs automatically
- * - Use typed responses
- *
  * @example
  * import { ai } from '@fabrk/ai';
  *

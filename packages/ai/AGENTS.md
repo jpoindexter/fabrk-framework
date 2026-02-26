@@ -27,9 +27,10 @@ The `ai` object auto-selects the first available provider (Claude → OpenAI).
 Costs are tracked automatically via `AICostTracker`.
 
 ```ts
-import { ai, claude, openai, vercelAI } from '@fabrk/ai'
+import { ai, claude, openai } from '@fabrk/ai'
 
 // Auto-select provider (preferred for most cases)
+// Falls back through: claude → openai. Both paths track costs.
 const result = await ai.generate({
   prompt: 'Generate a TypeScript interface for a user profile.',
   feature: 'code-generation',
@@ -54,9 +55,6 @@ const openaiResult = await openai.generate({
   feature: 'summarization',
   model: 'gpt-4o', // default
 })
-
-// Stream via Vercel AI SDK (costs NOT tracked — use for edge streaming only)
-const streamResult = await vercelAI.stream({ prompt: 'Tell me a story', feature: 'story' })
 ```
 
 `GenerateOptions` type:
@@ -196,6 +194,8 @@ Exported clients: `OpenAIClient`, `AnthropicClient`, `OllamaClient` (instantiate
 
 ## Streaming Utilities
 
+All streaming functions work with `AsyncIterable<string>`.
+
 ```ts
 import {
   streamToString, parseStreamChunks,
@@ -203,11 +203,11 @@ import {
   toReadableStream, fromReadableStream,
 } from '@fabrk/ai'
 
-// Consume a Vercel AI textStream to string
-const text = await streamToString(result.textStream)
+// Consume an async iterable stream to string
+const text = await streamToString(myAsyncIterableStream)
 
 // Process chunks as they arrive
-await parseStreamChunks(result.textStream, {
+await parseStreamChunks(myAsyncIterableStream, {
   onChunk: (chunk, accumulated) => process.stdout.write(chunk),
   onDone: (full) => saveToDatabase(full),
   onError: (err) => console.error(err),
@@ -217,7 +217,7 @@ await parseStreamChunks(result.textStream, {
 const mockStream = createTextStream('Hello world', { chunkSize: 5, delayMs: 50 })
 
 // Convert to ReadableStream for Response objects (edge/streaming routes)
-return new Response(toReadableStream(result.textStream), {
+return new Response(toReadableStream(myAsyncIterableStream), {
   headers: { 'Content-Type': 'text/plain; charset=utf-8' },
 })
 ```

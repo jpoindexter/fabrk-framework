@@ -86,7 +86,6 @@ export function getChartColor(index: number): string {
 
 /**
  * Get chart colors as CSS variable references
- * Useful for Tailwind classes
  *
  * @returns Array of CSS variable references
  */

@@ -1,9 +1,3 @@
-/**
- * Webhooks Hook
- *
- * Access the webhook manager from auto-wired features.
- */
-
 'use client';
 
 import { createFeatureHook } from './create-feature-hook';

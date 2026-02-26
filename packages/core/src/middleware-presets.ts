@@ -25,9 +25,6 @@ interface RequestContext {
   [key: string]: unknown
 }
 
-/**
- * Auth middleware — validates session or API key
- */
 export function authMiddleware(
   adapter: AuthAdapter
 ): MiddlewareFunction<RequestContext> {
@@ -121,9 +118,6 @@ export function rateLimitMiddleware(
   }
 }
 
-/**
- * CORS middleware
- */
 export function corsMiddleware(
   allowedOrigins: string[]
 ): MiddlewareFunction<RequestContext & { response?: Response }> {

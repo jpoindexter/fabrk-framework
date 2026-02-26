@@ -25,16 +25,10 @@ const templates: Record<string, TemplateRenderer> = {
   invite: inviteTemplate,
 }
 
-/**
- * Register a custom template
- */
 export function registerTemplate(name: string, renderer: TemplateRenderer): void {
   templates[name] = renderer
 }
 
-/**
- * Render a named template with data
- */
 export function renderTemplate(template: EmailTemplateData): RenderedEmail {
   const renderer = templates[template.template]
   if (!renderer) {

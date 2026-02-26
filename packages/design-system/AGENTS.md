@@ -12,7 +12,7 @@ import { formatButtonText, formatLabelText } from '@fabrk/design-system'
 
 ## The `mode` Object — Use This in Every Component
 
-`mode` is a flat config object mapping semantic roles to Tailwind class strings.
+`mode` is a config object mapping semantic roles to Tailwind class strings.
 It is the primary API. Import it and apply its properties directly in `className`.
 
 ```ts
@@ -21,7 +21,7 @@ import { cn } from '@fabrk/core'
 
 <Card className={cn('border border-border', mode.radius)}>
   <button className={cn(mode.radius, mode.font, 'bg-primary text-primary-foreground px-4 py-2')}>
-    {mode.buttonPrefix}SUBMIT
+    > SUBMIT
   </button>
 </Card>
 ```
@@ -45,13 +45,7 @@ import { cn } from '@fabrk/core'
 |---|---|---|
 | `mode.radius` | `'rounded-none'` | Border radius for full-bordered elements |
 | `mode.font` | `'font-mono'` | Monospace font class |
-| `mode.shadow` | `'shadow-sm'` | Default shadow |
-| `mode.buttonPrefix` | `'> '` | Prepend to button text: `> SUBMIT` |
-| `mode.inputStyle` | Tailwind input classes | Apply to `<input>` elements |
-| `mode.borderWidth` | `'border'` | Default border-width class |
 | `mode.textTransform` | `'uppercase'` | Text casing mode |
-| `mode.labelFormat` | `'brackets'` | Labels render as `[LABEL]` |
-| `mode.cardHeader` | `'bracketed'` | Card titles render as `[TITLE]` |
 
 ### `mode.color` — Semantic Color Tokens
 
@@ -63,39 +57,47 @@ All values are Tailwind class strings.
 |---|---|---|
 | `base` | `bg-background` | Page background |
 | `surface` | `bg-card` | Card/panel background |
+| `surfaceRaised` | `bg-card` | Raised card variant |
 | `elevated` | `bg-popover` | Dropdowns, tooltips |
 | `accent` | `bg-accent` | CTA, highlighted elements |
 | `accentMuted` | `bg-accent/10` | Subtle accent tint |
+| `primaryLight` | `bg-primary/10` | Light primary tint |
 | `danger` | `bg-destructive` | Error states |
 | `dangerMuted` | `bg-destructive/10` | Error background tint |
 | `success` | `bg-success` | Success states |
+| `successMuted` | `bg-success/10` | Success tint |
 | `warning` | `bg-warning` | Warning states |
+| `warningMuted` | `bg-warning/10` | Warning tint |
+| `infoMuted` | `bg-info/10` | Info tint |
 | `muted` | `bg-muted` | Subtle/disabled backgrounds |
+| `secondary` | `bg-secondary` | Secondary action backgrounds |
 
 **Text** (`mode.color.text.*`):
 
 | Key | Class | Use for |
 |---|---|---|
 | `primary` | `text-foreground` | Body text |
+| `secondary` | `text-card-foreground` | Secondary text on cards |
 | `muted` | `text-muted-foreground` | Secondary/helper text |
+| `inverse` | `text-accent-foreground` | Text on accent backgrounds |
 | `accent` | `text-accent` | Links, emphasis |
 | `danger` | `text-destructive` | Error messages |
+| `dangerOnColor` | `text-destructive-foreground` | Text on destructive bg |
 | `success` | `text-success` | Success messages |
+| `successOnColor` | `text-success-foreground` | Text on success bg |
 | `warning` | `text-warning` | Warning messages |
-| `inverse` | `text-accent-foreground` | Text on accent backgrounds |
+| `warningOnColor` | `text-warning-foreground` | Text on warning bg |
+| `info` | `text-info` | Info messages |
 
 **Borders** (`mode.color.border.*`):
 
 | Key | Class |
 |---|---|
 | `default` | `border-border` |
-| `focus` | `border-ring` |
 | `accent` | `border-primary` |
 | `danger` | `border-destructive` |
 | `success` | `border-success` |
 | `warning` | `border-warning` |
-
-**Icons** (`mode.color.icon.*`): same pattern — `primary`, `muted`, `accent`, `danger`, `success`, `warning`, `info`
 
 ### `mode.spacing` — Spacing Tokens
 
@@ -109,52 +111,29 @@ mode.spacing.badge.sm    // 'px-2 py-0.5'
 mode.spacing.badge.md    // 'px-2 py-1'
 ```
 
-### `mode.typography` — M3 Type Scale
+### `mode.typography` — Type Scale
 
 ```ts
-mode.typography.display.xl    // 'text-display-xl'  — 88px hero
-mode.typography.display.l     // 'text-display-l'   — 57px
-mode.typography.headline.l    // 'text-headline-l'  — 32px page title
-mode.typography.headline.s    // 'text-headline-s'  — 24px
-mode.typography.title.l       // 'text-title-l'     — 22px section header
-mode.typography.title.m       // 'text-title-m'     — 16px
-mode.typography.body.l        // 'text-body-l'      — 16px running text
-mode.typography.body.m        // 'text-body-m'      — 14px
-mode.typography.label.m       // 'text-label-m'     — 12px UI label
-mode.typography.code.m        // 'text-code-m'      — 14px terminal output
-
-// Legacy aliases (still work)
+mode.typography.body.m        // 'text-body-m'       — 14px body text
 mode.typography.button        // 'text-label-m font-medium'
-mode.typography.caps          // 'uppercase tracking-caps'
-```
-
-### `mode.sizing` — Layout Sizing Tokens
-
-```ts
-mode.sizing.panel          // 'h-panel'       — 600px
-mode.sizing.panelSm        // 'h-panel-sm'    — 400px
-mode.sizing.sidebar        // 'w-sidebar'     — 288px
-mode.sizing.auth           // 'max-w-auth'    — 400px (auth pages)
-mode.sizing.dropdown       // 'min-w-dropdown'
-mode.sizing.touch          // 'min-h-touch min-w-touch'  — 44px WCAG touch target
+mode.typography.caption       // 'text-caption text-muted-foreground'
+mode.typography.input         // 'text-body-m'
+mode.typography.label         // 'text-label-m'
 ```
 
 ### `mode.state` — Interactive States
 
 ```ts
 mode.state.hover.bg          // 'hover:bg-primary/90'
+mode.state.hover.text        // 'hover:text-foreground'
 mode.state.hover.card        // 'hover:bg-muted/50'
-mode.state.hover.link        // 'hover:text-primary'
+mode.state.hover.opacity     // 'hover:opacity-90'
 mode.state.focus.ring        // 'focus-visible:ring-2 focus-visible:ring-ring ...'
 mode.state.disabled.opacity  // 'disabled:opacity-50'
 mode.state.disabled.cursor   // 'disabled:cursor-not-allowed'
-```
-
-### `mode.zIndex`
-
-```ts
-mode.zIndex.banner    // 'z-banner'  — z-60 (cookie consent, floating notices)
-mode.zIndex.modal     // 'z-modal'   — z-100 (modals, toast, nav)
+mode.state.muted.opacity     // 'opacity-50'
+mode.state.subtle.opacity    // 'opacity-40'
+mode.state.secondary.opacity // 'opacity-70'
 ```
 
 ---
@@ -232,17 +211,11 @@ Color themes are applied via CSS variables using the `data-theme` attribute on `
 ## Text Formatting Utilities
 
 ```ts
-import { formatButtonText, formatLabelText, formatCardHeader, formatStatusText } from '@fabrk/design-system'
+import { formatButtonText, formatLabelText, formatCardHeader } from '@fabrk/design-system'
 
 formatButtonText('submit')          // '> SUBMIT'
 formatLabelText('status')           // '[STATUS]'
 formatCardHeader('Overview', 'OVR') // '[OVR] OVERVIEW'
-formatStatusText('active')          // 'ACTIVE'
-```
-
-Aliases also available from backwards-compat layer:
-```ts
-import { formatLabel, formatCardTitle } from '@fabrk/design-system'
 ```
 
 ---
@@ -252,18 +225,9 @@ import { formatLabel, formatCardTitle } from '@fabrk/design-system'
 ```ts
 import { getChartColors, getChartColor, getChartColorVars, CHART_FALLBACK_COLORS } from '@fabrk/design-system'
 
-getChartColors(5)           // string[] — 5 CSS var references for chart series
+getChartColors()            // string[] — up to 9 colors (CSS vars if available, hex fallbacks otherwise)
 getChartColor(0)            // string — first chart color
-getChartColorVars()         // { '--chart-1': ..., '--chart-2': ..., ... }
-```
-
----
-
-## Helpers
-
-```ts
-import { isSharpMode } from '@fabrk/design-system'
-isSharpMode()   // true (terminal theme is always sharp)
+getChartColorVars()         // string[] — array of 'oklch(var(--chart-N))' CSS var references
 ```
 
 ---
@@ -275,5 +239,7 @@ The full TypeScript type for `mode`:
 ```ts
 import type { ModeConfig } from '@fabrk/design-system'
 
-const myMode: ModeConfig = mode  // full type with color, spacing, typography, sizing, state, zIndex
+const myMode: ModeConfig = mode
 ```
+
+`ModeConfig` has these top-level keys: `radius`, `font`, `textTransform`, `color`, `spacing`, `typography`, `state`.

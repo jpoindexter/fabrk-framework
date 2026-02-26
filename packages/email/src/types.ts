@@ -1,7 +1,3 @@
-/**
- * Email package types
- */
-
 export interface ResendAdapterConfig {
   /** Resend API key */
   apiKey: string

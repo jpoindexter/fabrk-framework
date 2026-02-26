@@ -1,9 +1,3 @@
-/**
- * Team Hook
- *
- * Access the team/organization manager from auto-wired features.
- */
-
 'use client';
 
 import { createFeatureHook } from './create-feature-hook';

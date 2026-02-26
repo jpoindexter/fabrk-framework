@@ -1,6 +1,3 @@
-/**
- * Standard API response wrapper
- */
 export interface APIResponse<T> {
   success: boolean;
   data?: T;
@@ -28,9 +25,6 @@ export class AppError extends Error {
     this.name = 'AppError';
   }
 
-  /**
-   * Convert to API response format
-   */
   toResponse(): APIResponse<never> {
     return {
       success: false,
@@ -43,16 +37,10 @@ export class AppError extends Error {
   }
 }
 
-/**
- * Create a success response
- */
 export function successResponse<T>(data: T): APIResponse<T> {
   return { success: true, data };
 }
 
-/**
- * Create an error response
- */
 export function errorResponse(
   code: string,
   message: string,

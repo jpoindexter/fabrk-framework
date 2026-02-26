@@ -25,7 +25,7 @@ pnpm dev                  # Build all packages in watch mode
 pnpm build                # Build all packages for production
 pnpm type-check           # TypeScript validation across all packages
 pnpm lint                 # Lint all packages
-pnpm test                 # Run all 763 tests
+pnpm test                 # Run all 748 tests
 pnpm clean                # Remove all build artifacts
 
 # Quality
@@ -489,13 +489,14 @@ Read these files for context:
 
 ### Current Stats
 
-- **16/16 packages build** (12 packages + 4 examples)
-- **763 tests**, all passing
-- **105+ components**, 8 chart types, 18 themes
+- **17/17 packages build** (12 packages + 5 examples)
+- **748 tests**, all passing (353 root + 395 components)
+- **109+ components**, 15 hooks, 11 chart types, 18 themes
 - **12 packages**, ~43K source lines
-- **4 examples**: basic-usage, docs site, saas-analytics, ecommerce
+- **5 examples**: basic-usage, docs site, saas-analytics, ecommerce, agent-demo
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher
-- **Bundle size tracking**: packages tracked via size-limit, all within limits
+- **Bundle size tracking**: 7 packages tracked via size-limit, all within limits
+- **6 passes of adversarial security audits** — enterprise-grade hardening
 
 ---
 

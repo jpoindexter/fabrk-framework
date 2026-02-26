@@ -1,7 +1,6 @@
 /**
  * StyledTabs - Standardized tabs component with card header
  *
- * This component enforces consistent tab styling across all templates.
  * Automatically adapts to the current visual mode (sharp/standard/minimal).
  * Use this instead of manually styling Tabs/TabsList/TabsTrigger.
  *

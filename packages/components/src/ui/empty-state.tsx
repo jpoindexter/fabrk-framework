@@ -1,6 +1,5 @@
 /**
  * EmptyState - Placeholder for empty views with optional icon, description, and CTA button.
- * Uses `formatButtonText` from the design system for terminal-style button labels.
  *
  * @example
  * ```tsx

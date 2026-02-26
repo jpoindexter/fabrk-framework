@@ -1,7 +1,6 @@
 /**
  * LLM client factory
  *
- * Creates the appropriate LLM client based on configuration.
  * Supports hybrid mode: use cloud provider for complex tasks
  * while keeping simple tasks on local Ollama.
  */

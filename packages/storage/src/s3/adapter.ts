@@ -13,10 +13,10 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
   let HeadObjectCommand: any = null
   let getSignedUrlFn: any = null
 
-  function getClient() {
+  async function getClient() {
     if (!s3Client) {
       try {
-        const s3Module = require('@aws-sdk/client-s3')
+        const s3Module = await import('@aws-sdk/client-s3')
         S3Client = s3Module.S3Client
         PutObjectCommand = s3Module.PutObjectCommand
         GetObjectCommand = s3Module.GetObjectCommand
@@ -38,7 +38,7 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
         })
 
         try {
-          const presignerModule = require('@aws-sdk/s3-request-presigner')
+          const presignerModule = await import('@aws-sdk/s3-request-presigner')
           getSignedUrlFn = presignerModule.getSignedUrl
         } catch {
           // Presigner is optional
@@ -57,7 +57,7 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
     version: '1.0.0',
 
     async initialize() {
-      getClient()
+      await getClient()
     },
 
     isConfigured(): boolean {
@@ -65,7 +65,7 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
     },
 
     async upload(options: UploadOptions): Promise<UploadResult> {
-      const client = getClient()
+      const client = await getClient()
 
       // When a path is provided, sanitize the filename separately (without the timestamp
       // that generateStorageKey adds) so the caller gets a deterministic key.
@@ -167,7 +167,7 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
     },
 
     async getSignedUrl(options: SignedUrlOptions): Promise<SignedUrlResult> {
-      const client = getClient()
+      const client = await getClient()
 
       if (!getSignedUrlFn) {
         throw new Error(
@@ -195,7 +195,7 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
     },
 
     async delete(key: string): Promise<void> {
-      const client = getClient()
+      const client = await getClient()
       const safeKey = sanitizePath(key)
 
       await client.send(
@@ -207,7 +207,7 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
     },
 
     async exists(key: string): Promise<boolean> {
-      const client = getClient()
+      const client = await getClient()
       const safeKey = sanitizePath(key)
 
       try {

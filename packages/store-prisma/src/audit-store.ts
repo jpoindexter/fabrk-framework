@@ -3,6 +3,7 @@ import type { PrismaClient } from './types'
 
 const DEFAULT_AUDIT_LIMIT = 1000
 const MAX_AUDIT_LIMIT = 10_000
+const MAX_AUDIT_OFFSET = 100_000
 
 export class PrismaAuditStore implements AuditStore {
   constructor(private prisma: PrismaClient) {}
@@ -51,7 +52,7 @@ export class PrismaAuditStore implements AuditStore {
       },
       orderBy: { timestamp: 'desc' },
       take: Math.min(options.limit ?? DEFAULT_AUDIT_LIMIT, MAX_AUDIT_LIMIT),
-      skip: options.offset,
+      skip: Math.min(options.offset ?? 0, MAX_AUDIT_OFFSET),
     })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

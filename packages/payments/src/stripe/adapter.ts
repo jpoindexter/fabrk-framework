@@ -43,11 +43,12 @@ const stripeCache = createIdempotencyCache(10_000)
 export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter {
   let stripe: any = null
 
-  function getStripe() {
+  async function getStripe() {
     if (!stripe) {
       let StripeClass: any
       try {
-        StripeClass = require('stripe')
+        const mod = await import('stripe')
+        StripeClass = mod.default || mod
       } catch {
         throw new Error('@fabrk/payments: stripe package is required. Run: npm install stripe')
       }
@@ -63,7 +64,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
 
     async initialize() {
       // Validate Stripe is available
-      getStripe()
+      await getStripe()
     },
 
     isConfigured(): boolean {
@@ -71,7 +72,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
     },
 
     async createCheckout(options: CheckoutOptions): Promise<CheckoutResult> {
-      const s = getStripe()
+      const s = await getStripe()
 
       const params: any = {
         mode: options.subscription ? 'subscription' : 'payment',
@@ -105,7 +106,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
     },
 
     async handleWebhook(payload: string | ArrayBuffer, signature: string): Promise<WebhookResult> {
-      const s = getStripe()
+      const s = await getStripe()
 
       try {
         const payloadStr = typeof payload === 'string' ? payload : new TextDecoder().decode(payload)
@@ -154,7 +155,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
     },
 
     async getCustomer(customerId: string): Promise<CustomerInfo | null> {
-      const s = getStripe()
+      const s = await getStripe()
 
       try {
         const customer = await s.customers.retrieve(customerId, {
@@ -176,7 +177,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
     },
 
     async getSubscription(subscriptionId: string): Promise<SubscriptionInfo | null> {
-      const s = getStripe()
+      const s = await getStripe()
 
       try {
         const sub = await s.subscriptions.retrieve(subscriptionId)
@@ -198,7 +199,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
       subscriptionId: string,
       options?: { atPeriodEnd?: boolean }
     ): Promise<void> {
-      const s = getStripe()
+      const s = await getStripe()
 
       if (options?.atPeriodEnd) {
         await s.subscriptions.update(subscriptionId, {
@@ -210,7 +211,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
     },
 
     async createPortalSession(customerId: string, returnUrl: string): Promise<string> {
-      const s = getStripe()
+      const s = await getStripe()
 
       const session = await s.billingPortal.sessions.create({
         customer: customerId,

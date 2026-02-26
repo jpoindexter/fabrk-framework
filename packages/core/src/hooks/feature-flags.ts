@@ -1,9 +1,3 @@
-/**
- * Feature Flag Hook
- *
- * Check if a specific feature flag is enabled using the auto-wired FeatureFlagManager.
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';

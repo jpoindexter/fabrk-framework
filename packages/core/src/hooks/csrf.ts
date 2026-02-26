@@ -1,9 +1,3 @@
-/**
- * CSRF Token Hook
- *
- * Read a CSRF token from a cookie and provide a fetch wrapper that attaches it.
- */
-
 'use client';
 
 import { useState, useCallback } from 'react';

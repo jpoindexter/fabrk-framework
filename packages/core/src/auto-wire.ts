@@ -237,7 +237,7 @@ async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): 
       registry.register('storage', storage.createR2Adapter({ bucket, accountId }))
     } else if (adapter === 'local' && storage.createLocalAdapter) {
       registry.register('storage', storage.createLocalAdapter({
-        basePath: env('STORAGE_PATH', './uploads'),
+        directory: env('STORAGE_PATH', './uploads'),
       }))
     }
   } catch {

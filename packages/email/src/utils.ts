@@ -1,10 +1,3 @@
-/**
- * HTML sanitization utilities for email templates.
- *
- * Prevents HTML injection (XSS) when interpolating user-provided
- * values into email HTML strings.
- */
-
 const HTML_ESCAPE_MAP: Record<string, string> = {
   '&': '&amp;',
   '<': '&lt;',
@@ -15,11 +8,6 @@ const HTML_ESCAPE_MAP: Record<string, string> = {
 
 const HTML_ESCAPE_RE = /[&<>"']/g
 
-/**
- * Escape a string for safe interpolation into HTML content.
- *
- * Replaces &, <, >, ", and ' with their HTML entity equivalents.
- */
 export function escapeHtml(value: string): string {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return value.replace(HTML_ESCAPE_RE, (ch) => HTML_ESCAPE_MAP[ch]!)

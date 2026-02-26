@@ -30,12 +30,6 @@ import { createIdempotencyCache } from '../idempotency'
 // Shared idempotency cache to reject duplicate webhook events
 const lsCache = createIdempotencyCache(10_000)
 
-/**
- * @remarks **Serverless warning:** The built-in idempotency cache is process-scoped
- * and does NOT survive cold starts on serverless platforms (Vercel, AWS Lambda, etc.).
- * For production serverless deployments, inject a persistent idempotency store
- * (Redis, database) to prevent webhook replay attacks across function invocations.
- */
 export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.lemonsqueezy.com/v1'
 

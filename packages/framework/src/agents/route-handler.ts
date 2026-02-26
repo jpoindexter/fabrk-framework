@@ -77,9 +77,10 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: budgetError }, 429);
     }
 
+    const sanitized = body.messages.map(({ role, content }) => ({ role, content }));
     const messages = options.systemPrompt
-      ? [{ role: "system", content: options.systemPrompt }, ...body.messages]
-      : body.messages;
+      ? [{ role: "system", content: options.systemPrompt }, ...sanitized]
+      : sanitized;
 
     try {
       let result: LLMCallResult;

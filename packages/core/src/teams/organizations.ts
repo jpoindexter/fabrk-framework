@@ -128,7 +128,8 @@ export function createTeamManager(store: TeamStore): TeamManager {
 
     /** @security Validates accepting user's email matches the invite recipient */
     async acceptInvite(token: string, userId: string, email?: string): Promise<OrgMember | null> {
-      // Store atomically checks+accepts — returns null if already accepted or expired
+      if (!userId) return null
+
       const invite = await store.acceptInvite(token)
       if (!invite) return null
 

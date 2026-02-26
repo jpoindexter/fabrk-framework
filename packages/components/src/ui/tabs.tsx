@@ -57,13 +57,9 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
       data-slot="tabs-trigger"
       className={cn(
         'flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-        // Underline style - clean minimal look
         'border-b-2 border-transparent bg-transparent',
-        // Default state - muted text
         mode.color.text.muted,
-        // Hover state
         'hover:text-foreground',
-        // Active state - primary underline
         'data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:font-semibold',
         mode.state.focus.ring,
         // Note: No border-radius on TabsTrigger - it uses underline style with border-b

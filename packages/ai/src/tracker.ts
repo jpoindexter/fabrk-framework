@@ -159,7 +159,6 @@ export class AICostTracker {
   }): Promise<T> {
     const { model, feature, prompt, userId, metadata, errorProviderFallback, fn, extractContent, extractTokens } = options;
 
-    // Enforce daily budget if configured
     if (this.dailyBudget !== undefined) {
       const status = await this.checkBudget(userId)
       if (!status.withinBudget) {

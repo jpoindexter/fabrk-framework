@@ -20,32 +20,23 @@ export function getSecurityHeaders(
 ): Record<string, string> {
   const headers: Record<string, string> = {}
 
-  // HSTS (HTTP Strict Transport Security)
   if (config.hsts !== false) {
     const maxAge = config.hstsMaxAge ?? 31536000
     headers['Strict-Transport-Security'] = `max-age=${maxAge}; includeSubDomains; preload`
   }
 
-  // X-Frame-Options
   if (config.frameOptions !== false) {
     headers['X-Frame-Options'] = config.frameOptions ?? 'DENY'
   }
 
-  // X-Content-Type-Options
   if (config.contentTypeOptions !== false) {
     headers['X-Content-Type-Options'] = 'nosniff'
   }
 
-  // Referrer-Policy
   headers['Referrer-Policy'] = config.referrerPolicy ?? 'strict-origin-when-cross-origin'
-
-  // X-DNS-Prefetch-Control
   headers['X-DNS-Prefetch-Control'] = 'on'
-
-  // X-Permitted-Cross-Domain-Policies
   headers['X-Permitted-Cross-Domain-Policies'] = 'none'
 
-  // Permissions-Policy
   if (config.permissionsPolicy) {
     const directives = Object.entries(config.permissionsPolicy)
       .map(([feature, allowlist]) => `${feature}=(${allowlist.join(' ')})`)

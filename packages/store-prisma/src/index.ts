@@ -5,5 +5,3 @@ export { PrismaNotificationStore } from './notification-store'
 export { PrismaJobStore } from './job-store'
 export { PrismaWebhookStore } from './webhook-store'
 export { PrismaFeatureFlagStore } from './feature-flag-store'
-
-// PrismaCostStore lives in @fabrk/ai since cost types are defined there.

@@ -57,15 +57,12 @@ export function getChartColors(): string[] {
       style.getPropertyValue('--chart-9').trim(),
     ];
 
-    // Check if we got valid CSS variables (all have OKLCH values)
     const hasValidCSSVars = cssVarColors.every((color) => color && color.includes('%'));
 
     if (hasValidCSSVars) {
-      // Wrap OKLCH values in oklch()
       return cssVarColors.map((color) => `oklch(${color})`);
     }
 
-    // Fallback to hex colors if CSS vars not ready
     return [...CHART_FALLBACK_COLORS];
   } catch {
     // On error, return fallback colors

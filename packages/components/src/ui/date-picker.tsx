@@ -460,7 +460,6 @@ function DatePicker({
     value && !use24Hour ? (format(value, 'a').toUpperCase() as 'AM' | 'PM') : 'AM'
   );
 
-  // Generate year options
   const currentYear = new Date().getFullYear();
   const years = React.useMemo(() => {
     const minYear = minDate?.getFullYear() || currentYear - 50;
@@ -468,7 +467,6 @@ function DatePicker({
     return Array.from({ length: maxYear - minYear + 1 }, (_, i) => minYear + i);
   }, [minDate, maxDate, currentYear]);
 
-  // Get placeholder text
   const getPlaceholder = () => {
     if (placeholder) return placeholder;
     if (monthOnly) return 'Pick a month';
@@ -477,7 +475,6 @@ function DatePicker({
     return 'Pick a date';
   };
 
-  // Format display value
   const getDisplayValue = () => {
     if (monthOnly && value) {
       return format(value, 'MMMM yyyy');
@@ -500,7 +497,6 @@ function DatePicker({
     return null;
   };
 
-  // Handle single date select
   const handleSingleSelect = (date: Date | undefined) => {
     if (showTime && date) {
       // Don't close, let user pick time
@@ -511,7 +507,6 @@ function DatePicker({
     }
   };
 
-  // Handle time apply
   const handleTimeApply = () => {
     if (!month) return;
 
@@ -534,12 +529,10 @@ function DatePicker({
     setOpen(false);
   };
 
-  // Handle range select
   const handleRangeSelect = (range: DateRange | undefined) => {
     onRangeChange?.(range);
   };
 
-  // Handle preset select
   const handlePresetSelect = (presetLabel: string) => {
     const preset = presets.find((p) => p.label === presetLabel);
     if (preset) {
@@ -547,14 +540,12 @@ function DatePicker({
     }
   };
 
-  // Handle month select (monthOnly mode)
   const handleMonthSelect = (monthIndex: number) => {
     const newDate = setMonth(setYear(new Date(), month.getFullYear()), monthIndex);
     onChange?.(newDate);
     setOpen(false);
   };
 
-  // Handle month/year dropdown changes
   const handleMonthChange = (monthIndex: string) => {
     const newDate = new Date(month);
     newDate.setMonth(parseInt(monthIndex));

@@ -12,7 +12,7 @@
  *   ]}
  *   xAxisKey="date"
  *   series={[
- *     { dataKey: 'users', name: 'Users', color: 'hsl(var(--chart-1))' },
+ *     { dataKey: 'users', name: 'Users', color: 'var(--color-chart-1)' },
  *     { dataKey: 'sessions', name: 'Sessions', dashed: true },
  *   ]}
  * />

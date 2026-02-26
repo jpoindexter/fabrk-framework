@@ -1,0 +1,47 @@
+/* @fabrk/design-system — shared CSS utilities
+   Import in your app's globals.css: @import '@fabrk/design-system/utilities.css';
+   Requires Tailwind CSS v4 with @layer utilities support. */
+
+@layer utilities {
+  /* ── TYPOGRAPHY SCALE ── M3-based type scale, mode.typography.* */
+  .text-display-xl  { font-size: 5.5rem;    line-height: 6rem; }
+  .text-display-l   { font-size: 3.5625rem; line-height: 4rem; }
+  .text-display-m   { font-size: 2.8125rem; line-height: 3.25rem; }
+  .text-display-s   { font-size: 2.25rem;   line-height: 2.75rem; }
+  .text-headline-l  { font-size: 2rem;      line-height: 2.5rem; }
+  .text-headline-m  { font-size: 1.75rem;   line-height: 2.25rem; }
+  .text-headline-s  { font-size: 1.5rem;    line-height: 2rem; }
+  .text-title-l     { font-size: 1.375rem;  line-height: 1.875rem; }
+  .text-title-m     { font-size: 1rem;      line-height: 1.5rem; }
+  .text-title-s     { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-body-l      { font-size: 1rem;      line-height: 1.5rem; }
+  .text-body-m      { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-body-s      { font-size: 0.75rem;   line-height: 1rem; }
+  .text-label-l     { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-label-m     { font-size: 0.75rem;   line-height: 1rem; }
+  .text-label-s     { font-size: 0.6875rem; line-height: 1rem; }
+  .text-code-l      { font-size: 1rem;      line-height: 1.5rem; }
+  .text-code-m      { font-size: 0.875rem;  line-height: 1.25rem; }
+  .text-code-s      { font-size: 0.75rem;   line-height: 1rem; }
+  .text-caption     { font-size: 0.6875rem; line-height: 1rem; }
+  .text-2xs         { font-size: 0.625rem;  line-height: 1rem; }
+
+  /* ── LETTER SPACING ── */
+  .tracking-caps { letter-spacing: 0.1em; }
+
+  /* ── SIZING ── 8px grid, mode.sizing.* */
+  .h-panel          { height: 37.5rem; }   /* 600px */
+  .h-panel-sm       { height: 25rem; }     /* 400px */
+  .w-sidebar        { width: 18rem; }      /* 288px */
+  .max-w-auth       { max-width: 25rem; }  /* 400px */
+  .min-w-dropdown   { min-width: 8rem; }   /* 128px */
+  .min-w-select     { min-width: 5rem; }   /* 80px */
+  .max-h-dropdown   { max-height: 18.75rem; } /* 300px */
+  .max-h-textarea   { max-height: 12.5rem; }  /* 200px */
+  .min-h-touch      { min-height: 2.75rem; }  /* 44px — touch target */
+  .min-w-touch      { min-width: 2.75rem; }   /* 44px — touch target */
+
+  /* ── Z-INDEX ── */
+  .z-banner { z-index: 60; }
+  .z-modal  { z-index: 100; }
+}

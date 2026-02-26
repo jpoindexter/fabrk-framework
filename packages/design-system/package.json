@@ -10,10 +10,14 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
-    }
+    },
+    "./utilities.css": "./src/utilities.css",
+    "./theme.css": "./src/theme.css"
   },
   "files": [
     "dist",
+    "src/utilities.css",
+    "src/theme.css",
     "README.md",
     "AGENTS.md"
   ],

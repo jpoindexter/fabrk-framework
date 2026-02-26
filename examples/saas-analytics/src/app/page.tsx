@@ -58,9 +58,9 @@ const dauData = [
 ]
 
 const planDistribution = [
-  { label: 'Free', value: 60, color: 'hsl(var(--chart-1))' },
-  { label: 'Pro', value: 30, color: 'hsl(var(--chart-2))' },
-  { label: 'Team', value: 10, color: 'hsl(var(--chart-3))' },
+  { label: 'Free', value: 60, color: 'var(--color-chart-1)' },
+  { label: 'Pro', value: 30, color: 'var(--color-chart-2)' },
+  { label: 'Team', value: 10, color: 'var(--color-chart-3)' },
 ]
 
 const topCustomers = [

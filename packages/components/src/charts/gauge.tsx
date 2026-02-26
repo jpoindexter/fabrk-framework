@@ -45,7 +45,7 @@ export function Gauge({
   thickness = 20,
   startAngle = -135,
   endAngle = 135,
-  color = 'hsl(var(--primary))',
+  color = 'var(--color-primary)',
   backgroundColor = 'var(--color-muted)',
   showValue = true,
   showMinMax = false,
@@ -149,7 +149,7 @@ export function Gauge({
         {/* Needle */}
         <polygon
           points={getNeedlePoints()}
-          fill="hsl(var(--foreground))"
+          fill="var(--color-foreground)"
           className="gauge-needle transition-all"
         />
 
@@ -158,7 +158,7 @@ export function Gauge({
           cx={center}
           cy={center}
           r={thickness * 0.6}
-          fill="hsl(var(--foreground))"
+          fill="var(--color-foreground)"
           stroke="var(--color-background)"
           strokeWidth={2}
           className="gauge-center"
@@ -220,9 +220,9 @@ export function ScoreGauge({
 }: ScoreGaugeProps) {
   const getColor = (score: number, max: number) => {
     const percentage = (score / max) * 100;
-    if (percentage >= 80) return 'hsl(var(--success))';
-    if (percentage >= 60) return 'hsl(var(--chart-4))';
-    return 'hsl(var(--destructive))';
+    if (percentage >= 80) return 'var(--color-success)';
+    if (percentage >= 60) return 'var(--color-chart-4)';
+    return 'var(--color-destructive)';
   };
 
   return (

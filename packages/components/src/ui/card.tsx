@@ -49,7 +49,7 @@ export type CardProps = React.HTMLAttributes<HTMLDivElement> & {
   as?: 'div' | 'article' | 'section';
 };
 
-const toneStyles: Record<CardTone, string> = {
+const toneBorderStyles: Record<CardTone, string> = {
   neutral: mode.color.border.default,
   primary: mode.color.border.accent,
   success: mode.color.border.success,
@@ -57,9 +57,17 @@ const toneStyles: Record<CardTone, string> = {
   danger: mode.color.border.danger,
 };
 
+const toneBgStyles: Record<CardTone, string> = {
+  neutral: mode.color.bg.surface,
+  primary: mode.color.bg.primaryLight,
+  success: mode.color.bg.successMuted,
+  warning: mode.color.bg.warningMuted,
+  danger: mode.color.bg.dangerMuted,
+};
+
 const sizeStyles: Record<CardSize, string> = {
-  auto: '', // Natural height
-  full: 'h-full', // Equal height for grids
+  auto: '',
+  full: 'h-full',
 };
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
@@ -79,12 +87,11 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       data-slot="card"
       className={cn(
         'crt-scanlines relative flex flex-col border overflow-hidden',
-        mode.color.bg.surface,
+        toneBgStyles[tone],
         mode.radius,
-        toneStyles[tone],
+        toneBorderStyles[tone],
         sizeStyles[size],
         interactive && cn('group transition-colors', mode.state.hover.card),
-
         className
       )}
       {...props}

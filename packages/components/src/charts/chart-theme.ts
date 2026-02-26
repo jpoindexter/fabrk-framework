@@ -6,13 +6,13 @@
  */
 export const CHART_COLORS = {
   chart: [
-    'hsl(var(--chart-1))',
-    'hsl(var(--chart-2))',
-    'hsl(var(--chart-3))',
-    'hsl(var(--chart-4))',
-    'hsl(var(--chart-5))',
-    'hsl(var(--chart-6))',
+    'var(--color-chart-1)',
+    'var(--color-chart-2)',
+    'var(--color-chart-3)',
+    'var(--color-chart-4)',
+    'var(--color-chart-5)',
+    'var(--color-chart-6)',
   ],
-  muted: 'hsl(var(--muted-foreground))',
-  border: 'hsl(var(--border))',
+  muted: 'var(--color-muted-foreground)',
+  border: 'var(--color-border)',
 }

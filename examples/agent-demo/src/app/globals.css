@@ -1,7 +1,18 @@
 @import "tailwindcss";
+@import "@fabrk/design-system/theme.css";
+@import "@fabrk/design-system/utilities.css";
+
+@source '../../../../packages/components/src';
+@source '../../../../packages/design-system/src';
+
+@theme inline {
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-code: 'JetBrains Mono', 'Fira Code', monospace;
+}
 
 :root {
-  /* CodeScan — GitHub analytics SaaS theme */
   --background: 220 16% 96%;
   --foreground: 220 20% 10%;
   --card: 0 0% 100%;
@@ -24,8 +35,10 @@
   --input: 220 14% 88%;
   --ring: 211 100% 50%;
   --radius: 0.5rem;
-
-  /* Chart palette — blues and greens for code/analytics */
+  --warning: 38 92% 52%;
+  --warning-foreground: 0 0% 5%;
+  --info: 211 100% 50%;
+  --info-foreground: 0 0% 98%;
   --chart-1: 211 100% 50%;
   --chart-2: 142 72% 38%;
   --chart-3: 262 52% 58%;
@@ -47,7 +60,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Override FABRK monospace font for this app — Inter dashboard style */
+/* Override FABRK monospace font */
 [data-slot="card"],
 [data-slot="card-header"],
 [data-slot="card-content"],
@@ -60,7 +73,6 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
 }
 
-/* Card styling */
 [data-slot="card"] {
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
@@ -75,13 +87,11 @@ body {
   padding: 0.875rem 1rem;
 }
 
-/* KPI card value size */
 [data-slot="kpi-card"] [data-slot="card-content"] > div:first-child {
   font-size: 1.5rem;
   font-weight: 700;
 }
 
-/* Badge sizing */
 [data-slot="badge"] {
   font-size: 0.625rem;
   padding: 0.125rem 0.4rem;
@@ -89,7 +99,6 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Table density */
 table th,
 table td {
   padding: 0.5rem 0.875rem;
@@ -104,7 +113,6 @@ table th {
   text-transform: uppercase;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

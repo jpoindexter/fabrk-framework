@@ -1,4 +1,4 @@
-import { defineTool, textResult } from 'fabrk'
+import { defineTool, textResult } from '@fabrk/framework'
 
 export default defineTool({
   name: 'get-stats',

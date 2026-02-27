@@ -1,4 +1,4 @@
-import { defineAgent } from 'fabrk'
+import { defineAgent } from '@fabrk/framework'
 
 export default defineAgent({
   model: 'claude-sonnet-4-5',

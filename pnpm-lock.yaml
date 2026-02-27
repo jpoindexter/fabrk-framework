@@ -265,12 +265,12 @@ importers:
       '@fabrk/design-system':
         specifier: workspace:*
         version: link:../../packages/design-system
+      '@fabrk/framework':
+        specifier: workspace:*
+        version: link:../../packages/framework
       '@tanstack/react-table':
         specifier: ^8.20.5
         version: 8.21.3(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      fabrk:
-        specifier: workspace:*
-        version: link:../../packages/framework
       lucide-react:
         specifier: ^0.344.0
         version: 0.344.0(react@19.2.4)

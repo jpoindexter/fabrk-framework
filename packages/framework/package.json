@@ -1,5 +1,5 @@
 {
-  "name": "fabrk",
+  "name": "@fabrk/framework",
   "version": "0.2.0",
   "description": "AI-first full-stack framework built on vinext — 105+ components, AI agents, auth, payments, 18 themes",
   "license": "MIT",

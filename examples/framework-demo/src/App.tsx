@@ -10,7 +10,7 @@ import {
   CardContent,
   CardHeader,
   Button,
-} from 'fabrk/components'
+} from '@fabrk/framework/components'
 import {
   LayoutGrid,
   Layers,

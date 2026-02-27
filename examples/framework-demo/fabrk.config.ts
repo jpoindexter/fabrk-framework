@@ -1,4 +1,4 @@
-import { defineFabrkConfig } from 'fabrk/fabrk'
+import { defineFabrkConfig } from '@fabrk/framework/fabrk'
 
 export default defineFabrkConfig({
   ai: {

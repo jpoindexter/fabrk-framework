@@ -22,7 +22,7 @@
  */
 
 import type { AuditEvent, AuditStore } from '@fabrk/core'
-import { timingSafeEqual } from '@fabrk/core'
+import { timingSafeEqual, bytesToHex } from '@fabrk/core'
 
 export interface AuditLogInput {
   actorId: string
@@ -101,9 +101,7 @@ export function createAuditLogger(store: AuditStore): AuditLogger {
 
         const encoder = new TextEncoder()
         const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(hashInput))
-        event.hash = Array.from(new Uint8Array(hashBuffer))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('')
+        event.hash = bytesToHex(new Uint8Array(hashBuffer))
 
         lastHash = event.hash
 
@@ -157,9 +155,7 @@ export function createAuditLogger(store: AuditStore): AuditLogger {
 
         const encoder = new TextEncoder()
         const hashBuffer = await crypto.subtle.digest('SHA-256', encoder.encode(hashInput))
-        const expectedHash = Array.from(new Uint8Array(hashBuffer))
-          .map((b) => b.toString(16).padStart(2, '0'))
-          .join('')
+        const expectedHash = bytesToHex(new Uint8Array(hashBuffer))
 
         if (!await timingSafeEqual(event.hash ?? '', expectedHash)) return false
         previousHash = event.hash

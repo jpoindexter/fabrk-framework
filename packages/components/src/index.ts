@@ -83,6 +83,8 @@ export * from './ui/page-header'
 export * from './ui/dashboard-shell'
 
 // Charts
+export * from './charts/chart-card'
+export * from './charts/chart-tooltip'
 export * from './charts/area-chart'
 export * from './charts/bar-chart'
 export * from './charts/donut-chart'

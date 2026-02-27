@@ -4,6 +4,7 @@ import { createStripeAdapter } from './stripe/adapter'
 import { createPolarAdapter } from './polar/adapter'
 import { createLemonSqueezyAdapter } from './lemonsqueezy/adapter'
 import { InMemoryPaymentStore } from './types'
+import { bytesToHex } from '@fabrk/core'
 
 /** Compute a valid svix-style HMAC-SHA256 signature for Polar webhook tests */
 async function computePolarSig(
@@ -183,7 +184,7 @@ describe('createLemonSqueezyAdapter', () => {
     const encoder = new TextEncoder()
     const key = await crypto.subtle.importKey('raw', encoder.encode(validConfig.webhookSecret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
     const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
-    const signature = Array.from(new Uint8Array(signed)).map((b) => b.toString(16).padStart(2, '0')).join('')
+    const signature = bytesToHex(new Uint8Array(signed))
 
     const result = await adapter.handleWebhook(payload, signature)
     expect(result.verified).toBe(true)

@@ -20,7 +20,7 @@
  */
 
 import type { WebhookConfig, WebhookDelivery, WebhookStore } from '../plugin-types'
-import { timingSafeEqual } from '../crypto'
+import { timingSafeEqual, bytesToHex, generateRandomHex } from '../crypto'
 
 /**
  * Check whether four IPv4 octets fall into a private or reserved range.
@@ -170,9 +170,7 @@ export function createWebhookManager(
       ['sign']
     )
     const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
-    return Array.from(new Uint8Array(signature))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
+    return bytesToHex(new Uint8Array(signature))
   }
 
   return {
@@ -193,11 +191,7 @@ export function createWebhookManager(
       validateWebhookUrl(options.url)
 
       // Generate secret
-      const secretBytes = new Uint8Array(32)
-      crypto.getRandomValues(secretBytes)
-      const secret = Array.from(secretBytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
+      const secret = generateRandomHex(32)
 
       const webhook: WebhookConfig = {
         id: crypto.randomUUID(),
@@ -288,7 +282,7 @@ export function createWebhookManager(
 
     async verify(payload: string, signature: string, secret: string): Promise<boolean> {
       const expected = await sign(payload, secret)
-      return await timingSafeEqual(expected, signature)
+      return timingSafeEqual(expected, signature)
     },
 
     async list(): Promise<WebhookConfig[]> {

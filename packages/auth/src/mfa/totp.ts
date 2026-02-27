@@ -18,7 +18,7 @@
  * ```
  */
 
-import { timingSafeEqual } from '@fabrk/core'
+import { timingSafeEqual, bytesToHex } from '@fabrk/core'
 
 /**
  * TOTP replay protection: recently used codes are cached to prevent reuse
@@ -84,7 +84,7 @@ export async function verifyTotp(
   // Use the full 64-character SHA-256 hex digest — truncating to 16 chars (64-bit) would
   // create birthday-attack risk at scale (~2^32 operations for a 50% collision probability).
   const digestBytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(secret)))
-  const secretHash = Array.from(digestBytes).map(b => b.toString(16).padStart(2, '0')).join('')
+  const secretHash = bytesToHex(digestBytes)
   const replayKey = `${secretHash}:${code}`
   if (usedCodes.has(replayKey)) {
     return false

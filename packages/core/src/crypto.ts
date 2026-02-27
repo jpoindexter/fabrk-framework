@@ -31,11 +31,21 @@ export async function timingSafeEqual(a: string, b: string): Promise<boolean> {
   return diff === 0
 }
 
-/**
- * SHA-256 hash a string and return the hex digest.
- */
+/** Convert a Uint8Array to a hex string. */
+export function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+/** Generate a cryptographically random hex string of the given byte length. */
+export function generateRandomHex(byteLength = 32): string {
+  const bytes = new Uint8Array(byteLength)
+  crypto.getRandomValues(bytes)
+  return bytesToHex(bytes)
+}
+
+/** SHA-256 hash a string and return the hex digest. */
 export async function hashPayload(payload: string): Promise<string> {
   const data = new TextEncoder().encode(payload)
   const hash = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+  return bytesToHex(new Uint8Array(hash))
 }

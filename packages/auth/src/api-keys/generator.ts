@@ -16,6 +16,7 @@
  * ```
  */
 
+import { bytesToHex } from '@fabrk/core'
 import type { ApiKeyGeneratorConfig } from '../types'
 
 const MIN_KEY_LENGTH = 16
@@ -48,8 +49,7 @@ export async function generateApiKey(
 
 export async function hashApiKey(key: string): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key))
-  const hashHex = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, '0')).join('')
-  return `sha256:${hashHex}`
+  return `sha256:${bytesToHex(new Uint8Array(hashBuffer))}`
 }
 
 /**

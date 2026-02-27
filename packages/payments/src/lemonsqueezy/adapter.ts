@@ -24,7 +24,7 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { LemonSqueezyAdapterConfig } from '../types'
-import { timingSafeEqual, hashPayload } from '@fabrk/core'
+import { timingSafeEqual, hashPayload, bytesToHex } from '@fabrk/core'
 import { createIdempotencyCache } from '../idempotency'
 
 // Shared idempotency cache to reject duplicate webhook events
@@ -65,9 +65,7 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
     )
 
     const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
-    const expectedSignature = Array.from(new Uint8Array(signed))
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('')
+    const expectedSignature = bytesToHex(new Uint8Array(signed))
 
     // Constant-time comparison to prevent timing attacks
     return timingSafeEqual(expectedSignature, signature)

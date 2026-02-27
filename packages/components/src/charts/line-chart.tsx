@@ -33,8 +33,9 @@ import {
   Legend,
 } from 'recharts';
 import { cn } from '@fabrk/core';
-import { mode } from '@fabrk/design-system';
 import { CHART_COLORS } from './chart-theme';
+import { useChartTooltip } from './chart-tooltip';
+import { ChartCard } from './chart-card';
 
 export interface LineChartDataPoint {
   [key: string]: string | number;
@@ -99,39 +100,7 @@ export function LineChart({
   className,
 }: LineChartProps) {
   const colors = CHART_COLORS.chart;
-  // Memoize tooltip to prevent recreation on every render
-  const CustomTooltipContent = React.useMemo(
-    () =>
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Recharts TooltipContentProps is complex
-      ({ active, payload, label }: any) => {
-        if (active && payload && payload.length) {
-          return (
-            <div className={cn(mode.color.border.default, 'bg-card border px-4 py-2', mode.radius)}>
-              <p className={cn('text-foreground mb-2 text-xs font-semibold', mode.font)}>
-                {xAxisFormatter ? xAxisFormatter(String(label ?? '')) : label}
-              </p>
-              <div className="space-y-1">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {payload.map((entry: any, index: number) => (
-                  <p key={index} className={cn('text-muted-foreground text-xs', mode.font)}>
-                    <span
-                      className="mr-2 inline-block h-2 w-2"
-                      style={{ backgroundColor: entry.stroke }}
-                    />
-                    {entry.name}:{' '}
-                    <span className="text-foreground font-semibold">
-                      {tooltipFormatter ? tooltipFormatter(entry.value, entry.name) : entry.value}
-                    </span>
-                  </p>
-                ))}
-              </div>
-            </div>
-          );
-        }
-        return null;
-      },
-    [xAxisFormatter, tooltipFormatter]
-  );
+  const CustomTooltipContent = useChartTooltip({ xAxisFormatter, tooltipFormatter, colorKey: 'stroke' });
 
   return (
     <div className={cn('w-full', className)}>
@@ -201,7 +170,7 @@ export interface LineChartCardProps extends LineChartProps {
 export function LineChartCard({
   title,
   description,
-  code = '0x00',
+  code,
   icon,
   headerActions,
   cardClassName,
@@ -209,27 +178,8 @@ export function LineChartCard({
   ...chartProps
 }: LineChartCardProps) {
   return (
-    <div className={cn('border-border bg-card border', mode.radius, cardClassName)}>
-      {/* Terminal Header */}
-      <div className="border-border flex items-center justify-between border-b px-4 py-2">
-        <div className="flex items-center gap-4">
-          {icon}
-          <div>
-            <span className={cn('text-muted-foreground text-xs', mode.font)}>
-              [{code}] {title.toUpperCase()}
-            </span>
-            {description && (
-              <p className={cn('text-muted-foreground mt-0.5 text-xs', mode.font)}>{description}</p>
-            )}
-          </div>
-        </div>
-        {headerActions}
-      </div>
-
-      {/* Chart */}
-      <div className="p-4">
-        <LineChart className={className} {...chartProps} />
-      </div>
-    </div>
+    <ChartCard title={title} description={description} code={code} icon={icon} headerActions={headerActions} cardClassName={cardClassName}>
+      <LineChart className={className} {...chartProps} />
+    </ChartCard>
   );
 }

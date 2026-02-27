@@ -20,7 +20,7 @@
  */
 
 import type { CsrfConfig } from './types'
-import { timingSafeEqual } from '@fabrk/core'
+import { timingSafeEqual, generateRandomHex } from '@fabrk/core'
 
 export interface CsrfProtection {
   generateToken(): Promise<string>
@@ -50,11 +50,7 @@ export function createCsrfProtection(config: CsrfConfig = {}): CsrfProtection {
 
   return {
     async generateToken(): Promise<string> {
-      const bytes = new Uint8Array(tokenLength)
-      crypto.getRandomValues(bytes)
-      return Array.from(bytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
+      return generateRandomHex(tokenLength)
     },
 
     createCookie(token: string): string {
@@ -101,7 +97,7 @@ export function createCsrfProtection(config: CsrfConfig = {}): CsrfProtection {
       const headerToken = request.headers.get(headerName)
       if (!headerToken) return false
 
-      return await timingSafeEqual(cookieToken, headerToken)
+      return timingSafeEqual(cookieToken, headerToken)
     },
 
     getTokenFromCookie(request: Request): string | null {

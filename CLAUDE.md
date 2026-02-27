@@ -320,6 +320,10 @@ This enables proper ESM/CJS dual-module support and TypeScript resolution.
 
 10. **`||` vs `??` for empty strings**: `agentName ?? "agent"` doesn't catch `""` — use `||` when empty string should fall back to default.
 
+11. **`bytesToHex` / `generateRandomHex` in `@fabrk/core`**: All hex conversion from `Uint8Array` must use `bytesToHex()` from `@fabrk/core/crypto`. Never inline `Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')`. Random hex tokens use `generateRandomHex(byteLength)`.
+
+12. **Chart shared components**: `useChartTooltip` (from `./chart-tooltip`) and `ChartCard` (from `./chart-card`) are shared across BarChart, AreaChart, and LineChart. Never duplicate tooltip or card wrapper markup in individual chart files.
+
 ---
 
 ## Component Extraction Process

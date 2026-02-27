@@ -10,7 +10,7 @@ export type { CreateFabrkOptions } from './framework'
 export { autoWire } from './auto-wire'
 export type { AutoWireResult, FeatureModules, AdapterOverrides, StoreOverrides } from './auto-wire'
 
-export { timingSafeEqual, hashPayload } from './crypto'
+export { timingSafeEqual, hashPayload, bytesToHex, generateRandomHex } from './crypto'
 
 export { isDev, applyDevDefaults } from './defaults'
 export * from './middleware'

@@ -4,6 +4,7 @@
  * CRUD operations for organizations, members, and invitations.
  */
 
+import { generateRandomHex } from '../crypto'
 import type {
   Organization,
   OrgMember,
@@ -105,11 +106,7 @@ export function createTeamManager(store: TeamStore): TeamManager {
     },
 
     async createInvite(orgId, email, role, invitedBy) {
-      const bytes = new Uint8Array(32)
-      crypto.getRandomValues(bytes)
-      const token = Array.from(bytes)
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
+      const token = generateRandomHex(32)
 
       const invite: OrgInvite = {
         id: crypto.randomUUID(),

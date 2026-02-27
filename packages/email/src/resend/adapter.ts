@@ -37,7 +37,7 @@ export function createResendAdapter(config: ResendAdapterConfig): EmailAdapter {
     if (!resend) {
       try {
         const mod = await import('resend')
-        const Resend = (mod as any).Resend || (mod as any).default
+        const Resend = ((mod as Record<string, unknown>).Resend || (mod as Record<string, unknown>).default) as new (apiKey: string) => Record<string, unknown>
         resend = new Resend(config.apiKey)
       } catch {
         throw new Error(

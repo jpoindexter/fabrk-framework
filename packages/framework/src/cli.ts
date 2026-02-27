@@ -61,6 +61,7 @@ function resolveVinextBin(): string {
 }
 
 async function dev(): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log(`\n  fabrk dev v${VERSION}  (powered by vinext)\n`);
 
   try {
@@ -71,6 +72,7 @@ async function dev(): Promise<void> {
       const toolDefs = await loadToolDefinitions(scanned);
       const { startMcpDevServer } = await import("./tools/mcp-dev-server");
       await startMcpDevServer(toolDefs);
+      // eslint-disable-next-line no-console
       console.log(`  MCP server started with ${scanned.length} tool(s)\n`);
     }
   } catch (err) {
@@ -81,6 +83,7 @@ async function dev(): Promise<void> {
     const { scanAgents } = await import("./agents/scanner");
     const agents = scanAgents(process.cwd());
     if (agents.length > 0) {
+      // eslint-disable-next-line no-console
       console.log(
         `  Discovered ${agents.length} agent(s): ${agents.map((a) => a.name).join(", ")}\n`
       );
@@ -93,6 +96,7 @@ async function dev(): Promise<void> {
 }
 
 async function build(): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log(`\n  fabrk build v${VERSION}  (powered by vinext)\n`);
 
   vinextPassthrough("build", rawArgs);
@@ -124,6 +128,7 @@ async function build(): Promise<void> {
 
       const outPath = path.join(process.cwd(), "AGENTS.md");
       fs.writeFileSync(outPath, md);
+      // eslint-disable-next-line no-console
       console.log(
         `\n  Generated AGENTS.md (${scannedAgents.length} agents, ${scannedTools.length} tools)`
       );
@@ -135,6 +140,7 @@ async function build(): Promise<void> {
 
 async function info(): Promise<void> {
   const root = process.cwd();
+  // eslint-disable-next-line no-console
   console.log(`\n  fabrk info v${VERSION}\n`);
 
   try {
@@ -158,17 +164,23 @@ async function info(): Promise<void> {
       fs.existsSync(path.join(root, "app")) ||
       fs.existsSync(path.join(root, "src", "app"));
 
+    // eslint-disable-next-line no-console
     console.log(
       `  Config:   ${hasConfig ? "fabrk.config.ts" : "none (using defaults)"}`
     );
+    // eslint-disable-next-line no-console
     console.log(
       `  Agents:   ${agents.length}${agents.length > 0 ? ` (${agents.map((a) => a.name).join(", ")})` : ""}`
     );
+    // eslint-disable-next-line no-console
     console.log(
       `  Tools:    ${tools.length}${tools.length > 0 ? ` (${tools.map((t) => t.name).join(", ")})` : ""}`
     );
+    // eslint-disable-next-line no-console
     console.log(`  Prompts:  ${promptCount}`);
+    // eslint-disable-next-line no-console
     console.log(`  App dir:  ${hasAppDir ? "yes" : "no"}`);
+    // eslint-disable-next-line no-console
     console.log();
   } catch (err) {
     console.error("  Error scanning project:", err);
@@ -176,6 +188,7 @@ async function info(): Promise<void> {
 }
 
 function printHelp(): void {
+  // eslint-disable-next-line no-console
   console.log(`
   fabrk v${VERSION} — AI-first full-stack framework built on vinext
 
@@ -206,6 +219,7 @@ function printHelp(): void {
 }
 
 if (command === "--version" || command === "-v") {
+  // eslint-disable-next-line no-console
   console.log(`fabrk v${VERSION}`);
   process.exit(0);
 }

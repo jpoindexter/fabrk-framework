@@ -11,7 +11,9 @@ export class AnthropicClient implements LLMClient {
   constructor(config: Partial<LLMConfig> = {}) {
     this.config = { ...LLM_DEFAULTS, ...config, provider: 'anthropic' }
     if (!this.config.anthropicApiKey) {
-      this.config.anthropicApiKey = (globalThis as any).process?.env?.ANTHROPIC_API_KEY || ''
+      this.config.anthropicApiKey = (globalThis as Record<string, unknown>).process
+        ? ((globalThis as Record<string, unknown>).process as { env?: Record<string, string> }).env?.ANTHROPIC_API_KEY || ''
+        : ''
     }
   }
 

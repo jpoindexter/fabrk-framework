@@ -35,7 +35,7 @@ export function getLLMClient(
   if (
     complexity === 'complex' &&
     merged.provider === 'ollama' &&
-    (merged.openaiApiKey || (globalThis as any).process?.env?.OPENAI_API_KEY)
+    (merged.openaiApiKey || ((globalThis as Record<string, unknown>).process as { env?: Record<string, string> } | undefined)?.env?.OPENAI_API_KEY)
   ) {
     return new OpenAIClient(merged)
   }

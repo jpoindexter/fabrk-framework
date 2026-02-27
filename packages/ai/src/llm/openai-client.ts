@@ -11,7 +11,9 @@ export class OpenAIClient implements LLMClient {
   constructor(config: Partial<LLMConfig> = {}) {
     this.config = { ...LLM_DEFAULTS, ...config, provider: 'openai' }
     if (!this.config.openaiApiKey) {
-      this.config.openaiApiKey = (globalThis as any).process?.env?.OPENAI_API_KEY || ''
+      this.config.openaiApiKey = (globalThis as Record<string, unknown>).process
+        ? ((globalThis as Record<string, unknown>).process as { env?: Record<string, string> }).env?.OPENAI_API_KEY || ''
+        : ''
     }
   }
 

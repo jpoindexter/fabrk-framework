@@ -1,4 +1,5 @@
-import type { Plugin, ViteDevServer } from "vite";
+import type { Plugin, ViteDevServer, Connect } from "vite";
+import type { ServerResponse } from "node:http";
 import { buildSecurityHeaders } from "../middleware/security";
 
 interface CallRecord {
@@ -104,7 +105,7 @@ export function dashboardPlugin(): Plugin {
 
     configureServer(server: ViteDevServer) {
       return () => {
-        server.middlewares.use((req: any, res: any, next: any) => {
+        server.middlewares.use((req: Connect.IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
           const url = req.url ?? "/";
           const pathname = url.split("?")[0];
 

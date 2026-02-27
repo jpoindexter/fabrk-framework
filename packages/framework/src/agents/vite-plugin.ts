@@ -1,7 +1,7 @@
-import type { Plugin, ViteDevServer } from "vite";
+import type { Plugin, ViteDevServer, Connect } from "vite";
+import type { ServerResponse } from "node:http";
 import { scanAgents } from "./scanner";
 import { createAgentHandler } from "./route-handler";
-import type { AgentDefinition } from "./define-agent";
 import { scanTools } from "../tools/scanner";
 import { setAgents, setTools, recordCall } from "../dashboard/vite-plugin";
 import { buildSecurityHeaders } from "../middleware/security";
@@ -25,18 +25,20 @@ export function agentPlugin(): Plugin {
       setTools(tools.length);
 
       if (agents.length > 0) {
+        // eslint-disable-next-line no-console
         console.log(
           `[fabrk] Discovered ${agents.length} agent(s): ${agents.map((a) => a.name).join(", ")}`
         );
       }
       if (tools.length > 0) {
+        // eslint-disable-next-line no-console
         console.log(
           `[fabrk] Discovered ${tools.length} tool(s): ${tools.map((t) => t.name).join(", ")}`
         );
       }
 
       return () => {
-        server.middlewares.use(async (req: any, res: any, next: any) => {
+        server.middlewares.use(async (req: Connect.IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
           const url = req.url ?? "/";
           const pathname = url.split("?")[0];
 
@@ -110,7 +112,7 @@ export function agentPlugin(): Plugin {
 
 const MAX_BODY_BYTES = 1024 * 1024; // 1 MB
 
-async function nodeToWebRequest(req: any, url: string): Promise<Request> {
+async function nodeToWebRequest(req: Connect.IncomingMessage, url: string): Promise<Request> {
   const webUrl = `http://localhost${url}`;
 
   const bodyChunks: Buffer[] = [];
@@ -136,7 +138,7 @@ async function nodeToWebRequest(req: any, url: string): Promise<Request> {
   });
 }
 
-async function writeWebResponse(res: any, webRes: Response): Promise<void> {
+async function writeWebResponse(res: ServerResponse, webRes: Response): Promise<void> {
   res.statusCode = webRes.status;
   webRes.headers.forEach((value: string, key: string) => {
     res.setHeader(key, value);

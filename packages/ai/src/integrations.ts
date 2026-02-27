@@ -107,7 +107,7 @@ export const claude = {
    * Check if Claude is available (API key configured)
    */
   isAvailable(): boolean {
-    return !!(globalThis as any).process?.env?.ANTHROPIC_API_KEY;
+    return !!((globalThis as Record<string, unknown>).process as { env?: Record<string, string> } | undefined)?.env?.ANTHROPIC_API_KEY;
   },
 };
 
@@ -212,7 +212,7 @@ export const openai = {
    * Check if OpenAI is available (API key configured)
    */
   isAvailable(): boolean {
-    return !!(globalThis as any).process?.env?.OPENAI_API_KEY;
+    return !!((globalThis as Record<string, unknown>).process as { env?: Record<string, string> } | undefined)?.env?.OPENAI_API_KEY;
   },
 };
 

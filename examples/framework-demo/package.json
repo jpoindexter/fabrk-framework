@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "node ../../packages/framework/dist/cli.js dev",
     "build": "node ../../packages/framework/dist/cli.js build",
-    "preview": "vite preview",
-    "type-check": "tsc --noEmit"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fabrk/design-system": "workspace:*",

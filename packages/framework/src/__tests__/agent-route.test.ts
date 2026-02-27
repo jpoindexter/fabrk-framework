@@ -142,12 +142,12 @@ describe("createAgentHandler", () => {
   });
 
   it("truncates long sessionId", async () => {
-    let capturedMessages: Array<{ role: string; content: string }> = [];
+    let _capturedMessages: Array<{ role: string; content: string }> = [];
     const handler = createAgentHandler({
       auth: "none",
       model: "test-model",
       _llmCall: async (messages) => {
-        capturedMessages = messages;
+        _capturedMessages = messages;
         return {
           content: "OK",
           usage: { promptTokens: 1, completionTokens: 1 },

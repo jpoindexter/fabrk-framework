@@ -11,7 +11,7 @@ export class OpenAIEmbeddingProvider implements EmbeddingProvider {
   constructor(config: Partial<EmbeddingConfig> = {}) {
     this.config = { ...EMBEDDING_DEFAULTS, ...config, provider: 'openai' }
     if (!this.config.apiKey) {
-      this.config.apiKey = (globalThis as any).process?.env?.OPENAI_API_KEY || ''
+      this.config.apiKey = ((globalThis as Record<string, unknown>).process as { env?: Record<string, string> } | undefined)?.env?.OPENAI_API_KEY || ''
     }
   }
 

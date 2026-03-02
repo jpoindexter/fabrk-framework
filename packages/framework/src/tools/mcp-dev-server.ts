@@ -1,4 +1,5 @@
 import type { ToolDefinition } from "./define-tool";
+import { createMCPServer, type MCPServer } from "./mcp/server";
 
 export interface McpToolDef {
   name: string;
@@ -25,8 +26,13 @@ export function buildMcpTools(tools: ToolDefinition[]): McpToolDef[] {
 
 export function startMcpDevServer(
   tools: ToolDefinition[],
-  options?: { name?: string }
-) {
-  const mcpTools = buildMcpTools(tools);
-  return { tools: mcpTools, name: options?.name ?? "fabrk-dev" };
+  options?: { name?: string; version?: string }
+): MCPServer {
+  const server = createMCPServer({
+    name: options?.name ?? "fabrk-dev",
+    version: options?.version ?? "0.2.0",
+    tools,
+  });
+
+  return server;
 }

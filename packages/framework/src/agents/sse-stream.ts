@@ -2,6 +2,9 @@ import { buildSecurityHeaders } from "../middleware/security";
 
 export type SSEEvent =
   | { type: "text"; content: string }
+  | { type: "text-delta"; content: string }
+  | { type: "tool-call"; name: string; input: Record<string, unknown>; iteration: number }
+  | { type: "tool-result"; name: string; output: string; durationMs: number; iteration: number }
   | {
       type: "usage";
       promptTokens: number;

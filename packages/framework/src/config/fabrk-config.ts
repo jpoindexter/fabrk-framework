@@ -13,6 +13,14 @@ export interface FabrkAIConfig {
 
 export interface FabrkConfig {
   ai?: FabrkAIConfig;
+  agents?: {
+    maxIterations?: number;
+    defaultStream?: boolean;
+  };
+  mcp?: {
+    expose?: boolean;
+    consume?: string[];
+  };
   auth?: {
     provider?: "nextauth" | "custom";
     apiKeys?: boolean;

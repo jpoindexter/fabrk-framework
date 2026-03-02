@@ -1,7 +1,14 @@
+import type { SkillDefinition } from "../skills/define-skill";
+
 export interface AgentBudget {
   daily?: number;
   perSession?: number;
   alertThreshold?: number;
+}
+
+export interface AgentMemoryConfig {
+  maxMessages?: number;
+  semantic?: boolean | { topK?: number; threshold?: number };
 }
 
 export interface AgentDefinition {
@@ -12,6 +19,9 @@ export interface AgentDefinition {
   budget?: AgentBudget;
   stream: boolean;
   auth: "required" | "optional" | "none";
+  memory?: boolean | AgentMemoryConfig;
+  agents?: Array<{ name: string; description: string }>;
+  skills?: SkillDefinition[];
 }
 
 export interface DefineAgentOptions {
@@ -22,6 +32,9 @@ export interface DefineAgentOptions {
   budget?: AgentBudget;
   stream?: boolean;
   auth?: "required" | "optional" | "none";
+  memory?: boolean | AgentMemoryConfig;
+  agents?: Array<{ name: string; description: string }>;
+  skills?: SkillDefinition[];
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -33,5 +46,8 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     budget: options.budget,
     stream: options.stream ?? true,
     auth: options.auth ?? "none",
+    memory: options.memory,
+    agents: options.agents,
+    skills: options.skills,
   };
 }

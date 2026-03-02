@@ -1,73 +1,68 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
-import { createRequire } from "node:module";
 import path from "node:path";
 import fs from "node:fs";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const command = process.argv[2];
 const rawArgs = process.argv.slice(3);
 
-function vinextPassthrough(cmd: string, args: string[] = []): void {
-  const vinextBin = resolveVinextBin();
-  try {
-    execFileSync(vinextBin, [cmd, ...args], {
-      cwd: process.cwd(),
-      stdio: "inherit",
-      env: process.env,
-    });
-  } catch (err: unknown) {
-    const code = (err as { status?: number }).status ?? 1;
-    process.exit(code);
+function parseArgs(args: string[]): Record<string, string | boolean> {
+  const parsed: Record<string, string | boolean> = {};
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith("--")) {
+      const key = arg.slice(2);
+      const next = args[i + 1];
+      if (next && !next.startsWith("--")) {
+        parsed[key] = next;
+        i++;
+      } else {
+        parsed[key] = true;
+      }
+    } else if (arg.startsWith("-")) {
+      parsed[arg.slice(1)] = true;
+    }
   }
+  return parsed;
 }
 
-function resolveVinextBin(): string {
-  const localBin = path.join(process.cwd(), "node_modules", ".bin", "vinext");
-  if (fs.existsSync(localBin)) return localBin;
+async function loadFabrkViteConfig(root: string) {
+  const { fabrkPlugin } = await import("./runtime/plugin");
+  const { agentPlugin } = await import("./agents/vite-plugin");
+  const { dashboardPlugin } = await import("./dashboard/vite-plugin");
 
-  // In pnpm workspaces, vinext is installed under the framework package, not the app
-  const frameworkDir = path.resolve(new URL(".", import.meta.url).pathname, "..");
-  const frameworkBin = path.join(frameworkDir, "node_modules", ".bin", "vinext");
-  if (fs.existsSync(frameworkBin)) return frameworkBin;
-
-  try {
-    const esmRequire = createRequire(import.meta.url);
-    const vinextEntry = esmRequire.resolve("vinext");
-    // Walk up from the resolved entry to find the package bin
-    let dir = path.dirname(vinextEntry);
-    for (let i = 0; i < 5; i++) {
-      const pkgPath = path.join(dir, "package.json");
-      if (fs.existsSync(pkgPath)) {
-        const pkgJson = JSON.parse(fs.readFileSync(pkgPath, "utf-8"));
-        if (pkgJson.name === "vinext") {
-          const binEntry = typeof pkgJson.bin === "string"
-            ? pkgJson.bin
-            : pkgJson.bin?.vinext;
-          if (binEntry) return path.join(dir, binEntry);
-          break;
-        }
-      }
-      dir = path.dirname(dir);
-    }
-  } catch (err: unknown) {
-    if ((err as { code?: string }).code !== "MODULE_NOT_FOUND") {
-      console.warn("[fabrk] Unexpected error resolving vinext:", err);
+  const configFiles = ["vite.config.ts", "vite.config.js", "vite.config.mjs"];
+  let userConfigPath: string | undefined;
+  for (const file of configFiles) {
+    const fullPath = path.join(root, file);
+    if (fs.existsSync(fullPath)) {
+      userConfigPath = fullPath;
+      break;
     }
   }
 
-  return "vinext";
+  return {
+    fabrkPlugin,
+    agentPlugin,
+    dashboardPlugin,
+    userConfigPath,
+  };
 }
 
 async function dev(): Promise<void> {
+  const root = process.cwd();
+  const args = parseArgs(rawArgs);
+  const port = typeof args.port === "string" ? parseInt(args.port, 10) : 5173;
+  const host = typeof args.host === "string" ? args.host : args.host === true ? "0.0.0.0" : "localhost";
+
   // eslint-disable-next-line no-console
-  console.log(`\n  fabrk dev v${VERSION}  (powered by vinext)\n`);
+  console.log(`\n  fabrk dev v${VERSION}\n`);
 
   try {
     const { scanTools } = await import("./tools/scanner");
     const { loadToolDefinitions } = await import("./tools/loader");
-    const scanned = scanTools(process.cwd());
+    const scanned = scanTools(root);
     if (scanned.length > 0) {
       const toolDefs = await loadToolDefinitions(scanned);
       const { startMcpDevServer } = await import("./tools/mcp-dev-server");
@@ -81,7 +76,7 @@ async function dev(): Promise<void> {
 
   try {
     const { scanAgents } = await import("./agents/scanner");
-    const agents = scanAgents(process.cwd());
+    const agents = scanAgents(root);
     if (agents.length > 0) {
       // eslint-disable-next-line no-console
       console.log(
@@ -92,49 +87,392 @@ async function dev(): Promise<void> {
     console.warn("  [fabrk] Agent scanning failed:", err);
   }
 
-  vinextPassthrough("dev", rawArgs);
+  const { createServer } = await import("vite");
+  const { fabrkPlugin, agentPlugin, dashboardPlugin, userConfigPath } =
+    await loadFabrkViteConfig(root);
+
+  // When user has a vite.config with fabrk(), don't duplicate plugins
+  const server = await createServer({
+    configFile: userConfigPath ?? false,
+    root,
+    plugins: userConfigPath
+      ? []
+      : [fabrkPlugin(), agentPlugin(), dashboardPlugin()],
+    server: {
+      port,
+      host,
+    },
+    ssr: {
+      external: true,
+    },
+  });
+
+  await server.listen();
+  server.printUrls();
 }
 
 async function build(): Promise<void> {
+  const root = process.cwd();
+  const args = parseArgs(rawArgs);
+  const target = typeof args.target === "string" ? args.target : "node";
+
   // eslint-disable-next-line no-console
-  console.log(`\n  fabrk build v${VERSION}  (powered by vinext)\n`);
+  console.log(`\n  fabrk build v${VERSION} (target: ${target})\n`);
 
-  vinextPassthrough("build", rawArgs);
+  const { build: viteBuild } = await import("vite");
+  const { fabrkPlugin, agentPlugin, dashboardPlugin, userConfigPath } =
+    await loadFabrkViteConfig(root);
 
+  const buildPlugins = userConfigPath
+    ? []
+    : [fabrkPlugin(), agentPlugin(), dashboardPlugin()];
+
+  // Step 1: Client build → dist/client/
+  // eslint-disable-next-line no-console
+  console.log("  [1/5] Building client bundle...");
+  await viteBuild({
+    configFile: userConfigPath ?? false,
+    root,
+    plugins: buildPlugins,
+    build: {
+      outDir: "dist/client",
+    },
+  });
+
+  // Step 2: SSR build → dist/server/
+  const appDir = path.join(root, "app");
+  if (fs.existsSync(appDir)) {
+    const { scanRoutes } = await import("./runtime/router");
+    const routes = scanRoutes(appDir);
+
+    if (routes.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log("  [2/5] Building server bundle...");
+
+      const { generateServerEntry } = await import("./runtime/server-entry-gen");
+      const entrySource = generateServerEntry(routes, appDir);
+
+      // Write generated entry to temp file
+      const tmpEntryPath = path.join(root, ".fabrk-server-entry.ts");
+      fs.writeFileSync(tmpEntryPath, entrySource);
+
+      try {
+        if (target === "worker") {
+          // Worker build — export default { fetch } format
+          const workerWrapper = `
+import { createFetchHandler } from "${path.resolve(root, "node_modules/@fabrk/framework/dist/runtime/worker-entry.js")}";
+import { routes, layoutModules, boundaryModules } from "./.fabrk-server-entry";
+
+const modules = new Map();
+routes.forEach(r => modules.set(r.filePath, r.module));
+
+const layoutMap = new Map();
+Object.entries(layoutModules).forEach(([k, v]) => layoutMap.set(k, v));
+
+const handler = createFetchHandler({
+  routes,
+  modules,
+  layoutModules: layoutMap,
+});
+
+export default { fetch: handler.fetch };
+`;
+          const workerEntryPath = path.join(root, ".fabrk-worker-entry.ts");
+          fs.writeFileSync(workerEntryPath, workerWrapper);
+
+          await viteBuild({
+            configFile: false,
+            root,
+            build: {
+              ssr: workerEntryPath,
+              outDir: "dist/server",
+              rollupOptions: {
+                output: { entryFileNames: "worker.js" },
+              },
+            },
+            plugins: buildPlugins,
+          });
+
+          // Cleanup
+          fs.unlinkSync(workerEntryPath);
+        } else {
+          // Node SSR build
+          await viteBuild({
+            configFile: userConfigPath ?? false,
+            root,
+            build: {
+              ssr: tmpEntryPath,
+              outDir: "dist/server",
+            },
+            plugins: buildPlugins,
+          });
+        }
+      } finally {
+        // Cleanup temp entry
+        if (fs.existsSync(tmpEntryPath)) {
+          fs.unlinkSync(tmpEntryPath);
+        }
+      }
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("  [2/5] No routes found, skipping server build.");
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("  [2/5] No app/ directory, skipping server build.");
+  }
+
+  // Step 3: Static generation (pre-render eligible pages)
+  // eslint-disable-next-line no-console
+  console.log("  [3/5] Static generation...");
+  const serverDir = path.join(root, "dist", "server");
+  if (fs.existsSync(serverDir)) {
+    try {
+      // Find the built server entry
+      const serverFiles = fs.readdirSync(serverDir).filter(
+        (f) => f.endsWith(".js") || f.endsWith(".mjs"),
+      );
+      if (serverFiles.length > 0) {
+        const serverEntryPath = path.join(serverDir, serverFiles[0]);
+        const serverEntry = await import(serverEntryPath);
+
+        const { collectStaticRoutes, renderStaticPage } = await import(
+          "./runtime/static-export"
+        );
+
+        const modulesMap = new Map<string, Record<string, unknown>>();
+        if (serverEntry.routes) {
+          for (const r of serverEntry.routes) {
+            modulesMap.set(r.filePath, r.module);
+          }
+        }
+
+        const layoutModulesMap = new Map<string, Record<string, unknown>>();
+        if (serverEntry.layoutModules) {
+          for (const [k, v] of Object.entries(serverEntry.layoutModules)) {
+            layoutModulesMap.set(k, v as Record<string, unknown>);
+          }
+        }
+
+        const staticRoutes = await collectStaticRoutes({
+          routes: serverEntry.routes ?? [],
+          modules: modulesMap,
+        });
+
+        if (staticRoutes.length > 0) {
+          const clientDir = path.join(root, "dist", "client");
+          let generated = 0;
+
+          for (const sr of staticRoutes) {
+            try {
+              const mod = modulesMap.get(sr.route.filePath);
+              if (!mod) continue;
+
+              const html = await renderStaticPage(
+                mod,
+                sr.params,
+                layoutModulesMap,
+                sr.route.layoutPaths,
+              );
+
+              const outPath = path.join(clientDir, sr.outputPath);
+              const outDir = path.dirname(outPath);
+              if (!fs.existsSync(outDir)) {
+                fs.mkdirSync(outDir, { recursive: true });
+              }
+              fs.writeFileSync(outPath, html);
+              generated++;
+            } catch (err) {
+              console.warn(
+                `  [fabrk] Static render failed for ${sr.outputPath}:`,
+                err,
+              );
+            }
+          }
+
+          // eslint-disable-next-line no-console
+          console.log(
+            `        Generated ${generated} static page(s)`,
+          );
+        } else {
+          // eslint-disable-next-line no-console
+          console.log("        No static pages to generate.");
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.log("        No server entry found, skipping.");
+      }
+    } catch (err) {
+      console.warn("  [fabrk] Static generation failed:", err);
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("        No server build, skipping.");
+  }
+
+  // Step 4: Generate AGENTS.md
+  // eslint-disable-next-line no-console
+  console.log("  [4/5] Generating AGENTS.md...");
   try {
     const { scanAgents } = await import("./agents/scanner");
     const { scanTools } = await import("./tools/scanner");
 
-    const scannedAgents = scanAgents(process.cwd());
-    const scannedTools = scanTools(process.cwd());
+    const scannedAgents = scanAgents(root);
+    const scannedTools = scanTools(root);
 
     if (scannedAgents.length > 0 || scannedTools.length > 0) {
       const { generateAgentsMd } = await import("./build/agents-md");
+      const { loadToolDefinitions } = await import("./tools/loader");
+
+      // Load real tool definitions for descriptions
+      const toolDefs = await loadToolDefinitions(scannedTools);
+
+      // Load real agent definitions
+      const agentEntries = await Promise.all(
+        scannedAgents.map(async (a) => {
+          try {
+            const mod = await import(a.filePath);
+            const def = mod.default ?? mod;
+            if (def && typeof def === "object" && typeof def.model === "string") {
+              return {
+                name: a.name,
+                route: a.routePattern,
+                model: def.model as string,
+                auth: (def.auth as string) ?? "none",
+                tools: (def.tools as string[]) ?? [],
+              };
+            }
+          } catch { /* skip invalid agent files */ }
+          return {
+            name: a.name,
+            route: a.routePattern,
+            model: "default",
+            auth: "none",
+            tools: [] as string[],
+          };
+        })
+      );
 
       const md = generateAgentsMd({
-        agents: scannedAgents.map((a) => ({
-          name: a.name,
-          route: a.routePattern,
-          model: "default",
-          auth: "none",
-          tools: [] as string[],
-        })),
-        tools: scannedTools.map((t) => ({
+        agents: agentEntries,
+        tools: toolDefs.map((t) => ({
           name: t.name,
-          description: `Tool: ${t.name}`,
+          description: t.description,
         })),
         prompts: [],
       });
 
-      const outPath = path.join(process.cwd(), "AGENTS.md");
+      const outPath = path.join(root, "AGENTS.md");
       fs.writeFileSync(outPath, md);
       // eslint-disable-next-line no-console
       console.log(
-        `\n  Generated AGENTS.md (${scannedAgents.length} agents, ${scannedTools.length} tools)`
+        `        Generated (${scannedAgents.length} agents, ${scannedTools.length} tools)`
       );
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("        No agents or tools found, skipping.");
     }
   } catch (err) {
     console.warn("  [fabrk] AGENTS.md generation failed:", err);
+  }
+
+  // Step 5: Done
+  // eslint-disable-next-line no-console
+  console.log("  [5/5] Build complete.\n");
+  // eslint-disable-next-line no-console
+  console.log("  Output:");
+  // eslint-disable-next-line no-console
+  console.log("    dist/client/ — static assets");
+  if (fs.existsSync(path.join(root, "dist", "server"))) {
+    // eslint-disable-next-line no-console
+    console.log("    dist/server/ — SSR bundle");
+  }
+  // eslint-disable-next-line no-console
+  console.log("\n  Run `fabrk start` to serve.\n");
+}
+
+async function start(): Promise<void> {
+  const root = process.cwd();
+  const args = parseArgs(rawArgs);
+  const port = typeof args.port === "string" ? parseInt(args.port, 10) : 3000;
+  const host = typeof args.host === "string" ? args.host : args.host === true ? "0.0.0.0" : "localhost";
+
+  // eslint-disable-next-line no-console
+  console.log(`\n  fabrk start v${VERSION}\n`);
+
+  const distDir = path.join(root, "dist");
+  if (!fs.existsSync(distDir)) {
+    console.error("  No dist/ directory found. Run `fabrk build` first.");
+    process.exit(1);
+  }
+
+  const serverDir = path.join(distDir, "server");
+  const hasServerEntry = fs.existsSync(serverDir);
+
+  if (hasServerEntry) {
+    // Use our production server with SSR
+    const { startProdServer } = await import("./runtime/prod-server");
+
+    // Find the server entry file (could be .js or .mjs)
+    let serverEntryPath = "";
+    const candidates = [
+      path.join(serverDir, ".fabrk-server-entry.js"),
+      path.join(serverDir, ".fabrk-server-entry.mjs"),
+      path.join(serverDir, "entry.js"),
+      path.join(serverDir, "entry.mjs"),
+    ];
+    for (const candidate of candidates) {
+      if (fs.existsSync(candidate)) {
+        serverEntryPath = candidate;
+        break;
+      }
+    }
+
+    // If no specific entry found, look for any .js file
+    if (!serverEntryPath) {
+      const files = fs.readdirSync(serverDir).filter((f) => f.endsWith(".js") || f.endsWith(".mjs"));
+      if (files.length > 0) {
+        serverEntryPath = path.join(serverDir, files[0]);
+      }
+    }
+
+    if (!serverEntryPath) {
+      console.error("  No server entry found in dist/server/. Run `fabrk build` first.");
+      process.exit(1);
+    }
+
+    // Check for built middleware
+    let middlewarePath: string | undefined;
+    const middlewareCandidates = [
+      path.join(serverDir, "middleware.js"),
+      path.join(serverDir, "middleware.mjs"),
+    ];
+    for (const candidate of middlewareCandidates) {
+      if (fs.existsSync(candidate)) {
+        middlewarePath = candidate;
+        break;
+      }
+    }
+
+    await startProdServer({
+      distDir,
+      port,
+      host,
+      serverEntryPath,
+      middlewarePath,
+    });
+  } else {
+    // Fallback: use vite preview for static-only builds
+    const { preview } = await import("vite");
+    const { userConfigPath } = await loadFabrkViteConfig(root);
+
+    const server = await preview({
+      configFile: userConfigPath ?? false,
+      root,
+      preview: { port, host },
+    });
+
+    server.printUrls();
   }
 }
 
@@ -190,30 +528,27 @@ async function info(): Promise<void> {
 function printHelp(): void {
   // eslint-disable-next-line no-console
   console.log(`
-  fabrk v${VERSION} — AI-first full-stack framework built on vinext
+  fabrk v${VERSION} — AI-first full-stack framework
 
   Usage: fabrk <command> [options]
 
   Commands:
-    dev      Start dev server (vinext + AI agents + MCP server)
-    build    Build for production (vinext + AGENTS.md generation)
-    start    Start production server (vinext)
-    deploy   Deploy to Cloudflare Workers (vinext)
+    dev      Start dev server with file-system routing + AI agents
+    build    Build for production (client + SSR + AGENTS.md)
+    start    Start production server
     info     Show project agents, tools, and prompts
-    init     Migrate a Next.js project to vinext
-    check    Check Next.js compatibility
-    lint     Run linter
 
   Options:
-    -h, --help     Show this help
-    --version      Show version
-
-  Powered by vinext (https://github.com/cloudflare/vinext)
+    --port <number>    Server port (dev: 5173, start: 3000)
+    --host [address]   Bind to host (use --host for 0.0.0.0)
+    --target <target>  Build target: "node" (default) or "worker"
+    -h, --help         Show this help
+    --version          Show version
 
   Examples:
     fabrk dev                  Start dev server with AI agents
-    fabrk build                Build + generate AGENTS.md
-    fabrk deploy               Deploy to Cloudflare Workers
+    fabrk build                Build for production
+    fabrk start                Start production server
     fabrk info                 Show agents, tools, prompts
 `);
 }
@@ -244,19 +579,18 @@ switch (command) {
     });
     break;
 
-  case "info":
-    info().catch((e) => {
+  case "start":
+    start().catch((e) => {
       console.error(e);
       process.exit(1);
     });
     break;
 
-  case "start":
-  case "deploy":
-  case "init":
-  case "check":
-  case "lint":
-    vinextPassthrough(command, rawArgs);
+  case "info":
+    info().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
     break;
 
   default:

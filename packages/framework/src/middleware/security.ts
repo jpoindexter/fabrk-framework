@@ -1,3 +1,4 @@
+import type { ServerResponse } from "node:http";
 import type { FabrkConfig } from "../config/fabrk-config";
 
 export function buildSecurityHeaders(
@@ -16,4 +17,10 @@ export function buildSecurityHeaders(
   }
 
   return headers;
+}
+
+export function applySecurityHeaders(res: ServerResponse): void {
+  for (const [k, v] of Object.entries(buildSecurityHeaders())) {
+    res.setHeader(k, v);
+  }
 }

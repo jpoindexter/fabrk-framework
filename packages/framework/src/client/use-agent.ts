@@ -13,6 +13,14 @@ export interface AgentUsage {
   completionTokens: number;
 }
 
+export interface AgentToolCall {
+  name: string;
+  input: Record<string, unknown>;
+  output?: string;
+  durationMs?: number;
+  iteration: number;
+}
+
 export function parseSSELine(line: string): SSEEvent | null {
   if (!line.startsWith("data: ")) return null;
   const json = line.slice("data: ".length);
@@ -34,6 +42,7 @@ export function useAgent(agentName: string) {
     completionTokens: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const [toolCalls, setToolCalls] = useState<AgentToolCall[]>([]);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
 
@@ -41,6 +50,7 @@ export function useAgent(agentName: string) {
     async (content: string) => {
       setError(null);
       setIsStreaming(true);
+      setToolCalls([]);
 
       const userMessage: AgentMessage = { role: "user", content };
       setMessages((prev) => [...prev, userMessage]);
@@ -90,7 +100,7 @@ export function useAgent(agentName: string) {
                 const event = parseSSELine(line);
                 if (!event) continue;
 
-                if (event.type === "text") {
+                if (event.type === "text-delta") {
                   assistantContent += event.content;
                   setMessages((prev) => {
                     const updated = [...prev];
@@ -98,6 +108,36 @@ export function useAgent(agentName: string) {
                       role: "assistant",
                       content: assistantContent,
                     };
+                    return updated;
+                  });
+                } else if (event.type === "text") {
+                  assistantContent = event.content;
+                  setMessages((prev) => {
+                    const updated = [...prev];
+                    updated[updated.length - 1] = {
+                      role: "assistant",
+                      content: assistantContent,
+                    };
+                    return updated;
+                  });
+                } else if (event.type === "tool-call") {
+                  setToolCalls((prev) => [
+                    ...prev,
+                    { name: event.name, input: event.input, iteration: event.iteration },
+                  ]);
+                } else if (event.type === "tool-result") {
+                  setToolCalls((prev) => {
+                    const updated = [...prev];
+                    const idx = updated.findIndex(
+                      (tc) => tc.name === event.name && tc.output === undefined
+                    );
+                    if (idx >= 0) {
+                      updated[idx] = {
+                        ...updated[idx],
+                        output: event.output,
+                        durationMs: event.durationMs,
+                      };
+                    }
                     return updated;
                   });
                 } else if (event.type === "usage") {
@@ -129,6 +169,13 @@ export function useAgent(agentName: string) {
           if (data.cost) {
             setCost((prev) => prev + data.cost);
           }
+          if (data.toolCalls) {
+            setToolCalls(data.toolCalls.map((tc: { name: string; input: Record<string, unknown>; output: string }, _i: number) => ({
+              ...tc,
+              iteration: 0,
+              durationMs: 0,
+            })));
+          }
         }
       } catch (err) {
         setError(String(err));
@@ -139,5 +186,5 @@ export function useAgent(agentName: string) {
     [agentName]
   );
 
-  return { send, messages, isStreaming, cost, usage, error };
+  return { send, messages, isStreaming, cost, usage, error, toolCalls };
 }

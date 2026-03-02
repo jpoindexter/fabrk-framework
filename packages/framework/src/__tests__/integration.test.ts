@@ -37,6 +37,7 @@ describe("E2E integration", () => {
       model: "test-model",
       tools: ["search"],
       auth: "none",
+      stream: false,
     });
 
     const handler = createAgentHandler({

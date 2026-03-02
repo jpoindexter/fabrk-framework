@@ -75,6 +75,18 @@ export type {
   LLMConfig,
   LLMProvider,
   TaskComplexity,
+  LLMToolSchema,
+  LLMToolCall,
+  LLMToolResult,
+  LLMMessage,
+  LLMStreamEvent,
+} from './llm'
+
+export {
+  openaiGenerateWithTools,
+  openaiStreamWithTools,
+  anthropicGenerateWithTools,
+  anthropicStreamWithTools,
 } from './llm'
 
 export {

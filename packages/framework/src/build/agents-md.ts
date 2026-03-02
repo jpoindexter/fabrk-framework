@@ -5,12 +5,22 @@ export interface AgentsMdInput {
     model: string;
     auth: string;
     tools: string[];
+    skills?: string[];
+    memory?: boolean;
+    agents?: string[];
   }>;
   tools: Array<{
     name: string;
     description: string;
+    schema?: Record<string, unknown>;
+  }>;
+  skills?: Array<{
+    name: string;
+    description: string;
+    tools: string[];
   }>;
   prompts: string[];
+  mcp?: { exposed: boolean; consumed: string[] };
 }
 
 export function generateAgentsMd(input: AgentsMdInput): string {
@@ -31,6 +41,15 @@ export function generateAgentsMd(input: AgentsMdInput): string {
       if (a.tools.length > 0) {
         lines.push(`- **Tools:** ${a.tools.join(", ")}`);
       }
+      if (a.skills && a.skills.length > 0) {
+        lines.push(`- **Skills:** ${a.skills.join(", ")}`);
+      }
+      if (a.memory) {
+        lines.push(`- **Memory:** enabled`);
+      }
+      if (a.agents && a.agents.length > 0) {
+        lines.push(`- **Delegates to:** ${a.agents.join(", ")}`);
+      }
       lines.push("");
     }
   } else {
@@ -42,7 +61,31 @@ export function generateAgentsMd(input: AgentsMdInput): string {
     for (const t of input.tools) {
       lines.push(`### ${t.name}`, "");
       lines.push(`${t.description}`, "");
+      if (t.schema) {
+        lines.push("```json", JSON.stringify(t.schema, null, 2), "```", "");
+      }
     }
+  }
+
+  if (input.skills && input.skills.length > 0) {
+    lines.push("## Skills", "");
+    for (const s of input.skills) {
+      lines.push(`### ${s.name}`, "");
+      lines.push(`${s.description}`, "");
+      if (s.tools.length > 0) {
+        lines.push(`- **Tools:** ${s.tools.join(", ")}`);
+      }
+      lines.push("");
+    }
+  }
+
+  if (input.mcp) {
+    lines.push("## MCP", "");
+    lines.push(`- **Exposed:** ${input.mcp.exposed ? "yes" : "no"}`);
+    if (input.mcp.consumed.length > 0) {
+      lines.push(`- **Consuming:** ${input.mcp.consumed.join(", ")}`);
+    }
+    lines.push("");
   }
 
   if (input.prompts.length > 0) {

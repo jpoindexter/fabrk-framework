@@ -1,0 +1,203 @@
+"use client";
+
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  type AnchorHTMLAttributes,
+  type MouseEvent,
+} from "react";
+import { prefetchUrl } from "./navigation";
+import { patchHistory } from "./navigation-state";
+
+// ---------------------------------------------------------------------------
+// Shared IntersectionObserver singleton for viewport prefetch
+// ---------------------------------------------------------------------------
+
+let observer: IntersectionObserver | null = null;
+const observedElements = new Map<Element, () => void>();
+
+function getObserver(): IntersectionObserver | null {
+  if (typeof IntersectionObserver === "undefined") return null;
+  if (observer) return observer;
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const callback = observedElements.get(entry.target);
+          if (callback) {
+            callback();
+            if (observer) observer.unobserve(entry.target);
+            observedElements.delete(entry.target);
+          }
+        }
+      }
+    },
+    { rootMargin: "250px" }
+  );
+
+  return observer;
+}
+
+// ---------------------------------------------------------------------------
+// Link component
+// ---------------------------------------------------------------------------
+
+export interface LinkProps
+  extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
+  href: string;
+  /** Use replaceState instead of pushState. */
+  replace?: boolean;
+  /** Scroll to top after navigation. Defaults to true. */
+  scroll?: boolean;
+  /** Prefetch strategy: "viewport" (default), "hover", or false. */
+  prefetch?: "viewport" | "hover" | false;
+}
+
+const DANGEROUS_SCHEMES = new Set(["javascript:", "data:", "vbscript:"]);
+
+function isExternalUrl(href: string): boolean {
+  if (href.startsWith("/") || href.startsWith("#") || href.startsWith("?")) {
+    return false;
+  }
+  try {
+    const url = new URL(href, window.location.origin);
+    return url.origin !== window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
+function isDangerousScheme(href: string): boolean {
+  const lower = href.toLowerCase().trim();
+  for (const scheme of DANGEROUS_SCHEMES) {
+    if (lower.startsWith(scheme)) return true;
+  }
+  return false;
+}
+
+function shouldNavigate(event: MouseEvent<HTMLAnchorElement>): boolean {
+  // Don't intercept: modifier keys, middle/right click
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+    return false;
+  }
+  if (event.button !== 0) return false;
+  // Don't intercept if default was prevented
+  if (event.defaultPrevented) return false;
+  return true;
+}
+
+export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
+  function Link(
+    {
+      href,
+      replace: useReplace = false,
+      scroll = true,
+      prefetch: prefetchStrategy = "viewport",
+      onClick,
+      onMouseEnter,
+      children,
+      target,
+      ...rest
+    },
+    ref
+  ) {
+    const elementRef = useRef<HTMLAnchorElement | null>(null);
+
+    patchHistory();
+
+    const handleClick = useCallback(
+      (event: MouseEvent<HTMLAnchorElement>) => {
+        onClick?.(event);
+
+        if (event.defaultPrevented) return;
+        if (!shouldNavigate(event)) return;
+        if (target && target !== "_self") return;
+        if (isDangerousScheme(href)) {
+          event.preventDefault();
+          return;
+        }
+        if (isExternalUrl(href)) return;
+
+        event.preventDefault();
+
+        const mode = useReplace ? "replace" : "push";
+
+        // Navigate using history API
+        if (mode === "push") {
+          // Save scroll position
+          const state = history.state ?? {};
+          history.replaceState(
+            { ...state, __fabrkScrollY: window.scrollY },
+            ""
+          );
+          history.pushState({}, "", href);
+        } else {
+          history.replaceState({}, "", href);
+        }
+
+        // Trigger RSC navigation if available
+        if (window.__FABRK_RSC_NAVIGATE__) {
+          window.__FABRK_RSC_NAVIGATE__(href);
+        }
+
+        if (scroll) {
+          window.scrollTo(0, 0);
+        }
+      },
+      [href, useReplace, scroll, onClick, target]
+    );
+
+    const handleMouseEnter = useCallback(
+      (event: MouseEvent<HTMLAnchorElement>) => {
+        onMouseEnter?.(event);
+        if (prefetchStrategy === "hover" && !isExternalUrl(href)) {
+          prefetchUrl(href);
+        }
+      },
+      [href, prefetchStrategy, onMouseEnter]
+    );
+
+    // Viewport-based prefetch
+    useEffect(() => {
+      if (prefetchStrategy !== "viewport") return;
+      if (isExternalUrl(href) || isDangerousScheme(href)) return;
+
+      const el = elementRef.current;
+      const obs = getObserver();
+      if (!el || !obs) return;
+
+      observedElements.set(el, () => prefetchUrl(href));
+      obs.observe(el);
+
+      return () => {
+        obs.unobserve(el);
+        observedElements.delete(el);
+      };
+    }, [href, prefetchStrategy]);
+
+    const setRef = useCallback(
+      (node: HTMLAnchorElement | null) => {
+        elementRef.current = node;
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      },
+      [ref]
+    );
+
+    return React.createElement(
+      "a",
+      {
+        ...rest,
+        href,
+        ref: setRef,
+        target,
+        onClick: handleClick,
+        onMouseEnter: handleMouseEnter,
+      },
+      children
+    );
+  }
+);

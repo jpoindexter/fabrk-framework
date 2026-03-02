@@ -25,3 +25,21 @@ export type {
   TaskComplexity,
 } from './types'
 export { LLM_DEFAULTS } from './types'
+
+export type {
+  LLMToolSchema,
+  LLMToolCall,
+  LLMToolResult,
+  LLMMessage,
+  LLMStreamEvent,
+} from './tool-types'
+
+export {
+  generateWithTools as openaiGenerateWithTools,
+  streamWithTools as openaiStreamWithTools,
+} from './openai-tools'
+
+export {
+  generateWithTools as anthropicGenerateWithTools,
+  streamWithTools as anthropicStreamWithTools,
+} from './anthropic-tools'

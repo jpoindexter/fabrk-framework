@@ -15,8 +15,12 @@ export interface SupervisorConfig {
   handlerFactory: (name: string) => Promise<(req: Request) => Promise<Response>>;
 }
 
-export function defineSupervisor(config: SupervisorConfig): AgentDefinition {
-  const _maxDelegations = Math.min(config.maxDelegations ?? 5, MAX_DELEGATIONS_CAP);
+export interface SupervisorDefinition extends AgentDefinition {
+  maxDelegations: number;
+}
+
+export function defineSupervisor(config: SupervisorConfig): SupervisorDefinition {
+  const maxDelegations = Math.min(config.maxDelegations ?? 5, MAX_DELEGATIONS_CAP);
 
   const agentTools: ToolDefinition[] = config.agents.map((a) =>
     agentAsTool(
@@ -42,5 +46,6 @@ export function defineSupervisor(config: SupervisorConfig): AgentDefinition {
     auth: "none",
     agents: config.agents,
     memory: false,
+    maxDelegations,
   };
 }

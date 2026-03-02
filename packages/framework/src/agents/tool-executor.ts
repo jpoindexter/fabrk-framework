@@ -16,7 +16,7 @@ function validateRequiredFields(
 ): string | null {
   if (!schema.required) return null;
   for (const field of schema.required) {
-    if (!(field in input)) {
+    if (!Object.hasOwn(input, field)) {
       return `Missing required field: ${field}`;
     }
   }

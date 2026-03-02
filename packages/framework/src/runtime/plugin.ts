@@ -5,6 +5,7 @@ import path from "node:path";
 import { scanRoutes, type Route } from "./router";
 import { handleRequest } from "./ssr-handler";
 import { nodeToWebRequest, writeWebResponse } from "./node-web-bridge";
+import { isImageRequest, handleImageRequest } from "./image-handler";
 
 const MIDDLEWARE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 
@@ -68,6 +69,15 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
           if (shouldSkipPath(pathname)) return next();
 
           try {
+            // Image optimization endpoint
+            if (isImageRequest(pathname)) {
+              const publicDir = path.join(root, "public");
+              const webReq = await nodeToWebRequest(req, url);
+              const webRes = await handleImageRequest(webReq, publicDir);
+              await writeWebResponse(res, webRes);
+              return;
+            }
+
             const webReq = await nodeToWebRequest(req, url);
             const middlewarePath = findMiddleware(appDirResolved);
             const webRes = await handleRequest(webReq, {

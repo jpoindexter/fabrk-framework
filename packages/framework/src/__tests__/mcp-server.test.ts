@@ -125,7 +125,7 @@ describe("MCP Server", () => {
       }) as { result?: { content: Array<{ text: string }>; isError: boolean } };
 
       expect(result.result?.isError).toBe(true);
-      expect(result.result?.content[0].text).toContain("Error: Boom");
+      expect(result.result?.content[0].text).toBe("Error: Tool execution failed");
     });
   });
 

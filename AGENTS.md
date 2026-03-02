@@ -36,7 +36,7 @@ pnpm size             # Bundle size tracking
 | `@fabrk/email` | Resend adapter + templates | `createResendAdapter()`, `createConsoleAdapter()` |
 | `@fabrk/storage` | S3, R2, local filesystem adapters | `createS3Adapter()`, `createR2Adapter()`, `createLocalAdapter()` |
 | `@fabrk/store-prisma` | 7 Prisma store adapters | `PrismaTeamStore`, `PrismaAuditStore`, `PrismaJobStore` |
-| `@fabrk/framework` | Full-stack framework — own Vite 7 runtime, file-system routing, SSR, AI agents, tools, MCP, CLI | `fabrk()`, `defineAgent()`, `defineTool()`, `fabrk dev/build/start` |
+| `@fabrk/framework` | Full-stack framework — own Vite 7 runtime, file-system routing, SSR, AI agents, tools, built-in tools, testing framework, MCP, CLI | `fabrk()`, `defineAgent()`, `defineTool()`, `sqlQueryTool()`, `ragTool()`, `mockLLM()`, `createTestAgent()`, `fabrk dev/build/start/agents/check/test` |
 | `create-fabrk-app` | CLI scaffolding tool | `npx create-fabrk-app` |
 
 ## Component Categories
@@ -140,6 +140,63 @@ export default function Dashboard() {
   )
 }
 ```
+
+## Testing Agents
+
+`@fabrk/framework` ships a built-in testing framework for agent behavior. No external mocking library needed.
+
+```typescript
+import { mockLLM, createTestAgent, calledTool, respondedWith, costUnder } from '@fabrk/framework'
+import { defineTool, textResult } from '@fabrk/framework'
+
+const searchTool = defineTool({
+  name: 'search',
+  description: 'Search docs',
+  schema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+  handler: async (input) => textResult(`Results for: ${input.query}`),
+})
+
+const mock = mockLLM()
+  .onMessage('search').callTool('search', { query: 'cats' })
+  .setDefault('Found cats!')
+
+const agent = createTestAgent({ mock, tools: [searchTool] })
+const result = await agent.send('search for cats')
+
+expect(calledTool(result, 'search')).toBe(true)
+expect(respondedWith(result, 'cats')).toBe(true)
+expect(costUnder(result, 0.01)).toBe(true)
+```
+
+## Built-in Agent Tools
+
+`@fabrk/framework` provides two ready-to-use built-in tools:
+
+**`sqlQueryTool(options)`** — SQL query tool with read-only enforcement by default. Accepts any database driver via an injected `query` function. Parameterized queries, 5s timeout, 100-row / 100KB truncation, markdown table output.
+
+```typescript
+import { sqlQueryTool } from '@fabrk/framework'
+const tool = sqlQueryTool({ query: (sql, params) => db.query(sql, params) })
+```
+
+**`ragTool(options)`** — RAG search tool. Pluggable vector store via an injected `search` function. Supports `minScore` filtering, `topK` control, custom `formatResult`, and metadata display.
+
+```typescript
+import { ragTool } from '@fabrk/framework'
+const tool = ragTool({ search: (query, topK) => vectorStore.search(query, topK) })
+```
+
+## CLI Commands (fabrk)
+
+| Command | What It Does |
+|---------|-------------|
+| `fabrk dev` | Dev server with file-system routing, AI agents, and MCP tools |
+| `fabrk build` | Production build (client + SSR + AGENTS.md generation) |
+| `fabrk start` | Start production server |
+| `fabrk info` | Show project agents, tools, and prompts |
+| `fabrk agents` | List all discovered agents with model, tools, memory, and auth details |
+| `fabrk check` | Validate Node.js version, config, app directory, agents, tools, tsconfig |
+| `fabrk test` | Run vitest with passthrough args |
 
 ## Reference
 

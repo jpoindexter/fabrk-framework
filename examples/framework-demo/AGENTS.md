@@ -7,8 +7,9 @@
 ### assistant
 
 - **Route:** `/api/agents/assistant`
-- **Model:** claude-sonnet-4-5
+- **Model:** claude-sonnet-4-6
 - **Auth:** none
+- **Tools:** get-stats
 
 ## Tools
 

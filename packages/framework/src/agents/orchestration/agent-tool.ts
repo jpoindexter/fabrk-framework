@@ -8,6 +8,7 @@ export function agentAsTool(
     name: string;
     description: string;
     inputSchema?: Record<string, unknown>;
+    parentRequest?: Request;
   },
   handlerFactory: (name: string) => Promise<(req: Request) => Promise<Response>>
 ): ToolDefinition {
@@ -25,11 +26,18 @@ export function agentAsTool(
       const message = typeof input.message === "string" ? input.message : JSON.stringify(input);
       const handler = await handlerFactory(options.name);
 
+      // Read and increment delegation depth from parent request
+      const parentDepth = parseInt(
+        options.parentRequest?.headers.get(DEPTH_HEADER) ?? "0",
+        10
+      );
+      const childDepth = String(parentDepth + 1);
+
       const req = new Request(`http://internal/api/agents/${encodeURIComponent(options.name)}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          [DEPTH_HEADER]: "0",
+          [DEPTH_HEADER]: childDepth,
         },
         body: JSON.stringify({
           messages: [{ role: "user", content: message }],

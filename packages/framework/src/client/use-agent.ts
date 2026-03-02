@@ -178,7 +178,7 @@ export function useAgent(agentName: string) {
           }
         }
       } catch (err) {
-        setError(String(err));
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setIsStreaming(false);
       }

@@ -212,6 +212,116 @@ ai: {
 }`}</CodeBlock>
       </Section>
 
+      <Section title="STEP 5B: ADD AN AI AGENT">
+        <p className="text-sm text-muted-foreground mb-4">
+          AI agents are a first-class primitive in FABRK. Drop an <code>agent.ts</code> file
+          into <code>agents/&lt;name&gt;/</code> and the framework exposes it automatically
+          as a streaming HTTP endpoint with budget enforcement.
+        </p>
+        <CodeBlock title="agents/assistant/agent.ts">{`# File-system convention: agents/<name>/agent.ts
+# Create agents/assistant/agent.ts
+
+import { defineAgent } from '@fabrk/framework'
+
+export default defineAgent({
+  model: 'claude-sonnet-4-6',
+  systemPrompt: 'You are a helpful coding assistant. Be concise.',
+  stream: true,
+  memory: true,
+  auth: 'none',
+  budget: { daily: 5.0, perSession: 0.50 },
+})
+
+# The agent is automatically available at POST /api/agents/assistant`}</CodeBlock>
+
+        <CodeBlock title="use in React">{`'use client'
+import { useAgent } from '@fabrk/framework/client'
+
+function ChatPage() {
+  const { messages, send, isStreaming } = useAgent('assistant')
+
+  return (
+    <div>
+      {messages.map((m, i) => (
+        <div key={i}>{m.role}: {m.content}</div>
+      ))}
+      <form onSubmit={(e) => { e.preventDefault(); send(new FormData(e.currentTarget).get('msg') as string) }}>
+        <input name="msg" placeholder="Ask something..." />
+        <button type="submit" disabled={isStreaming}>&gt; SEND</button>
+      </form>
+    </div>
+  )
+}`}</CodeBlock>
+
+        <InfoCard title="BUDGET ENFORCEMENT">
+          The <code>budget</code> field sets hard limits per agent — <code>daily</code> caps
+          total spend across all sessions in a 24-hour window, <code>perSession</code> caps
+          a single conversation. Requests that would exceed either limit are rejected before
+          hitting the LLM provider.
+        </InfoCard>
+      </Section>
+
+      <Section title="STEP 5C: ADD TOOLS">
+        <p className="text-sm text-muted-foreground mb-4">
+          Tools extend what agents can do. Drop a <code>tool.ts</code> file into{' '}
+          <code>tools/&lt;name&gt;/</code>, then reference it by name in any agent definition.
+        </p>
+        <CodeBlock title="tools/search-docs/tool.ts">{`# File-system convention: tools/<name>/tool.ts
+# Create tools/search-docs/tool.ts
+
+import { defineTool } from '@fabrk/framework'
+
+export default defineTool({
+  name: 'search-docs',
+  description: 'Search project documentation for answers.',
+  schema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'Search query' },
+    },
+    required: ['query'],
+  },
+  handler: async ({ query }) => ({
+    content: [{ type: 'text', text: \`Results for: \${query}\` }],
+  }),
+})`}</CodeBlock>
+
+        <CodeBlock title="reference tool in agent">{`# Then reference it in your agent:
+export default defineAgent({
+  model: 'claude-sonnet-4-6',
+  tools: ['search-docs'],
+  // ...
+})`}</CodeBlock>
+
+        <InfoCard title="AUTO-DISCOVERY">
+          FABRK scans the <code>tools/</code> directory at startup. Any file matching{' '}
+          <code>tools/*/tool.ts</code> is registered automatically — no manual imports or
+          plugin registration required.
+        </InfoCard>
+      </Section>
+
+      <Section title="STEP 5D: AGENT MEMORY AND TESTING">
+        <p className="text-sm text-muted-foreground mb-4">
+          Agents with <code>memory: true</code> persist conversation history automatically.
+          The built-in testing framework lets you mock LLM responses and assert on tool calls
+          without making real API requests.
+        </p>
+        <CodeBlock title="agent test">{`import { createTestAgent, mockLLM, respondedWith } from '@fabrk/framework/testing'
+
+const agent = createTestAgent('assistant', {
+  mock: mockLLM().onMessage('hello').respondWith('Hi there!'),
+})
+
+const result = await agent.send('hello')
+expect(respondedWith(result, /Hi there/)).toBe(true)`}</CodeBlock>
+
+        <InfoCard title="MEMORY PERSISTENCE">
+          In development, conversation history is stored in memory (per-process).
+          In production, wire a store adapter — any key/value or relational store works —
+          so history survives restarts and scales across instances.
+        </InfoCard>
+      </Section>
+
       <Section title="STEP 6: AUTO-WIRE AND RUN">
         <p className="text-sm text-muted-foreground mb-4">
           FABRK's <code>autoWire()</code> reads your config and creates all adapters
@@ -303,7 +413,16 @@ fabrk build
 fabrk start
 
 # Show project info (agents, tools, prompts)
-fabrk info`}</CodeBlock>
+fabrk info
+
+# List all discovered agents
+fabrk agents
+
+# Run health check
+fabrk check
+
+# Run agent tests
+fabrk test`}</CodeBlock>
       </Section>
 
       <Section title="NEXT STEPS">

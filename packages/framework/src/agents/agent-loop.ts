@@ -104,11 +104,11 @@ export async function* runAgentLoop(
               toolCallId: tc.id,
             });
           } catch (err) {
-            const errorMsg = err instanceof Error ? err.message : "Tool execution failed";
-            yield { type: "tool-result", name: tc.name, output: `Error: ${errorMsg}`, durationMs: 0, iteration };
+            console.error(`[fabrk] Tool "${tc.name}" execution error:`, err);
+            yield { type: "tool-result", name: tc.name, output: "Error: Tool execution failed", durationMs: 0, iteration };
             messages.push({
               role: "tool",
-              content: `Error: ${errorMsg}`,
+              content: "Error: Tool execution failed",
               toolCallId: tc.id,
             });
           }
@@ -156,11 +156,11 @@ export async function* runAgentLoop(
             toolCallId: tc.id,
           });
         } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : "Tool execution failed";
-          yield { type: "tool-result", name: tc.name, output: `Error: ${errorMsg}`, durationMs: 0, iteration };
+          console.error(`[fabrk] Tool "${tc.name}" execution error:`, err);
+          yield { type: "tool-result", name: tc.name, output: "Error: Tool execution failed", durationMs: 0, iteration };
           messages.push({
             role: "tool",
-            content: `Error: ${errorMsg}`,
+            content: "Error: Tool execution failed",
             toolCallId: tc.id,
           });
         }

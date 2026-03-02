@@ -75,6 +75,9 @@ describe("CLI command structure", () => {
     expect(source).toContain("case \"build\":");
     expect(source).toContain("case \"start\":");
     expect(source).toContain("case \"info\":");
+    expect(source).toContain("case \"agents\":");
+    expect(source).toContain("case \"check\":");
+    expect(source).toContain("case \"test\":");
 
     expect(source).toContain("createServer");
     expect(source).toContain("viteBuild");

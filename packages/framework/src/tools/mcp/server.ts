@@ -87,9 +87,9 @@ export function createMCPServer(options: {
             content: result.content,
           });
         } catch (err) {
-          const msg = err instanceof Error ? err.message : "Tool execution failed";
+          console.error(`[fabrk] MCP tool "${toolName}" error:`, err);
           return rpcResponse(id, {
-            content: [{ type: "text", text: `Error: ${msg}` }],
+            content: [{ type: "text", text: "Error: Tool execution failed" }],
             isError: true,
           });
         }
@@ -100,6 +100,8 @@ export function createMCPServer(options: {
     }
   }
 
+  const MAX_REQUEST_BYTES = 1024 * 1024; // 1 MB
+
   async function httpHandler(req: Request): Promise<Response> {
     if (req.method !== "POST") {
       return new Response(JSON.stringify(rpcError(undefined, -32600, "POST required")), {
@@ -108,9 +110,25 @@ export function createMCPServer(options: {
       });
     }
 
+    // Validate Content-Length if present
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_BYTES) {
+      return new Response(
+        JSON.stringify(rpcError(undefined, -32600, "Request body too large")),
+        { status: 413, headers: { "Content-Type": "application/json", ...buildSecurityHeaders() } }
+      );
+    }
+
     let body: unknown;
     try {
-      body = await req.json();
+      const text = await req.text();
+      if (text.length > MAX_REQUEST_BYTES) {
+        return new Response(
+          JSON.stringify(rpcError(undefined, -32600, "Request body too large")),
+          { status: 413, headers: { "Content-Type": "application/json", ...buildSecurityHeaders() } }
+        );
+      }
+      body = JSON.parse(text);
     } catch {
       return new Response(
         JSON.stringify(rpcError(undefined, -32700, "Parse error")),

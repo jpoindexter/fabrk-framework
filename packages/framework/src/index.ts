@@ -65,6 +65,21 @@ export {
 } from "./runtime/static-export";
 export type { StaticRoute, StaticExportOptions } from "./runtime/static-export";
 
+export { handleImageRequest, isImageRequest } from "./runtime/image-handler";
+
+export {
+  InMemoryISRCache,
+  serveFromISR,
+  isrRevalidateTag,
+  isrRevalidatePath,
+  getRevalidateInterval,
+  getPageTags,
+} from "./runtime/isr-cache";
+export type { ISRCacheHandler, ISRCacheEntry, ISRResult } from "./runtime/isr-cache";
+
+export { generateSitemap } from "./build/sitemap-gen";
+export type { SitemapEntry, SitemapOptions } from "./build/sitemap-gen";
+
 export {
   createCachedFetch,
   patchFetch,
@@ -90,6 +105,8 @@ export { defineAgent } from "./agents/define-agent";
 export type { AgentDefinition, DefineAgentOptions, AgentBudget, AgentMemoryConfig } from "./agents/define-agent";
 export { defineTool, textResult } from "./tools/define-tool";
 export type { ToolDefinition, ToolResult } from "./tools/define-tool";
+export { sqlQueryTool } from "./tools/builtins/sql-query";
+export type { SqlQueryOptions } from "./tools/builtins/sql-query";
 export { loadFabrkConfig } from "./config/fabrk-config";
 
 // Memory
@@ -115,3 +132,11 @@ export type { ScannedSkill } from "./skills/scanner";
 export { runAgentLoop } from "./agents/agent-loop";
 export type { AgentLoopEvent, AgentLoopOptions } from "./agents/agent-loop";
 export { createToolExecutor } from "./agents/tool-executor";
+
+// Testing
+export { mockLLM, MockLLM, createTestAgent, calledTool, calledToolWith, respondedWith, costUnder, iterationsUnder, getToolCalls } from "./testing/index";
+export type { TestAgentOptions, TestAgentResult } from "./testing/index";
+
+// Built-in tools
+export { ragTool } from "./tools/builtins/rag";
+export type { RagResult, RagToolOptions } from "./tools/builtins/rag";

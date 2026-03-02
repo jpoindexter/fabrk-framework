@@ -234,7 +234,7 @@ describe("runAgentLoop", () => {
     );
 
     const toolResult = events.find((e) => e.type === "tool-result") as Extract<AgentLoopEvent, { type: "tool-result" }>;
-    expect(toolResult.output).toContain("Error: Tool crashed!");
+    expect(toolResult.output).toBe("Error: Tool execution failed");
 
     // Should still get a final text response (error goes back to LLM)
     const textEvent = events.find((e) => e.type === "text");

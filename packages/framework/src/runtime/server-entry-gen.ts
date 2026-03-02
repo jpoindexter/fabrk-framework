@@ -1,4 +1,5 @@
 import type { Route } from "./router";
+import fs from "node:fs";
 
 /**
  * Generate a server entry module that statically imports all route modules
@@ -92,18 +93,11 @@ ${globalErrorImport ? "export { globalError };" : "export const globalError = nu
 `;
 }
 
-function findGlobalError(routes: Route[], appDir: string): string | null {
-  // Check common locations for global-error file
+function findGlobalError(_routes: Route[], appDir: string): string | null {
   const extensions = [".tsx", ".ts", ".jsx", ".js"];
-  // We can't import fs here since this module might run at build time
-  // Instead, check if any route's directory is the app root and has an error path
-  // The caller should provide this information
   for (const ext of extensions) {
     const candidate = `${appDir}/global-error${ext}`;
-    // Check if any route references a path in the app dir
-    for (const route of routes) {
-      if (route.errorPath === candidate) return candidate;
-    }
+    if (fs.existsSync(candidate)) return candidate;
   }
   return null;
 }

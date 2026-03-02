@@ -77,6 +77,7 @@ export const navigation: NavItem[] = [
       { label: 'Store Pattern', href: '/philosophy#store-pattern' },
     ],
   },
+  { label: 'COMPARISON', href: '/comparison' },
   { label: 'MIGRATION', href: '/migration' },
   { label: 'CLI REFERENCE', href: '/cli' },
   { label: 'API REFERENCE', href: '/api' },

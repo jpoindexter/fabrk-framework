@@ -14,11 +14,17 @@ export async function callLLM(
 ): Promise<LLMCallResult> {
   const { ai, calculateModelCost } = await import("@fabrk/ai");
 
-  const userMessage = [...messages].reverse().find((m) => m.role === "user");
+  // Build a single prompt from the full conversation history
+  // so multi-turn context is preserved
   const systemMessage = messages.find((m) => m.role === "system");
+  const conversationMessages = messages.filter((m) => m.role !== "system");
+
+  const conversationPrompt = conversationMessages
+    .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+    .join("\n\n");
 
   const result = await ai.generate({
-    prompt: userMessage?.content ?? "",
+    prompt: conversationPrompt,
     feature: `agent:${bridge.resolvedModel}`,
     model: bridge.resolvedModel,
     systemPrompt: systemMessage?.content,

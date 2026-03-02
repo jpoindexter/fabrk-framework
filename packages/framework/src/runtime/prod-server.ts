@@ -9,6 +9,12 @@ import {
   extractMiddleware,
   type MiddlewareHandler,
 } from "./middleware";
+import {
+  resolveMetadata,
+  mergeMetadata,
+  buildMetadataHtml,
+} from "./metadata";
+import { isImageRequest, handleImageRequest } from "./image-handler";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -140,31 +146,35 @@ async function serveStaticFile(
     mimeType.includes("xml") ||
     mimeType.includes("svg");
 
-  res.writeHead(200, {
+  // Determine encoding before writing headers
+  let encoding: "br" | "gzip" | null = null;
+  if (isCompressible && stat.size > 1024) {
+    if (acceptEncoding.includes("br")) encoding = "br";
+    else if (acceptEncoding.includes("gzip")) encoding = "gzip";
+  }
+
+  const headers: Record<string, string> = {
     "Content-Type": mimeType,
     ...cacheHeaders,
     ...securityHeaders,
-  });
+  };
+  if (encoding) headers["Content-Encoding"] = encoding;
 
-  if (isCompressible && stat.size > 1024) {
-    if (acceptEncoding.includes("br")) {
-      res.setHeader("Content-Encoding", "br");
-      const readStream = fs.createReadStream(resolvedPath);
-      const brotli = zlib.createBrotliCompress({
-        params: {
-          [zlib.constants.BROTLI_PARAM_QUALITY]: 4,
-        },
-      });
-      await pipeline(readStream, brotli, res);
-      return true;
-    }
-    if (acceptEncoding.includes("gzip")) {
-      res.setHeader("Content-Encoding", "gzip");
-      const readStream = fs.createReadStream(resolvedPath);
-      const gzip = zlib.createGzip({ level: 6 });
-      await pipeline(readStream, gzip, res);
-      return true;
-    }
+  res.writeHead(200, headers);
+
+  if (encoding === "br") {
+    const readStream = fs.createReadStream(resolvedPath);
+    const brotli = zlib.createBrotliCompress({
+      params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 4 },
+    });
+    await pipeline(readStream, brotli, res);
+    return true;
+  }
+  if (encoding === "gzip") {
+    const readStream = fs.createReadStream(resolvedPath);
+    const gzip = zlib.createGzip({ level: 6 });
+    await pipeline(readStream, gzip, res);
+    return true;
   }
 
   // Uncompressed
@@ -280,8 +290,9 @@ async function handleApiRoute(
 async function handlePageRoute(
   route: ServerEntry["routes"][number],
   params: Record<string, string>,
-  serverEntry: ServerEntry
-): Promise<{ status: number; headers: Record<string, string>; body: string }> {
+  serverEntry: ServerEntry,
+  reqUrl: string
+): Promise<{ status: number; headers: Record<string, string>; body: string | ReadableStream }> {
   try {
     const PageComponent = route.module.default;
     if (typeof PageComponent !== "function") {
@@ -303,8 +314,10 @@ async function handlePageRoute(
     const createElement = React.createElement ?? React.default?.createElement;
     const renderToString =
       reactDomServer.renderToString ?? reactDomServer.default?.renderToString;
+    const renderToReadableStream =
+      reactDomServer.renderToReadableStream ?? reactDomServer.default?.renderToReadableStream;
 
-    if (typeof createElement !== "function" || typeof renderToString !== "function") {
+    if (typeof createElement !== "function") {
       return {
         status: 500,
         headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
@@ -312,9 +325,29 @@ async function handlePageRoute(
       };
     }
 
-    let element: React.ReactNode = createElement(PageComponent as React.FC<Record<string, unknown>>, { params });
+    // Extract searchParams
+    const url = new URL(reqUrl, "http://localhost");
+    const searchParams = Object.fromEntries(url.searchParams.entries());
+    const metadataContext = { params, searchParams };
 
+    // Resolve metadata from layouts + page
+    const metadataLayers = [];
     const routeEntry = route as unknown as { layoutPaths?: string[] };
+    if (routeEntry.layoutPaths) {
+      for (const lp of routeEntry.layoutPaths) {
+        const layoutMod = serverEntry.layoutModules[lp];
+        if (layoutMod) metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
+      }
+    }
+    metadataLayers.push(await resolveMetadata(route.module, metadataContext));
+    const metadata = mergeMetadata(metadataLayers);
+    const head = buildMetadataHtml(metadata);
+
+    let element: React.ReactNode = createElement(
+      PageComponent as React.FC<Record<string, unknown>>,
+      { params, searchParams }
+    );
+
     if (routeEntry.layoutPaths) {
       for (const lp of routeEntry.layoutPaths.slice().reverse()) {
         const layoutMod = serverEntry.layoutModules[lp];
@@ -324,25 +357,69 @@ async function handlePageRoute(
       }
     }
 
+    // Streaming SSR path — preferred when available
+    if (typeof renderToReadableStream === "function") {
+      const reactStream = await renderToReadableStream(element);
+
+      const prefix = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  ${head}
+</head>
+<body>
+  <div id="root">`;
+      const suffix = `</div>
+</body>
+</html>`;
+
+      const encoder = new TextEncoder();
+      const reader = reactStream.getReader();
+
+      const stream = new ReadableStream({
+        async start(controller) {
+          controller.enqueue(encoder.encode(prefix));
+        },
+        async pull(controller) {
+          try {
+            const { done, value } = await reader.read();
+            if (done) {
+              controller.enqueue(encoder.encode(suffix));
+              controller.close();
+              return;
+            }
+            controller.enqueue(value);
+          } catch {
+            controller.close();
+          }
+        },
+      });
+
+      return {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Transfer-Encoding": "chunked",
+          ...buildSecurityHeaders(),
+        },
+        body: stream,
+      };
+    }
+
+    // Fallback: synchronous renderToString
+    if (typeof renderToString !== "function") {
+      return {
+        status: 500,
+        headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
+        body: "React SSR modules not available",
+      };
+    }
+
     const ssrBody = renderToString(element);
-
-    const metadata = route.module.metadata as
-      | { title?: string; description?: string }
-      | undefined;
-
-    let head = "";
-    if (metadata?.title) {
-      head += `<title>${escapeHtml(metadata.title)}</title>\n`;
-    }
-    if (metadata?.description) {
-      head += `<meta name="description" content="${escapeHtml(metadata.description)}" />\n`;
-    }
-
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   ${head}
 </head>
 <body>
@@ -369,14 +446,6 @@ async function handlePageRoute(
       body: "Internal server error",
     };
   }
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 // ---------------------------------------------------------------------------
@@ -426,6 +495,39 @@ export async function startProdServer(
     try {
       const served = await serveStaticFile(req, res, clientDir);
       if (served) return;
+
+      // Image optimization endpoint
+      const imgUrl = new URL(req.url || "/", "http://localhost");
+      if (isImageRequest(imgUrl.pathname)) {
+        const imgReq = new Request(`http://localhost${req.url || "/"}`, {
+          method: "GET",
+          headers: Object.fromEntries(
+            Object.entries(req.headers).filter(
+              ([, v]) => typeof v === "string",
+            ) as [string, string][],
+          ),
+        });
+        const imgRes = await handleImageRequest(imgReq, clientDir);
+        const imgHeaders: Record<string, string> = {};
+        imgRes.headers.forEach((value: string, key: string) => {
+          imgHeaders[key] = value;
+        });
+        res.writeHead(imgRes.status, imgHeaders);
+        if (imgRes.body) {
+          const reader = imgRes.body.getReader();
+          try {
+            for (;;) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              res.write(value);
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        }
+        res.end();
+        return;
+      }
 
       // Run middleware before routing
       if (middlewareHandler) {
@@ -485,20 +587,36 @@ export async function startProdServer(
         return;
       }
 
-      let result: { status: number; headers: Record<string, string>; body: string };
-
       if (matched.route.type === "api") {
-        result = await handleApiRoute(req, matched.route, matched.params);
+        const result = await handleApiRoute(req, matched.route, matched.params);
+        res.writeHead(result.status, result.headers);
+        res.end(result.body);
       } else {
-        result = await handlePageRoute(
+        const result = await handlePageRoute(
           matched.route,
           matched.params,
-          serverEntry
+          serverEntry,
+          req.url || "/"
         );
-      }
+        res.writeHead(result.status, result.headers);
 
-      res.writeHead(result.status, result.headers);
-      res.end(result.body);
+        // Handle streaming body (ReadableStream) or string
+        if (result.body instanceof ReadableStream) {
+          const reader = result.body.getReader();
+          try {
+            for (;;) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              res.write(value);
+            }
+          } finally {
+            reader.releaseLock();
+          }
+          res.end();
+        } else {
+          res.end(result.body);
+        }
+      }
     } catch (err) {
       console.error("[fabrk] Unhandled server error:", err);
       const securityHeaders = buildSecurityHeaders();

@@ -1,6 +1,12 @@
 import { matchRoute, type Route } from "./router";
 import { buildSecurityHeaders } from "../middleware/security";
 import { isRedirectError, isNotFoundError } from "./server-helpers";
+import {
+  resolveMetadata,
+  mergeMetadata,
+  buildMetadataHtml,
+} from "./metadata";
+import { isImageRequest } from "./image-handler";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -41,6 +47,18 @@ export function createFetchHandler(options: FetchHandlerOptions) {
         }
 
         const url = new URL(request.url);
+
+        // Image optimization endpoint
+        if (isImageRequest(url.pathname)) {
+          // In workers, images are served from static assets
+          // The handler needs a root dir — not available in workers,
+          // so delegate to getAsset for the original file
+          return new Response(JSON.stringify({ error: "Image optimization not available in worker mode" }), {
+            status: 501,
+            headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+          });
+        }
+
         const matched = matchRoute(routes, url.pathname);
 
         if (!matched) {
@@ -157,7 +175,7 @@ async function handleApiRoute(
 // ---------------------------------------------------------------------------
 
 async function handlePageRoute(
-  _request: Request,
+  request: Request,
   matched: { route: Route; params: Record<string, string> },
   modules?: Map<string, Record<string, unknown>>,
   layoutModules?: Map<string, Record<string, unknown>>
@@ -188,7 +206,6 @@ async function handlePageRoute(
   }
 
   try {
-    // Edge runtime: use lightweight renderToString
     const [reactDomServer, React] = await Promise.all([
       import("react-dom/server"),
       import("react"),
@@ -209,8 +226,28 @@ async function handlePageRoute(
       });
     }
 
-    // Build element tree
-    let element: React.ReactNode = createElement(PageComponent as React.FC<Record<string, unknown>>, { params: matched.params });
+    // Extract searchParams
+    const url = new URL(request.url);
+    const searchParams = Object.fromEntries(url.searchParams.entries());
+    const metadataContext = { params: matched.params, searchParams };
+
+    // Resolve metadata from layouts + page
+    const metadataLayers = [];
+    if (layoutModules) {
+      for (const lp of matched.route.layoutPaths) {
+        const layoutMod = layoutModules.get(lp);
+        if (layoutMod) metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
+      }
+    }
+    metadataLayers.push(await resolveMetadata(mod, metadataContext));
+    const metadata = mergeMetadata(metadataLayers);
+    const head = buildMetadataHtml(metadata);
+
+    // Build element tree with searchParams
+    let element: React.ReactNode = createElement(
+      PageComponent as React.FC<Record<string, unknown>>,
+      { params: matched.params, searchParams }
+    );
 
     // Apply layouts
     if (layoutModules) {
@@ -222,26 +259,14 @@ async function handlePageRoute(
       }
     }
 
-    // Extract metadata
-    const metadata = mod.metadata as
-      | { title?: string; description?: string }
-      | undefined;
-    let head = "";
-    if (metadata?.title) head += `<title>${escapeHtml(metadata.title)}</title>\n`;
-    if (metadata?.description) {
-      head += `<meta name="description" content="${escapeHtml(metadata.description)}" />\n`;
-    }
-
     // Prefer streaming if available (Cloudflare Workers supports it)
     if (typeof renderToReadableStream === "function") {
       const stream = await renderToReadableStream(element);
 
-      // We need to wrap the stream in our HTML shell
       const prefix = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   ${head}
 </head>
 <body>
@@ -284,7 +309,6 @@ async function handlePageRoute(
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   ${head}
 </head>
 <body>
@@ -315,14 +339,6 @@ async function handlePageRoute(
       },
     });
   }
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 export type { Route } from "./router";

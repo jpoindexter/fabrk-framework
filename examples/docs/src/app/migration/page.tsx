@@ -452,6 +452,275 @@ export default function StaticPage() {
 }`}</CodeBlock>
       </Section>
 
+      <Section title="MIGRATE FROM VERCEL AI SDK">
+        <p className="text-sm text-muted-foreground mb-4">
+          If you are using the Vercel AI SDK (<code>ai</code> package), fabrk replaces the
+          ad-hoc <code>generateText</code> / <code>streamText</code> call sites with file-system
+          agent definitions. Each agent lives in <code>agents/&lt;name&gt;/agent.ts</code> and is
+          discovered automatically at startup — no registration boilerplate required.
+        </p>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          BASIC GENERATION
+        </h3>
+        <CodeBlock title="before and after">{`// BEFORE: Vercel AI SDK
+import { generateText, streamText } from 'ai'
+import { openai } from '@ai-sdk/openai'
+
+const result = await generateText({
+  model: openai('gpt-4'),
+  prompt: 'Hello',
+})
+
+// Streaming with tools
+const stream = await streamText({
+  model: openai('gpt-4'),
+  messages: [...],
+  tools: { ... },
+})
+
+// AFTER: fabrk agent definition
+// agents/assistant/agent.ts
+import { defineAgent } from '@fabrk/framework'
+
+export default defineAgent({
+  model: 'gpt-4',
+  tools: ['my-tool'],
+  systemPrompt: 'You are a helpful assistant.',
+  stream: true,
+})`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          CALLING AGENTS FROM THE CLIENT
+        </h3>
+        <CodeBlock title="client hook">{`// BEFORE: call generateText / streamText in your own API route,
+// then wire up a custom fetch loop on the client.
+
+// AFTER: use the built-in useAgent hook
+import { useAgent } from '@fabrk/framework/client'
+
+function Chat() {
+  const { messages, send, isStreaming } = useAgent('assistant')
+
+  return (
+    <div>
+      {messages.map((m, i) => (
+        <p key={i}>{m.content}</p>
+      ))}
+      <button onClick={() => send('Hello')}>{'>'} SEND</button>
+    </div>
+  )
+}`}</CodeBlock>
+
+        <InfoCard title="AGENT FILE-SYSTEM ROUTING">
+          Place agent files anywhere under <code>agents/</code>. The route is derived from the
+          directory name: <code>agents/assistant/agent.ts</code> is served at
+          <code>/__ai/agents/assistant</code>. No manual registration needed.
+        </InfoCard>
+      </Section>
+
+      <Section title="MIGRATE AI TOOLS">
+        <p className="text-sm text-muted-foreground mb-4">
+          Vercel AI SDK tool definitions map directly to fabrk&apos;s <code>defineTool</code>.
+          The key difference is the schema format (JSON Schema object instead of a Zod schema)
+          and the return shape (MCP-compatible content array).
+        </p>
+
+        <CodeBlock title="before and after">{`// BEFORE: Vercel AI SDK tool
+import { tool } from 'ai'
+import { z } from 'zod'
+
+const weatherTool = tool({
+  description: 'Get weather',
+  parameters: z.object({ city: z.string() }),
+  execute: async ({ city }) => ({ temp: 72 }),
+})
+
+// AFTER: fabrk defineTool
+// tools/weather/tool.ts
+import { defineTool } from '@fabrk/framework'
+
+export default defineTool({
+  name: 'weather',
+  description: 'Get weather',
+  schema: {
+    type: 'object',
+    properties: { city: { type: 'string' } },
+    required: ['city'],
+  },
+  handler: async ({ city }) => ({
+    content: [{ type: 'text', text: JSON.stringify({ temp: 72 }) }],
+  }),
+})`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          REFERENCING TOOLS IN AGENTS
+        </h3>
+        <CodeBlock title="tool reference">{`// tools/weather/tool.ts — defines the tool (above)
+
+// agents/assistant/agent.ts — references the tool by name
+import { defineAgent } from '@fabrk/framework'
+
+export default defineAgent({
+  model: 'gpt-4',
+  tools: ['weather'],   // matched by tool name, auto-discovered from tools/
+  systemPrompt: 'You can look up weather.',
+  stream: true,
+})`}</CodeBlock>
+
+        <InfoCard title="MCP COMPATIBILITY">
+          fabrk tools use the MCP content array format natively. Tools defined with
+          <code>defineTool</code> are automatically exposed via the built-in MCP server
+          at <code>/__ai/mcp</code> — no additional adapter code required.
+        </InfoCard>
+      </Section>
+
+      <Section title="MIGRATE COST TRACKING">
+        <p className="text-sm text-muted-foreground mb-4">
+          The Vercel AI SDK has no built-in cost tracking. You either omit it entirely or wire
+          up a custom solution. fabrk tracks every LLM call automatically and enforces daily
+          budgets and per-agent spending limits.
+        </p>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          BEFORE: NO BUILT-IN TRACKING
+        </h3>
+        <CodeBlock>{`// BEFORE: nothing — or a hand-rolled counter
+import { generateText } from 'ai'
+
+const result = await generateText({ model: openai('gpt-4'), prompt })
+
+// Token usage is buried in result.usage — you must manually record,
+// store, and alert on cost. No enforcement, no per-agent isolation.
+console.log(result.usage.totalTokens)`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          AFTER: AUTOMATIC COST TRACKING
+        </h3>
+        <CodeBlock>{`// AFTER: configure budgets in fabrk.config.ts
+import { defineFabrkConfig } from '@fabrk/config'
+
+export default defineFabrkConfig({
+  ai: {
+    defaultModel: 'gpt-4',
+    costTracking: {
+      enabled: true,
+      dailyBudget: 10.00,       // hard cap across all agents ($)
+      alertThreshold: 0.8,      // warn at 80% of budget
+      perAgentLimit: 2.00,      // per-agent daily cap ($)
+    },
+  },
+})`}</CodeBlock>
+
+        <CodeBlock title="runtime cost API">{`// Query live cost data at runtime
+import { getCostTracker } from '@fabrk/ai'
+
+const tracker = getCostTracker()
+
+// Total spend today across all agents
+const daily = await tracker.getDailyTotal()
+
+// Spend broken down by agent name
+const byAgent = await tracker.getDailyByAgent()
+
+// Check remaining budget before running an expensive prompt
+const remaining = await tracker.getRemainingBudget()
+if (remaining < 0.10) {
+  throw new Error('Daily budget nearly exhausted')
+}`}</CodeBlock>
+
+        <InfoCard title="BUDGET ENFORCEMENT">
+          When a call would exceed the configured <code>dailyBudget</code>, fabrk rejects it
+          before the LLM request is made and returns a 402 response to the client. The
+          per-agent cap is enforced independently so one runaway agent cannot consume the
+          entire shared budget.
+        </InfoCard>
+      </Section>
+
+      <Section title="MIGRATE FROM NEXT.JS ROUTING">
+        <p className="text-sm text-muted-foreground mb-4">
+          fabrk uses the same file-system routing conventions as the Next.js App Router.
+          In most cases, your existing <code>app/</code> directory moves over unchanged.
+          The primary differences are the build toolchain (Vite instead of webpack) and a
+          small set of Next.js-specific imports that need replacing.
+        </p>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          ROUTING CONVENTIONS (IDENTICAL)
+        </h3>
+        <CodeBlock title="file-system routing">{`// Next.js App Router          →    fabrk (identical)
+app/page.tsx                  →    app/page.tsx
+app/layout.tsx                →    app/layout.tsx
+app/loading.tsx               →    app/loading.tsx
+app/error.tsx                 →    app/error.tsx
+app/not-found.tsx             →    app/not-found.tsx
+app/[id]/page.tsx             →    app/[id]/page.tsx
+app/api/route.ts              →    app/api/route.ts
+app/(group)/page.tsx          →    app/(group)/page.tsx
+
+// No changes needed for any of these files.`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          IMPORTS THAT NEED REPLACING
+        </h3>
+        <CodeBlock title="next.js-specific imports">{`// BEFORE: Next.js imports
+import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
+import { headers, cookies } from 'next/headers'
+import Image from 'next/image'
+
+// AFTER: fabrk equivalents
+import { Link } from '@fabrk/framework/client'          // or standard <a>
+import { useRouter, usePathname } from '@fabrk/framework/client'
+import { headers, cookies } from '@fabrk/framework/server'
+import { Image } from '@fabrk/framework/client'         // or standard <img>`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          SERVER ACTIONS
+        </h3>
+        <CodeBlock title="server actions — same syntax">{`// Server actions work the same way — same directive, same signature
+'use server'
+
+export async function createItem(formData: FormData) {
+  const name = formData.get('name') as string
+  // ... database call
+  return { success: true }
+}
+
+// Client usage is identical too
+'use client'
+import { createItem } from './actions'
+
+<form action={createItem}>
+  <input name="name" />
+  <button type="submit">{'>'} CREATE</button>
+</form>`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          METADATA API
+        </h3>
+        <CodeBlock title="metadata — same export name">{`// Metadata export works identically
+import type { Metadata } from '@fabrk/framework'
+
+export const metadata: Metadata = {
+  title: 'My App',
+  description: 'Built with fabrk',
+}
+
+export default function Page() {
+  return <main>...</main>
+}`}</CodeBlock>
+
+        <InfoCard title="KEY DIFFERENCES FROM NEXT.JS">
+          <ul className="space-y-1 mt-1 list-disc list-inside">
+            <li>Build toolchain: Vite 7 instead of webpack/Turbopack — faster cold starts and HMR</li>
+            <li>No <code>next.config.ts</code> — use <code>fabrk.config.ts</code> instead</li>
+            <li>No <code>next/font</code> — import fonts directly in CSS or via Vite plugins</li>
+            <li>No Vercel-specific deployment primitives — fabrk targets any Node.js or edge host</li>
+          </ul>
+        </InfoCard>
+      </Section>
+
       <Section title="MIGRATION CHECKLIST">
         <InfoCard title="STEP BY STEP">
           <ol className="space-y-2 mt-1 list-decimal list-inside">

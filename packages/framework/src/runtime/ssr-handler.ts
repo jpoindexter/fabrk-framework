@@ -4,6 +4,12 @@ import { matchRoute, findFile } from "./router";
 import { buildSecurityHeaders } from "../middleware/security";
 import { isRedirectError, isNotFoundError } from "./server-helpers";
 import { buildPageTree, type PageModules } from "./page-builder";
+import {
+  resolveMetadata,
+  mergeMetadata,
+  buildMetadataHtml,
+  type Metadata,
+} from "./metadata";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -47,9 +53,16 @@ export async function handleRequest(
       const middlewareMod = await viteServer.ssrLoadModule(middlewarePath);
       const middleware = middlewareMod.default;
       if (typeof middleware === "function") {
-        const middlewareResponse = await middleware(request);
-        if (middlewareResponse instanceof Response) {
-          return middlewareResponse;
+        const middlewareResult = await middleware(request);
+        if (middlewareResult instanceof Response) {
+          return middlewareResult;
+        }
+        // Support middleware rewrites (object with rewriteUrl)
+        if (middlewareResult && typeof middlewareResult === "object" && typeof middlewareResult.rewriteUrl === "string") {
+          request = new Request(
+            new URL(middlewareResult.rewriteUrl, request.url).toString(),
+            request
+          );
         }
       }
     } catch {
@@ -292,9 +305,18 @@ async function handlePageRoute(
       }
     }
 
-    const metadata = pageMod.metadata as
-      | { title?: string; description?: string }
-      | undefined;
+    const url = new URL(_request.url);
+    const searchParams = Object.fromEntries(url.searchParams.entries());
+    const metadataContext = { params: matched.params, searchParams };
+
+    // Resolve metadata from layouts + page (full pipeline)
+    const metadataLayers: Metadata[] = [];
+    for (const layoutPath of matched.route.layoutPaths) {
+      const layoutMod = await viteServer.ssrLoadModule(layoutPath);
+      metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
+    }
+    metadataLayers.push(await resolveMetadata(pageMod, metadataContext));
+    const metadata = mergeMetadata(metadataLayers);
 
     const loader = reactLoader ?? defaultReactLoader;
     const [reactDomServer, React] = await loader();
@@ -307,8 +329,6 @@ async function handlePageRoute(
       });
     }
 
-    const url = new URL(_request.url);
-
     // Build the full element tree with error/loading/not-found boundaries
     const hasBoundaries = modules.errorFallback || modules.loadingFallback ||
       modules.notFoundFallback || modules.globalErrorFallback;
@@ -318,13 +338,14 @@ async function handlePageRoute(
       element = buildPageTree({
         route: matched.route,
         params: matched.params,
+        searchParams,
         modules,
         pathname: url.pathname,
         React,
       });
     } else {
       // Fast path: no boundaries, build tree directly (backwards compat)
-      element = createElement(PageComponent, { params: matched.params });
+      element = createElement(PageComponent, { params: matched.params, searchParams });
       for (let i = layouts.length - 1; i >= 0; i--) {
         element = createElement(layouts[i], { children: element });
       }
@@ -378,7 +399,7 @@ async function handlePageRoute(
     }
 
     if (typeof renderToString === "function") {
-      const head = buildHead(metadata);
+      const head = buildMetadataHtml(metadata);
       const ssrBody = renderToString(element);
       const html = htmlShell({ head, body: ssrBody });
       return new Response(html, {
@@ -433,11 +454,11 @@ async function streamingRender(
   element: unknown,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderToReadableStream: (element: any) => Promise<ReadableStream>,
-  metadata: { title?: string; description?: string } | undefined,
+  metadata: Metadata,
   htmlShell: (options: { head: string; body: string }) => string
 ): Promise<Response> {
   const reactStream = await renderToReadableStream(element);
-  const head = buildHead(metadata);
+  const head = buildMetadataHtml(metadata);
   const marker = "<!--FABRK_BODY-->";
   const shell = htmlShell({ head, body: marker });
   const splitIndex = shell.indexOf(marker);
@@ -481,7 +502,7 @@ async function streamingRender(
 async function buildDevHtml(
   viteServer: ViteDevServer,
   matched: RouteMatch,
-  metadata: { title?: string; description?: string } | undefined,
+  metadata: Metadata,
   ssrBody: string,
   fallbackShell: (options: { head: string; body: string }) => string
 ): Promise<string> {
@@ -489,7 +510,7 @@ async function buildDevHtml(
   const indexHtmlPath = path.join(root, "index.html");
 
   if (!fs.existsSync(indexHtmlPath)) {
-    const head = buildHead(metadata);
+    const head = buildMetadataHtml(metadata);
     return fallbackShell({ head, body: ssrBody });
   }
 
@@ -522,41 +543,13 @@ import "${pageRelative}";
     `<div id="root">${ssrBody}</div>`
   );
 
-  if (metadata?.title) {
-    template = template.replace(
-      /<title>[^<]*<\/title>/,
-      `<title>${escapeHtml(metadata.title)}</title>`
-    );
-  }
-  if (metadata?.description) {
-    const metaTag = `<meta name="description" content="${escapeHtml(metadata.description)}" />`;
-    template = template.replace("</head>", `  ${metaTag}\n</head>`);
+  // Inject full metadata into <head>
+  const metadataHtml = buildMetadataHtml(metadata);
+  if (metadataHtml) {
+    template = template.replace("</head>", `  ${metadataHtml}\n</head>`);
   }
 
   return template;
-}
-
-function buildHead(
-  metadata?: { title?: string; description?: string }
-): string {
-  const parts: string[] = [];
-  if (metadata?.title) {
-    parts.push(`<title>${escapeHtml(metadata.title)}</title>`);
-  }
-  if (metadata?.description) {
-    parts.push(
-      `<meta name="description" content="${escapeHtml(metadata.description)}" />`
-    );
-  }
-  return parts.join("\n  ");
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 // Vite 7's ssrLoadModule without an importer doesn't externalize CJS modules.

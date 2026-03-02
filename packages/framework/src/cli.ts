@@ -525,6 +525,246 @@ async function info(): Promise<void> {
   }
 }
 
+async function agents(): Promise<void> {
+  const root = process.cwd();
+  // eslint-disable-next-line no-console
+  console.log(`\n  fabrk agents v${VERSION}\n`);
+
+  try {
+    const { scanAgents } = await import("./agents/scanner");
+    const { scanTools } = await import("./tools/scanner");
+
+    const scannedAgents = scanAgents(root);
+    const scannedTools = scanTools(root);
+
+    if (scannedAgents.length === 0) {
+      // eslint-disable-next-line no-console
+      console.log("  No agents found. Create agents in agents/ directory.\n");
+      return;
+    }
+
+    // eslint-disable-next-line no-console
+    console.log(`  Found ${scannedAgents.length} agent(s):\n`);
+
+    for (const agent of scannedAgents) {
+      // eslint-disable-next-line no-console
+      console.log(`  ${agent.name}`);
+      // eslint-disable-next-line no-console
+      console.log(`    Route:  ${agent.routePattern}`);
+      // eslint-disable-next-line no-console
+      console.log(`    File:   ${path.relative(root, agent.filePath)}`);
+
+      try {
+        const mod = await import(agent.filePath);
+        const def = mod.default ?? mod;
+        if (def && typeof def === "object") {
+          if (typeof def.model === "string") {
+            // eslint-disable-next-line no-console
+            console.log(`    Model:  ${def.model}`);
+          }
+          if (Array.isArray(def.tools) && def.tools.length > 0) {
+            // eslint-disable-next-line no-console
+            console.log(`    Tools:  ${def.tools.join(", ")}`);
+          }
+          if (def.memory) {
+            // eslint-disable-next-line no-console
+            console.log("    Memory: enabled");
+          }
+          if (def.auth) {
+            // eslint-disable-next-line no-console
+            console.log(`    Auth:   ${def.auth}`);
+          }
+        }
+      } catch {
+        // eslint-disable-next-line no-console
+        console.log("    (could not load definition)");
+      }
+      // eslint-disable-next-line no-console
+      console.log();
+    }
+
+    if (scannedTools.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`  Found ${scannedTools.length} tool(s): ${scannedTools.map((t) => t.name).join(", ")}\n`);
+    }
+  } catch (err) {
+    console.error("  Error scanning project:", err);
+  }
+}
+
+async function check(): Promise<void> {
+  const root = process.cwd();
+  // eslint-disable-next-line no-console
+  console.log(`\n  fabrk check v${VERSION}\n`);
+
+  let issues = 0;
+
+  // Check Node.js version
+  const nodeVersion = process.versions.node;
+  const majorVersion = parseInt(nodeVersion.split(".")[0], 10);
+  if (majorVersion < 22) {
+    // eslint-disable-next-line no-console
+    console.log(`  [WARN] Node.js ${nodeVersion} detected — Node.js 22+ recommended`);
+    issues++;
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(`  [OK]   Node.js ${nodeVersion}`);
+  }
+
+  // Check for package.json
+  const pkgPath = path.join(root, "package.json");
+  if (fs.existsSync(pkgPath)) {
+    // eslint-disable-next-line no-console
+    console.log("  [OK]   package.json found");
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("  [FAIL] No package.json found");
+    issues++;
+  }
+
+  // Check for fabrk config
+  const hasConfigTs = fs.existsSync(path.join(root, "fabrk.config.ts"));
+  const hasConfigJs = fs.existsSync(path.join(root, "fabrk.config.js"));
+  if (hasConfigTs || hasConfigJs) {
+    // eslint-disable-next-line no-console
+    console.log(`  [OK]   ${hasConfigTs ? "fabrk.config.ts" : "fabrk.config.js"} found`);
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("  [INFO] No fabrk.config found (using defaults)");
+  }
+
+  // Check for app directory
+  const hasAppDir = fs.existsSync(path.join(root, "app"));
+  if (hasAppDir) {
+    // eslint-disable-next-line no-console
+    console.log("  [OK]   app/ directory found");
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("  [INFO] No app/ directory (no file-system routing)");
+  }
+
+  // Check for vite config
+  const viteConfigs = ["vite.config.ts", "vite.config.js", "vite.config.mjs"];
+  const hasViteConfig = viteConfigs.some((f) => fs.existsSync(path.join(root, f)));
+  if (hasViteConfig) {
+    // eslint-disable-next-line no-console
+    console.log("  [OK]   Vite config found");
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("  [INFO] No vite config (fabrk will use defaults)");
+  }
+
+  // Check agents
+  try {
+    const { scanAgents } = await import("./agents/scanner");
+    const agents = scanAgents(root);
+    if (agents.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`  [OK]   ${agents.length} agent(s) discovered`);
+
+      // Validate agent definitions
+      for (const agent of agents) {
+        try {
+          const mod = await import(agent.filePath);
+          const def = mod.default ?? mod;
+          if (!def || typeof def !== "object") {
+            // eslint-disable-next-line no-console
+            console.log(`  [WARN] Agent "${agent.name}" has no valid definition export`);
+            issues++;
+          } else if (typeof def.model !== "string") {
+            // eslint-disable-next-line no-console
+            console.log(`  [WARN] Agent "${agent.name}" is missing a "model" field`);
+            issues++;
+          }
+        } catch {
+          // eslint-disable-next-line no-console
+          console.log(`  [WARN] Agent "${agent.name}" failed to load — check for syntax errors`);
+          issues++;
+        }
+      }
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("  [INFO] No agents found");
+    }
+  } catch {
+    // eslint-disable-next-line no-console
+    console.log("  [INFO] Agent scanning not available");
+  }
+
+  // Check tools
+  try {
+    const { scanTools } = await import("./tools/scanner");
+    const tools = scanTools(root);
+    if (tools.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log(`  [OK]   ${tools.length} tool(s) discovered`);
+    } else {
+      // eslint-disable-next-line no-console
+      console.log("  [INFO] No tools found");
+    }
+  } catch {
+    // eslint-disable-next-line no-console
+    console.log("  [INFO] Tool scanning not available");
+  }
+
+  // Check for TypeScript
+  const hasTsConfig = fs.existsSync(path.join(root, "tsconfig.json"));
+  if (hasTsConfig) {
+    // eslint-disable-next-line no-console
+    console.log("  [OK]   tsconfig.json found");
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("  [INFO] No tsconfig.json");
+  }
+
+  // eslint-disable-next-line no-console
+  console.log();
+  if (issues === 0) {
+    // eslint-disable-next-line no-console
+    console.log("  All checks passed.\n");
+  } else {
+    // eslint-disable-next-line no-console
+    console.log(`  ${issues} issue(s) found.\n`);
+  }
+}
+
+async function test(): Promise<void> {
+  const root = process.cwd();
+  // eslint-disable-next-line no-console
+  console.log(`\n  fabrk test v${VERSION}\n`);
+
+  // Check if vitest is available
+  try {
+    const { execFileSync } = await import("node:child_process");
+
+    // Look for test files
+    const testPatterns = [
+      path.join(root, "**/*.test.ts"),
+      path.join(root, "**/*.test.tsx"),
+      path.join(root, "**/*.spec.ts"),
+      path.join(root, "**/*.spec.tsx"),
+    ];
+
+    // eslint-disable-next-line no-console
+    console.log("  Running vitest...\n");
+
+    execFileSync(process.execPath, [
+      path.join(root, "node_modules/.bin/vitest"),
+      "run",
+      ...rawArgs,
+    ], {
+      cwd: root,
+      stdio: "inherit",
+    });
+  } catch (err) {
+    if (err && typeof err === "object" && "status" in err) {
+      process.exit((err as { status: number }).status);
+    }
+    console.error("  Failed to run tests. Is vitest installed?");
+    process.exit(1);
+  }
+}
+
 function printHelp(): void {
   // eslint-disable-next-line no-console
   console.log(`
@@ -537,6 +777,9 @@ function printHelp(): void {
     build    Build for production (client + SSR + AGENTS.md)
     start    Start production server
     info     Show project agents, tools, and prompts
+    agents   List all discovered agents with config details
+    check    Run health/compatibility checks on the project
+    test     Run project tests via vitest
 
   Options:
     --port <number>    Server port (dev: 5173, start: 3000)
@@ -550,6 +793,9 @@ function printHelp(): void {
     fabrk build                Build for production
     fabrk start                Start production server
     fabrk info                 Show agents, tools, prompts
+    fabrk agents               List all agents and config
+    fabrk check                Verify project health
+    fabrk test                 Run agent tests
 `);
 }
 
@@ -588,6 +834,27 @@ switch (command) {
 
   case "info":
     info().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+    break;
+
+  case "agents":
+    agents().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+    break;
+
+  case "check":
+    check().catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+    break;
+
+  case "test":
+    test().catch((e) => {
       console.error(e);
       process.exit(1);
     });

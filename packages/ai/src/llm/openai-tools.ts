@@ -126,6 +126,7 @@ export async function* streamWithTools(
 
   // Accumulate tool call deltas
   const toolCallAccum = new Map<number, { id: string; name: string; args: string }>();
+  let toolCallsEmitted = false;
 
   for await (const chunk of stream) {
     const delta = chunk.choices?.[0]?.delta;
@@ -141,6 +142,7 @@ export async function* streamWithTools(
         if (!toolCallAccum.has(idx)) {
           toolCallAccum.set(idx, { id: tc.id || "", name: "", args: "" });
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const entry = toolCallAccum.get(idx)!;
         if (tc.id) entry.id = tc.id;
         if (tc.function?.name) entry.name += tc.function.name;
@@ -163,6 +165,7 @@ export async function* streamWithTools(
           arguments: args,
         };
       }
+      toolCallsEmitted = true;
 
       yield {
         type: "usage",
@@ -172,9 +175,19 @@ export async function* streamWithTools(
     }
   }
 
-  // If no usage chunk was sent (some providers), emit tool calls now
-  if (toolCallAccum.size > 0) {
-    // Check if we already emitted (usage path handles it)
-    // This is a fallback for providers that don't send usage
+  // Fallback: emit tool calls if no usage chunk was received
+  if (toolCallAccum.size > 0 && !toolCallsEmitted) {
+    for (const [, entry] of toolCallAccum) {
+      let args: Record<string, unknown> = {};
+      try {
+        args = JSON.parse(entry.args || "{}");
+      } catch { /* keep empty */ }
+      yield {
+        type: "tool-call",
+        id: entry.id,
+        name: entry.name,
+        arguments: args,
+      };
+    }
   }
 }

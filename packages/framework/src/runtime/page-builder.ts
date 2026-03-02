@@ -23,7 +23,7 @@ import {
 
 export interface PageModules {
   /** The page's default export component. */
-  page: React.ComponentType<{ params: Record<string, string> }>;
+  page: React.ComponentType<{ params: Record<string, string>; searchParams?: Record<string, string> }>;
   /** Layout components, ordered root → leaf. */
   layouts: React.ComponentType<{ children: React.ReactNode }>[];
   /** Error boundary fallback component (from nearest error.tsx). */
@@ -45,6 +45,7 @@ export interface PageModules {
 export interface BuildPageTreeOptions {
   route: Route;
   params: Record<string, string>;
+  searchParams?: Record<string, string>;
   modules: PageModules;
   pathname: string;
   /** React module — passed in to avoid importing React at module scope. */
@@ -56,7 +57,7 @@ export interface BuildPageTreeOptions {
  * Returns a single React element ready to pass to renderToReadableStream.
  */
 export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement {
-  const { route: _route, params, modules, pathname, React } = options;
+  const { route: _route, params, searchParams, modules, pathname, React } = options;
   const {
     page: Page,
     layouts,
@@ -69,7 +70,7 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
   // We use React.createElement throughout to avoid JSX transform issues in SSR
 
   // Innermost: the page component
-  let element: React.ReactElement = React.createElement(Page, { params });
+  let element: React.ReactElement = React.createElement(Page, { params, searchParams });
 
   // Wrap in Suspense if loading.tsx exists
   if (loadingFallback) {

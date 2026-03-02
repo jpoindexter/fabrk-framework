@@ -6,10 +6,11 @@ import { scanTools } from "../tools/scanner";
 import { loadToolDefinitions } from "../tools/loader";
 import { loadFabrkConfig, type FabrkConfig } from "../config/fabrk-config";
 import { loadPrompt } from "../prompts/loader";
-import { setAgents, setTools, recordCall } from "../dashboard/vite-plugin";
+import { setAgents, setTools, recordCall, recordToolCall, recordError } from "../dashboard/vite-plugin";
 import { applySecurityHeaders } from "../middleware/security";
 import { nodeToWebRequest, writeWebResponse } from "../runtime/node-web-bridge";
 import type { ToolDefinition } from "../tools/define-tool";
+import { getMemoryStore } from "./memory/index";
 
 export function agentPlugin(): Plugin {
   let root: string;
@@ -112,6 +113,9 @@ export function agentPlugin(): Plugin {
             const stream = agentDef.stream ?? fabrkConfig.agents?.defaultStream ?? true;
             const budget = agentDef.budget ?? fabrkConfig.ai?.budget;
 
+            // Wire memory store if agent has memory enabled
+            const memoryStore = agentDef.memory ? getMemoryStore() : undefined;
+
             const handler = createAgentHandler({
               model,
               auth: agentDef.auth ?? "none",
@@ -121,6 +125,9 @@ export function agentPlugin(): Plugin {
               budget,
               fallback: agentDef.fallback ?? fabrkConfig.ai?.fallback,
               toolDefinitions: toolDefs,
+              memory: agentDef.memory,
+              memoryStore,
+              maxIterations: agentDef.maxDelegations ?? fabrkConfig.agents?.maxIterations,
               onCallComplete: (record) => {
                 recordCall({
                   timestamp: Date.now(),
@@ -130,6 +137,22 @@ export function agentPlugin(): Plugin {
                   cost: record.cost,
                 });
               },
+              onToolCall: (record) => {
+                recordToolCall({
+                  timestamp: Date.now(),
+                  agent: record.agent,
+                  tool: record.tool,
+                  durationMs: record.durationMs,
+                  iteration: record.iteration,
+                });
+              },
+              onError: (record) => {
+                recordError({
+                  timestamp: record.timestamp,
+                  agent: record.agent,
+                  error: record.error,
+                });
+              },
             });
 
             const webReq = await nodeToWebRequest(req, url);
@@ -137,6 +160,11 @@ export function agentPlugin(): Plugin {
             await writeWebResponse(res, webRes);
           } catch (err) {
             console.error(`[fabrk] Agent "${agentName}" error:`, err);
+            recordError({
+              timestamp: Date.now(),
+              agent: agentName,
+              error: err instanceof Error ? err.message : "Unknown error",
+            });
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
             applySecurityHeaders(res);

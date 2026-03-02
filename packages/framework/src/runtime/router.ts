@@ -22,7 +22,20 @@ export interface Route {
   catchAll?: boolean;
   /** True for `[[...slug]]` optional catch-all routes. */
   optionalCatchAll?: boolean;
+  /** Parallel route slots — maps slot name to page file path. */
+  slots?: Record<string, string>;
+  /** Default slot fallbacks — maps slot name to default.tsx file path. */
+  slotDefaults?: Record<string, string>;
+  /** Intercepting route depth (0 = same level, 1 = parent, etc., -1 = root). */
+  interceptDepth?: number;
+  /** For intercepting routes, the original (non-intercepted) route pattern. */
+  interceptTarget?: string;
 }
+
+/** Regex for `@slotName` parallel route directories. */
+const PARALLEL_SLOT_SEG = /^@(\w+)$/;
+/** Regex for intercepting route prefixes: (.), (..), (..)(..), (...) */
+const INTERCEPT_PREFIX = /^(\(\.+\))+/;
 
 export interface RouteMatch {
   route: Route;
@@ -156,11 +169,28 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
     return;
   }
 
+  // Collect parallel slots for page routes in this directory
+  const slots: Record<string, string> = {};
+  const slotDefaults: Record<string, string> = {};
+
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
       if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
+
+      // Detect @slot parallel route directories
+      // Slots don't create standalone routes — they render alongside the parent page
+      const slotMatch = PARALLEL_SLOT_SEG.exec(entry.name);
+      if (slotMatch) {
+        const slotName = slotMatch[1];
+        const slotPage = findFile(fullPath, "page");
+        if (slotPage) slots[slotName] = slotPage;
+        const slotDefault = findFile(fullPath, "default");
+        if (slotDefault) slotDefaults[slotName] = slotDefault;
+        continue;
+      }
+
       walkDir(fullPath, appDir, routes);
       continue;
     }
@@ -182,7 +212,10 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
       const layoutPaths = collectLayouts(appDir, routeDir);
       const boundaries = collectBoundaries(appDir, routeDir);
 
-      routes.push({
+      // Detect intercepting routes from directory name
+      const interceptInfo = detectInterceptingRoute(routeDir, appDir);
+
+      const route: Route = {
         pattern: dirResult.pattern,
         regex,
         paramNames,
@@ -192,7 +225,14 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
         catchAll: catchAll || undefined,
         optionalCatchAll: optionalCatchAll || undefined,
         ...boundaries,
-      });
+      };
+
+      if (interceptInfo) {
+        route.interceptDepth = interceptInfo.depth;
+        route.interceptTarget = interceptInfo.targetPattern;
+      }
+
+      routes.push(route);
     } else if (baseName === "route") {
       const routeDir = path.dirname(fullPath);
       const dirResult = dirToPattern(routeDir, appDir);
@@ -211,6 +251,16 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
         catchAll: catchAll || undefined,
         optionalCatchAll: optionalCatchAll || undefined,
       });
+    }
+  }
+
+  // Attach collected slots to page routes in this directory
+  if (Object.keys(slots).length > 0 || Object.keys(slotDefaults).length > 0) {
+    for (const route of routes) {
+      if (path.dirname(route.filePath) === dir && route.type === "page") {
+        if (Object.keys(slots).length > 0) route.slots = slots;
+        if (Object.keys(slotDefaults).length > 0) route.slotDefaults = slotDefaults;
+      }
     }
   }
 }
@@ -240,6 +290,22 @@ function dirToPattern(
   const segments: SegmentInfo[] = [];
 
   for (const seg of rawSegments) {
+    // Parallel route slots: @modal, @sidebar — stripped from URL
+    if (PARALLEL_SLOT_SEG.test(seg)) {
+      segments.push({ urlSegment: "", type: "group" });
+      continue;
+    }
+
+    // Intercepting route prefix: strip (.) (..) (...) prefix from segment
+    const interceptMatch = INTERCEPT_PREFIX.exec(seg);
+    if (interceptMatch) {
+      const realName = seg.slice(interceptMatch[0].length);
+      if (realName) {
+        segments.push({ urlSegment: realName, type: "static" });
+        continue;
+      }
+    }
+
     // Route groups: (admin), (marketing) — stripped from URL
     if (ROUTE_GROUP_SEG.test(seg)) {
       segments.push({ urlSegment: "", type: "group" });
@@ -385,4 +451,51 @@ function routeWeight(route: Route): number {
     weight += seg.startsWith(":") ? 1 : 0;
   }
   return weight;
+}
+
+/**
+ * Detect if a route directory uses intercepting route conventions.
+ * Checks all segments in the path from appDir to routeDir.
+ *
+ * Conventions:
+ * - `(.)routeName` — intercept from same level (depth 0)
+ * - `(..)routeName` — intercept from parent level (depth 1)
+ * - `(..)(..)routeName` — intercept from grandparent (depth 2)
+ * - `(...)routeName` — intercept from root (depth -1)
+ */
+function detectInterceptingRoute(
+  routeDir: string,
+  appDir: string,
+): { depth: number; targetPattern: string } | null {
+  const relative = path.relative(appDir, routeDir);
+  if (!relative) return null;
+
+  const segments = relative.split(path.sep);
+
+  for (const seg of segments) {
+    const match = INTERCEPT_PREFIX.exec(seg);
+    if (!match) continue;
+
+    const prefix = match[0];
+    const targetName = seg.slice(prefix.length);
+    if (!targetName) continue;
+
+    // (...) = intercept from root
+    if (prefix === "(...)") {
+      return { depth: -1, targetPattern: `/${targetName}` };
+    }
+
+    // Count (..) occurrences
+    const dotDotCount = (prefix.match(/\(\.\.\)/g) || []).length;
+    if (dotDotCount > 0) {
+      return { depth: dotDotCount, targetPattern: targetName };
+    }
+
+    // (.) = same level
+    if (prefix === "(.)") {
+      return { depth: 0, targetPattern: targetName };
+    }
+  }
+
+  return null;
 }

@@ -39,6 +39,17 @@ export interface AgentHandlerOptions
     tokens: number;
     cost: number;
   }) => void;
+  onToolCall?: (record: {
+    agent: string;
+    tool: string;
+    durationMs: number;
+    iteration: number;
+  }) => void;
+  onError?: (record: {
+    agent: string;
+    error: string;
+    timestamp: number;
+  }) => void;
 }
 
 function jsonResponse(data: unknown, status: number): Response {
@@ -213,11 +224,30 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           return createSSEResponse(async function* (): AsyncGenerator<SSEEvent> {
             let totalTokens = 0;
             let totalCost = 0;
+            let streamContent = "";
 
             for await (const event of loopGen) {
               if (event.type === "usage") {
                 totalTokens += event.promptTokens + event.completionTokens;
                 totalCost += event.cost;
+              }
+              if (event.type === "text") {
+                streamContent = event.content;
+              }
+              if (event.type === "tool-result") {
+                options.onToolCall?.({
+                  agent: agentName,
+                  tool: event.name,
+                  durationMs: event.durationMs,
+                  iteration: event.iteration,
+                });
+              }
+              if (event.type === "error") {
+                options.onError?.({
+                  agent: agentName,
+                  error: event.message,
+                  timestamp: Date.now(),
+                });
               }
               const sseEvent = agentLoopEventToSSE(event);
               if (sseEvent) yield sseEvent;
@@ -229,12 +259,32 @@ export function createAgentHandler(options: AgentHandlerOptions) {
               tokens: totalTokens,
               cost: totalCost,
             });
+
+            // Persist to memory after stream completes
+            if (options.memoryStore && threadId) {
+              const lastUserMsg = sanitized[sanitized.length - 1];
+              if (lastUserMsg) {
+                await options.memoryStore.appendMessage(threadId, {
+                  threadId,
+                  role: "user",
+                  content: lastUserMsg.content,
+                });
+              }
+              if (streamContent) {
+                await options.memoryStore.appendMessage(threadId, {
+                  threadId,
+                  role: "assistant",
+                  content: streamContent,
+                });
+              }
+            }
           });
         }
 
         // Batch mode — collect events
         let content = "";
-        let totalTokens = 0;
+        let totalPromptTokens = 0;
+        let totalCompletionTokens = 0;
         let totalCost = 0;
         const toolCalls: Array<{ name: string; input: Record<string, unknown>; output: string }> = [];
         let currentToolCall: { name: string; input: Record<string, unknown> } | null = null;
@@ -242,20 +292,35 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         for await (const event of loopGen) {
           if (event.type === "text") content = event.content;
           else if (event.type === "usage") {
-            totalTokens += event.promptTokens + event.completionTokens;
+            totalPromptTokens += event.promptTokens;
+            totalCompletionTokens += event.completionTokens;
             totalCost += event.cost;
           } else if (event.type === "tool-call") {
             currentToolCall = { name: event.name, input: event.input };
-          } else if (event.type === "tool-result" && currentToolCall) {
-            toolCalls.push({ ...currentToolCall, output: event.output });
-            currentToolCall = null;
+          } else if (event.type === "tool-result") {
+            if (currentToolCall) {
+              toolCalls.push({ ...currentToolCall, output: event.output });
+              currentToolCall = null;
+            }
+            options.onToolCall?.({
+              agent: agentName,
+              tool: event.name,
+              durationMs: event.durationMs,
+              iteration: event.iteration,
+            });
+          } else if (event.type === "error") {
+            options.onError?.({
+              agent: agentName,
+              error: event.message,
+              timestamp: Date.now(),
+            });
           }
         }
 
         options.onCallComplete?.({
           agent: agentName,
           model: options.model,
-          tokens: totalTokens,
+          tokens: totalPromptTokens + totalCompletionTokens,
           cost: totalCost,
         });
 
@@ -280,7 +345,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
         return jsonResponse({
           content,
-          usage: { promptTokens: Math.floor(totalTokens / 2), completionTokens: Math.ceil(totalTokens / 2) },
+          usage: { promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens },
           cost: totalCost,
           toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
           threadId,

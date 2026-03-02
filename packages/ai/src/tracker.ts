@@ -24,15 +24,28 @@ import { calculateCost, MODEL_PRICING } from './pricing';
 
 export class InMemoryCostStore implements CostStore {
   private static readonly MAX_EVENTS = 10_000;
-  private events: AICostEvent[] = [];
+  private buffer: (AICostEvent | undefined)[] = new Array(InMemoryCostStore.MAX_EVENTS);
+  private head = 0;
+  private count = 0;
 
   async save(event: AICostEvent): Promise<void> {
-    if (this.events.length >= InMemoryCostStore.MAX_EVENTS) {
-      // NOTE: shift() is O(n) — this store is for development/testing only.
-      // In high-throughput production, use a persistent CostStore (e.g., Prisma adapter).
-      this.events.shift();
+    const idx = (this.head + this.count) % InMemoryCostStore.MAX_EVENTS;
+    this.buffer[idx] = event;
+    if (this.count < InMemoryCostStore.MAX_EVENTS) {
+      this.count++;
+    } else {
+      this.head = (this.head + 1) % InMemoryCostStore.MAX_EVENTS;
     }
-    this.events.push(event);
+  }
+
+  private getEvents(): AICostEvent[] {
+    const result: AICostEvent[] = [];
+    for (let i = 0; i < this.count; i++) {
+      const idx = (this.head + i) % InMemoryCostStore.MAX_EVENTS;
+      const event = this.buffer[idx];
+      if (event) result.push(event);
+    }
+    return result;
   }
 
   async query(filters: {
@@ -43,7 +56,7 @@ export class InMemoryCostStore implements CostStore {
     model?: string;
     provider?: string;
   }): Promise<AICostEvent[]> {
-    return this.events.filter((event) => {
+    return this.getEvents().filter((event) => {
       if (filters.feature && event.feature !== filters.feature) return false;
       if (filters.startDate && event.timestamp < filters.startDate) return false;
       if (filters.endDate && event.timestamp > filters.endDate) return false;

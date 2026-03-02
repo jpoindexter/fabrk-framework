@@ -2,10 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Route } from "../runtime/router";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface SitemapEntry {
   loc: string;
   lastmod?: string;
@@ -14,26 +10,12 @@ export interface SitemapEntry {
 }
 
 export interface SitemapOptions {
-  /** Base URL of the site (e.g. "https://example.com"). */
   baseUrl: string;
-  /** Routes discovered by the router. */
   routes: Route[];
-  /** Loaded route modules (for dynamic sitemap exports). */
   modules?: Map<string, Record<string, unknown>>;
-  /** Output directory (e.g. dist/client). */
   outDir: string;
 }
 
-// ---------------------------------------------------------------------------
-// Sitemap generation
-// ---------------------------------------------------------------------------
-
-/**
- * Generate sitemap.xml and robots.txt in the output directory.
- *
- * Route modules can export a `sitemap()` function for dynamic entries,
- * or export `sitemap = false` to exclude the route.
- */
 export async function generateSitemap(options: SitemapOptions): Promise<void> {
   const { baseUrl, routes, modules, outDir } = options;
   const normalizedBase = baseUrl.replace(/\/+$/, "");
@@ -41,15 +23,12 @@ export async function generateSitemap(options: SitemapOptions): Promise<void> {
   const entries: SitemapEntry[] = [];
 
   for (const route of routes) {
-    // Only include page routes, not API routes
     if (route.type !== "page") continue;
 
-    // Skip dynamic routes without generateStaticParams
     if (route.pattern.includes(":")) {
       const mod = modules?.get(route.filePath);
       if (!mod) continue;
 
-      // Check for custom sitemap export
       if (typeof mod.sitemap === "function") {
         const dynamicEntries = await mod.sitemap();
         if (Array.isArray(dynamicEntries)) {
@@ -67,11 +46,9 @@ export async function generateSitemap(options: SitemapOptions): Promise<void> {
         continue;
       }
 
-      // Skip dynamic routes with no sitemap export
       continue;
     }
 
-    // Check for sitemap = false to exclude route
     const mod = modules?.get(route.filePath);
     if (mod?.sitemap === false) continue;
 

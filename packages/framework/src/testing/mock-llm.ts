@@ -1,9 +1,5 @@
 import type { LLMMessage, LLMToolResult, LLMToolSchema, LLMStreamEvent } from "@fabrk/ai";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 interface ToolCallSpec {
   name: string;
   input: Record<string, unknown>;
@@ -26,17 +22,12 @@ interface ToolCallMatcher {
   result: string;
 }
 
-// ---------------------------------------------------------------------------
-// MockLLM builder
-// ---------------------------------------------------------------------------
-
 export class MockLLM {
   private messageMatchers: MessageMatcher[] = [];
   private toolCallMatchers: Map<string, ToolCallMatcher> = new Map();
   private defaultResponse: MockResponse = { content: "Mock response" };
   private callLog: Array<{ messages: LLMMessage[]; tools?: LLMToolSchema[] }> = [];
 
-  /** Match user messages containing a pattern and respond with specific content. */
   onMessage(pattern: string | RegExp): {
     respondWith: (content: string, opts?: Partial<MockResponse>) => MockLLM;
     callTool: (name: string, input?: Record<string, unknown>) => MockLLM;
@@ -63,7 +54,6 @@ export class MockLLM {
     };
   }
 
-  /** Configure a tool call result that the mock returns when the agent calls this tool. */
   onToolCall(toolName: string): { returnResult: (result: string) => MockLLM } {
     const self = this;
     return {
@@ -74,30 +64,22 @@ export class MockLLM {
     };
   }
 
-  /** Set the default response for unmatched messages. */
   setDefault(content: string, opts?: Partial<MockResponse>): MockLLM {
     this.defaultResponse = { content, ...opts };
     return this;
   }
 
-  /** Get all calls made to the mock LLM. */
   getCalls(): ReadonlyArray<{ messages: LLMMessage[]; tools?: LLMToolSchema[] }> {
     return this.callLog;
   }
 
-  /** Number of LLM calls made. */
   get callCount(): number {
     return this.callLog.length;
   }
 
-  /** Reset call log. */
   reset(): void {
     this.callLog = [];
   }
-
-  // -------------------------------------------------------------------------
-  // Internal: resolve a response for the given messages
-  // -------------------------------------------------------------------------
 
   private resolve(messages: LLMMessage[]): MockResponse {
     const lastUser = messages.filter((m) => m.role === "user").pop();
@@ -114,11 +96,6 @@ export class MockLLM {
     return this.defaultResponse;
   }
 
-  // -------------------------------------------------------------------------
-  // Generators for createAgentHandler injection
-  // -------------------------------------------------------------------------
-
-  /** Returns a `generateWithTools` function for injection into the agent handler. */
   asGenerateWithTools(): (messages: LLMMessage[], tools: LLMToolSchema[]) => Promise<LLMToolResult> {
     return async (messages, tools) => {
       this.callLog.push({ messages, tools });
@@ -139,7 +116,6 @@ export class MockLLM {
     };
   }
 
-  /** Returns a `streamWithTools` async generator for injection. */
   asStreamWithTools(): (messages: LLMMessage[], tools: LLMToolSchema[]) => AsyncGenerator<LLMStreamEvent> {
     const self = this;
     return async function* (messages, tools) {
@@ -168,13 +144,11 @@ export class MockLLM {
     };
   }
 
-  /** Returns a `_calculateCost` function that always returns 0. */
   static zeroCost(): (model: string, promptTokens: number, completionTokens: number) => { costUSD: number } {
     return () => ({ costUSD: 0 });
   }
 }
 
-/** Create a new MockLLM builder. */
 export function mockLLM(): MockLLM {
   return new MockLLM();
 }

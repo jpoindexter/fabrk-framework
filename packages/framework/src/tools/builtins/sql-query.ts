@@ -1,10 +1,8 @@
 import { defineTool, textResult } from "../define-tool";
 import type { ToolDefinition } from "../define-tool";
 
-// SQL statements that mutate state — blocked in read-only mode.
 const WRITE_PATTERN = /^\s*(INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|TRUNCATE)\b/i;
 
-// SQL statements permitted in read-only mode.
 const READ_PATTERN = /^\s*(SELECT|WITH|EXPLAIN|SHOW|DESCRIBE)\b/i;
 
 const DEFAULT_TIMEOUT_MS = 5_000;
@@ -12,22 +10,13 @@ const DEFAULT_MAX_ROWS = 100;
 const DEFAULT_MAX_BYTES = 100_000;
 
 export interface SqlQueryOptions {
-  /** Injected query executor — receives sql and optional params, resolves rows. */
   query: (sql: string, params?: unknown[]) => Promise<Record<string, unknown>[]>;
-  /**
-   * Allow INSERT / UPDATE / DELETE / DROP / ALTER / CREATE / TRUNCATE.
-   * Defaults to false (read-only).
-   */
   allowWrite?: boolean;
-  /** Abort query after this many milliseconds. Defaults to 5 000. */
   timeoutMs?: number;
-  /** Truncate result to at most this many rows. Defaults to 100. */
   maxRows?: number;
-  /** Truncate serialised result to at most this many bytes. Defaults to 100 000. */
   maxResultBytes?: number;
 }
 
-/** Render rows as a GitHub-flavoured markdown table. */
 function toMarkdownTable(rows: Record<string, unknown>[]): string {
   if (rows.length === 0) return "_No rows returned._";
 
@@ -41,13 +30,6 @@ function toMarkdownTable(rows: Record<string, unknown>[]): string {
   return [header, divider, body].join("\n");
 }
 
-/**
- * Built-in SQL query tool for AI agents.
- *
- * Accepts a caller-supplied `query` function so the tool works with any
- * database driver (pg, mysql2, better-sqlite3, etc.) without pulling in any
- * database dependency itself.
- */
 export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
   const {
     query,
@@ -86,7 +68,6 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
       const sql = input["sql"];
       const params = input["params"];
 
-      // -- Type guards -------------------------------------------------------
       if (typeof sql !== "string" || sql.trim() === "") {
         return textResult("ERROR: sql must be a non-empty string.");
       }
@@ -99,7 +80,6 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
         safeParams = params;
       }
 
-      // -- Read-only enforcement ---------------------------------------------
       if (!allowWrite) {
         if (WRITE_PATTERN.test(sql)) {
           return textResult(
@@ -114,7 +94,6 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
         }
       }
 
-      // -- Timeout + execute -------------------------------------------------
       let rows: Record<string, unknown>[];
 
       try {
@@ -132,22 +111,17 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
         return textResult("ERROR: Query execution failed.");
       }
 
-      // -- Validate result shape ---------------------------------------------
       if (!Array.isArray(rows)) {
         return textResult("ERROR: Query function must resolve to an array of row objects.");
       }
 
-      // -- Row truncation ----------------------------------------------------
       let truncatedRows = false;
       if (rows.length > maxRows) {
         rows = rows.slice(0, maxRows);
         truncatedRows = true;
       }
 
-      // -- Format as markdown table ------------------------------------------
       let table = toMarkdownTable(rows);
-
-      // -- Byte truncation ---------------------------------------------------
       let truncatedBytes = false;
       const encoder = new TextEncoder();
       if (encoder.encode(table).length > maxResultBytes) {

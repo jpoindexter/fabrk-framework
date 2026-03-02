@@ -8,17 +8,11 @@ export interface RagResult {
 }
 
 export interface RagToolOptions {
-  /** Tool name exposed to the LLM. Default: "knowledge-search" */
   name?: string;
-  /** Tool description exposed to the LLM. */
   description?: string;
-  /** Default number of results to fetch when the agent omits topK. Default: 5 */
   topK?: number;
-  /** Results with score below this threshold are excluded. Default: 0.0 */
   minScore?: number;
-  /** Override the default result formatter. */
   formatResult?: (results: RagResult[], query: string) => string;
-  /** Search function injected by the caller. */
   search: (query: string, topK: number) => Promise<RagResult[]>;
 }
 
@@ -87,7 +81,6 @@ export function ragTool(options: RagToolOptions): ToolDefinition {
         return textResult("Search failed: an internal error occurred.");
       }
 
-      // Filter results below minScore
       const results =
         minScore > 0
           ? raw.filter((r) => r.score === undefined || r.score >= minScore)

@@ -1,18 +1,3 @@
-/**
- * AI Cost Tracking System
- *
- * Track costs for Claude, OpenAI, and other AI API calls.
- *
- * @example
- * const tracker = new AICostTracker(store)
- * const result = await tracker.trackClaudeCall({
- *   model: 'claude-sonnet-4-20250514',
- *   feature: 'generate-user-page',
- *   prompt: 'Create a user settings page...',
- *   fn: async (client) => client.messages.create({ ... })
- * })
- */
-
 import type {
   AICostEvent,
   CostSummary,

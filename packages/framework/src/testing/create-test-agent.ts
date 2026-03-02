@@ -1,10 +1,6 @@
 import type { ToolDefinition } from "../tools/define-tool";
 import { MockLLM } from "./mock-llm";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface TestAgentOptions {
   name?: string;
   systemPrompt?: string;
@@ -26,14 +22,6 @@ interface AgentEvent {
   [key: string]: unknown;
 }
 
-// ---------------------------------------------------------------------------
-// createTestAgent
-// ---------------------------------------------------------------------------
-
-/**
- * Create a test agent that runs the full agent loop with a mock LLM.
- * Collects all events and returns structured results.
- */
 export function createTestAgent(options: TestAgentOptions) {
   const {
     name = "test-agent",
@@ -45,9 +33,7 @@ export function createTestAgent(options: TestAgentOptions) {
   } = options;
 
   return {
-    /** Send a message to the agent and collect the full response. */
     async send(message: string): Promise<TestAgentResult> {
-      // Lazy import to avoid circular dep issues at module load time
       const { createToolExecutor } = await import("../agents/tool-executor");
 
       const toolDefs = tools;
@@ -68,7 +54,6 @@ export function createTestAgent(options: TestAgentOptions) {
       let completionTokens = 0;
       let cost = 0;
 
-      // Use the agent loop directly for test control
       const { runAgentLoop } = await import("../agents/agent-loop");
 
       const messages = [

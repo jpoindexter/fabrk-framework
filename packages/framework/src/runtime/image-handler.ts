@@ -3,10 +3,6 @@ import path from "node:path";
 import { buildSecurityHeaders } from "../middleware/security";
 import { parseImageParams, negotiateImageFormat } from "../client/image";
 
-// ---------------------------------------------------------------------------
-// LRU cache for optimized images
-// ---------------------------------------------------------------------------
-
 interface CacheEntry {
   buffer: Buffer;
   contentType: string;
@@ -23,21 +19,18 @@ class ImageCache {
   get(key: string): CacheEntry | undefined {
     const entry = this.map.get(key);
     if (!entry) return undefined;
-    // Move to end (most recently used)
     this.map.delete(key);
     this.map.set(key, entry);
     return entry;
   }
 
   set(key: string, entry: CacheEntry): void {
-    // Evict existing entry if key exists
     if (this.map.has(key)) {
       const old = this.map.get(key)!;
       this.totalSize -= old.size;
       this.map.delete(key);
     }
 
-    // Evict oldest entries until under limits
     while (
       this.map.size >= MAX_ENTRIES ||
       this.totalSize + entry.size > MAX_TOTAL_BYTES
@@ -56,10 +49,6 @@ class ImageCache {
 
 const cache = new ImageCache();
 
-// ---------------------------------------------------------------------------
-// Sharp loader (optional peer dependency)
-// ---------------------------------------------------------------------------
-
 type SharpInstance = {
   resize: (width: number) => SharpInstance;
   jpeg: (opts: { quality: number }) => SharpInstance;
@@ -76,7 +65,6 @@ async function loadSharp(): Promise<SharpConstructor | null> {
   if (sharpModule === false) return null;
   if (sharpModule) return sharpModule;
   try {
-    // Dynamic import — sharp is an optional peer dependency
     const mod = await (Function('return import("sharp")')() as Promise<Record<string, unknown>>);
     sharpModule = (mod.default ?? mod) as SharpConstructor;
     return sharpModule;
@@ -86,28 +74,14 @@ async function loadSharp(): Promise<SharpConstructor | null> {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Content types
-// ---------------------------------------------------------------------------
-
 const FORMAT_CONTENT_TYPE: Record<string, string> = {
   avif: "image/avif",
   webp: "image/webp",
   jpeg: "image/jpeg",
 };
 
-// ---------------------------------------------------------------------------
-// Handler
-// ---------------------------------------------------------------------------
-
-/**
- * Handle `/_fabrk/image` requests.
- * Resizes + converts images using sharp (peer dep).
- * Falls back to serving the original file if sharp is not installed.
- */
 export async function handleImageRequest(
   request: Request,
-  /** Root directory to resolve image paths against (e.g. public/ in dev, dist/client/ in prod). */
   rootDir: string,
 ): Promise<Response> {
   const url = new URL(request.url, "http://localhost");
@@ -120,7 +94,6 @@ export async function handleImageRequest(
     });
   }
 
-  // Resolve file path with path traversal protection
   const filePath = path.resolve(rootDir, `.${params.url}`);
   if (!filePath.startsWith(path.resolve(rootDir) + path.sep)) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {
@@ -140,7 +113,6 @@ export async function handleImageRequest(
   const format = negotiateImageFormat(acceptHeader);
   const cacheKey = `${params.url}:${params.width}:${params.quality}:${format}`;
 
-  // Check cache
   const cached = cache.get(cacheKey);
   if (cached) {
     return new Response(new Uint8Array(cached.buffer), {
@@ -193,7 +165,6 @@ export async function handleImageRequest(
     }
   }
 
-  // Fallback: serve original file
   const rawBuffer = fs.readFileSync(filePath);
   const ext = path.extname(filePath).toLowerCase();
   const fallbackType =
@@ -215,9 +186,6 @@ export async function handleImageRequest(
   });
 }
 
-/**
- * Check if a request path is an image optimization request.
- */
 export function isImageRequest(pathname: string): boolean {
   return pathname === "/_fabrk/image";
 }

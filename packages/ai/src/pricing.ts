@@ -1,14 +1,4 @@
-/**
- * AI Model Pricing Tables
- *
- * Pricing data for Claude, OpenAI, and other AI models.
- * Update these as providers change rates.
- */
-
-/**
- * AI model pricing per 1K tokens
- * Update these as providers change rates
- */
+/** AI model pricing per 1K tokens. Update as providers change rates. */
 export const MODEL_PRICING: Record<
   string,
   { input: number; output: number; provider: 'anthropic' | 'openai' | 'other' }

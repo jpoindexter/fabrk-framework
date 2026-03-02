@@ -2,6 +2,7 @@
   "name": "fabrk-framework-demo",
   "version": "0.1.1",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "node ../../packages/framework/dist/cli.js dev",

@@ -28,11 +28,9 @@ all the packages work standalone. drop `@fabrk/components` into any react projec
 
 i also wanted a runtime layer — vite-based ssr, something modern that could replace the nextjs dependency. i started building it, got a prototype working with a vite plugin that handled ssr entry points, route discovery, api shims. then i stopped working on it for a few weeks.
 
-during those few weeks cloudflare released [vinext](https://github.com/cloudflare/vinext). open source, mit licensed. vite 7, react 19, ssr on cloudflare workers, nextjs api compat layer. basically the exact same thing id been working on.
+so i kept going. built my own vite 7 runtime — file-system routing, ssr with streaming, rsc support, middleware, a generic fetch handler that works on any runtime (node, cloudflare workers, deno, bun). the `fabrk` package owns the full stack now.
 
-kinda funny honestly. part of me was annoyed but mostly i was relieved. they have a whole team on that problem. i had to be honest that the runtime wasnt where my unique value was — everything on top of it was. the components, the design system, the auth, the payments, the ai toolkit. thats the stuff thats hard to replicate.
-
-so i pivoted. the `@fabrk/framework` meta-package uses vinext for the runtime and bundles all the batteries on top. sent them a [pr](https://github.com/cloudflare/vinext/pull/146) fixing pnpm strict hoisting issues i hit during integration. but again — vinext is just one option. all the individual packages work on their own with whatever framework you already use.
+but again — all the individual packages work on their own with whatever framework you already use. the runtime is just one way to consume them.
 
 ### the ai agent angle
 

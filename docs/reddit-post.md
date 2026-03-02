@@ -12,9 +12,7 @@ the whole thing is designed to be agnostic. payments? stripe, polar, lemon squee
 
 all the packages work standalone — drop `@fabrk/components` into any react project, use `@fabrk/auth` with nextjs, whatever. no lock-in.
 
-separately i was building a runtime layer — vite + ssr on cloudflare workers. then cloudflare released [vinext](https://github.com/cloudflare/vinext), basically the exact same thing. had to be honest with myself — the runtime wasnt where my value was. so the `@fabrk/framework` meta-package uses vinext and bundles everything together. but thats just one option, all the packages work independently with whatever you already use.
-
-sent them a [PR](https://github.com/cloudflare/vinext/pull/146) fixing pnpm hoisting issues i hit.
+the `fabrk` framework package includes its own vite 7 runtime — file-system routing, ssr/rsc streaming, middleware, generic fetch handler for any runtime. but thats just one option, all the packages work independently with whatever you already use.
 
 every package has AGENTS.md files that any llm can read — not tied to a specific ai tool. the idea is agents should import components instead of generating everything from scratch.
 

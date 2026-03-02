@@ -1,24 +1,3 @@
-/**
- * Webhook Manager
- *
- * Manages webhook registrations and dispatches events to registered endpoints.
- * Includes HMAC-SHA256 signature verification and retry logic.
- *
- * @example
- * ```ts
- * const webhooks = createWebhookManager()
- *
- * // Register a webhook
- * const webhook = await webhooks.register({
- *   url: 'https://example.com/webhook',
- *   events: ['user.created', 'payment.completed'],
- * })
- *
- * // Dispatch an event
- * await webhooks.dispatch('user.created', { userId: 'user_123' })
- * ```
- */
-
 import type { WebhookConfig, WebhookDelivery, WebhookStore } from '../plugin-types'
 import { timingSafeEqual, bytesToHex, generateRandomHex } from '../crypto'
 
@@ -107,21 +86,13 @@ function validateWebhookUrl(url: string): void {
 }
 
 export interface WebhookManager {
-  /** Register a new webhook endpoint */
   register(options: { url: string; events: string[] }): Promise<WebhookConfig>
-  /** Unregister a webhook */
   unregister(id: string): Promise<void>
-  /** Dispatch an event to all matching webhooks */
   dispatch(event: string, data: Record<string, unknown>): Promise<WebhookDelivery[]>
-  /** Verify a webhook signature */
   verify(payload: string, signature: string, secret: string): Promise<boolean>
-  /** List all webhooks */
   list(): Promise<WebhookConfig[]>
 }
 
-/**
- * In-memory webhook store
- */
 class InMemoryWebhookStore implements WebhookStore {
   private static readonly MAX_DELIVERIES = 10_000
   private webhooks = new Map<string, WebhookConfig>()
@@ -187,10 +158,7 @@ export function createWebhookManager(
      * be re-registered with a new secret.
      */
     async register(options): Promise<WebhookConfig> {
-      // Validate webhook URL against SSRF
       validateWebhookUrl(options.url)
-
-      // Generate secret
       const secret = generateRandomHex(32)
 
       const webhook: WebhookConfig = {

@@ -159,7 +159,7 @@ async function wirePayment(config: FabrkConfigInput, registry: PluginRegistry): 
   const pkgName = '@fabrk/payments'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payments: any = await import(/* webpackIgnore: true */ pkgName)
+    const payments: any = await import(/* @vite-ignore */ /* webpackIgnore: true */ pkgName)
     const adapter = config.payments?.adapter
 
     if (adapter === 'stripe' && payments.createStripeAdapter) {
@@ -190,7 +190,7 @@ async function wireEmail(config: FabrkConfigInput, registry: PluginRegistry): Pr
   const pkgName = '@fabrk/email'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const email: any = await import(/* webpackIgnore: true */ pkgName)
+    const email: any = await import(/* @vite-ignore */ /* webpackIgnore: true */ pkgName)
     const adapter = config.email?.adapter
 
     if (adapter === 'resend' && email.createResendAdapter) {
@@ -214,7 +214,7 @@ async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): 
   const pkgName = '@fabrk/storage'
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const storage: any = await import(/* webpackIgnore: true */ pkgName)
+    const storage: any = await import(/* @vite-ignore */ /* webpackIgnore: true */ pkgName)
     const adapter = config.storage?.adapter
 
     if (adapter === 's3' && storage.createS3Adapter) {

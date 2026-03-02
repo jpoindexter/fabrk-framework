@@ -7,11 +7,11 @@
 ### assistant
 
 - **Route:** `/api/agents/assistant`
-- **Model:** default
+- **Model:** claude-sonnet-4-5
 - **Auth:** none
 
 ## Tools
 
 ### get-stats
 
-Tool: get-stats
+Get code quality statistics for a repository

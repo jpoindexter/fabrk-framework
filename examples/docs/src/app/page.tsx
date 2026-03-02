@@ -34,7 +34,7 @@ const quickLinks = [
   { label: '> PACKAGES', href: '/packages', description: `Explore ${STATS.packages} modular packages` },
   { label: '> COMPONENTS', href: '/components', description: `Browse ${STATS.components} UI components` },
   { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
-  { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing Next.js app to FABRK' },
+  { label: '> MIGRATION', href: '/migration', description: 'Migrate an existing app to FABRK' },
   { label: '> CLI REFERENCE', href: '/cli', description: 'create-fabrk-app and fabrk dev CLI' },
   { label: '> ABOUT', href: '/about', description: 'The story behind FABRK — from boilerplate to framework' },
 ]

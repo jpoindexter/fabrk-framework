@@ -1,7 +1,7 @@
 {
   "name": "@fabrk/framework",
   "version": "0.2.0",
-  "description": "AI-first full-stack framework built on vinext — 105+ components, AI agents, auth, payments, 18 themes",
+  "description": "AI-first full-stack framework — file-system routing, SSR, AI agents, 105+ components, 18 themes",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
@@ -18,6 +18,26 @@
       "import": "./dist/client/use-agent.js",
       "types": "./dist/client/use-agent.d.ts"
     },
+    "./client/navigation": {
+      "import": "./dist/client/navigation.js",
+      "types": "./dist/client/navigation.d.ts"
+    },
+    "./client/link": {
+      "import": "./dist/client/link.js",
+      "types": "./dist/client/link.d.ts"
+    },
+    "./client/image": {
+      "import": "./dist/client/image.js",
+      "types": "./dist/client/image.d.ts"
+    },
+    "./client/dynamic": {
+      "import": "./dist/client/dynamic.js",
+      "types": "./dist/client/dynamic.d.ts"
+    },
+    "./client/script": {
+      "import": "./dist/client/script.js",
+      "types": "./dist/client/script.d.ts"
+    },
     "./components": {
       "import": "./dist/components.js",
       "types": "./dist/components.d.ts"
@@ -29,6 +49,10 @@
     "./fabrk": {
       "import": "./dist/fabrk.js",
       "types": "./dist/fabrk.d.ts"
+    },
+    "./worker": {
+      "import": "./dist/runtime/worker-entry.js",
+      "types": "./dist/runtime/worker-entry.d.ts"
     }
   },
   "files": [
@@ -47,13 +71,12 @@
   "author": "Jason Poindexter",
   "keywords": [
     "fabrk",
-    "vinext",
     "vite",
     "react",
-    "cloudflare-workers",
+    "ssr",
+    "file-system-routing",
     "ai-agents",
     "framework",
-    "nextjs",
     "typescript",
     "mcp",
     "llm",
@@ -81,10 +104,12 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
-    "vinext": "^0.0.5",
     "@fabrk/ai": "workspace:*",
     "@fabrk/components": "workspace:*",
-    "@fabrk/design-system": "workspace:*"
+    "@fabrk/design-system": "workspace:*",
+    "@vitejs/plugin-rsc": "^0.5.21",
+    "react-server-dom-webpack": "^19.2.4",
+    "rsc-html-stream": "^0.0.7"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

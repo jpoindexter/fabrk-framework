@@ -4,8 +4,8 @@
 
 ## TL;DR
 
-- **What**: AI-first React UI framework — 13 packages, 109+ components, 18 themes
-- **Stack**: TypeScript 5.x • React 19 • Next.js 16 • pnpm workspaces • Turbo
+- **What**: AI-first full-stack framework — 13 packages, 109+ components, 18 themes, own Vite 7 runtime
+- **Stack**: TypeScript 5.x • React 19 • Vite 7 • pnpm workspaces • Turbo
 - **Package manager**: pnpm (NOT npm, NOT yarn)
 - **Rule #1**: USE EXISTING COMPONENTS — don't rebuild what's already here
 
@@ -36,7 +36,7 @@ pnpm size             # Bundle size tracking
 | `@fabrk/email` | Resend adapter + templates | `createResendAdapter()`, `createConsoleAdapter()` |
 | `@fabrk/storage` | S3, R2, local filesystem adapters | `createS3Adapter()`, `createR2Adapter()`, `createLocalAdapter()` |
 | `@fabrk/store-prisma` | 7 Prisma store adapters | `PrismaTeamStore`, `PrismaAuditStore`, `PrismaJobStore` |
-| `fabrk` | Full-stack framework on vinext — AI agents, tools, MCP, CLI | `defineAgent()`, `defineTool()`, `fabrk dev/build/deploy` |
+| `@fabrk/framework` | Full-stack framework — own Vite 7 runtime, file-system routing, SSR, AI agents, tools, MCP, CLI | `fabrk()`, `defineAgent()`, `defineTool()`, `fabrk dev/build/start` |
 | `create-fabrk-app` | CLI scaffolding tool | `npx create-fabrk-app` |
 
 ## Component Categories
@@ -109,7 +109,7 @@ import { mode } from '@fabrk/design-system'
                               ←── @fabrk/email
                               ←── @fabrk/storage
                               ←── @fabrk/components
-                              ←── fabrk (meta-package: vinext + agents + tools)
+                              ←── @fabrk/framework (own Vite 7 runtime + routing + SSR + agents + tools)
 ```
 
 ## Example: Build a Dashboard

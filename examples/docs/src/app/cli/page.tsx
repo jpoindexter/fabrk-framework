@@ -87,148 +87,88 @@ Examples:
 ├── fabrk.config.ts              # Complete FABRK config
 ├── package.json                 # All @fabrk/* packages
 ├── .env.example                 # Environment variable template
-├── tsconfig.json
-└── next.config.js`}</CodeBlock>
+├── vite.config.ts               # Vite config with fabrk() plugin
+└── tsconfig.json`}</CodeBlock>
       </Section>
 
       <Section title="FABRK DEV CLI">
         <p className="text-sm text-muted-foreground mb-4">
-          Development CLI for FABRK projects. Provides dev server, build, lint,
-          code generation, and project info commands. Run from your project root.
+          Development CLI for <code>@fabrk/framework</code> projects. Provides dev server, build,
+          start, and project info commands. Run from your project root.
         </p>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-8 mb-3">
           FABRK DEV
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Start the Next.js development server with FABRK tooling.
-          Validates your <code>fabrk.config.ts</code> on startup and reports any issues.
+          Start the Vite development server with FABRK tooling.
+          Auto-discovers agents, tools, and prompts on startup.
         </p>
         <CodeBlock>{`fabrk dev [options]
 
 Options:
-  --port <number>    Port to use (default: 3000)
-  --turbo            Enable Turbopack for faster HMR
+  --port <number>    Port to use (default: 5173)
+  --host             Expose to network
 
 Examples:
   fabrk dev
-  fabrk dev --port 4000
-  fabrk dev --turbo`}</CodeBlock>
+  fabrk dev --port 4000`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-8 mb-3">
           FABRK BUILD
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Build the project for production. Runs <code>next build</code> with FABRK optimizations.
+          Build the project for production. Runs Vite build for client and SSR bundles.
         </p>
         <CodeBlock>{`fabrk build
 
-# Equivalent to: next build
-# Also validates fabrk.config.ts at build time`}</CodeBlock>
+# Builds client + SSR bundles via Vite
+# Also generates AGENTS.md for AI agent discovery`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-8 mb-3">
-          FABRK LINT
+          FABRK START
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Check for FABRK design system compliance. Scans your source files
-          for violations and reports them with suggestions.
+          Start the production server with the built SSR bundle.
         </p>
-        <CodeBlock>{`fabrk lint [path]
+        <CodeBlock>{`fabrk start [options]
 
-Checks:
-  - Hardcoded colors (bg-blue-500, text-red-600, etc.)
-  - Hardcoded border-radius (rounded-lg, rounded-xl, etc.)
-  - Missing mode.radius on full borders
-  - Inline styles on components
-  - dangerouslySetInnerHTML usage
-
-Fix suggestions:
-  bg-blue-500     → bg-primary
-  text-white      → text-primary-foreground
-  rounded-lg      → mode.radius
-  text-gray-500   → text-muted-foreground
+Options:
+  --port <number>    Port to use (default: 3000)
 
 Examples:
-  fabrk lint                     # Lint entire project
-  fabrk lint src/app/dashboard   # Lint specific directory
-  fabrk lint src/components      # Lint components folder`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-8 mb-3">
-          FABRK GENERATE
-        </h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Scaffold FABRK-compliant code with proper imports, design tokens,
-          and terminal aesthetic already applied.
-        </p>
-        <CodeBlock>{`fabrk generate <type> <name>
-
-Types:
-  component <Name>    Generate a React component with design tokens
-  page <name>         Generate a Next.js App Router page
-  api <name>          Generate a Next.js API route handler
-
-Examples:
-  fabrk generate component MetricsCard
-  fabrk generate component UserProfile
-  fabrk generate page settings
-  fabrk generate page dashboard/analytics
-  fabrk generate api webhooks
-  fabrk generate api users`}</CodeBlock>
-
-        <CodeBlock title="generated component example">{`// fabrk generate component MetricsCard
-// Creates: src/components/metrics-card.tsx
-
-'use client'
-
-import { cn } from '@fabrk/core'
-import { mode } from '@fabrk/design-system'
-import { Card } from '@fabrk/components'
-
-interface MetricsCardProps {
-  title: string
-  children: React.ReactNode
-  className?: string
-}
-
-export function MetricsCard({ title, children, className }: MetricsCardProps) {
-  return (
-    <Card className={cn('border border-border p-4', mode.radius, className)}>
-      <h3 className={cn('text-xs font-bold text-muted-foreground uppercase mb-3', mode.font)}>
-        [{title}]
-      </h3>
-      {children}
-    </Card>
-  )
-}`}</CodeBlock>
+  fabrk build && fabrk start
+  fabrk start --port 8080`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-8 mb-3">
           FABRK INFO
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Display project information including installed FABRK packages,
-          config status, and active features.
+          Display project information including discovered agents, tools,
+          prompts, and active features.
         </p>
         <CodeBlock>{`fabrk info
 
 Output:
   Project: my-app v${STATS.version}
-  Runtime: nextjs
+  Runtime: vite
   Config:  fabrk.config.ts (valid)
 
+  Agents:
+    assistant    claude-sonnet-4-5  tools: [search-docs]
+
+  Tools:
+    search-docs  Search documentation
+
   Packages:
-    @fabrk/core         ${STATS.version}
+    @fabrk/framework    ${STATS.version}
     @fabrk/components   ${STATS.version}
-    @fabrk/design-system       ${STATS.version}
-    @fabrk/auth         ${STATS.version}
-    @fabrk/payments     ${STATS.version}
     @fabrk/ai           ${STATS.version}
 
   Features:
     teams:          enabled
     notifications:  enabled
-    featureFlags:   enabled
-    webhooks:       enabled
-    jobs:           enabled`}</CodeBlock>
+    featureFlags:   enabled`}</CodeBlock>
       </Section>
 
       <Section title="E2E TESTING">

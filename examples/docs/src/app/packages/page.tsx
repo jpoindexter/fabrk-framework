@@ -29,7 +29,7 @@ const packages: PackageInfo[] = [
     example: `import { defineFabrkConfig } from '@fabrk/config'
 
 export default defineFabrkConfig({
-  framework: { runtime: 'nextjs', typescript: true, srcDir: 'src' },
+  framework: { runtime: 'vite', typescript: true, srcDir: 'src' },
   theme: { system: 'terminal', colorScheme: 'green', radius: 'sharp' },
   ai: { costTracking: true, budget: { daily: 50 } },
   notifications: { enabled: true },
@@ -348,13 +348,48 @@ const fabrk = autoWire(config, undefined, {
   featureFlagStore: new PrismaFeatureFlagStore(prisma),
 })`,
   },
+  {
+    id: 'framework',
+    name: '@fabrk/framework',
+    description: 'Full-stack framework — own Vite 7 runtime with file-system routing, SSR (streaming + renderToString), middleware, metadata injection, AI agents, tools, MCP, and dev dashboard.',
+    exports: [
+      'default export: fabrk() — Vite plugin array (router, virtual entries, agents, dashboard)',
+      'defineAgent() — Define an AI agent with model, tools, budget, system prompt',
+      'defineTool() / textResult() — Define MCP-compatible tools',
+      'scanRoutes() / matchRoute() / handleRequest() — File-system router + SSR handler',
+      'nodeToWebRequest() / writeWebResponse() — Node↔Web request bridge',
+      'createAgentHandler() — Create an SSE-streaming agent HTTP handler',
+      'createSSEResponse() / formatSSEEvent() — SSE streaming utilities',
+      'createFetchHandler() — Edge runtime fetch handler (from @fabrk/framework/worker)',
+      'useAgent() — React hook for agent chat (from @fabrk/framework/client/use-agent)',
+      'Re-exports: @fabrk/components (via /components), @fabrk/design-system (via /themes)',
+    ],
+    install: 'pnpm add @fabrk/framework',
+    example: `// vite.config.ts
+import { defineConfig } from 'vite'
+import fabrk from '@fabrk/framework'
+
+export default defineConfig({
+  plugins: [...fabrk()]
+})
+
+// agents/assistant/agent.ts
+import { defineAgent } from '@fabrk/framework'
+
+export default defineAgent({
+  model: 'claude-sonnet-4-5-20250514',
+  tools: ['search-docs'],
+  budget: { daily: 10.0, perSession: 0.50 },
+  systemPrompt: 'You are a helpful assistant.',
+})`,
+  },
 ]
 
 export default function PackagesPage() {
   return (
     <DocLayout
       title="PACKAGES"
-      description="12 modular packages covering every aspect of full-stack development. Install only what you need."
+      description="13 modular packages covering every aspect of full-stack development. Install only what you need."
     >
       {/* Dependency diagram */}
       <Section title="DEPENDENCY ARCHITECTURE">
@@ -378,7 +413,10 @@ export default function PackagesPage() {
 @fabrk/store-prisma (depends on core)
     |
     v
-Templates & Examples (depend on all packages)`}</CodeBlock>
+@fabrk/framework (own Vite 7 runtime + AI agents + components + themes)
+    |
+    v
+Templates & Examples`}</CodeBlock>
       </Section>
 
       {/* Package index */}

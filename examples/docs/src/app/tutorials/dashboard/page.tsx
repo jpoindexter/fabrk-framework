@@ -19,7 +19,7 @@ export default function DashboardTutorialPage() {
       <Section title="STEP 1 — SCAFFOLD">
         <p className="text-sm text-muted-foreground mb-4">
           Use the FABRK CLI to scaffold a new project with the dashboard template.
-          This gives you a Next.js app pre-wired with all FABRK packages.
+          This gives you a project pre-wired with all FABRK packages.
         </p>
         <CodeBlock title="terminal">{`npx create-fabrk-app my-dashboard --template dashboard
 cd my-dashboard
@@ -73,12 +73,10 @@ export default defineFabrkConfig({
           Create a dashboard layout with sidebar navigation using <code className="text-primary">DashboardShell</code>.
           The sidebar uses a partial border (border-r) so it does NOT get mode.radius.
         </p>
-        <CodeBlock title="src/app/dashboard/layout.tsx">{`'use client'
+        <CodeBlock title="app/dashboard/layout.tsx">{`'use client'
 
 import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 
 const sidebarItems = [
   { id: 'overview', label: 'OVERVIEW', href: '/dashboard' },
@@ -92,8 +90,6 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const pathname = usePathname()
-
   return (
     <div className="flex min-h-screen">
       {/* Sidebar — partial border, NO mode.radius */}
@@ -103,19 +99,17 @@ export default function DashboardLayout({
         </div>
         <nav className="space-y-1">
           {sidebarItems.map((item) => (
-            <Link
+            <a
               key={item.id}
               href={item.href}
               className={cn(
                 'block px-3 py-2 text-xs transition-colors',
                 mode.font,
-                pathname === item.href
-                  ? 'text-primary bg-primary/10 border-l-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                'text-muted-foreground hover:text-foreground'
               )}
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </nav>
       </aside>
@@ -288,8 +282,8 @@ fabrk build
 # Deploy to Vercel
 vercel
 
-# Or deploy to any Node.js host
-fabrk build && node .next/standalone/server.js`}</CodeBlock>
+# Or start the built production server
+fabrk build && fabrk start`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4 mb-4">
           Set your environment variables on the hosting platform before deploying.

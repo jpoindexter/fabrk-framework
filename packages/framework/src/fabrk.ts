@@ -31,7 +31,7 @@ export type { FabrkConfig, FabrkAIConfig } from "./config/fabrk-config";
 
 export { createAuthGuard } from "./middleware/auth-guard";
 export type { AuthGuardOptions } from "./middleware/auth-guard";
-export { buildSecurityHeaders } from "./middleware/security";
+export { buildSecurityHeaders, applySecurityHeaders } from "./middleware/security";
 
 export { generateAgentsMd } from "./build/agents-md";
 export type { AgentsMdInput } from "./build/agents-md";

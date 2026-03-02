@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FABRK Framework is a monorepo that provides the first UI framework designed specifically for AI coding agents. It enables AI assistants (Claude Code, Cursor, GitHub Copilot, v0.dev) to build full-stack applications in minutes by importing pre-built components and tools instead of writing everything from scratch.
 
-**Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Next.js 16 • Changesets for versioning
+**Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Vite 7 (own runtime) • Changesets for versioning
 
 **Requirements:** Node.js 22+ • pnpm 9+
 
@@ -69,7 +69,7 @@ This is a **pnpm workspace monorepo** orchestrated by **Turbo**. Dependencies fl
 @fabrk/ai (depends on core)
 @fabrk/components (depends on core, design-system)
     ↓
-fabrk (meta-package — vinext + @fabrk/ai, components, design-system)
+@fabrk/framework (own Vite 7 runtime + file-system routing + SSR + AI agents + tools + MCP)
     ↓
 Templates & Examples (depend on all packages)
 ```
@@ -90,7 +90,7 @@ fabrk-framework/
 │   ├── storage/           # @fabrk/storage - S3, R2, local filesystem adapters
 │   ├── security/          # @fabrk/security - CSRF, CSP, rate limiting, audit, GDPR, CORS
 │   ├── store-prisma/      # @fabrk/store-prisma - 7 Prisma store adapters
-│   ├── framework/         # fabrk - Meta-package: vinext + AI agents, tools, MCP, dashboard
+│   ├── framework/         # @fabrk/framework - Own Vite 7 runtime, file-system routing, SSR, AI agents, tools, MCP, CLI
 │   └── cli/               # create-fabrk-app - CLI scaffolding tool
 ├── templates/             # Starter templates (basic, ai-saas, dashboard)
 ├── examples/              # Example applications (basic-usage, docs, saas-analytics, ecommerce, agent-demo)

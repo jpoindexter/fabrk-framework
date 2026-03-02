@@ -29,11 +29,9 @@ FABRK started as a production boilerplate called [fabrk.dev](https://fabrk.dev) 
 
 Copying a boilerplate works until it doesn't. Bug fixes in one project didn't propagate to others. So the extraction began: components became `@fabrk/components`, auth became `@fabrk/auth`, payments, email, storage, security — each concern got its own package. The monorepo took shape: 13 packages, each with a focused responsibility.
 
-The framework layer — routing, SSR, Cloudflare Workers deployment — was being built from scratch when Cloudflare released [**vinext**](https://github.com/cloudflare/vinext). Vinext did almost exactly what FABRK was building for the runtime and server layer: Vite-based SSR on Workers, Next.js API shims, MIT licensed.
+The framework layer — routing, SSR, streaming — needed a runtime. Rather than depend on someone else's, FABRK built its own: a Vite 7 plugin with file-system routing, SSR/RSC streaming, middleware, and a generic fetch handler that works on any runtime (Node, Cloudflare Workers, Deno, Bun). The [`fabrk`](packages/framework) package owns the full stack — runtime plus all the batteries.
 
-Rather than compete with Cloudflare on runtime infrastructure, FABRK pivoted to where the unique value lived — everything else. The [`fabrk`](packages/framework) meta-package now depends on vinext for the runtime and layers on AI agents, tools, MCP, 109+ components, auth, payments, and the design system on top.
-
-**`fabrk = vinext (runtime) + batteries (everything else)`**
+**`fabrk = own runtime + batteries (everything else)`**
 
 ---
 
@@ -108,7 +106,7 @@ FABRK is a modular monorepo — install only what you need.
 
 | Package | Description |
 |---------|-------------|
-| [`fabrk`](packages/framework) | Full-stack framework built on [vinext](https://github.com/cloudflare/vinext) — AI agents, tools, MCP, dashboard, CLI |
+| [`@fabrk/framework`](packages/framework) | Full-stack framework — own Vite 7 runtime, file-system routing, SSR, AI agents, tools, MCP, CLI |
 
 ### CLI
 
@@ -159,7 +157,7 @@ className="bg-blue-500 text-white"              // wrong
 @fabrk/components (109+ UI components, charts, dashboard)
 @fabrk/store-prisma (Prisma database adapters)
     |
-fabrk (vinext runtime + AI agents + tools + MCP)
+@fabrk/framework (own Vite 7 runtime + file-system routing + SSR + AI agents + tools + MCP)
 create-fabrk-app CLI (scaffolding)
 ```
 

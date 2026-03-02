@@ -1,39 +1,13 @@
-/**
- * Feature Flag Manager
- *
- * Manages feature flags with support for rollout percentages,
- * user targeting, and role-based targeting.
- *
- * @example
- * ```ts
- * const flags = createFeatureFlagManager()
- *
- * // Define flags
- * await flags.set({ name: 'new-dashboard', enabled: true, rolloutPercent: 50 })
- *
- * // Check flags
- * const enabled = await flags.isEnabled('new-dashboard', { userId: 'user_123' })
- * ```
- */
-
 import type { FeatureFlagOptions, FeatureFlagStore } from '../plugin-types'
 
 export interface FeatureFlagManager {
-  /** Check if a flag is enabled */
   isEnabled(name: string, context?: { userId?: string; role?: string }): Promise<boolean>
-  /** Set a feature flag */
   set(flag: FeatureFlagOptions): Promise<void>
-  /** Delete a feature flag */
   delete(name: string): Promise<void>
-  /** Get all flags */
   getAll(): Promise<FeatureFlagOptions[]>
-  /** Get a specific flag */
   get(name: string): Promise<FeatureFlagOptions | null>
 }
 
-/**
- * In-memory feature flag store
- */
 class InMemoryFeatureFlagStore implements FeatureFlagStore {
   private flags = new Map<string, FeatureFlagOptions>()
 
@@ -79,7 +53,6 @@ export function createFeatureFlagManager(
 
       if (flag.rolloutPercent !== undefined && flag.rolloutPercent < 100) {
         if (!context?.userId) {
-          // No user context — use cryptographically secure random
           const buf = new Uint32Array(1)
           crypto.getRandomValues(buf)
           return (buf[0] / 0x100000000) * 100 < flag.rolloutPercent

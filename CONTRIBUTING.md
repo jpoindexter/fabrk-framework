@@ -42,7 +42,7 @@ packages/
   storage/         # @fabrk/storage — S3, R2, local filesystem adapters
   security/        # @fabrk/security — CSRF, CSP, rate limiting, audit, GDPR
   store-prisma/    # @fabrk/store-prisma — Prisma database adapters
-  framework/       # fabrk — Meta-package: vinext + AI agents, tools, MCP, dashboard
+  framework/       # @fabrk/framework — Own Vite 7 runtime, file-system routing, SSR, AI agents, tools, MCP, CLI
   cli/             # create-fabrk-app — CLI scaffolding tool
 ```
 
@@ -53,7 +53,7 @@ config, design-system (foundational, no deps)
   -> core
     -> payments, auth, email, storage, security, store-prisma
     -> ai, components
-    -> framework (fabrk meta-package)
+    -> framework (@fabrk/framework — own Vite 7 runtime)
 ```
 
 ## Development Workflow

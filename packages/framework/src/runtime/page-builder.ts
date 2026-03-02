@@ -1,0 +1,114 @@
+import type { Route } from "./router";
+import {
+  ErrorBoundary,
+  NotFoundBoundary,
+  GlobalErrorBoundary,
+} from "./error-boundary";
+
+/**
+ * Build the React element tree for a matched page route.
+ *
+ * Nesting order (outermost → innermost):
+ *   GlobalErrorBoundary(global-error.tsx)
+ *     └── RootLayout
+ *         └── ErrorBoundary(error.tsx)
+ *             └── NotFoundBoundary(not-found.tsx)
+ *                 └── NestedLayout(s)
+ *                     └── Suspense(loading.tsx)
+ *                         └── PageComponent
+ *
+ * This function is pure — it does not do I/O. Callers provide
+ * pre-loaded components via the `modules` parameter.
+ */
+
+export interface PageModules {
+  /** The page's default export component. */
+  page: React.ComponentType<{ params: Record<string, string> }>;
+  /** Layout components, ordered root → leaf. */
+  layouts: React.ComponentType<{ children: React.ReactNode }>[];
+  /** Error boundary fallback component (from nearest error.tsx). */
+  errorFallback?: React.ComponentType<{
+    error: Error & { digest?: string };
+    reset: () => void;
+  }>;
+  /** Loading fallback component (from nearest loading.tsx). */
+  loadingFallback?: React.ComponentType;
+  /** Not-found fallback component (from nearest not-found.tsx). */
+  notFoundFallback?: React.ComponentType;
+  /** Global error fallback (from global-error.tsx at app root). */
+  globalErrorFallback?: React.ComponentType<{
+    error: Error & { digest?: string };
+    reset: () => void;
+  }>;
+}
+
+export interface BuildPageTreeOptions {
+  route: Route;
+  params: Record<string, string>;
+  modules: PageModules;
+  pathname: string;
+  /** React module — passed in to avoid importing React at module scope. */
+  React: typeof import("react");
+}
+
+/**
+ * Build the full React element tree for a page render.
+ * Returns a single React element ready to pass to renderToReadableStream.
+ */
+export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement {
+  const { route: _route, params, modules, pathname, React } = options;
+  const {
+    page: Page,
+    layouts,
+    errorFallback,
+    loadingFallback,
+    notFoundFallback,
+    globalErrorFallback,
+  } = modules;
+
+  // We use React.createElement throughout to avoid JSX transform issues in SSR
+
+  // Innermost: the page component
+  let element: React.ReactElement = React.createElement(Page, { params });
+
+  // Wrap in Suspense if loading.tsx exists
+  if (loadingFallback) {
+    const Loading = loadingFallback;
+    element = React.createElement(
+      React.Suspense,
+      { fallback: React.createElement(Loading) },
+      element
+    );
+  }
+
+  // Wrap in NotFoundBoundary if not-found.tsx exists
+  if (notFoundFallback) {
+    element = React.createElement(
+      NotFoundBoundary,
+      { fallback: notFoundFallback, pathname, children: element }
+    );
+  }
+
+  // Wrap in ErrorBoundary if error.tsx exists
+  if (errorFallback) {
+    element = React.createElement(
+      ErrorBoundary,
+      { fallback: errorFallback, pathname, children: element }
+    );
+  }
+
+  // Wrap in layouts (innermost layout first, then outward)
+  for (let i = layouts.length - 1; i >= 0; i--) {
+    element = React.createElement(layouts[i], { children: element });
+  }
+
+  // Outermost: global error boundary
+  if (globalErrorFallback) {
+    element = React.createElement(
+      GlobalErrorBoundary,
+      { fallback: globalErrorFallback, children: element }
+    );
+  }
+
+  return element;
+}

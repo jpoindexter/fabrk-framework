@@ -4,10 +4,10 @@ export default function MigrationPage() {
   return (
     <DocLayout
       title="MIGRATION GUIDE"
-      description="Migrate an existing Next.js application to the FABRK framework. Transform imports, extract components, set up config, and wire store adapters."
+      description="Migrate an existing application to the FABRK framework. Transform imports, extract components, set up config, and wire store adapters."
     >
       <InfoCard title="WHO IS THIS FOR">
-        This guide is for developers who have an existing Next.js application and want to
+        This guide is for developers who have an existing application and want to
         adopt FABRK&apos;s component library, design system, and adapter pattern. It covers
         the import transformations, component extraction process, and configuration setup.
       </InfoCard>
@@ -56,7 +56,7 @@ pnpm add @fabrk/store-prisma  # Prisma store adapters`}</CodeBlock>
 
 export default defineFabrkConfig({
   framework: {
-    runtime: 'nextjs',
+    runtime: 'vite',
     typescript: true,
     srcDir: 'src',         // or 'app' if no src directory
     database: 'prisma',    // or 'drizzle' or 'none'
@@ -416,7 +416,7 @@ const fabrk = autoWire(config, undefined, {
 
       <Section title="STEP 7: ADD USE CLIENT DIRECTIVES">
         <p className="text-sm text-muted-foreground mb-4">
-          In Next.js App Router, components that use <code>cn()</code> from <code>@fabrk/core</code>
+          Components that use <code>cn()</code> from <code>@fabrk/core</code>
           or any interactive features need the <code>&apos;use client&apos;</code> directive.
           Server components (static pages, layouts without interactivity) do not need it.
         </p>
@@ -466,7 +466,7 @@ export default function StaticPage() {
             <li>Convert API-fetching components to callback props</li>
             <li>Replace direct SDK usage with FABRK adapters (payments, email, storage)</li>
             <li>Wire store adapters via <code>autoWire()</code> with <code>StoreOverrides</code></li>
-            <li>Run <code>fabrk lint</code> to catch remaining design system violations</li>
+            <li>Run the design system validation to catch remaining violations</li>
             <li>Run <code>pnpm build</code> to verify everything compiles</li>
           </ol>
         </InfoCard>

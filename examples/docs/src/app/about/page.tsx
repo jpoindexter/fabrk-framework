@@ -48,29 +48,22 @@ export default function AboutPage() {
         </p>
       </Section>
 
-      <Section id="pivot" title="THE PIVOT">
+      <Section id="runtime" title="OWN RUNTIME">
         <p className="text-sm text-muted-foreground mb-4">
-          I was building a full-stack framework layer on top of all this &mdash; routing,
-          SSR, Cloudflare Workers deployment, the works. A Vite-based runtime that would
-          tie everything together. I was deep into it when Cloudflare released{' '}
-          <span className="text-foreground font-semibold">vinext</span>.
+          The framework needed a runtime &mdash; routing, SSR, streaming, the works. Rather
+          than depend on someone else&apos;s, I built fabrk&apos;s own: a Vite 7 plugin with
+          file-system routing, SSR/RSC streaming, middleware, and a generic fetch handler
+          that works on any runtime.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          Vinext did almost exactly what I was building for the runtime and server layer.
-          SSR on Workers. Vite-based. MIT licensed. Built by a team with more resources
-          dedicated to that specific problem.
+          Node, Cloudflare Workers, Deno, Bun &mdash; deploy wherever you want. The{' '}
+          <span className="text-foreground font-semibold">@fabrk/framework</span> package owns the
+          full stack now. Runtime plus all the batteries.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          I had a choice: compete with Cloudflare on runtime infrastructure, or accept
-          that the runtime layer wasn&apos;t where my unique value lived. My value was
-          everything else &mdash; the components, the themes, the auth, the payments,
-          the AI toolkit, the security hardening, the design system.
-        </p>
-        <p className="text-sm text-muted-foreground mb-4">
-          So I pivoted. FABRK became a layer on top of vinext. Use their runtime. Keep
-          all the batteries. The result:{' '}
+          The result:{' '}
           <span className="text-foreground font-semibold">
-            fabrk = vinext (runtime) + batteries (everything else)
+            @fabrk/framework = own runtime + batteries (everything else)
           </span>.
         </p>
       </Section>

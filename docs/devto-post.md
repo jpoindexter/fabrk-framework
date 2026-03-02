@@ -24,15 +24,11 @@ so i started pulling things apart into 13 packages. the core principle was agnos
 
 all the packages work standalone. drop `@fabrk/components` into any react project. use `@fabrk/auth` with nextjs. use `@fabrk/payments` with remix. no lock-in to a specific framework or runtime — pick the packages you need, ignore the rest.
 
-## then cloudflare released vinext
+## own runtime
 
-separately i was building a runtime layer. wanted vite-based ssr on cloudflare workers — edge deployment, no cold starts. got a decent prototype working.
+separately i was building a runtime layer. wanted vite-based ssr — modern, fast, runs anywhere. so i built it: file-system routing, ssr with streaming, rsc support, middleware, a generic fetch handler that works on node, cloudflare workers, deno, bun — whatever runtime you deploy to.
 
-then [vinext](https://github.com/cloudflare/vinext) dropped. vite 7, react 19, ssr on workers, nextjs api compat. basically exactly what i was building.
-
-had to be honest with myself. the runtime wasnt where my unique value was. so the `@fabrk/framework` meta-package uses vinext for the runtime and bundles everything together — thats one way to use it if you want the full stack on cloudflare workers. but all the individual packages work independently with whatever framework you already use.
-
-sent them a [pr fixing pnpm issues](https://github.com/cloudflare/vinext/pull/146) i hit during integration.
+the `fabrk` framework package owns the full stack now. but all the individual packages work independently with whatever framework you already use.
 
 ## agent-friendly, not agent-specific
 

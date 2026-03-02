@@ -56,7 +56,7 @@ export default function GuidesPage() {
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
           The dashboard template includes pre-configured sidebar, theme support, and example pages.
-          If you already have a Next.js project, skip to step 2 and install the packages manually.
+          If you already have an existing project, skip to step 2 and install the packages manually.
         </p>
         <CodeBlock title="terminal">{`npx create-fabrk-app my-dashboard --template dashboard
 cd my-dashboard
@@ -71,12 +71,10 @@ pnpm install`}</CodeBlock>
           edges, not containers, so rounded corners would look broken. Active nav items use a
           left border accent (<code>border-l-2</code>) which is also partial and stays sharp.
         </p>
-        <CodeBlock title="src/app/dashboard/layout.tsx">{`'use client'
+        <CodeBlock title="app/dashboard/layout.tsx">{`'use client'
 
 import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 
 const navItems = [
   { id: 'overview', label: 'OVERVIEW', href: '/dashboard' },
@@ -86,8 +84,6 @@ const navItems = [
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-
   return (
     <div className="flex min-h-screen">
       {/* Sidebar — partial border (border-r), NO mode.radius */}
@@ -97,19 +93,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
         <nav className="space-y-1 flex-1">
           {navItems.map((item) => (
-            <Link
+            <a
               key={item.id}
               href={item.href}
               className={cn(
                 'block px-3 py-2 text-xs transition-colors',
                 mode.font,
-                pathname === item.href
-                  ? 'text-primary bg-primary/10 border-l-2 border-primary'
-                  : 'text-muted-foreground hover:text-foreground'
+                'text-muted-foreground hover:text-foreground'
               )}
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </nav>
         <div className="text-xs text-muted-foreground border-t border-border pt-3">
@@ -1901,35 +1895,26 @@ jobs:
       - run: pnpm audit || true  # Surface vulnerabilities without blocking`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          7. NEXT.JS SECURITY HEADERS
+          7. SECURITY HEADERS
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          The FABRK CLI templates include these headers by default. If you are adding FABRK
-          to an existing project, add them to your <code>next.config.js</code> directly.
+          <code>@fabrk/framework</code> automatically adds security headers via <code>buildSecurityHeaders()</code>
+          on all SSR responses. You can also configure them in your <code>fabrk.config.ts</code>.
         </p>
-        <CodeBlock title="next.config.js — security headers">{`/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'X-Frame-Options', value: 'DENY' },
-          { key: 'X-XSS-Protection', value: '1; mode=block' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-        ],
-      },
-    ]
-  },
+        <CodeBlock title="fabrk.config.ts — security headers">{`// Enable security headers in your config
+security: {
+  headers: true,   // Adds all 6 security headers automatically
+  csrf: true,
+  csp: true,
 }
 
-module.exports = nextConfig`}</CodeBlock>
+// Headers applied to all responses:
+//   X-Content-Type-Options: nosniff
+//   X-Frame-Options: DENY
+//   X-XSS-Protection: 1; mode=block
+//   Referrer-Policy: strict-origin-when-cross-origin
+//   Permissions-Policy: camera=(), microphone=(), geolocation=()
+//   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           8. MONITORING AND OBSERVABILITY
@@ -1940,8 +1925,8 @@ module.exports = nextConfig`}</CodeBlock>
 // - Checkly: synthetic monitoring with Playwright
 
 // For error tracking, add Sentry or similar:
-// npm install @sentry/nextjs
-// Follow their Next.js setup wizard: npx @sentry/wizard@latest -i nextjs
+// npm install @sentry/node
+// Follow Sentry docs for your runtime
 
 // For AI cost monitoring, query the cost tracker:
 const todaysCost = await costTracker.getTodaysCost()

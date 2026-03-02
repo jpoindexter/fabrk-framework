@@ -17,7 +17,7 @@ export default function GettingStartedPage() {
 
       <Section title="STEP 1: SCAFFOLD YOUR APP">
         <p className="text-sm text-muted-foreground mb-4">
-          The fastest way to start is with the CLI. It creates a Next.js 16 project
+          The fastest way to start is with the CLI. It creates a project
           with FABRK packages pre-configured, a Prisma schema, and a <code>fabrk.config.ts</code>.
         </p>
         <CodeBlock title="terminal">{`npx create-fabrk-app my-app
@@ -37,7 +37,7 @@ pnpm dev`}</CodeBlock>
         </p>
 
         <InfoCard title="MANUAL INSTALL">
-          If you prefer to add FABRK to an existing Next.js project:
+          If you prefer to add FABRK to an existing project:
           <CodeBlock title="install packages">{`pnpm add @fabrk/core @fabrk/config @fabrk/components @fabrk/design-system
 
 # Add feature packages as needed:
@@ -64,6 +64,7 @@ pnpm add @fabrk/storage @fabrk/security @fabrk/store-prisma`}</CodeBlock>
 ├── prisma/
 │   └── schema.prisma            # Database schema (template-specific)
 ├── fabrk.config.ts              # FABRK configuration
+├── vite.config.ts               # Vite config with fabrk() plugin
 ├── package.json
 ├── .env.example                 # Environment variables
 └── tsconfig.json`}</CodeBlock>
@@ -72,7 +73,7 @@ pnpm add @fabrk/storage @fabrk/security @fabrk/store-prisma`}</CodeBlock>
       <Section title="STEP 3: CONFIGURE FABRK">
         <p className="text-sm text-muted-foreground mb-4">
           Every FABRK app has a <code>fabrk.config.ts</code> at the project root.
-          This is your single source of truth &mdash; like <code>next.config.js</code> but for your
+          This is your single source of truth &mdash; like <code>vite.config.ts</code> but for your
           entire application stack.
         </p>
         <CodeBlock title="fabrk.config.ts">{`import { defineFabrkConfig } from '@fabrk/config'
@@ -80,7 +81,7 @@ pnpm add @fabrk/storage @fabrk/security @fabrk/store-prisma`}</CodeBlock>
 export default defineFabrkConfig({
   // Framework runtime
   framework: {
-    runtime: 'nextjs',
+    runtime: 'vite',
     typescript: true,
     srcDir: 'src',
     database: 'prisma',
@@ -292,21 +293,16 @@ vercel env add STRIPE_SECRET_KEY`}</CodeBlock>
         <p className="text-sm text-muted-foreground mb-4">
           The <code>fabrk</code> CLI helps with development workflows:
         </p>
-        <CodeBlock title="cli commands">{`# Start dev server with FABRK tooling
+        <CodeBlock title="cli commands">{`# Start Vite dev server with FABRK tooling
 fabrk dev
 
-# Build for production
+# Build for production (client + SSR)
 fabrk build
 
-# Check design system compliance
-fabrk lint
+# Start production server
+fabrk start
 
-# Generate scaffolding
-fabrk generate component MetricsCard
-fabrk generate page settings
-fabrk generate api webhooks
-
-# Show project info
+# Show project info (agents, tools, prompts)
 fabrk info`}</CodeBlock>
       </Section>
 
@@ -325,7 +321,7 @@ fabrk info`}</CodeBlock>
             Step-by-step guides: build a dashboard, add auth, integrate payments, deploy.
           </InfoCard>
           <InfoCard title="MIGRATION">
-            Moving from a raw Next.js app? See the migration guide for import transformations.
+            Moving from an existing app? See the migration guide for import transformations.
           </InfoCard>
           <InfoCard title="CLI REFERENCE">
             Full reference for <code>create-fabrk-app</code> and the <code>fabrk</code> dev CLI.

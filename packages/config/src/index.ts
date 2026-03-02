@@ -10,7 +10,7 @@ import { z } from 'zod'
 // ─── Framework ───────────────────────────────────────
 
 const frameworkConfigSchema = z.object({
-  runtime: z.enum(['nextjs']).default('nextjs'),
+  runtime: z.enum(['nextjs', 'vite']).default('nextjs'),
   typescript: z.boolean().default(true),
   srcDir: z.string().default('src'),
   database: z.enum(['prisma', 'drizzle', 'none']).default('none'),
@@ -236,7 +236,7 @@ export type JobsConfig = z.infer<typeof jobsConfigSchema>
  *
  * export default defineFabrkConfig({
  *   framework: {
- *     runtime: 'nextjs',
+ *     runtime: 'vite',
  *     typescript: true,
  *     srcDir: 'src',
  *   },

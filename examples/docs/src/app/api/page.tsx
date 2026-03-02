@@ -16,6 +16,7 @@ const packages = [
   { name: '@fabrk/security', description: 'CSRF, CSP, rate limiting, audit, GDPR, CORS' },
   { name: '@fabrk/storage', description: 'S3, Cloudflare R2, local filesystem' },
   { name: '@fabrk/store-prisma', description: 'Prisma store adapters for 7 entity types' },
+  { name: '@fabrk/framework', description: 'Own Vite 7 runtime, file-system routing, SSR, AI agents, tools, MCP, CLI' },
 ]
 
 const quickReference = [
@@ -98,7 +99,7 @@ export default function ApiReferencePage() {
   return (
     <DocLayout
       title="API REFERENCE"
-      description="Auto-generated TypeScript API documentation for all 12 packages. Generated with TypeDoc from JSDoc annotations and TypeScript types."
+      description="Auto-generated TypeScript API documentation for all 13 packages. Generated with TypeDoc from JSDoc annotations and TypeScript types."
     >
       <Section title="QUICK REFERENCE">
         <p className="text-sm text-muted-foreground mb-6">

@@ -1,52 +1,16 @@
-/**
- * Job Queue
- *
- * Simple async job queue for background processing.
- * Supports priorities, retries, delays, and scheduling.
- *
- * @example
- * ```ts
- * const queue = createJobQueue()
- *
- * // Register a handler
- * queue.process('send-email', async (job) => {
- *   await sendEmail(job.payload.to, job.payload.subject)
- * })
- *
- * // Enqueue a job
- * await queue.enqueue({
- *   type: 'send-email',
- *   payload: { to: 'user@example.com', subject: 'Hello' },
- *   maxRetries: 3,
- * })
- *
- * // Start processing
- * queue.start()
- * ```
- */
-
 import type { Job, JobOptions, JobStatus, JobStore } from '../plugin-types'
 
 const ALLOWED_JOB_UPDATE_FIELDS = ['status', 'lastAttemptAt', 'attempts', 'completedAt', 'error', 'result'] as const
 
 export interface JobQueue {
-  /** Enqueue a job */
   enqueue(options: JobOptions): Promise<Job>
-  /** Register a job handler */
   process(type: string, handler: (job: Job) => Promise<void>): void
-  /** Start processing jobs */
   start(options?: { pollInterval?: number }): void
-  /** Stop processing jobs */
   stop(): void
-  /** Get a job by ID */
   getJob(id: string): Promise<Job | null>
-  /** Get jobs by status */
   getByStatus(status: JobStatus, limit?: number): Promise<Job[]>
 }
 
-/**
- * In-memory job store
- */
 class InMemoryJobStore implements JobStore {
   private jobs = new Map<string, Job>()
   /** Tracks jobs that have been dequeued but not yet completed/failed, preventing double-dispatch. */
@@ -157,7 +121,6 @@ export function createJobQueue(store?: JobStore): JobQueue {
         maxRetries: options.maxRetries ?? 3,
       }
 
-      // Apply delay
       if (options.delay) {
         job.scheduledAt = new Date(Date.now() + options.delay)
       }

@@ -8,7 +8,7 @@ export default function ConfigurationPage() {
     >
       <InfoCard title="HOW IT WORKS">
         Every FABRK app has a <code>fabrk.config.ts</code> at the project root, like{' '}
-        <code>next.config.js</code>. The <code>defineFabrkConfig()</code> function provides
+        <code>vite.config.ts</code>. The <code>defineFabrkConfig()</code> function provides
         full TypeScript autocomplete and Zod validation. Use <code>autoWire()</code> to create
         all adapters from your config automatically.
       </InfoCard>
@@ -52,7 +52,7 @@ export const { email, storage, payments, auth, security } = fabrk`}</CodeBlock>
           Core framework settings: runtime, TypeScript, source directory, and database ORM.
         </p>
         <CodeBlock title="fabrk.config.ts">{`framework: {
-  runtime: 'nextjs',       // Runtime: 'nextjs' (more coming)
+  runtime: 'vite',         // Runtime: 'vite' | 'nextjs'
   typescript: true,        // TypeScript enabled (default: true)
   srcDir: 'src',           // Source directory (default: 'src')
   database: 'prisma',      // Database: 'prisma' | 'drizzle' | 'none'
@@ -286,7 +286,7 @@ export const { email, storage, payments, auth, security } = fabrk`}</CodeBlock>
 export default defineFabrkConfig({
   // Core framework
   framework: {
-    runtime: 'nextjs',
+    runtime: 'vite',
     typescript: true,
     srcDir: 'src',
     database: 'prisma',

@@ -25,7 +25,7 @@ export default function PaymentsTutorialPage() {
         <CodeBlock title="terminal">{`pnpm add @fabrk/payments @fabrk/components stripe`}</CodeBlock>
         <CodeBlock title=".env.local">{`STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_WEBHOOK_SECRET="whsec_..."
-NEXT_PUBLIC_APP_URL="http://localhost:3000"`}</CodeBlock>
+APP_URL="http://localhost:5173"`}</CodeBlock>
       </Section>
 
       {/* STEP 2 — STRIPE ADAPTER */}
@@ -64,10 +64,9 @@ export const payments = createStripeAdapter({
           Create an API route that generates a Stripe checkout session. The adapter
           handles mode detection (subscription vs one-time) and optional trial periods.
         </p>
-        <CodeBlock title="src/app/api/checkout/route.ts">{`import { NextRequest, NextResponse } from 'next/server'
-import { payments } from '@/lib/payments'
+        <CodeBlock title="app/api/checkout/route.ts">{`import { payments } from '../../../lib/payments'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const { priceId, customerEmail } = await req.json()
 
@@ -76,17 +75,19 @@ export async function POST(req: NextRequest) {
       customerEmail,
       subscription: true,
       trialDays: 14,
-      successUrl: \`\${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}\`,
-      cancelUrl: \`\${process.env.NEXT_PUBLIC_APP_URL}/pricing\`,
+      successUrl: \`\${process.env.APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}\`,
+      cancelUrl: \`\${process.env.APP_URL}/pricing\`,
       metadata: { source: 'pricing-page' },
     })
 
-    return NextResponse.json({ url: checkout.url })
+    return new Response(JSON.stringify({ url: checkout.url }), {
+      headers: { 'Content-Type': 'application/json' },
+    })
   } catch (error) {
     console.error('[CHECKOUT] Error creating session:', error)
-    return NextResponse.json(
-      { error: 'Failed to create checkout session' },
-      { status: 500 }
+    return new Response(
+      JSON.stringify({ error: 'Failed to create checkout session' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
 }`}</CodeBlock>
@@ -103,19 +104,22 @@ export async function POST(req: NextRequest) {
           Handle Stripe events with a webhook endpoint. The adapter verifies the
           signature and parses the payload automatically.
         </p>
-        <CodeBlock title="src/app/api/webhooks/stripe/route.ts">{`import { NextRequest, NextResponse } from 'next/server'
-import { payments } from '@/lib/payments'
+        <CodeBlock title="app/api/webhooks/stripe/route.ts">{`import { payments } from '../../../lib/payments'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const body = await req.text()
   const signature = req.headers.get('stripe-signature')
   if (!signature) {
-    return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
+    return new Response(JSON.stringify({ error: 'Missing signature' }), {
+      status: 400, headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const result = await payments.handleWebhook(body, signature)
   if (!result.verified) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+    return new Response(JSON.stringify({ error: 'Invalid signature' }), {
+      status: 400, headers: { 'Content-Type': 'application/json' },
+    })
   }
 
   const { type, data } = result.event!
@@ -123,21 +127,20 @@ export async function POST(req: NextRequest) {
   switch (type) {
     case 'checkout.session.completed':
       console.log('[WEBHOOK] Checkout completed:', (data as any).customer)
-      // Provision access — save customer to your database
       break
     case 'customer.subscription.deleted':
       console.log('[WEBHOOK] Subscription canceled:', data.id)
-      // Revoke access — update user tier in your database
       break
     case 'invoice.payment_failed':
       console.log('[WEBHOOK] Payment failed:', data.id)
-      // Notify user of failed payment
       break
     default:
       console.log('[WEBHOOK] Unhandled event:', type)
   }
 
-  return NextResponse.json({ received: true })
+  return new Response(JSON.stringify({ received: true }), {
+    headers: { 'Content-Type': 'application/json' },
+  })
 }`}</CodeBlock>
         <p className="text-sm text-muted-foreground mt-3">
           Test locally with the Stripe CLI:
@@ -272,18 +275,19 @@ export default function PricingPage() {
         <p className="text-sm text-muted-foreground mb-4">
           Let existing customers manage their subscription via the Stripe billing portal.
         </p>
-        <CodeBlock title="src/app/api/portal/route.ts">{`import { NextRequest, NextResponse } from 'next/server'
-import { payments } from '@/lib/payments'
+        <CodeBlock title="app/api/portal/route.ts">{`import { payments } from '../../lib/payments'
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   const { customerId } = await req.json()
 
   const portalUrl = await payments.createPortalSession(
     customerId,
-    \`\${process.env.NEXT_PUBLIC_APP_URL}/dashboard\`
+    \`\${process.env.APP_URL}/dashboard\`
   )
 
-  return NextResponse.json({ url: portalUrl })
+  return new Response(JSON.stringify({ url: portalUrl }), {
+    headers: { 'Content-Type': 'application/json' },
+  })
 }`}</CodeBlock>
 
         <InfoCard title="NEXT STEPS">

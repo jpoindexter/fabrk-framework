@@ -1,9 +1,3 @@
-/**
- * Notification Manager
- *
- * Manages both toast (ephemeral) and persistent notifications.
- */
-
 import type {
   Notification,
   NotificationOptions,
@@ -11,19 +5,12 @@ import type {
 } from '../plugin-types'
 
 export interface NotificationManager {
-  /** Send a notification */
   notify(options: NotificationOptions): Promise<Notification>
-  /** Get notifications for a user */
   getForUser(userId: string, options?: { unreadOnly?: boolean; limit?: number }): Promise<Notification[]>
-  /** Mark a notification as read */
   markRead(id: string, userId: string): Promise<void>
-  /** Mark all as read for a user */
   markAllRead(userId: string): Promise<void>
-  /** Dismiss a notification */
   dismiss(id: string, userId: string): Promise<void>
-  /** Get unread count */
   getUnreadCount(userId: string): Promise<number>
-  /** Subscribe to new notifications */
   subscribe(callback: (notification: Notification) => void): () => void
 }
 

@@ -29,7 +29,7 @@ describe("checkBudget", () => {
     recordCost(agent, session, 10);
 
     const result = checkBudget(agent, session, { daily: 10 });
-    expect(result).toContain("Daily budget exceeded");
+    expect(result).toContain("Agent daily budget exceeded");
   });
 
   it("returns null when under per-session budget", () => {
@@ -61,7 +61,7 @@ describe("recordCost", () => {
 
     // Should be at $5, so $4 daily budget should fail
     const result = checkBudget(agent, session, { daily: 4 });
-    expect(result).toContain("Daily budget exceeded");
+    expect(result).toContain("Agent daily budget exceeded");
   });
 
   it("accumulates session costs across calls", () => {
@@ -101,7 +101,7 @@ describe("recordCost", () => {
   it("daily budget of 0 blocks immediately", () => {
     const agent = unique("agent");
     const result = checkBudget(agent, "session", { daily: 0 });
-    expect(result).toContain("Daily budget exceeded");
+    expect(result).toContain("Agent daily budget exceeded");
   });
 
   it("triggers alertThreshold warning", () => {

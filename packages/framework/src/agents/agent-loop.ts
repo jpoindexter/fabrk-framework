@@ -3,7 +3,8 @@ import type { AgentBudget } from "./define-agent";
 import type { ToolExecutor } from "./tool-executor";
 import type { Guardrail } from "./guardrails";
 import { runGuardrails } from "./guardrails";
-import { checkBudget, recordCost } from "./budget-guard";
+import { checkBudget, recordCost, type BudgetContext } from "./budget-guard";
+import { setSpanAttributes } from "../runtime/tracer";
 
 const MAX_ITERATIONS_HARD_CAP = 25;
 
@@ -25,6 +26,7 @@ export interface AgentLoopOptions {
   sessionId: string;
   model: string;
   budget?: AgentBudget;
+  budgetContext?: BudgetContext;
   maxIterations?: number;
   stream: boolean;
   generateWithTools: (
@@ -83,7 +85,7 @@ export async function* runAgentLoop(
   }
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
-    const budgetError = checkBudget(options.agentName, options.sessionId, options.budget);
+    const budgetError = checkBudget(options.agentName, options.sessionId, options.budget, options.budgetContext);
     if (budgetError) {
       yield { type: "error", message: budgetError };
       return;
@@ -113,7 +115,15 @@ export async function* runAgentLoop(
       }
 
       const { costUSD } = options.calculateCost(options.model, totalPromptTokens, totalCompletionTokens);
-      recordCost(options.agentName, options.sessionId, costUSD);
+      recordCost(options.agentName, options.sessionId, costUSD, options.budgetContext);
+      setSpanAttributes({
+        "llm.model": options.model,
+        "llm.agent": options.agentName,
+        "llm.tokens.prompt": totalPromptTokens,
+        "llm.tokens.completion": totalCompletionTokens,
+        "llm.cost_usd": costUSD,
+        "llm.iteration": iteration,
+      });
       yield {
         type: "usage",
         promptTokens: totalPromptTokens,
@@ -179,7 +189,15 @@ export async function* runAgentLoop(
       result.usage.promptTokens,
       result.usage.completionTokens
     );
-    recordCost(options.agentName, options.sessionId, costUSD);
+    recordCost(options.agentName, options.sessionId, costUSD, options.budgetContext);
+    setSpanAttributes({
+      "llm.model": options.model,
+      "llm.agent": options.agentName,
+      "llm.tokens.prompt": result.usage.promptTokens,
+      "llm.tokens.completion": result.usage.completionTokens,
+      "llm.cost_usd": costUSD,
+      "llm.iteration": iteration,
+    });
     yield {
       type: "usage",
       promptTokens: result.usage.promptTokens,

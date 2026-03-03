@@ -6,7 +6,7 @@ import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
 import { createLLMBridge } from "./llm-bridge";
 import { callWithFallback, type LLMCallResult } from "./llm-caller";
-import { checkBudget, recordCost } from "./budget-guard";
+import { checkBudget, recordCost, type BudgetContext } from "./budget-guard";
 import { createAuthGuard } from "../middleware/auth-guard";
 import { buildSecurityHeaders } from "../middleware/security";
 import { createSSEResponse, type SSEEvent } from "./sse-stream";
@@ -216,7 +216,14 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     const sessionId = typeof body.sessionId === "string"
       ? body.sessionId.slice(0, 128)
       : "default";
-    const budgetError = checkBudget(agentName, sessionId, options.budget);
+
+    // Per-user and per-tenant budgets are scoped by request headers (set by auth middleware)
+    const budgetContext: BudgetContext = {
+      userId: req.headers.get("x-user-id")?.slice(0, 128) || undefined,
+      tenantId: req.headers.get("x-tenant-id")?.slice(0, 128) || undefined,
+    };
+
+    const budgetError = checkBudget(agentName, sessionId, options.budget, budgetContext);
     if (budgetError) {
       return jsonResponse({ error: budgetError }, 429);
     }
@@ -321,6 +328,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           sessionId,
           model: options.model,
           budget: options.budget,
+          budgetContext,
           maxIterations: options.maxIterations,
           stream: options.stream ?? false,
           generateWithTools: generateFn,
@@ -484,7 +492,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           }
 
           const totalTokens = result.usage.promptTokens + result.usage.completionTokens;
-          recordCost(agentName, sessionId, result.cost);
+          recordCost(agentName, sessionId, result.cost, budgetContext);
 
           options.onCallComplete?.({
             agent: agentName,
@@ -539,7 +547,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       }
 
       const totalTokens = result.usage.promptTokens + result.usage.completionTokens;
-      recordCost(agentName, sessionId, result.cost);
+      recordCost(agentName, sessionId, result.cost, budgetContext);
 
       options.onCallComplete?.({
         agent: agentName,

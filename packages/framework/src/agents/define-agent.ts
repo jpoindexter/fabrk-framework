@@ -7,6 +7,10 @@ export interface AgentBudget {
   daily?: number;
   perSession?: number;
   alertThreshold?: number;
+  /** Maximum daily spend per userId (passed via BudgetContext). */
+  perUser?: number;
+  /** Maximum daily spend per tenantId (passed via BudgetContext). */
+  perTenant?: number;
 }
 
 export interface AgentMemoryConfig {

@@ -2,9 +2,18 @@ import type { AgentBudget } from "./define-agent";
 
 const MAX_SESSIONS = 10_000;
 const MAX_AGENTS = 1_000;
+const MAX_USERS = 10_000;
+const MAX_TENANTS = 1_000;
 
 const dailyCosts = new Map<string, { total: number; date: string }>();
 const sessionCosts = new Map<string, number>();
+const userDailyCosts = new Map<string, { total: number; date: string }>();
+const tenantDailyCosts = new Map<string, { total: number; date: string }>();
+
+export interface BudgetContext {
+  userId?: string;
+  tenantId?: string;
+}
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -16,23 +25,44 @@ function validateBudgetValue(name: string, value: number): void {
   }
 }
 
+function evictOldest<V>(map: Map<string, V>, cap: number, newKey: string): void {
+  if (map.size >= cap && !map.has(newKey)) {
+    const oldest = map.keys().next().value;
+    if (oldest !== undefined) map.delete(oldest);
+  }
+}
+
+function checkDailyMap(
+  map: Map<string, { total: number; date: string }>,
+  key: string,
+  limit: number,
+  label: string
+): string | null {
+  const entry = map.get(key);
+  const currentDay = today();
+  const spent = entry?.date === currentDay ? entry.total : 0;
+  if (spent >= limit) {
+    return `${label} daily budget exceeded: $${spent.toFixed(4)} / $${limit}`;
+  }
+  return null;
+}
+
 export function checkBudget(
   agentName: string,
   sessionId: string,
-  budget?: AgentBudget
+  budget?: AgentBudget,
+  ctx?: BudgetContext
 ): string | null {
   if (!budget) return null;
 
   if (budget.daily !== undefined) {
     validateBudgetValue("daily", budget.daily);
+    const err = checkDailyMap(dailyCosts, agentName, budget.daily, "Agent");
+    if (err) return err;
+
     const entry = dailyCosts.get(agentName);
     const currentDay = today();
     const spent = entry?.date === currentDay ? entry.total : 0;
-
-    if (spent >= budget.daily) {
-      return `Daily budget exceeded: $${spent.toFixed(4)} / $${budget.daily}`;
-    }
-
     const threshold = budget.alertThreshold ?? 0.8;
     if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
       throw new Error(`[fabrk] Invalid alertThreshold: ${threshold}`);
@@ -52,34 +82,64 @@ export function checkBudget(
     }
   }
 
+  if (budget.perUser !== undefined && ctx?.userId) {
+    validateBudgetValue("perUser", budget.perUser);
+    const err = checkDailyMap(userDailyCosts, ctx.userId, budget.perUser, "User");
+    if (err) return err;
+  }
+
+  if (budget.perTenant !== undefined && ctx?.tenantId) {
+    validateBudgetValue("perTenant", budget.perTenant);
+    const err = checkDailyMap(tenantDailyCosts, ctx.tenantId, budget.perTenant, "Tenant");
+    if (err) return err;
+  }
+
   return null;
 }
 
 export function recordCost(
   agentName: string,
   sessionId: string,
-  cost: number
+  cost: number,
+  ctx?: BudgetContext
 ): void {
   if (!Number.isFinite(cost) || cost < 0) {
     throw new Error(`[fabrk] Invalid cost value: ${cost}`);
   }
   const currentDay = today();
+
+  // Agent daily
   const entry = dailyCosts.get(agentName);
   if (entry?.date === currentDay) {
     entry.total += cost;
   } else {
-    if (dailyCosts.size >= MAX_AGENTS && !dailyCosts.has(agentName)) {
-      const oldest = dailyCosts.keys().next().value;
-      if (oldest !== undefined) dailyCosts.delete(oldest);
-    }
+    evictOldest(dailyCosts, MAX_AGENTS, agentName);
     dailyCosts.set(agentName, { total: cost, date: currentDay });
   }
 
-  if (sessionCosts.size >= MAX_SESSIONS && !sessionCosts.has(sessionId)) {
-    const oldest = sessionCosts.keys().next().value;
-    if (oldest !== undefined) sessionCosts.delete(oldest);
+  // Session
+  evictOldest(sessionCosts, MAX_SESSIONS, sessionId);
+  sessionCosts.set(sessionId, (sessionCosts.get(sessionId) ?? 0) + cost);
+
+  // User daily
+  if (ctx?.userId) {
+    const userEntry = userDailyCosts.get(ctx.userId);
+    if (userEntry?.date === currentDay) {
+      userEntry.total += cost;
+    } else {
+      evictOldest(userDailyCosts, MAX_USERS, ctx.userId);
+      userDailyCosts.set(ctx.userId, { total: cost, date: currentDay });
+    }
   }
 
-  const sessionTotal = sessionCosts.get(sessionId) ?? 0;
-  sessionCosts.set(sessionId, sessionTotal + cost);
+  // Tenant daily
+  if (ctx?.tenantId) {
+    const tenantEntry = tenantDailyCosts.get(ctx.tenantId);
+    if (tenantEntry?.date === currentDay) {
+      tenantEntry.total += cost;
+    } else {
+      evictOldest(tenantDailyCosts, MAX_TENANTS, ctx.tenantId);
+      tenantDailyCosts.set(ctx.tenantId, { total: cost, date: currentDay });
+    }
+  }
 }

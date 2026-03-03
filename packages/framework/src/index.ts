@@ -181,7 +181,7 @@ export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult, Scorer, Scor
 export type { ToolExecutorHooks } from "./agents/tool-executor";
 
 // OpenTelemetry tracer
-export { initTracer, startSpan, getActiveSpan } from "./runtime/tracer";
+export { initTracer, startSpan, setSpanAttributes, getActiveSpan, type SpanAttributes } from "./runtime/tracer";
 
 // Route type generation
 export { generateRouteTypes } from "./runtime/route-types-gen";

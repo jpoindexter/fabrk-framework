@@ -1,3 +1,7 @@
+import fsPromises from "node:fs/promises";
+import fsCb from "node:fs";
+import nodePath from "node:path";
+
 export interface ISRCacheEntry {
   html: string;
   timestamp: number;
@@ -162,4 +166,67 @@ export async function isrRevalidatePath(
   pathname: string,
 ): Promise<void> {
   await cacheHandler.delete(pathname);
+}
+
+/**
+ * Filesystem-backed ISR cache. Stores entries as JSON files in a directory.
+ * Enables persistence across restarts and sharing between processes (e.g. via NFS).
+ *
+ * Key → filename: `/about` → `about.json`, `/blog/foo` → `blog__foo.json`
+ */
+export class FilesystemISRCache implements ISRCacheHandler {
+  constructor(private dir: string) {
+    fsCb.mkdirSync(dir, { recursive: true });
+  }
+
+  private keyToFile(key: string): string {
+    // Strip leading slash, replace remaining slashes with __ to stay flat
+    const safe = key.replace(/^\//, "").replace(/\//g, "__") || "__root";
+    return nodePath.join(this.dir, `${safe}.json`);
+  }
+
+  async get(key: string): Promise<ISRCacheEntry | null> {
+    try {
+      const raw = await fsPromises.readFile(this.keyToFile(key), "utf-8");
+      return JSON.parse(raw) as ISRCacheEntry;
+    } catch {
+      return null;
+    }
+  }
+
+  async set(key: string, entry: ISRCacheEntry): Promise<void> {
+    await fsPromises.writeFile(this.keyToFile(key), JSON.stringify(entry), "utf-8");
+  }
+
+  async delete(key: string): Promise<void> {
+    try {
+      await fsPromises.unlink(this.keyToFile(key));
+    } catch {
+      // ignore ENOENT
+    }
+  }
+
+  async deleteByTag(tag: string): Promise<void> {
+    let files: string[];
+    try {
+      files = await fsPromises.readdir(this.dir);
+    } catch {
+      return;
+    }
+
+    await Promise.all(
+      files.filter((f) => f.endsWith(".json")).map(async (f) => {
+        const filePath = nodePath.join(this.dir, f);
+        try {
+          const raw = await fsPromises.readFile(filePath, "utf-8");
+          const entry = JSON.parse(raw) as ISRCacheEntry;
+          if (Array.isArray(entry.tags) && entry.tags.includes(tag)) {
+            await fsPromises.unlink(filePath);
+          }
+        } catch {
+          // ignore corrupt or already-deleted files
+        }
+      }),
+    );
+  }
 }

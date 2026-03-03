@@ -118,6 +118,99 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
         });
       };
     },
+
+    async closeBundle() {
+      // Only run during build (not dev server watch mode)
+      if (this.meta?.watchMode !== false) return;
+
+      const outDir = path.resolve(root, "dist", "client");
+      if (!fs.existsSync(outDir)) return;
+
+      const { collectStaticRoutes, renderStaticPage } = await import("./static-export");
+      const modules = new Map<string, Record<string, unknown>>();
+      for (const route of routes) {
+        try {
+          const mod = await import(route.filePath);
+          modules.set(route.filePath, mod);
+        } catch {
+          // ignore missing modules
+        }
+      }
+
+      const staticRoutes = await collectStaticRoutes({ routes, modules });
+      let prerendered = 0;
+
+      // ISR pre-render — write pre-rendered HTML for ISR pages to dist/server/isr-prerender/
+      const isrPreDir = path.resolve(root, "dist", "server", "isr-prerender");
+      let isrPrerendered = 0;
+
+      for (const { route, params, outputPath } of staticRoutes) {
+        const mod = modules.get(route.filePath);
+
+        if (mod && typeof mod.revalidate === "number") {
+          // ISR page — pre-render to dist/server/isr-prerender/ for warm cache at startup
+          try {
+            const layoutModules = new Map<string, Record<string, unknown>>();
+            for (const lp of route.layoutPaths) {
+              try {
+                layoutModules.set(lp, await import(lp));
+              } catch { /* ignore */ }
+            }
+            const html = await renderStaticPage(mod, params, layoutModules, route.layoutPaths);
+            const safeKey = outputPath.replace(/\//g, "__").replace(/\.html$/, ".json");
+            const destPath = path.join(isrPreDir, safeKey);
+            fs.mkdirSync(isrPreDir, { recursive: true });
+            fs.writeFileSync(destPath, JSON.stringify({
+              pathname: outputPath.replace(/\/index\.html$/, "") || "/",
+              html,
+              revalidate: mod.revalidate as number,
+              tags: Array.isArray(mod.tags) ? mod.tags : [],
+            }), "utf-8");
+            isrPrerendered++;
+          } catch (err) {
+            console.warn(`[fabrk] ISR pre-render failed for ${route.pattern}:`, err);
+          }
+          continue;
+        }
+
+        // Static page — write directly to dist/client/
+        try {
+          const layoutModules = new Map<string, Record<string, unknown>>();
+          for (const lp of route.layoutPaths) {
+            try {
+              layoutModules.set(lp, await import(lp));
+            } catch { /* ignore */ }
+          }
+          const html = await renderStaticPage(mod!, params, layoutModules, route.layoutPaths);
+          const destPath = path.join(outDir, outputPath);
+          fs.mkdirSync(path.dirname(destPath), { recursive: true });
+          fs.writeFileSync(destPath, html, "utf-8");
+          prerendered++;
+        } catch (err) {
+          console.warn(`[fabrk] Static pre-render failed for ${route.pattern}:`, err);
+        }
+      }
+
+      if (prerendered > 0) {
+        console.log(`[fabrk] Pre-rendered ${prerendered} static page(s)`);
+      }
+      if (isrPrerendered > 0) {
+        console.log(`[fabrk] Pre-rendered ${isrPrerendered} ISR page(s) for warm cache`);
+      }
+
+      // Sitemap + robots.txt
+      try {
+        const { generateSitemap } = await import("../build/sitemap-gen");
+        const { loadFabrkConfig } = await import("../config/fabrk-config");
+        const fabrkConfig = await loadFabrkConfig(root).catch(() => ({}));
+        const baseUrl = (fabrkConfig as Record<string, unknown>).baseUrl as string | undefined
+          ?? "http://localhost:3000";
+        await generateSitemap({ baseUrl, routes, modules, outDir });
+        console.log(`[fabrk] Generated sitemap.xml and robots.txt`);
+      } catch (err) {
+        console.warn("[fabrk] Sitemap generation failed:", err);
+      }
+    },
   };
 
   const virtualPlugin: Plugin = {

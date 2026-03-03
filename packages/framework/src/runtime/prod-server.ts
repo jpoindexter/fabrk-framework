@@ -638,6 +638,30 @@ export async function startProdServer(
     );
   }
 
+  // Pre-populate ISR cache from build-time pre-rendered pages
+  const isrPreDir = path.join(distDir, "server", "isr-prerender");
+  if (fs.existsSync(isrPreDir)) {
+    const files = fs.readdirSync(isrPreDir).filter((f) => f.endsWith(".json"));
+    for (const file of files) {
+      try {
+        const data = JSON.parse(fs.readFileSync(path.join(isrPreDir, file), "utf-8")) as {
+          pathname: string;
+          html: string;
+          revalidate: number;
+          tags: string[];
+        };
+        await isrCache.set(data.pathname, {
+          html: data.html,
+          timestamp: 0, // immediately stale — first request triggers background revalidation
+          revalidate: data.revalidate,
+          tags: data.tags,
+        });
+      } catch {
+        // ignore corrupt files
+      }
+    }
+  }
+
   let middlewareHandler: MiddlewareHandler | undefined;
   let middlewareMatchers: RegExp[] | undefined;
   if (middlewarePath) {

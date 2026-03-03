@@ -89,6 +89,7 @@ export type { JsonLdData, JsonLdOrganization, JsonLdProduct, JsonLdArticle, Json
 
 export {
   InMemoryISRCache,
+  FilesystemISRCache,
   serveFromISR,
   isrRevalidateTag,
   isrRevalidatePath,

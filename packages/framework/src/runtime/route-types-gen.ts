@@ -1,8 +1,8 @@
 import type { Route } from "./router";
 
-const DYNAMIC_SEG = /\[([^\[\]\.]+)\]/g;
-const CATCH_ALL_SEG = /\[\.\.\.([^\[\]\.]+)\]/g;
-const OPTIONAL_CATCH_ALL_SEG = /\[\[\.\.\.([^\[\]\.]+)\]\]/g;
+const DYNAMIC_SEG = /\[([^[\].]+)\]/g;
+const CATCH_ALL_SEG = /\[\.\.\.([^[\].]+)\]/g;
+const OPTIONAL_CATCH_ALL_SEG = /\[\[\.\.\.([^[\].]+)\]\]/g;
 
 function extractParamType(pattern: string): string {
   const params: string[] = [];
@@ -21,8 +21,8 @@ function extractParamType(pattern: string): string {
 
   // Clean pattern of catch-alls before scanning dynamic segments
   const cleaned = pattern
-    .replace(/\[\[\.\.\.([^\[\]\.]+)\]\]/g, "")
-    .replace(/\[\.\.\.([^\[\]\.]+)\]/g, "");
+    .replace(/\[\[\.\.\.([^[\].]+)\]\]/g, "")
+    .replace(/\[\.\.\.([^[\].]+)\]/g, "");
 
   const dynamic = new RegExp(DYNAMIC_SEG.source, "g");
   while ((match = dynamic.exec(cleaned)) !== null) {

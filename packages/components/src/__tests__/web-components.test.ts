@@ -59,8 +59,9 @@ describe("Web Components Wrapper", () => {
 
     defineWebComponent("shadow-element", MockComponent);
 
-    const ElementClass = mockRegistry.get("shadow-element")!;
-    expect(ElementClass.prototype.connectedCallback).toBeDefined();
+    const ElementClass = mockRegistry.get("shadow-element");
+    expect(ElementClass).toBeDefined();
+    expect(ElementClass?.prototype.connectedCallback).toBeDefined();
   });
 
   it("disconnectedCallback exists on registered element", async () => {
@@ -69,8 +70,9 @@ describe("Web Components Wrapper", () => {
 
     defineWebComponent("cleanup-element", MockComponent);
 
-    const ElementClass = mockRegistry.get("cleanup-element")!;
-    expect(ElementClass.prototype.disconnectedCallback).toBeDefined();
+    const ElementClass = mockRegistry.get("cleanup-element");
+    expect(ElementClass).toBeDefined();
+    expect(ElementClass?.prototype.disconnectedCallback).toBeDefined();
   });
 
   it("observedAttributes are correctly passed through", async () => {

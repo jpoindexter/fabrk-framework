@@ -20,6 +20,9 @@ export type {
   LLMToolResult,
   LLMMessage,
   LLMStreamEvent,
+  LLMTextPart,
+  LLMImagePart,
+  LLMContentPart,
 } from './tool-types'
 
 export {

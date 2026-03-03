@@ -7,10 +7,24 @@ import type {
   LLMToolResult,
   LLMToolCall,
   LLMStreamEvent,
+  LLMContentPart,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
   return { ...LLM_DEFAULTS, ...config, provider: "ollama" as const };
+}
+
+function contentPartsToOllama(parts: LLMContentPart[]): string {
+  // Ollama's text API — skip image parts with a warning, concatenate text parts
+  const textParts: string[] = [];
+  for (const part of parts) {
+    if (part.type === "text") {
+      textParts.push(part.text);
+    } else {
+      console.warn("[fabrk/ollama-tools] Image content parts are not supported by this Ollama adapter — skipping image part");
+    }
+  }
+  return textParts.join("");
 }
 
 function toOllamaMessages(messages: LLMMessage[]): unknown[] {
@@ -21,7 +35,7 @@ function toOllamaMessages(messages: LLMMessage[]): unknown[] {
     if (m.role === "assistant" && m.toolCalls?.length) {
       return {
         role: "assistant",
-        content: m.content || "",
+        content: Array.isArray(m.content) ? contentPartsToOllama(m.content) : (m.content || ""),
         tool_calls: m.toolCalls.map((tc) => ({
           id: tc.id,
           type: "function",
@@ -29,7 +43,10 @@ function toOllamaMessages(messages: LLMMessage[]): unknown[] {
         })),
       };
     }
-    return { role: m.role, content: m.content };
+    return {
+      role: m.role,
+      content: Array.isArray(m.content) ? contentPartsToOllama(m.content) : m.content,
+    };
   });
 }
 

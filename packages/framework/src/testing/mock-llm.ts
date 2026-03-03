@@ -83,7 +83,15 @@ export class MockLLM {
 
   private resolve(messages: LLMMessage[]): MockResponse {
     const lastUser = messages.filter((m) => m.role === "user").pop();
-    const text = lastUser?.content ?? "";
+    const rawContent = lastUser?.content ?? "";
+    // Extract text string for pattern matching — join text parts for multimodal messages
+    const text: string = typeof rawContent === "string"
+      ? rawContent
+      : rawContent
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((p): p is { type: "text"; text: string } => (p as any).type === "text")
+          .map((p) => p.text)
+          .join("");
 
     for (const matcher of this.messageMatchers) {
       if (typeof matcher.pattern === "string") {

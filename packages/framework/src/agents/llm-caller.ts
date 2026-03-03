@@ -1,5 +1,5 @@
 import type { LLMBridge } from "./llm-bridge";
-import type { LLMMessage } from "@fabrk/ai";
+import type { LLMMessage, LLMContentPart } from "@fabrk/ai";
 
 export interface LLMCallResult {
   content: string;
@@ -7,7 +7,7 @@ export interface LLMCallResult {
   cost: number;
 }
 
-type Message = { role: string; content: string };
+type Message = { role: string; content: string | unknown[] };
 
 export async function callLLM(
   bridge: LLMBridge,
@@ -17,7 +17,7 @@ export async function callLLM(
 
   const llmMessages: LLMMessage[] = messages.map((m) => ({
     role: m.role as LLMMessage["role"],
-    content: m.content,
+    content: m.content as string | LLMContentPart[],
   }));
 
   const generateFn = await resolveGenerateWithTools(bridge);
@@ -74,6 +74,38 @@ async function resolveGenerateWithTools(bridge: LLMBridge) {
     openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
 }
 
+const MAX_RETRIES = 3;
+
+function extractStatusCode(err: unknown): number | undefined {
+  if (err && typeof err === "object" && "status" in err) {
+    const s = (err as Record<string, unknown>).status;
+    if (typeof s === "number") return s;
+  }
+  return undefined;
+}
+
+async function callWithRetry(bridge: LLMBridge, messages: Message[]): Promise<LLMCallResult> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await callLLM(bridge, messages);
+    } catch (err) {
+      lastError = err;
+      const status = extractStatusCode(err);
+      const retryable = status === 429 || (status !== undefined && status >= 500);
+      if (attempt < MAX_RETRIES - 1 && retryable) {
+        // Exponential backoff with full jitter: 1s, 2s, 4s ± up to 200ms
+        const delay = Math.min(1000 * 2 ** attempt + Math.random() * 200, 8000);
+        console.warn(`[fabrk] Model ${bridge.resolvedModel} returned ${status}, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
+        await new Promise<void>((resolve) => setTimeout(resolve, delay));
+      } else {
+        throw err;
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function callWithFallback(
   primary: LLMBridge,
   fallbacks: LLMBridge[],
@@ -84,7 +116,7 @@ export async function callWithFallback(
   let lastError: unknown;
   for (let i = 0; i < models.length; i++) {
     try {
-      return await callLLM(models[i], messages);
+      return await callWithRetry(models[i], messages);
     } catch (err) {
       lastError = err;
       if (i < models.length - 1) {

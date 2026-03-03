@@ -5,6 +5,7 @@ import type {
   LLMToolSchema,
   LLMToolResult,
   LLMStreamEvent,
+  LLMContentPart,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -17,13 +18,34 @@ function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
   return merged;
 }
 
+function contentPartsToAnthropic(parts: LLMContentPart[]): unknown[] {
+  return parts.map((part) => {
+    if (part.type === "text") {
+      return { type: "text", text: part.text };
+    }
+    // image part
+    if (part.url) {
+      return { type: "image", source: { type: "url", url: part.url } };
+    }
+    return {
+      type: "image",
+      source: {
+        type: "base64",
+        media_type: part.mimeType ?? "image/jpeg",
+        data: part.base64,
+      },
+    };
+  });
+}
+
 function toAnthropicMessages(messages: LLMMessage[]): { system?: string; messages: unknown[] } {
   let system: string | undefined;
   const out: unknown[] = [];
 
   for (const m of messages) {
     if (m.role === "system") {
-      system = m.content;
+      // system role always carries a string
+      system = m.content as string;
       continue;
     }
     if (m.role === "tool") {
@@ -42,14 +64,21 @@ function toAnthropicMessages(messages: LLMMessage[]): { system?: string; message
     if (m.role === "assistant" && m.toolCalls?.length) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const content: any[] = [];
-      if (m.content) content.push({ type: "text", text: m.content });
+      if (Array.isArray(m.content)) {
+        content.push(...contentPartsToAnthropic(m.content));
+      } else if (m.content) {
+        content.push({ type: "text", text: m.content });
+      }
       for (const tc of m.toolCalls) {
         content.push({ type: "tool_use", id: tc.id, name: tc.name, input: tc.arguments });
       }
       out.push({ role: "assistant", content });
       continue;
     }
-    out.push({ role: m.role, content: m.content });
+    out.push({
+      role: m.role,
+      content: Array.isArray(m.content) ? contentPartsToAnthropic(m.content) : m.content,
+    });
   }
 
   return { system, messages: out };

@@ -18,18 +18,24 @@ const MAX_MESSAGES = 20;
 const MAX_CONTENT_CHARS = 4000;
 const MAX_OUTPUT_CHARS = 8000;
 
+function contentToDisplayString(content: string | unknown[]): string {
+  if (typeof content === "string") return content;
+  return JSON.stringify(content);
+}
+
 function capMessages(
-  msgs: Array<{ role: string; content: string }>
+  msgs: Array<{ role: string; content: string | unknown[] }>
 ): Array<{ role: string; content: string }> {
   const capped = msgs.length > MAX_MESSAGES
     ? [...msgs.slice(0, 5), ...msgs.slice(-15)]
     : msgs;
-  return capped.map((m) => ({
-    role: m.role,
-    content: m.content.length > MAX_CONTENT_CHARS
-      ? m.content.slice(0, MAX_CONTENT_CHARS)
-      : m.content,
-  }));
+  return capped.map((m) => {
+    const str = contentToDisplayString(m.content);
+    return {
+      role: m.role,
+      content: str.length > MAX_CONTENT_CHARS ? str.slice(0, MAX_CONTENT_CHARS) : str,
+    };
+  });
 }
 
 interface ToolCallRecord {
@@ -108,7 +114,7 @@ export function setMCPExposed(exposed: boolean) {
   mcpExposed = exposed;
 }
 
-export function recordCall(record: Omit<CallRecord, 'id'> & { id?: string }) {
+export function recordCall(record: Omit<CallRecord, 'id' | 'inputMessages'> & { id?: string; inputMessages?: Array<{ role: string; content: string | unknown[] }> }) {
   const id = record.id ?? crypto.randomUUID();
   const entry: CallRecord = {
     ...record,

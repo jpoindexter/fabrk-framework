@@ -97,7 +97,7 @@ describe("createAgentHandler", () => {
     const res = await handler(req);
     expect(res.status).toBe(400);
     const data = await res.json();
-    expect(data.error).toContain("role and content strings");
+    expect(data.error).toContain("role");
   });
 
   it("rejects oversized message content", async () => {
@@ -142,7 +142,7 @@ describe("createAgentHandler", () => {
   });
 
   it("truncates long sessionId", async () => {
-    let _capturedMessages: Array<{ role: string; content: string }> = [];
+    let _capturedMessages: Array<{ role: string; content: string | unknown[] }> = [];
     const handler = createAgentHandler({
       auth: "none",
       model: "test-model",
@@ -249,7 +249,7 @@ describe("createAgentHandler", () => {
   });
 
   it("prepends system prompt to messages", async () => {
-    let capturedMessages: Array<{ role: string; content: string }> = [];
+    let capturedMessages: Array<{ role: string; content: string | unknown[] }> = [];
     const handler = createAgentHandler({
       model: "test-model",
       auth: "none",

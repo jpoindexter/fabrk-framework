@@ -6,6 +6,7 @@ import type {
   LLMToolResult,
   LLMToolCall,
   LLMStreamEvent,
+  LLMContentPart,
 } from "./tool-types";
 import { registerProvider } from "./registry";
 
@@ -32,19 +33,28 @@ interface CohereMessage {
   }>;
 }
 
+/** Extract text from content — Cohere does not support multimodal input parts */
+function contentToString(content: string | LLMContentPart[]): string {
+  if (typeof content === "string") return content;
+  return content
+    .filter((p): p is { type: "text"; text: string } => p.type === "text")
+    .map((p) => p.text)
+    .join("");
+}
+
 function toCohereMessages(messages: LLMMessage[]): CohereMessage[] {
   return messages.map((m) => {
     if (m.role === "tool") {
       return {
         role: "tool" as const,
-        content: m.content,
+        content: contentToString(m.content),
         tool_call_id: m.toolCallId,
       };
     }
     if (m.role === "assistant" && m.toolCalls?.length) {
       return {
         role: "assistant" as const,
-        content: m.content || "",
+        content: contentToString(m.content) || "",
         tool_calls: m.toolCalls.map((tc) => ({
           id: tc.id,
           type: "function" as const,
@@ -52,7 +62,7 @@ function toCohereMessages(messages: LLMMessage[]): CohereMessage[] {
         })),
       };
     }
-    return { role: m.role, content: m.content };
+    return { role: m.role, content: contentToString(m.content) };
   });
 }
 

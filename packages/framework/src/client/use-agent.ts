@@ -3,9 +3,13 @@
 import { useState, useCallback, useRef } from "react";
 import type { SSEEvent } from "../agents/sse-stream";
 
+export type AgentContentPart =
+  | { type: "text"; text: string }
+  | { type: "image"; url?: string; base64?: string; mimeType?: string };
+
 export interface AgentMessage {
   role: "user" | "assistant";
-  content: string;
+  content: string | AgentContentPart[];
 }
 
 export interface AgentUsage {
@@ -45,9 +49,18 @@ export function useAgent(agentName: string) {
   const [toolCalls, setToolCalls] = useState<AgentToolCall[]>([]);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const stop = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
 
   const send = useCallback(
-    async (content: string) => {
+    async (content: string | AgentContentPart[]) => {
+      // Cancel any in-progress stream before starting a new one
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = new AbortController();
+
       setError(null);
       setIsStreaming(true);
       setToolCalls([]);
@@ -65,6 +78,7 @@ export function useAgent(agentName: string) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: allMessages }),
+          signal: abortControllerRef.current.signal,
         });
 
         if (!res.ok) {
@@ -178,6 +192,8 @@ export function useAgent(agentName: string) {
           }
         }
       } catch (err) {
+        // Ignore user-initiated aborts — not an error
+        if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setIsStreaming(false);
@@ -186,5 +202,5 @@ export function useAgent(agentName: string) {
     [agentName]
   );
 
-  return { send, messages, isStreaming, cost, usage, error, toolCalls };
+  return { send, stop, messages, isStreaming, cost, usage, error, toolCalls };
 }

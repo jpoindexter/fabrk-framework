@@ -86,7 +86,7 @@ describe("Phase 1 Bug Fixes", () => {
 
   describe("llm-caller multi-turn conversation", () => {
     it("passes full conversation history to LLM", async () => {
-      let capturedMessages: Array<{ role: string; content: string }> = [];
+      let capturedMessages: Array<{ role: string; content: string | unknown[] }> = [];
       const handler = createAgentHandler({
         model: "test-model",
         auth: "none",

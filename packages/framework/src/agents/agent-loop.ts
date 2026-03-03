@@ -1,4 +1,4 @@
-import type { LLMMessage, LLMToolSchema, LLMToolResult, LLMStreamEvent } from "@fabrk/ai";
+import type { LLMMessage, LLMToolSchema, LLMToolResult, LLMStreamEvent, LLMContentPart } from "@fabrk/ai";
 import type { AgentBudget } from "./define-agent";
 import type { ToolExecutor } from "./tool-executor";
 import type { Guardrail } from "./guardrails";
@@ -54,17 +54,30 @@ export async function* runAgentLoop(
   if (options.inputGuardrails && options.inputGuardrails.length > 0) {
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (lastUser) {
+      // Extract text for guardrail checking — multimodal messages use concatenated text parts
+      const rawContent = lastUser.content;
+      const textContent = typeof rawContent === "string"
+        ? rawContent
+        : (rawContent as LLMContentPart[])
+            .filter((p): p is Extract<LLMContentPart, { type: "text" }> => p.type === "text")
+            .map((p) => p.text)
+            .join("");
       const result = runGuardrails(
         options.inputGuardrails,
-        lastUser.content,
+        textContent,
         { ...guardCtx, direction: "input" },
       );
       if (result.blocked) {
         yield { type: "error", message: `Input guardrail blocked: ${result.reason}` };
         return;
       }
-      if (result.content !== lastUser.content) {
-        lastUser.content = result.content;
+      if (result.content !== textContent) {
+        if (typeof rawContent === "string") {
+          lastUser.content = result.content;
+        } else {
+          // Replace text parts with the guardrail-modified string
+          lastUser.content = [{ type: "text", text: result.content } satisfies LLMContentPart];
+        }
       }
     }
   }
@@ -116,26 +129,26 @@ export async function* runAgentLoop(
           toolCalls: collectedToolCalls,
         });
 
-        // Execute each tool
+        // Announce all tool calls first, then execute in parallel
         for (const tc of collectedToolCalls) {
           yield { type: "tool-call", name: tc.name, input: tc.arguments, iteration };
+        }
 
-          try {
-            const { output, durationMs } = await options.toolExecutor.execute(tc.name, tc.arguments);
+        const toolResults = await Promise.allSettled(
+          collectedToolCalls.map((tc) => options.toolExecutor.execute(tc.name, tc.arguments))
+        );
+
+        for (let i = 0; i < collectedToolCalls.length; i++) {
+          const tc = collectedToolCalls[i];
+          const result = toolResults[i];
+          if (result.status === "fulfilled") {
+            const { output, durationMs } = result.value;
             yield { type: "tool-result", name: tc.name, output, durationMs, iteration };
-            messages.push({
-              role: "tool",
-              content: output,
-              toolCallId: tc.id,
-            });
-          } catch (err) {
-            console.error(`[fabrk] Tool "${tc.name}" execution error:`, err);
+            messages.push({ role: "tool", content: output, toolCallId: tc.id });
+          } else {
+            console.error(`[fabrk] Tool "${tc.name}" execution error:`, result.reason);
             yield { type: "tool-result", name: tc.name, output: "Error: Tool execution failed", durationMs: 0, iteration };
-            messages.push({
-              role: "tool",
-              content: "Error: Tool execution failed",
-              toolCallId: tc.id,
-            });
+            messages.push({ role: "tool", content: "Error: Tool execution failed", toolCallId: tc.id });
           }
         }
         continue; // Loop again for next LLM turn

@@ -30,9 +30,18 @@ function toBedrockMessages(messages: LLMMessage[]): {
   let system: Array<{ text: string }> | undefined;
   const out: BedrockMessage[] = [];
 
+  /** Extract text from content (string or array of parts) for providers that don't support vision */
+  function toText(content: LLMMessage["content"]): string {
+    if (typeof content === "string") return content;
+    return content
+      .filter((p): p is { type: "text"; text: string } => p.type === "text")
+      .map((p) => p.text)
+      .join("");
+  }
+
   for (const m of messages) {
     if (m.role === "system") {
-      system = [{ text: m.content }];
+      system = [{ text: m.content as string }];
       continue;
     }
     if (m.role === "tool") {
@@ -42,7 +51,7 @@ function toBedrockMessages(messages: LLMMessage[]): {
           {
             toolResult: {
               toolUseId: m.toolCallId || "",
-              content: [{ text: m.content }],
+              content: [{ text: toText(m.content) }],
             },
           },
         ],
@@ -51,7 +60,8 @@ function toBedrockMessages(messages: LLMMessage[]): {
     }
     if (m.role === "assistant" && m.toolCalls?.length) {
       const content: BedrockMessage["content"] = [];
-      if (m.content) content.push({ text: m.content });
+      const text = toText(m.content);
+      if (text) content.push({ text });
       for (const tc of m.toolCalls) {
         content.push({
           toolUse: { toolUseId: tc.id, name: tc.name, input: tc.arguments },
@@ -62,7 +72,7 @@ function toBedrockMessages(messages: LLMMessage[]): {
     }
     out.push({
       role: m.role === "user" ? "user" : "assistant",
-      content: [{ text: m.content }],
+      content: [{ text: toText(m.content) }],
     });
   }
 

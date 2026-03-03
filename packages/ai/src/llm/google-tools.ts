@@ -6,6 +6,7 @@ import type {
   LLMToolResult,
   LLMToolCall,
   LLMStreamEvent,
+  LLMContentPart,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -18,6 +19,15 @@ function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
   return merged;
 }
 
+function contentPartsToGemini(parts: LLMContentPart[]): Array<{ text: string }> {
+  // Google Gemini vision is behind a different API path — skip image parts with a warning
+  return parts.flatMap((part) => {
+    if (part.type === "text") return [{ text: part.text }];
+    console.warn("[fabrk/google-tools] Image content parts are not supported by this Google adapter — skipping image part");
+    return [];
+  });
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toGeminiContents(messages: LLMMessage[]): { systemInstruction?: any; contents: any[] } {
   let systemInstruction: { parts: Array<{ text: string }> } | undefined;
@@ -26,7 +36,8 @@ function toGeminiContents(messages: LLMMessage[]): { systemInstruction?: any; co
 
   for (const m of messages) {
     if (m.role === "system") {
-      systemInstruction = { parts: [{ text: m.content }] };
+      // system role always carries a string
+      systemInstruction = { parts: [{ text: m.content as string }] };
       continue;
     }
     if (m.role === "tool") {
@@ -44,7 +55,11 @@ function toGeminiContents(messages: LLMMessage[]): { systemInstruction?: any; co
     if (m.role === "assistant" && m.toolCalls?.length) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const parts: any[] = [];
-      if (m.content) parts.push({ text: m.content });
+      if (Array.isArray(m.content)) {
+        parts.push(...contentPartsToGemini(m.content));
+      } else if (m.content) {
+        parts.push({ text: m.content });
+      }
       for (const tc of m.toolCalls) {
         parts.push({
           functionCall: { name: tc.name, args: tc.arguments },
@@ -55,7 +70,7 @@ function toGeminiContents(messages: LLMMessage[]): { systemInstruction?: any; co
     }
     contents.push({
       role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
+      parts: Array.isArray(m.content) ? contentPartsToGemini(m.content) : [{ text: m.content }],
     });
   }
 

@@ -19,9 +19,13 @@ export interface LLMToolResult {
   usage: { promptTokens: number; completionTokens: number };
 }
 
+export type LLMTextPart = { type: "text"; text: string };
+export type LLMImagePart = { type: "image"; url?: string; base64?: string; mimeType?: string };
+export type LLMContentPart = LLMTextPart | LLMImagePart;
+
 export interface LLMMessage {
   role: "system" | "user" | "assistant" | "tool";
-  content: string;
+  content: string | LLMContentPart[];
   toolCallId?: string;
   toolCalls?: LLMToolCall[];
 }

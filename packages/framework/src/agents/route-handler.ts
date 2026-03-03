@@ -18,6 +18,12 @@ import { compressThread } from "./memory/compress";
 
 const approvalHandler = createApprovalHandler();
 
+/** Serialize message content for memory storage — always produces a string */
+function serializeContentForMemory(content: string | unknown[]): string {
+  if (typeof content === "string") return content;
+  return JSON.stringify(content);
+}
+
 export interface AgentHandlerOptions
   extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt" | "tools" | "stream"> {
   systemPrompt?: string;
@@ -29,7 +35,7 @@ export interface AgentHandlerOptions
   maxIterations?: number;
   memoryStore?: MemoryStore;
   _llmCall?: (
-    messages: Array<{ role: string; content: string }>
+    messages: Array<{ role: string; content: string | unknown[] }>
   ) => Promise<LLMCallResult>;
   _generateWithTools?: (
     messages: LLMMessage[],
@@ -46,7 +52,7 @@ export interface AgentHandlerOptions
     tokens: number;
     cost: number;
     durationMs?: number;
-    inputMessages?: Array<{ role: string; content: string }>;
+    inputMessages?: Array<{ role: string; content: string | unknown[] }>;
     outputText?: string;
   }) => void;
   onToolCall?: (record: {
@@ -159,7 +165,8 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: depthError }, 429);
     }
 
-    let body: { messages?: Array<{ role: string; content: string }>; sessionId?: string; threadId?: string };
+    type IncomingMessage = { role: string; content: string | unknown[] };
+    let body: { messages?: IncomingMessage[]; sessionId?: string; threadId?: string };
     try {
       body = await req.json();
     } catch {
@@ -175,15 +182,34 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     }
 
     const ALLOWED_ROLES = new Set(["user", "assistant"]);
+    const MAX_PARTS = 20;
+    const MAX_BASE64_BYTES = 2 * 1024 * 1024; // 2 MB
     for (const msg of body.messages) {
-      if (typeof msg.role !== "string" || typeof msg.content !== "string") {
-        return jsonResponse({ error: "Each message must have role and content strings" }, 400);
+      if (typeof msg.role !== "string") {
+        return jsonResponse({ error: "Each message must have a role string" }, 400);
       }
       if (!ALLOWED_ROLES.has(msg.role)) {
         return jsonResponse({ error: `Invalid role: ${msg.role}` }, 400);
       }
-      if (msg.content.length > 100_000) {
-        return jsonResponse({ error: "Message content too large" }, 400);
+      if (typeof msg.content === "string") {
+        if (msg.content.length > 100_000) {
+          return jsonResponse({ error: "Message content too large" }, 400);
+        }
+      } else if (Array.isArray(msg.content)) {
+        if (msg.content.length > MAX_PARTS) {
+          return jsonResponse({ error: `Message content array exceeds max parts (${MAX_PARTS})` }, 400);
+        }
+        for (const part of msg.content) {
+          if (typeof part !== "object" || part === null || typeof (part as Record<string, unknown>).type !== "string") {
+            return jsonResponse({ error: "Each content part must have a type field" }, 400);
+          }
+          const p = part as Record<string, unknown>;
+          if (typeof p.base64 === "string" && p.base64.length > MAX_BASE64_BYTES) {
+            return jsonResponse({ error: "base64 image content exceeds 2MB limit" }, 400);
+          }
+        }
+      } else {
+        return jsonResponse({ error: "Each message must have content as a string or array of parts" }, 400);
       }
     }
 
@@ -197,7 +223,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
     // Memory: load thread history if threadId provided
     let threadId = typeof body.threadId === "string" ? body.threadId.slice(0, 128) : undefined;
-    let historyMessages: Array<{ role: string; content: string }> = [];
+    let historyMessages: Array<{ role: string; content: string | unknown[] }> = [];
 
     if (options.memoryStore && options.memory) {
       if (threadId) {
@@ -284,7 +310,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
         const llmMessages: LLMMessage[] = messages.map((m) => ({
           role: m.role as LLMMessage["role"],
-          content: m.content,
+          content: m.content as LLMMessage["content"],
         }));
 
         const loopGen = runAgentLoop({
@@ -354,7 +380,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
                 await options.memoryStore.appendMessage(threadId, {
                   threadId,
                   role: "user",
-                  content: lastUserMsg.content,
+                  content: serializeContentForMemory(lastUserMsg.content),
                 });
               }
               if (streamContent) {
@@ -421,7 +447,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
             await options.memoryStore.appendMessage(threadId, {
               threadId,
               role: "user",
-              content: lastUserMsg.content,
+              content: serializeContentForMemory(lastUserMsg.content),
             });
           }
           if (content) {
@@ -477,7 +503,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
               await options.memoryStore.appendMessage(threadId, {
                 threadId,
                 role: "user",
-                content: lastUserMsg.content,
+                content: serializeContentForMemory(lastUserMsg.content),
               });
             }
             if (result.content) {
@@ -532,7 +558,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           await options.memoryStore.appendMessage(threadId, {
             threadId,
             role: "user",
-            content: lastUserMsg.content,
+            content: serializeContentForMemory(lastUserMsg.content),
           });
         }
         if (result.content) {

@@ -84,6 +84,9 @@ export type {
   LLMToolResult,
   LLMMessage,
   LLMStreamEvent,
+  LLMTextPart,
+  LLMImagePart,
+  LLMContentPart,
 } from './llm'
 
 export {

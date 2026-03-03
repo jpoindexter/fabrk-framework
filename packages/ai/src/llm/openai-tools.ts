@@ -6,6 +6,7 @@ import type {
   LLMToolResult,
   LLMToolCall,
   LLMStreamEvent,
+  LLMContentPart,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -18,15 +19,31 @@ function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
   return merged;
 }
 
+function contentPartsToOpenAI(parts: LLMContentPart[]): unknown[] {
+  return parts.map((part) => {
+    if (part.type === "text") {
+      return { type: "text", text: part.text };
+    }
+    // image part
+    const url = part.url
+      ? part.url
+      : `data:${part.mimeType ?? "image/jpeg"};base64,${part.base64}`;
+    return { type: "image_url", image_url: { url } };
+  });
+}
+
 function toOpenAIMessages(messages: LLMMessage[]): unknown[] {
   return messages.map((m) => {
     if (m.role === "tool") {
+      // tool role always carries string content
       return { role: "tool", content: m.content, tool_call_id: m.toolCallId };
     }
     if (m.role === "assistant" && m.toolCalls?.length) {
       return {
         role: "assistant",
-        content: m.content || null,
+        content: Array.isArray(m.content)
+          ? contentPartsToOpenAI(m.content)
+          : (m.content || null),
         tool_calls: m.toolCalls.map((tc) => ({
           id: tc.id,
           type: "function",
@@ -34,7 +51,10 @@ function toOpenAIMessages(messages: LLMMessage[]): unknown[] {
         })),
       };
     }
-    return { role: m.role, content: m.content };
+    return {
+      role: m.role,
+      content: Array.isArray(m.content) ? contentPartsToOpenAI(m.content) : m.content,
+    };
   });
 }
 

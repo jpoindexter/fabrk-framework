@@ -87,6 +87,20 @@ export {
   openaiStreamWithTools,
   anthropicGenerateWithTools,
   anthropicStreamWithTools,
+  cohereGenerateWithTools,
+  cohereStreamWithTools,
+  bedrockGenerateWithTools,
+  bedrockStreamWithTools,
+} from './llm'
+
+export type { ProviderAdapter, OpenAICompatOptions } from './llm'
+
+export {
+  registerProvider,
+  getProvider,
+  getProviderByKey,
+  listProviders,
+  makeOpenAICompatAdapter,
 } from './llm'
 
 export {

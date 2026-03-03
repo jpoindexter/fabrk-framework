@@ -27,10 +27,14 @@
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.500.0",
     "openai": "^4.28.0"
   },
   "peerDependenciesMeta": {
     "@anthropic-ai/sdk": {
+      "optional": true
+    },
+    "@aws-sdk/client-bedrock-runtime": {
       "optional": true
     },
     "openai": {

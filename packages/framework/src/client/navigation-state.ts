@@ -27,6 +27,13 @@ export function patchHistory(): void {
     origReplace(data, unused, url);
     window.dispatchEvent(new PopStateEvent(NAVIGATE_EVENT, { state: data }));
   };
+
+  window.addEventListener("popstate", (event: PopStateEvent) => {
+    requestAnimationFrame(() => {
+      const scrollY = (event.state as Record<string, unknown> | null)?.__fabrkScrollY;
+      window.scrollTo(0, typeof scrollY === "number" ? scrollY : 0);
+    });
+  });
 }
 
 const MAX_ENTRIES = 50;
@@ -91,6 +98,11 @@ export function clearPrefetchCache(): void {
     window.__FABRK_PREFETCH_CACHE__?.clear();
   }
   moduleCache?.clear();
+}
+
+/** @internal Test-only reset for the patched flag. */
+export function _resetPatched(): void {
+  patched = false;
 }
 
 export { NAVIGATE_EVENT };

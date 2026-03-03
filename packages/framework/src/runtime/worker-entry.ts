@@ -1,6 +1,7 @@
 import { matchRoute, type Route } from "./router";
 import { buildSecurityHeaders } from "../middleware/security";
 import { isRedirectError, isNotFoundError } from "./server-helpers";
+import { buildPageTree, type PageModules } from "./page-builder";
 import {
   resolveMetadata,
   mergeMetadata,
@@ -207,27 +208,65 @@ async function handlePageRoute(
     const metadataContext = { params: matched.params, searchParams };
 
     const metadataLayers = [];
+    const layouts: Array<React.ComponentType<{ children: React.ReactNode }>> = [];
     if (layoutModules) {
       for (const lp of matched.route.layoutPaths) {
         const layoutMod = layoutModules.get(lp);
-        if (layoutMod) metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
+        if (layoutMod) {
+          metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
+          if (typeof layoutMod.default === "function") {
+            layouts.push(layoutMod.default as React.ComponentType<{ children: React.ReactNode }>);
+          }
+        }
       }
     }
     metadataLayers.push(await resolveMetadata(mod, metadataContext));
     const metadata = mergeMetadata(metadataLayers);
     const head = buildMetadataHtml(metadata);
 
-    let element: React.ReactNode = createElement(
-      PageComponent as React.FC<Record<string, unknown>>,
-      { params: matched.params, searchParams }
-    );
+    const pageModules: PageModules = {
+      page: PageComponent as PageModules["page"],
+      layouts,
+    };
 
-    if (layoutModules) {
-      for (const lp of matched.route.layoutPaths.slice().reverse()) {
-        const layoutMod = layoutModules.get(lp);
-        if (layoutMod && typeof layoutMod.default === "function") {
-          element = createElement(layoutMod.default as React.FC<Record<string, unknown>>, { children: element });
-        }
+    if (matched.route.errorPath && modules) {
+      const errMod = modules.get(matched.route.errorPath);
+      if (errMod && typeof errMod.default === "function") {
+        pageModules.errorFallback = errMod.default as PageModules["errorFallback"];
+      }
+    }
+    if (matched.route.loadingPath && modules) {
+      const loadMod = modules.get(matched.route.loadingPath);
+      if (loadMod && typeof loadMod.default === "function") {
+        pageModules.loadingFallback = loadMod.default as PageModules["loadingFallback"];
+      }
+    }
+    if (matched.route.notFoundPath && modules) {
+      const nfMod = modules.get(matched.route.notFoundPath);
+      if (nfMod && typeof nfMod.default === "function") {
+        pageModules.notFoundFallback = nfMod.default as PageModules["notFoundFallback"];
+      }
+    }
+
+    const hasBoundaries = pageModules.errorFallback || pageModules.loadingFallback || pageModules.notFoundFallback;
+
+    let element: React.ReactNode;
+    if (hasBoundaries) {
+      element = buildPageTree({
+        route: matched.route,
+        params: matched.params,
+        searchParams,
+        modules: pageModules,
+        pathname: url.pathname,
+        React,
+      });
+    } else {
+      element = createElement(
+        PageComponent as React.FC<Record<string, unknown>>,
+        { params: matched.params, searchParams }
+      );
+      for (let i = layouts.length - 1; i >= 0; i--) {
+        element = createElement(layouts[i], { children: element });
       }
     }
 

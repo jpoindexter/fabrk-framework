@@ -1,4 +1,5 @@
 import type { Route } from "./router";
+import { resolveMetadata, buildMetadataHtml } from "./metadata";
 
 export interface StaticRoute {
   route: Route;
@@ -135,15 +136,8 @@ export async function renderStaticPage(
 
   const ssrBody = renderToString(element);
 
-  const metadata = mod.metadata as
-    | { title?: string; description?: string }
-    | undefined;
-
-  let head = "";
-  if (metadata?.title) head += `<title>${escapeHtml(metadata.title)}</title>\n`;
-  if (metadata?.description) {
-    head += `<meta name="description" content="${escapeHtml(metadata.description)}" />\n`;
-  }
+  const metadata = await resolveMetadata(mod, { params });
+  const head = buildMetadataHtml(metadata);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -156,12 +150,4 @@ export async function renderStaticPage(
   <div id="root">${ssrBody}</div>
 </body>
 </html>`;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }

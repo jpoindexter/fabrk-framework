@@ -109,6 +109,20 @@ export async function handleImageRequest(
     });
   }
 
+  const inputExt = path.extname(filePath).toLowerCase();
+  if (inputExt === ".gif") {
+    const gifBuffer = fs.readFileSync(filePath);
+    return new Response(new Uint8Array(gifBuffer), {
+      status: 200,
+      headers: {
+        "Content-Type": "image/gif",
+        "Cache-Control": "public, max-age=31536000, immutable",
+        "Content-Length": String(gifBuffer.length),
+        ...buildSecurityHeaders(),
+      },
+    });
+  }
+
   const acceptHeader = request.headers.get("accept");
   const format = negotiateImageFormat(acceptHeader);
   const cacheKey = `${params.url}:${params.width}:${params.quality}:${format}`;

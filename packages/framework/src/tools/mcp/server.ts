@@ -99,6 +99,9 @@ export function createMCPServer(options: {
       case "ping":
         return rpcResponse(id, {});
 
+      case "notifications/initialized":
+        return undefined;
+
       case "tools/list":
         return rpcResponse(id, {
           tools: options.tools.map((t) => ({
@@ -193,6 +196,12 @@ export function createMCPServer(options: {
     }
 
     const result = await handleRequest(body);
+    if (result === undefined) {
+      return new Response(null, {
+        status: 204,
+        headers: buildSecurityHeaders(),
+      });
+    }
     return new Response(JSON.stringify(result), {
       status: 200,
       headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },

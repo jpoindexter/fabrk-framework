@@ -8,7 +8,7 @@ import React, {
   type AnchorHTMLAttributes,
   type MouseEvent,
 } from "react";
-import { prefetchUrl } from "./navigation";
+import { prefetchUrl, navigateImpl } from "./navigation";
 import { patchHistory } from "./navigation-state";
 
 let observer: IntersectionObserver | null = null;
@@ -113,26 +113,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 
         event.preventDefault();
 
-        const mode = useReplace ? "replace" : "push";
-
-        if (mode === "push") {
-          const state = history.state ?? {};
-          history.replaceState(
-            { ...state, __fabrkScrollY: window.scrollY },
-            ""
-          );
-          history.pushState({}, "", href);
-        } else {
-          history.replaceState({}, "", href);
-        }
-
-        if (window.__FABRK_RSC_NAVIGATE__) {
-          window.__FABRK_RSC_NAVIGATE__(href);
-        }
-
-        if (scroll) {
-          window.scrollTo(0, 0);
-        }
+        navigateImpl(href, useReplace ? "replace" : "push", { scroll });
       },
       [href, useReplace, scroll, onClick, target]
     );

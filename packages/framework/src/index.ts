@@ -73,6 +73,14 @@ export type { StaticRoute, StaticExportOptions } from "./runtime/static-export";
 
 export { handleImageRequest, isImageRequest } from "./runtime/image-handler";
 
+// OG image generation
+export { defineOGTemplate, handleOGRequest, isOGRequest } from "./runtime/og-handler";
+export type { OGTemplate, OGTemplateOptions, OGFont } from "./runtime/og-handler";
+
+// JSON-LD structured data
+export { buildJsonLdScript, JsonLdScript } from "./runtime/json-ld";
+export type { JsonLdData, JsonLdOrganization, JsonLdProduct, JsonLdArticle, JsonLdBreadcrumb } from "./runtime/json-ld";
+
 export {
   InMemoryISRCache,
   serveFromISR,
@@ -145,9 +153,23 @@ export { runAgentLoop } from "./agents/agent-loop";
 export type { AgentLoopEvent, AgentLoopOptions } from "./agents/agent-loop";
 export { createToolExecutor } from "./agents/tool-executor";
 
+// Durable agent execution (checkpoint/resume)
+export { InMemoryCheckpointStore, generateCheckpointId } from "./agents/checkpoint";
+export type { CheckpointStore, CheckpointState, CheckpointStatus } from "./agents/checkpoint";
+export { handleStartAgent, handleResumeAgent, handleAgentStatus } from "./agents/durable-handler";
+export type { DurableAgentOptions } from "./agents/durable-handler";
+
+// Guardrails
+export { runGuardrails, maxLength, denyList, requireJsonSchema, piiRedactor } from "./agents/guardrails";
+export type { Guardrail, GuardrailContext, GuardrailResult } from "./agents/guardrails";
+
 // Testing
 export { mockLLM, MockLLM, createTestAgent, calledTool, calledToolWith, respondedWith, costUnder, iterationsUnder, getToolCalls } from "./testing/index";
 export type { TestAgentOptions, TestAgentResult } from "./testing/index";
+
+// Evals
+export { defineEval, runEvals, exactMatch, includes, llmAsJudge, toolCallSequence, jsonSchema } from "./testing/index";
+export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult, Scorer, ScorerResult } from "./testing/index";
 
 // Built-in tools
 export { ragTool } from "./tools/builtins/rag";

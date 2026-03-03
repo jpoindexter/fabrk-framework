@@ -1,6 +1,8 @@
 import type { LLMMessage, LLMToolSchema, LLMToolResult, LLMStreamEvent } from "@fabrk/ai";
 import type { AgentBudget } from "./define-agent";
 import type { ToolExecutor } from "./tool-executor";
+import type { Guardrail } from "./guardrails";
+import { runGuardrails } from "./guardrails";
 import { checkBudget, recordCost } from "./budget-guard";
 
 const MAX_ITERATIONS_HARD_CAP = 25;
@@ -33,6 +35,8 @@ export interface AgentLoopOptions {
     tools: LLMToolSchema[],
   ) => AsyncGenerator<LLMStreamEvent>;
   calculateCost: (model: string, promptTokens: number, completionTokens: number) => { costUSD: number };
+  inputGuardrails?: Guardrail[];
+  outputGuardrails?: Guardrail[];
 }
 
 export async function* runAgentLoop(
@@ -43,6 +47,26 @@ export async function* runAgentLoop(
     MAX_ITERATIONS_HARD_CAP
   );
   const messages = [...options.messages];
+  const guardCtx = { agentName: options.agentName, sessionId: options.sessionId };
+
+  // Input guardrails — validate last user message before first LLM call
+  if (options.inputGuardrails && options.inputGuardrails.length > 0) {
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (lastUser) {
+      const result = runGuardrails(
+        options.inputGuardrails,
+        lastUser.content,
+        { ...guardCtx, direction: "input" },
+      );
+      if (result.blocked) {
+        yield { type: "error", message: `Input guardrail blocked: ${result.reason}` };
+        return;
+      }
+      if (result.content !== lastUser.content) {
+        lastUser.content = result.content;
+      }
+    }
+  }
 
   for (let iteration = 0; iteration < maxIterations; iteration++) {
     const budgetError = checkBudget(options.agentName, options.sessionId, options.budget);
@@ -116,7 +140,19 @@ export async function* runAgentLoop(
         continue; // Loop again for next LLM turn
       }
 
-      // No tool calls — we're done
+      // No tool calls — run output guardrails then done
+      if (options.outputGuardrails && options.outputGuardrails.length > 0) {
+        const result = runGuardrails(
+          options.outputGuardrails,
+          fullText,
+          { ...guardCtx, direction: "output" },
+        );
+        if (result.blocked) {
+          yield { type: "error", message: `Output guardrail blocked: ${result.reason}` };
+          return;
+        }
+        fullText = result.content;
+      }
       yield { type: "text", content: fullText };
       yield { type: "done" };
       return;
@@ -168,7 +204,20 @@ export async function* runAgentLoop(
       continue;
     }
 
-    yield { type: "text", content: result.content || "" };
+    let finalContent = result.content || "";
+    if (options.outputGuardrails && options.outputGuardrails.length > 0) {
+      const guardResult = runGuardrails(
+        options.outputGuardrails,
+        finalContent,
+        { ...guardCtx, direction: "output" },
+      );
+      if (guardResult.blocked) {
+        yield { type: "error", message: `Output guardrail blocked: ${guardResult.reason}` };
+        return;
+      }
+      finalContent = guardResult.content;
+    }
+    yield { type: "text", content: finalContent };
     yield { type: "done" };
     return;
   }

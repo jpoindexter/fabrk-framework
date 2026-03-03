@@ -42,6 +42,16 @@ async function resolveGenerateWithTools(bridge: LLMBridge) {
     return (msgs: LLMMessage[], tools: never[]) =>
       anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
   }
+  if (bridge.provider === "google") {
+    const { googleGenerateWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: never[]) =>
+      googleGenerateWithTools(msgs, tools, { googleModel: bridge.resolvedModel });
+  }
+  if (bridge.provider === "ollama") {
+    const { ollamaGenerateWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: never[]) =>
+      ollamaGenerateWithTools(msgs, tools, { ollamaModel: bridge.resolvedModel });
+  }
   const { openaiGenerateWithTools } = await import("@fabrk/ai");
   return (msgs: LLMMessage[], tools: never[]) =>
     openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });

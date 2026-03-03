@@ -16,6 +16,7 @@
 export { getLLMClient } from './factory'
 export { OpenAIClient } from './openai-client'
 export { AnthropicClient } from './anthropic-client'
+export { GoogleClient } from './google-client'
 export { OllamaClient } from './ollama-client'
 export type {
   LLMClient,
@@ -23,6 +24,8 @@ export type {
   LLMConfig,
   LLMProvider,
   TaskComplexity,
+  JsonSchema,
+  GenerateObjectResult,
 } from './types'
 export { LLM_DEFAULTS } from './types'
 
@@ -43,3 +46,15 @@ export {
   generateWithTools as anthropicGenerateWithTools,
   streamWithTools as anthropicStreamWithTools,
 } from './anthropic-tools'
+
+export {
+  generateWithTools as googleGenerateWithTools,
+  streamWithTools as googleStreamWithTools,
+} from './google-tools'
+
+export {
+  generateWithTools as ollamaGenerateWithTools,
+  streamWithTools as ollamaStreamWithTools,
+} from './ollama-tools'
+
+export { generateObject } from './generate-object'

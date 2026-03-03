@@ -80,6 +80,11 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
         safeParams = params;
       }
 
+      const stripped = sql.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+      if (/;/.test(stripped)) {
+        return textResult("ERROR: Multi-statement queries are not allowed.");
+      }
+
       if (!allowWrite) {
         if (WRITE_PATTERN.test(sql)) {
           return textResult(

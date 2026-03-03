@@ -22,7 +22,7 @@ export interface LLMClient {
 export type TaskComplexity = 'simple' | 'complex'
 
 /** Supported LLM providers */
-export type LLMProvider = 'openai' | 'anthropic' | 'ollama'
+export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'ollama'
 
 export interface LLMConfig {
   provider: LLMProvider
@@ -30,6 +30,8 @@ export interface LLMConfig {
   openaiModel?: string
   anthropicApiKey?: string
   anthropicModel?: string
+  googleApiKey?: string
+  googleModel?: string
   ollamaBaseUrl?: string
   ollamaModel?: string
   maxTokens?: number
@@ -38,14 +40,25 @@ export interface LLMConfig {
   timeoutMs?: number
 }
 
+/** JSON Schema object for structured output */
+export type JsonSchema = Record<string, unknown>
+
+/** Result from generateObject — parsed object + raw response + usage */
+export interface GenerateObjectResult<T = unknown> {
+  object: T
+  rawContent: string
+  usage: { promptTokens: number; completionTokens: number }
+}
+
 /** Hard cap on tokens per request to prevent runaway cost from untrusted input */
 export const MAX_TOKENS_LIMIT = 100_000
 
 /** Default LLM configuration values */
-export const LLM_DEFAULTS: Required<Omit<LLMConfig, 'openaiApiKey' | 'anthropicApiKey'>> = {
+export const LLM_DEFAULTS: Required<Omit<LLMConfig, 'openaiApiKey' | 'anthropicApiKey' | 'googleApiKey'>> = {
   provider: 'openai',
   openaiModel: 'gpt-4o',
   anthropicModel: 'claude-sonnet-4-5-20250929',
+  googleModel: 'gemini-2.0-flash',
   ollamaBaseUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.1:8b-instruct',
   maxTokens: 3000,

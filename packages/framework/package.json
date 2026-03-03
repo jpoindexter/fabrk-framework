@@ -38,6 +38,14 @@
       "import": "./dist/client/script.js",
       "types": "./dist/client/script.d.ts"
     },
+    "./client/form": {
+      "import": "./dist/client/form.js",
+      "types": "./dist/client/form.d.ts"
+    },
+    "./client/use-form-state": {
+      "import": "./dist/client/use-form-state.js",
+      "types": "./dist/client/use-form-state.d.ts"
+    },
     "./fabrk": {
       "import": "./dist/fabrk.js",
       "types": "./dist/fabrk.d.ts"
@@ -90,9 +98,23 @@
     "node": ">=22.0.0"
   },
   "peerDependencies": {
+    "@resvg/resvg-js": "^2.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
     "react": ">=19.2.0",
     "react-dom": ">=19.2.0",
+    "satori": "^0.10.0 || ^0.11.0 || ^0.12.0",
     "vite": "^7.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@resvg/resvg-js": {
+      "optional": true
+    },
+    "@vitejs/plugin-react": {
+      "optional": true
+    },
+    "satori": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@fabrk/ai": "workspace:*",

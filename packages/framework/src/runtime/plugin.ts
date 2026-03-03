@@ -6,6 +6,7 @@ import { scanRoutes, type Route } from "./router";
 import { handleRequest } from "./ssr-handler";
 import { nodeToWebRequest, writeWebResponse } from "./node-web-bridge";
 import { isImageRequest, handleImageRequest } from "./image-handler";
+import { isOGRequest, handleOGRequest, type OGTemplate } from "./og-handler";
 import { loadFabrkConfig, type FabrkConfig } from "../config/fabrk-config";
 
 const MIDDLEWARE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
@@ -17,6 +18,8 @@ export interface FabrkRuntimeOptions {
   htmlShell?: (options: { head: string; body: string }) => string;
   /** Enable RSC (React Server Components). Defaults to true when @vitejs/plugin-rsc is available. */
   rsc?: boolean;
+  /** OG image templates keyed by name. */
+  ogTemplates?: Map<string, OGTemplate>;
 }
 
 export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
@@ -83,6 +86,13 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
               return;
             }
 
+            if (isOGRequest(pathname) && options.ogTemplates) {
+              const webReq = await nodeToWebRequest(req, url);
+              const webRes = await handleOGRequest(webReq, options.ogTemplates);
+              await writeWebResponse(res, webRes);
+              return;
+            }
+
             const webReq = await nodeToWebRequest(req, url);
             const middlewarePath = findMiddleware(appDirResolved);
             const webRes = await handleRequest(webReq, {
@@ -138,7 +148,30 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     plugins.push(rscIntegrationPlugin());
   }
 
+  plugins.push(reactRefreshPlugin());
+
   return plugins;
+}
+
+function reactRefreshPlugin(): Plugin {
+  return {
+    name: "fabrk:react-refresh",
+
+    async config(config) {
+      try {
+        // Dynamic string prevents TS from resolving the optional peer dep
+        const specifier = "@vitejs/plugin-react";
+        const mod = await import(/* @vite-ignore */ specifier);
+        const pluginReact = mod.default as (opts?: Record<string, unknown>) => Plugin[];
+        const refreshPlugins = pluginReact();
+        const existing = Array.isArray(config.plugins) ? config.plugins : [];
+        config.plugins = [...existing, ...refreshPlugins];
+      } catch {
+        // eslint-disable-next-line no-console
+        console.log("[fabrk] @vitejs/plugin-react not found — HMR/Fast Refresh disabled");
+      }
+    },
+  };
 }
 
 function rscIntegrationPlugin(): Plugin {
@@ -175,13 +208,16 @@ function findMiddleware(appDir: string): string | null {
   return null;
 }
 
-function shouldSkipPath(pathname: string): boolean {
-  return (
+export function shouldSkipPath(pathname: string): boolean {
+  if (
     pathname.startsWith("/@") ||
     pathname.startsWith("/__") ||
-    pathname.startsWith("/node_modules/") ||
-    pathname.includes(".")
-  );
+    pathname.startsWith("/node_modules/")
+  ) {
+    return true;
+  }
+  const lastSeg = pathname.split("/").pop() ?? "";
+  return lastSeg.includes(".") && !lastSeg.endsWith(".rsc");
 }
 
 function generateRoutesModule(routes: Route[]): string {
@@ -248,6 +284,7 @@ import { rscStream } from "rsc-html-stream/client";
 import { hydrateRoot, createRoot } from "react-dom/client";
 import * as React from "react";
 
+const NAVIGATE_EVENT = "fabrk:navigate";
 const contentPromise = createFromReadableStream(rscStream);
 let currentContent = contentPromise;
 
@@ -274,7 +311,13 @@ window.__FABRK_RSC_NAVIGATE__ = async function(url) {
   if (reactRoot) {
     React.startTransition(() => {
       reactRoot.render(React.createElement(App));
+      window.dispatchEvent(new CustomEvent(NAVIGATE_EVENT));
     });
   }
 };
+
+// Accept HMR updates so RSC state survives hot reloads
+if (import.meta.hot) {
+  import.meta.hot.accept();
+}
 `;

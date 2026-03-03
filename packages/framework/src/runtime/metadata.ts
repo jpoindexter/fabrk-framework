@@ -1,4 +1,5 @@
 import React from "react";
+import { buildJsonLdScript, JsonLdScript, type JsonLdData } from "./json-ld";
 
 export interface MetadataTitle {
   /** Default title when no child overrides. */
@@ -68,6 +69,8 @@ export interface Metadata {
   themeColor?: string;
   /** Arbitrary key-value pairs for <meta name="key" content="value"> tags. */
   other?: Record<string, string>;
+  /** JSON-LD structured data. Single object or array of objects. */
+  jsonLd?: JsonLdData | JsonLdData[];
 }
 
 export interface GenerateMetadataContext {
@@ -148,6 +151,9 @@ export function mergeMetadata(layers: Metadata[]): Metadata {
     }
     if (layer.other) {
       merged.other = { ...merged.other, ...layer.other };
+    }
+    if (layer.jsonLd !== undefined) {
+      merged.jsonLd = layer.jsonLd;
     }
   }
 
@@ -485,6 +491,12 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     }
   }
 
+  if (metadata.jsonLd) {
+    elements.push(
+      React.createElement(JsonLdScript, { key: key++, data: metadata.jsonLd })
+    );
+  }
+
   return React.createElement(React.Fragment, null, ...elements);
 }
 
@@ -539,16 +551,82 @@ export function buildMetadataHtml(metadata: Metadata): string {
     if (tw.description) parts.push(`<meta name="twitter:description" content="${escapeAttr(tw.description)}" />`);
     if (tw.creator) parts.push(`<meta name="twitter:creator" content="${escapeAttr(tw.creator)}" />`);
     if (tw.site) parts.push(`<meta name="twitter:site" content="${escapeAttr(tw.site)}" />`);
+    if (tw.images) {
+      for (const img of tw.images) {
+        parts.push(`<meta name="twitter:image" content="${escapeAttr(img)}" />`);
+      }
+    }
   }
 
-  if (metadata.alternates?.canonical) {
-    parts.push(`<link rel="canonical" href="${escapeAttr(metadata.alternates.canonical)}" />`);
+  if (metadata.icons) {
+    const icons = metadata.icons;
+    if (typeof icons.icon === "string") {
+      parts.push(`<link rel="icon" href="${escapeAttr(icons.icon)}" />`);
+    } else if (Array.isArray(icons.icon)) {
+      for (const ic of icons.icon) {
+        let tag = `<link rel="icon" href="${escapeAttr(ic.url)}"`;
+        if (ic.sizes) tag += ` sizes="${escapeAttr(ic.sizes)}"`;
+        if (ic.type) tag += ` type="${escapeAttr(ic.type)}"`;
+        tag += " />";
+        parts.push(tag);
+      }
+    }
+    if (typeof icons.apple === "string") {
+      parts.push(`<link rel="apple-touch-icon" href="${escapeAttr(icons.apple)}" />`);
+    } else if (Array.isArray(icons.apple)) {
+      for (const ic of icons.apple) {
+        let tag = `<link rel="apple-touch-icon" href="${escapeAttr(ic.url)}"`;
+        if (ic.sizes) tag += ` sizes="${escapeAttr(ic.sizes)}"`;
+        tag += " />";
+        parts.push(tag);
+      }
+    }
+  }
+
+  if (metadata.robots) {
+    const robotsParts: string[] = [];
+    if (metadata.robots.index === false) robotsParts.push("noindex");
+    if (metadata.robots.follow === false) robotsParts.push("nofollow");
+    if (metadata.robots.noarchive) robotsParts.push("noarchive");
+    if (metadata.robots.nosnippet) robotsParts.push("nosnippet");
+    if (robotsParts.length > 0) {
+      parts.push(`<meta name="robots" content="${escapeAttr(robotsParts.join(", "))}" />`);
+    }
+    if (metadata.robots.googleBot) {
+      const botParts: string[] = [];
+      if (metadata.robots.googleBot.index === false) botParts.push("noindex");
+      if (metadata.robots.googleBot.follow === false) botParts.push("nofollow");
+      if (metadata.robots.googleBot.maxSnippet !== undefined) {
+        botParts.push(`max-snippet:${metadata.robots.googleBot.maxSnippet}`);
+      }
+      if (metadata.robots.googleBot.maxImagePreview) {
+        botParts.push(`max-image-preview:${metadata.robots.googleBot.maxImagePreview}`);
+      }
+      if (botParts.length > 0) {
+        parts.push(`<meta name="googlebot" content="${escapeAttr(botParts.join(", "))}" />`);
+      }
+    }
+  }
+
+  if (metadata.alternates) {
+    if (metadata.alternates.canonical) {
+      parts.push(`<link rel="canonical" href="${escapeAttr(metadata.alternates.canonical)}" />`);
+    }
+    if (metadata.alternates.languages) {
+      for (const [lang, href] of Object.entries(metadata.alternates.languages)) {
+        parts.push(`<link rel="alternate" hreflang="${escapeAttr(lang)}" href="${escapeAttr(href)}" />`);
+      }
+    }
   }
 
   if (metadata.other) {
     for (const [name, content] of Object.entries(metadata.other)) {
       parts.push(`<meta name="${escapeAttr(name)}" content="${escapeAttr(content)}" />`);
     }
+  }
+
+  if (metadata.jsonLd) {
+    parts.push(buildJsonLdScript(metadata.jsonLd));
   }
 
   return parts.join("\n  ");

@@ -140,6 +140,48 @@ describe("read-only mode (default)", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Multi-statement injection
+// ---------------------------------------------------------------------------
+
+describe("multi-statement injection prevention", () => {
+  it("blocks SELECT followed by DROP", async () => {
+    const tool = sqlQueryTool({ query: makeQuery([]) });
+    const text = await run(tool, { sql: "SELECT 1; DROP TABLE users" });
+    expect(text).toMatch(/ERROR.*multi-statement/i);
+  });
+
+  it("blocks semicolon even in write mode", async () => {
+    const tool = sqlQueryTool({ query: makeQuery([]), allowWrite: true });
+    const text = await run(tool, { sql: "INSERT INTO t VALUES (1); DELETE FROM t" });
+    expect(text).toMatch(/ERROR.*multi-statement/i);
+  });
+
+  it("allows semicolons inside single-quoted string literals", async () => {
+    const tool = sqlQueryTool({ query: makeQuery([{ v: "a;b" }]) });
+    const text = await run(tool, { sql: "SELECT * FROM t WHERE v = 'a;b'" });
+    expect(text).not.toMatch(/^ERROR/);
+  });
+
+  it("allows escaped quotes inside string literals with semicolons", async () => {
+    const tool = sqlQueryTool({ query: makeQuery([{ v: "it's;done" }]) });
+    const text = await run(tool, { sql: "SELECT * FROM t WHERE v = 'it\\'s;done'" });
+    expect(text).not.toMatch(/^ERROR/);
+  });
+
+  it("blocks semicolon outside quotes even when quotes contain semicolons", async () => {
+    const tool = sqlQueryTool({ query: makeQuery([]) });
+    const text = await run(tool, { sql: "SELECT * FROM t WHERE v = 'safe;val'; DROP TABLE t" });
+    expect(text).toMatch(/ERROR.*multi-statement/i);
+  });
+
+  it("blocks trailing semicolon", async () => {
+    const tool = sqlQueryTool({ query: makeQuery([]) });
+    const text = await run(tool, { sql: "SELECT 1;" });
+    expect(text).toMatch(/ERROR.*multi-statement/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Write mode
 // ---------------------------------------------------------------------------
 

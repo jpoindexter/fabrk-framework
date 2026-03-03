@@ -178,4 +178,96 @@ describe("buildMetadataHtml", () => {
     expect(html).not.toContain('"with"');
     expect(html).toContain("&quot;with&quot;");
   });
+
+  it("renders hreflang link tags from alternates.languages", () => {
+    const html = buildMetadataHtml({
+      alternates: {
+        canonical: "https://example.com",
+        languages: { en: "https://example.com/en", fr: "https://example.com/fr" },
+      },
+    });
+    expect(html).toContain('rel="canonical"');
+    expect(html).toContain('hreflang="en"');
+    expect(html).toContain('href="https://example.com/en"');
+    expect(html).toContain('hreflang="fr"');
+    expect(html).toContain('href="https://example.com/fr"');
+  });
+
+  it("renders icon link tag from string", () => {
+    const html = buildMetadataHtml({ icons: { icon: "/favicon.ico" } });
+    expect(html).toContain('rel="icon"');
+    expect(html).toContain('href="/favicon.ico"');
+  });
+
+  it("renders icon link tags from array with sizes and type", () => {
+    const html = buildMetadataHtml({
+      icons: {
+        icon: [
+          { url: "/icon-32.png", sizes: "32x32", type: "image/png" },
+          { url: "/icon-16.png", sizes: "16x16" },
+        ],
+      },
+    });
+    expect(html).toContain('href="/icon-32.png"');
+    expect(html).toContain('sizes="32x32"');
+    expect(html).toContain('type="image/png"');
+    expect(html).toContain('href="/icon-16.png"');
+    expect(html).toContain('sizes="16x16"');
+  });
+
+  it("renders apple-touch-icon from string", () => {
+    const html = buildMetadataHtml({ icons: { apple: "/apple-icon.png" } });
+    expect(html).toContain('rel="apple-touch-icon"');
+    expect(html).toContain('href="/apple-icon.png"');
+  });
+
+  it("renders apple-touch-icon from array", () => {
+    const html = buildMetadataHtml({
+      icons: { apple: [{ url: "/apple-180.png", sizes: "180x180" }] },
+    });
+    expect(html).toContain('rel="apple-touch-icon"');
+    expect(html).toContain('href="/apple-180.png"');
+    expect(html).toContain('sizes="180x180"');
+  });
+
+  it("renders robots meta tag", () => {
+    const html = buildMetadataHtml({
+      robots: { index: false, follow: false, noarchive: true },
+    });
+    expect(html).toContain('name="robots"');
+    expect(html).toContain("noindex");
+    expect(html).toContain("nofollow");
+    expect(html).toContain("noarchive");
+  });
+
+  it("renders googlebot meta tag", () => {
+    const html = buildMetadataHtml({
+      robots: {
+        googleBot: {
+          index: false,
+          maxSnippet: 150,
+          maxImagePreview: "large",
+        },
+      },
+    });
+    expect(html).toContain('name="googlebot"');
+    expect(html).toContain("noindex");
+    expect(html).toContain("max-snippet:150");
+    expect(html).toContain("max-image-preview:large");
+  });
+
+  it("omits robots tag when no directives are active", () => {
+    const html = buildMetadataHtml({ robots: {} });
+    expect(html).not.toContain('name="robots"');
+    expect(html).not.toContain('name="googlebot"');
+  });
+
+  it("renders twitter:image tags", () => {
+    const html = buildMetadataHtml({
+      twitter: { images: ["https://example.com/a.png", "https://example.com/b.png"] },
+    });
+    expect(html).toContain('name="twitter:image"');
+    expect(html).toContain('content="https://example.com/a.png"');
+    expect(html).toContain('content="https://example.com/b.png"');
+  });
 });

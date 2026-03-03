@@ -11,6 +11,8 @@ export default defineConfig({
     'src/client/image.tsx',
     'src/client/dynamic.ts',
     'src/client/script.ts',
+    'src/client/form.tsx',
+    'src/client/use-form-state.ts',
     'src/agents/define-agent.ts',
     'src/tools/define-tool.ts',
     'src/build/agents-md.ts',
@@ -27,6 +29,9 @@ export default defineConfig({
     'react-server-dom-webpack',
     'vite',
     '@vitejs/plugin-rsc',
+    '@vitejs/plugin-react',
     'rsc-html-stream',
+    'satori',
+    '@resvg/resvg-js',
   ],
 })

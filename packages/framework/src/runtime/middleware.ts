@@ -30,15 +30,22 @@ export type MiddlewareHandler = (
  * Rejects patterns with nested quantifiers (ReDoS protection).
  */
 export function compileMatcher(pattern: string): RegExp {
-  if (hasNestedQuantifiers(pattern)) {
+  let normalized = pattern === "/" ? "/" : pattern.replace(/\/+$/, "");
+
+  // Named params first (before glob conversion so :path* isn't mangled)
+  normalized = normalized.replace(/:[\w]+\*/g, "(.+)");
+  normalized = normalized.replace(/:[\w]+/g, "([^/]+)");
+
+  // Glob conversion: ** → match across segments, * → single segment
+  normalized = normalized.replace(/\*\*/g, "§GLOB_STAR§");
+  normalized = normalized.replace(/\*/g, "[^/]+");
+  normalized = normalized.replace(/§GLOB_STAR§/g, ".*");
+
+  if (hasNestedQuantifiers(normalized)) {
     throw new Error(
       `[fabrk] Middleware matcher pattern rejected (ReDoS risk): ${pattern}`,
     );
   }
-
-  let normalized = pattern === "/" ? "/" : pattern.replace(/\/+$/, "");
-  normalized = normalized.replace(/:[\w]+\*/g, "(.+)");
-  normalized = normalized.replace(/:[\w]+/g, "([^/]+)");
 
   return new RegExp(`^${normalized}(?:\\/)?$`);
 }

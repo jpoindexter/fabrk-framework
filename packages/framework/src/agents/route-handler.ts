@@ -2,6 +2,7 @@ import type { AgentDefinition } from "./define-agent";
 import type { ToolDefinition } from "../tools/define-tool";
 import type { LLMMessage, LLMToolResult, LLMToolSchema, LLMStreamEvent } from "@fabrk/ai";
 import type { MemoryStore } from "./memory/types";
+import type { Guardrail } from "./guardrails";
 import { createLLMBridge } from "./llm-bridge";
 import { callWithFallback, type LLMCallResult } from "./llm-caller";
 import { checkBudget, recordCost } from "./budget-guard";
@@ -51,6 +52,8 @@ export interface AgentHandlerOptions
     error: string;
     timestamp: number;
   }) => void;
+  inputGuardrails?: Guardrail[];
+  outputGuardrails?: Guardrail[];
 }
 
 function jsonResponse(data: unknown, status: number): Response {
@@ -176,6 +179,16 @@ export function createAgentHandler(options: AgentHandlerOptions) {
             return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
               anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
           }
+          if (bridge.provider === "google") {
+            const { googleGenerateWithTools } = await import("@fabrk/ai");
+            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+              googleGenerateWithTools(msgs, tools, { googleModel: bridge.resolvedModel });
+          }
+          if (bridge.provider === "ollama") {
+            const { ollamaGenerateWithTools } = await import("@fabrk/ai");
+            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+              ollamaGenerateWithTools(msgs, tools, { ollamaModel: bridge.resolvedModel });
+          }
           const { openaiGenerateWithTools } = await import("@fabrk/ai");
           return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
             openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
@@ -188,6 +201,16 @@ export function createAgentHandler(options: AgentHandlerOptions) {
             const { anthropicStreamWithTools } = await import("@fabrk/ai");
             return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
               anthropicStreamWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
+          }
+          if (bridge.provider === "google") {
+            const { googleStreamWithTools } = await import("@fabrk/ai");
+            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+              googleStreamWithTools(msgs, tools, { googleModel: bridge.resolvedModel });
+          }
+          if (bridge.provider === "ollama") {
+            const { ollamaStreamWithTools } = await import("@fabrk/ai");
+            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+              ollamaStreamWithTools(msgs, tools, { ollamaModel: bridge.resolvedModel });
           }
           const { openaiStreamWithTools } = await import("@fabrk/ai");
           return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
@@ -224,6 +247,8 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           generateWithTools: generateFn,
           streamWithTools: streamFn,
           calculateCost,
+          inputGuardrails: options.inputGuardrails,
+          outputGuardrails: options.outputGuardrails,
         });
 
         if (options.stream) {

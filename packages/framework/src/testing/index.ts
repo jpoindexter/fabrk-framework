@@ -9,3 +9,7 @@ export {
   iterationsUnder,
   getToolCalls,
 } from "./assert-agent";
+export { defineEval, runEvals } from "./evals";
+export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult } from "./evals";
+export { exactMatch, includes, llmAsJudge, toolCallSequence, jsonSchema } from "./scorers";
+export type { Scorer, ScorerResult } from "./scorers";

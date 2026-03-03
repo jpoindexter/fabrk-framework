@@ -33,6 +33,7 @@ import {
   buildMetadataHtml,
 } from "./metadata";
 import { isImageRequest, handleImageRequest } from "./image-handler";
+import { isOGRequest, handleOGRequest, type OGTemplate } from "./og-handler";
 import {
   InMemoryISRCache,
   serveFromISR,
@@ -54,6 +55,8 @@ export interface ProdServerOptions {
   middlewarePath?: string;
   /** Optional ISR cache handler. Defaults to InMemoryISRCache. */
   isrCache?: ISRCacheHandler;
+  /** OG image templates keyed by name. */
+  ogTemplates?: Map<string, OGTemplate>;
 }
 
 interface ServerEntry {
@@ -257,7 +260,7 @@ async function handleApiRoute(
       method: req.method,
       headers: nodeHeadersToRecord(req.headers),
       body: method !== "GET" && method !== "HEAD"
-        ? Buffer.concat(bodyChunks).toString()
+        ? Buffer.concat(bodyChunks)
         : undefined,
     });
 
@@ -370,6 +373,16 @@ async function handlePageRoute(
       };
     }
 
+    let routeHeaders: Record<string, string> = {};
+    if (typeof route.module.headers === "function") {
+      try {
+        const url = new URL(reqUrl, "http://localhost");
+        const ctx = { params, searchParams: Object.fromEntries(url.searchParams.entries()) };
+        const h = await (route.module.headers as (ctx: { params: Record<string, string>; searchParams: Record<string, string> }) => Promise<Record<string, string>> | Record<string, string>)(ctx);
+        if (h && typeof h === "object") routeHeaders = h;
+      } catch { /* skip invalid headers export */ }
+    }
+
     const revalidateInterval = getRevalidateInterval(route.module);
     if (isrCache && revalidateInterval !== null) {
       const url = new URL(reqUrl, "http://localhost");
@@ -387,6 +400,7 @@ async function handlePageRoute(
       return {
         status: 200,
         headers: {
+          ...routeHeaders,
           "Content-Type": "text/html; charset=utf-8",
           ...buildSecurityHeaders(),
           ...(isrResult.revalidating ? { "X-Fabrk-ISR": "stale" } : { "X-Fabrk-ISR": isrResult.cached ? "hit" : "miss" }),
@@ -484,6 +498,7 @@ async function handlePageRoute(
       return {
         status: 200,
         headers: {
+          ...routeHeaders,
           "Content-Type": "text/html; charset=utf-8",
           "Transfer-Encoding": "chunked",
           ...buildSecurityHeaders(),
@@ -515,6 +530,7 @@ async function handlePageRoute(
     return {
       status: 200,
       headers: {
+        ...routeHeaders,
         "Content-Type": "text/html; charset=utf-8",
         ...buildSecurityHeaders(),
       },
@@ -543,6 +559,7 @@ export async function startProdServer(
     serverEntryPath,
     middlewarePath,
     isrCache = new InMemoryISRCache(),
+    ogTemplates,
   } = options;
 
   const clientDir = path.join(distDir, "client");
@@ -577,8 +594,8 @@ export async function startProdServer(
       const served = await serveStaticFile(req, res, clientDir);
       if (served) return;
 
-      const imgUrl = new URL(req.url || "/", "http://localhost");
-      if (isImageRequest(imgUrl.pathname)) {
+      const parsedUrl = new URL(req.url || "/", "http://localhost");
+      if (isImageRequest(parsedUrl.pathname)) {
         const imgReq = new Request(`http://localhost${req.url || "/"}`, {
           method: "GET",
           headers: nodeHeadersToRecord(req.headers),
@@ -595,6 +612,26 @@ export async function startProdServer(
         res.end();
         return;
       }
+
+      if (isOGRequest(parsedUrl.pathname) && ogTemplates) {
+        const ogReq = new Request(`http://localhost${req.url || "/"}`, {
+          method: "GET",
+          headers: nodeHeadersToRecord(req.headers),
+        });
+        const ogRes = await handleOGRequest(ogReq, ogTemplates);
+        const ogHeaders: Record<string, string> = {};
+        ogRes.headers.forEach((value: string, key: string) => {
+          ogHeaders[key] = value;
+        });
+        res.writeHead(ogRes.status, ogHeaders);
+        if (ogRes.body) {
+          await drainStream(ogRes.body.getReader(), res);
+        }
+        res.end();
+        return;
+      }
+
+      const mwHeaders: Record<string, string> = {};
 
       if (middlewareHandler) {
         const webReq = new Request(`http://localhost${req.url || "/"}`, {
@@ -621,6 +658,12 @@ export async function startProdServer(
         if (mwResult.rewriteUrl) {
           req.url = mwResult.rewriteUrl;
         }
+
+        if (mwResult.responseHeaders) {
+          mwResult.responseHeaders.forEach((value: string, key: string) => {
+            mwHeaders[key] = value;
+          });
+        }
       }
 
       const url = new URL(req.url || "/", "http://localhost");
@@ -634,6 +677,7 @@ export async function startProdServer(
           const securityHeaders = buildSecurityHeaders();
           res.writeHead(200, {
             "Content-Type": "text/html; charset=utf-8",
+            ...mwHeaders,
             ...securityHeaders,
           });
           res.end(html);
@@ -643,6 +687,7 @@ export async function startProdServer(
         const securityHeaders = buildSecurityHeaders();
         res.writeHead(404, {
           "Content-Type": "text/plain",
+          ...mwHeaders,
           ...securityHeaders,
         });
         res.end("Not Found");
@@ -651,7 +696,7 @@ export async function startProdServer(
 
       if (matched.route.type === "api") {
         const result = await handleApiRoute(req, matched.route, matched.params);
-        res.writeHead(result.status, result.headers);
+        res.writeHead(result.status, { ...mwHeaders, ...result.headers });
         res.end(result.body);
       } else {
         const result = await handlePageRoute(
@@ -661,7 +706,7 @@ export async function startProdServer(
           req.url || "/",
           isrCache,
         );
-        res.writeHead(result.status, result.headers);
+        res.writeHead(result.status, { ...mwHeaders, ...result.headers });
 
         if (result.body instanceof ReadableStream) {
           await drainStream(result.body.getReader(), res);

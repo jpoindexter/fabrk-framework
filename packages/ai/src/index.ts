@@ -65,8 +65,10 @@ export {
   getLLMClient,
   OpenAIClient,
   AnthropicClient,
+  GoogleClient,
   OllamaClient,
   LLM_DEFAULTS,
+  generateObject,
 } from './llm'
 
 export type {
@@ -75,6 +77,8 @@ export type {
   LLMConfig,
   LLMProvider,
   TaskComplexity,
+  JsonSchema,
+  GenerateObjectResult,
   LLMToolSchema,
   LLMToolCall,
   LLMToolResult,
@@ -87,6 +91,10 @@ export {
   openaiStreamWithTools,
   anthropicGenerateWithTools,
   anthropicStreamWithTools,
+  googleGenerateWithTools,
+  googleStreamWithTools,
+  ollamaGenerateWithTools,
+  ollamaStreamWithTools,
 } from './llm'
 
 export {

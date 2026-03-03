@@ -3,6 +3,8 @@ import { rscStream } from "rsc-html-stream/client";
 import { hydrateRoot } from "react-dom/client";
 import React from "react";
 
+const NAVIGATE_EVENT = "fabrk:navigate";
+
 declare global {
   interface Window {
     __FABRK_RSC_NAVIGATE__?: (url: string) => Promise<void>;
@@ -45,6 +47,7 @@ window.__FABRK_RSC_NAVIGATE__ = async function (url: string): Promise<void> {
       const root = reactRoot;
       React.startTransition(() => {
         root.render(React.createElement(App));
+        window.dispatchEvent(new CustomEvent(NAVIGATE_EVENT));
       });
     }
   } catch {

@@ -51,6 +51,8 @@ export async function handleRequest(
 ): Promise<Response> {
   const { routes, viteServer, htmlShell = DEFAULT_HTML_SHELL, middlewarePath, appDir, rsc, i18n } = options;
 
+  let mwResponseHeaders: Headers | undefined;
+
   if (middlewarePath) {
     try {
       const middlewareMod = await viteServer.ssrLoadModule(middlewarePath);
@@ -60,11 +62,16 @@ export async function handleRequest(
         if (middlewareResult instanceof Response) {
           return middlewareResult;
         }
-        if (middlewareResult && typeof middlewareResult === "object" && typeof middlewareResult.rewriteUrl === "string") {
-          request = new Request(
-            new URL(middlewareResult.rewriteUrl, request.url).toString(),
-            request
-          );
+        if (middlewareResult && typeof middlewareResult === "object") {
+          if (typeof middlewareResult.rewriteUrl === "string") {
+            request = new Request(
+              new URL(middlewareResult.rewriteUrl, request.url).toString(),
+              request
+            );
+          }
+          if (middlewareResult.responseHeaders instanceof Headers) {
+            mwResponseHeaders = middlewareResult.responseHeaders;
+          }
         }
       }
     } catch { /* ignore */ }
@@ -106,7 +113,15 @@ export async function handleRequest(
     return handleRscPayload(matched, viteServer, appDir);
   }
 
-  return handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale);
+  const response = await handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale);
+
+  if (mwResponseHeaders) {
+    mwResponseHeaders.forEach((value, key) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
 }
 
 async function handleApiRoute(
@@ -340,6 +355,14 @@ async function handlePageRoute(
     metadataLayers.push(await resolveMetadata(pageMod, metadataContext));
     const metadata = mergeMetadata(metadataLayers);
 
+    let routeHeaders: Record<string, string> = {};
+    if (typeof pageMod.headers === "function") {
+      try {
+        const h = await pageMod.headers(metadataContext);
+        if (h && typeof h === "object") routeHeaders = h as Record<string, string>;
+      } catch { /* skip invalid headers export */ }
+    }
+
     const loader = reactLoader ?? defaultReactLoader;
     const [reactDomServer, React] = await loader();
     const createElement = React.createElement ?? React.default?.createElement;
@@ -385,6 +408,7 @@ async function handlePageRoute(
           return new Response(htmlStream, {
             status: 200,
             headers: {
+              ...routeHeaders,
               "Content-Type": "text/html; charset=utf-8",
               "Transfer-Encoding": "chunked",
               ...buildSecurityHeaders(),
@@ -404,6 +428,7 @@ async function handlePageRoute(
       return new Response(html, {
         status: 200,
         headers: {
+          ...routeHeaders,
           "Content-Type": "text/html; charset=utf-8",
           ...buildSecurityHeaders(),
         },
@@ -411,7 +436,7 @@ async function handlePageRoute(
     }
 
     if (typeof renderToReadableStream === "function") {
-      return streamingRender(element, renderToReadableStream, metadata, htmlShell);
+      return streamingRender(element, renderToReadableStream, metadata, htmlShell, routeHeaders);
     }
 
     if (typeof renderToString === "function") {
@@ -421,6 +446,7 @@ async function handlePageRoute(
       return new Response(html, {
         status: 200,
         headers: {
+          ...routeHeaders,
           "Content-Type": "text/html; charset=utf-8",
           ...buildSecurityHeaders(),
         },
@@ -469,7 +495,8 @@ async function streamingRender(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   renderToReadableStream: (element: any) => Promise<ReadableStream>,
   metadata: Metadata,
-  htmlShell: (options: { head: string; body: string }) => string
+  htmlShell: (options: { head: string; body: string }) => string,
+  extraHeaders: Record<string, string> = {},
 ): Promise<Response> {
   const reactStream = await renderToReadableStream(element);
   const head = buildMetadataHtml(metadata);
@@ -504,6 +531,7 @@ async function streamingRender(
   return new Response(stream, {
     status: 200,
     headers: {
+      ...extraHeaders,
       "Content-Type": "text/html; charset=utf-8",
       "Transfer-Encoding": "chunked",
       ...buildSecurityHeaders(),

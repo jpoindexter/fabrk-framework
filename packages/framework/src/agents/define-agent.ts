@@ -1,4 +1,5 @@
 import type { SkillDefinition } from "../skills/define-skill";
+import type { Guardrail } from "./guardrails";
 
 export interface AgentBudget {
   daily?: number;
@@ -22,6 +23,8 @@ export interface AgentDefinition {
   memory?: boolean | AgentMemoryConfig;
   agents?: Array<{ name: string; description: string }>;
   skills?: SkillDefinition[];
+  inputGuardrails?: Guardrail[];
+  outputGuardrails?: Guardrail[];
 }
 
 export interface DefineAgentOptions {
@@ -35,6 +38,8 @@ export interface DefineAgentOptions {
   memory?: boolean | AgentMemoryConfig;
   agents?: Array<{ name: string; description: string }>;
   skills?: SkillDefinition[];
+  inputGuardrails?: Guardrail[];
+  outputGuardrails?: Guardrail[];
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -49,5 +54,7 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     memory: options.memory,
     agents: options.agents,
     skills: options.skills,
+    inputGuardrails: options.inputGuardrails,
+    outputGuardrails: options.outputGuardrails,
   };
 }

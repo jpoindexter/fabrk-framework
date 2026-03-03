@@ -78,7 +78,22 @@ function isSafeUrl(url: string): boolean {
   }
 }
 
-async function navigateImpl(
+/**
+ * Swap page content for non-RSC SPA navigation.
+ * HTML originates from same-origin server responses only (enforced by isSafeUrl).
+ */
+function swapContent(html: string): void {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const newRoot = doc.getElementById("root");
+  const currentRoot = document.getElementById("root");
+
+  if (newRoot && currentRoot) {
+    // Safe: HTML is from our own server, validated by isSafeUrl same-origin check
+    currentRoot.innerHTML = newRoot.innerHTML;
+  }
+}
+
+export async function navigateImpl(
   url: string,
   mode: "push" | "replace",
   options?: NavigateOptions
@@ -102,16 +117,25 @@ async function navigateImpl(
   if (window.__FABRK_RSC_NAVIGATE__) {
     await window.__FABRK_RSC_NAVIGATE__(url);
   } else {
-    const cached = getPrefetchResponse(url);
-    if (!cached) {
+    let html = getPrefetchResponse(url);
+    if (!html) {
       try {
         const res = await fetch(url, {
           headers: { "X-Fabrk-Navigate": "1", "X-Fabrk-Navigation": "soft" },
         });
         if (res.ok) {
-          storePrefetchResponse(url, await res.text());
+          html = await res.text();
+          storePrefetchResponse(url, html);
         }
-      } catch { /* hard navigation is the fallback for RSC-less mode */ }
+      } catch {
+        window.location.href = url;
+        return;
+      }
+    }
+
+    if (html) {
+      swapContent(html);
+    } else {
       window.location.href = url;
       return;
     }

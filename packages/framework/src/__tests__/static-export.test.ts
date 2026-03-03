@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   collectStaticRoutes,
   resolveOutputPath,
+  renderStaticPage,
 } from "../runtime/static-export";
 import type { Route } from "../runtime/router";
 
@@ -190,5 +191,65 @@ describe("collectStaticRoutes", () => {
 
     const result = await collectStaticRoutes({ routes: [route], modules });
     expect(result).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// renderStaticPage — full metadata pipeline
+// ---------------------------------------------------------------------------
+
+describe("renderStaticPage metadata", () => {
+  it("renders full metadata including OG, robots, and icons", async () => {
+    const mod = {
+      default: () => null,
+      metadata: {
+        title: "My Page",
+        description: "Page description",
+        openGraph: { title: "OG Title", type: "website" },
+        robots: { index: false, follow: false },
+        icons: { icon: "/favicon.ico" },
+        alternates: {
+          canonical: "https://example.com",
+          languages: { en: "/en", de: "/de" },
+        },
+      },
+    };
+
+    const html = await renderStaticPage(mod, {});
+    expect(html).toContain("<title>My Page</title>");
+    expect(html).toContain('name="description"');
+    expect(html).toContain('property="og:title"');
+    expect(html).toContain('property="og:type"');
+    expect(html).toContain('name="robots"');
+    expect(html).toContain("noindex");
+    expect(html).toContain('rel="icon"');
+    expect(html).toContain('href="/favicon.ico"');
+    expect(html).toContain('rel="canonical"');
+    expect(html).toContain('hreflang="en"');
+    expect(html).toContain('hreflang="de"');
+  });
+
+  it("resolves generateMetadata for dynamic pages", async () => {
+    const mod = {
+      default: () => null,
+      generateMetadata: async ({ params }: { params: Record<string, string> }) => ({
+        title: `Post: ${params.slug}`,
+        openGraph: { title: `Post: ${params.slug}` },
+      }),
+    };
+
+    const html = await renderStaticPage(mod, { slug: "hello" });
+    expect(html).toContain("<title>Post: hello</title>");
+    expect(html).toContain('property="og:title"');
+    expect(html).toContain("Post: hello");
+  });
+
+  it("renders empty head gracefully when no metadata", async () => {
+    const mod = { default: () => null };
+    const html = await renderStaticPage(mod, {});
+    expect(html).toContain("<!DOCTYPE html>");
+    expect(html).toContain('<div id="root">');
+    // No metadata tags beyond the default viewport
+    expect(html).not.toContain('name="description"');
   });
 });

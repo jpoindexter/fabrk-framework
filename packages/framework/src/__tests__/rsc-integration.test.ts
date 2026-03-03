@@ -22,14 +22,14 @@ describe("RSC Integration", () => {
       expect(names).toContain("fabrk:virtual-entries");
     });
 
-    it("includes 3 plugins with RSC enabled", () => {
+    it("includes 4 plugins with RSC enabled", () => {
       const plugins = fabrkPlugin();
-      expect(plugins).toHaveLength(3);
+      expect(plugins).toHaveLength(4);
     });
 
-    it("includes 2 plugins with RSC disabled", () => {
+    it("includes 3 plugins with RSC disabled", () => {
       const plugins = fabrkPlugin({ rsc: false });
-      expect(plugins).toHaveLength(2);
+      expect(plugins).toHaveLength(3);
     });
   });
 

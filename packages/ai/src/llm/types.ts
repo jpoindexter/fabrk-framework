@@ -41,6 +41,12 @@ export type LLMProvider =
   | 'cerebras'
   | 'lmstudio'
   | 'nim'
+  | 'huggingface' | 'replicate' | 'deepinfra' | 'sambanova'
+  | 'hyperbolic' | 'novita' | 'friendli' | 'upstage'
+  | 'writer' | 'lambda' | 'reka' | 'ai21'
+  | 'moonshot' | 'zhipu' | 'yi' | 'qwen'
+  | 'minimax' | 'stepfun' | 'baichuan' | 'maritaca'
+  | 'nebius' | 'cloudflare-ai'
 
 export interface LLMConfig {
   provider: LLMProvider

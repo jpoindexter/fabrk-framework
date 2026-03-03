@@ -157,3 +157,177 @@ registerProvider("nim", makeOpenAICompatAdapter({
   prefixes: ["nim:"],
   stripPrefix: "nim:",
 }));
+
+// === Batch 2: Additional OpenAI-compatible providers ===
+
+registerProvider("huggingface", makeOpenAICompatAdapter({
+  key: "huggingface",
+  baseURL: "https://api-inference.huggingface.co/v1",
+  envKey: "HF_TOKEN",
+  prefixes: ["hf:"],
+  stripPrefix: "hf:",
+}));
+
+registerProvider("replicate", makeOpenAICompatAdapter({
+  key: "replicate",
+  baseURL: "https://api.replicate.com/openai/v1",
+  envKey: "REPLICATE_API_KEY",
+  prefixes: ["replicate:"],
+  stripPrefix: "replicate:",
+}));
+
+registerProvider("deepinfra", makeOpenAICompatAdapter({
+  key: "deepinfra",
+  baseURL: "https://api.deepinfra.com/v1/openai",
+  envKey: "DEEPINFRA_API_KEY",
+  prefixes: ["deepinfra:"],
+  stripPrefix: "deepinfra:",
+}));
+
+registerProvider("sambanova", makeOpenAICompatAdapter({
+  key: "sambanova",
+  baseURL: "https://api.sambanova.ai/v1",
+  envKey: "SAMBANOVA_API_KEY",
+  prefixes: ["sambanova:"],
+  stripPrefix: "sambanova:",
+}));
+
+registerProvider("hyperbolic", makeOpenAICompatAdapter({
+  key: "hyperbolic",
+  baseURL: "https://api.hyperbolic.xyz/v1",
+  envKey: "HYPERBOLIC_API_KEY",
+  prefixes: ["hyperbolic:"],
+  stripPrefix: "hyperbolic:",
+}));
+
+registerProvider("novita", makeOpenAICompatAdapter({
+  key: "novita",
+  baseURL: "https://api.novita.ai/v3/openai",
+  envKey: "NOVITA_API_KEY",
+  prefixes: ["novita:"],
+  stripPrefix: "novita:",
+}));
+
+registerProvider("friendli", makeOpenAICompatAdapter({
+  key: "friendli",
+  baseURL: "https://inference.friendli.ai/v1",
+  envKey: "FRIENDLI_TOKEN",
+  prefixes: ["friendli:"],
+  stripPrefix: "friendli:",
+}));
+
+registerProvider("upstage", makeOpenAICompatAdapter({
+  key: "upstage",
+  baseURL: "https://api.upstage.ai/v1",
+  envKey: "UPSTAGE_API_KEY",
+  prefixes: ["upstage:", "solar-"],
+  stripPrefix: "upstage:",
+}));
+
+registerProvider("writer", makeOpenAICompatAdapter({
+  key: "writer",
+  baseURL: "https://api.writer.com/v1",
+  envKey: "WRITER_API_KEY",
+  prefixes: ["writer:", "palmyra-"],
+  stripPrefix: "writer:",
+}));
+
+registerProvider("lambda", makeOpenAICompatAdapter({
+  key: "lambda",
+  baseURL: "https://api.lambdalabs.com/v1",
+  envKey: "LAMBDA_API_KEY",
+  prefixes: ["lambda:"],
+  stripPrefix: "lambda:",
+}));
+
+registerProvider("reka", makeOpenAICompatAdapter({
+  key: "reka",
+  baseURL: "https://api.reka.ai/v1",
+  envKey: "REKA_API_KEY",
+  prefixes: ["reka-"],
+}));
+
+registerProvider("ai21", makeOpenAICompatAdapter({
+  key: "ai21",
+  baseURL: "https://api.ai21.com/studio/v1",
+  envKey: "AI21_API_KEY",
+  prefixes: ["ai21:", "jamba-"],
+  stripPrefix: "ai21:",
+}));
+
+registerProvider("moonshot", makeOpenAICompatAdapter({
+  key: "moonshot",
+  baseURL: "https://api.moonshot.cn/v1",
+  envKey: "MOONSHOT_API_KEY",
+  prefixes: ["moonshot:", "kimi-"],
+  stripPrefix: "moonshot:",
+}));
+
+registerProvider("zhipu", makeOpenAICompatAdapter({
+  key: "zhipu",
+  baseURL: "https://open.bigmodel.cn/api/paas/v4",
+  envKey: "ZHIPU_API_KEY",
+  prefixes: ["zhipu:", "glm-"],
+  stripPrefix: "zhipu:",
+}));
+
+registerProvider("yi", makeOpenAICompatAdapter({
+  key: "yi",
+  baseURL: "https://api.01.ai/v1",
+  envKey: "YI_API_KEY",
+  prefixes: ["yi-"],
+}));
+
+registerProvider("qwen", makeOpenAICompatAdapter({
+  key: "qwen",
+  baseURL: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  envKey: "DASHSCOPE_API_KEY",
+  prefixes: ["qwen-"],
+}));
+
+registerProvider("minimax", makeOpenAICompatAdapter({
+  key: "minimax",
+  baseURL: "https://api.minimax.chat/v1",
+  envKey: "MINIMAX_API_KEY",
+  prefixes: ["minimax:", "abab"],
+  stripPrefix: "minimax:",
+}));
+
+registerProvider("stepfun", makeOpenAICompatAdapter({
+  key: "stepfun",
+  baseURL: "https://api.stepfun.com/v1",
+  envKey: "STEPFUN_API_KEY",
+  prefixes: ["step-"],
+}));
+
+registerProvider("baichuan", makeOpenAICompatAdapter({
+  key: "baichuan",
+  baseURL: "https://api.baichuan-ai.com/v1",
+  envKey: "BAICHUAN_API_KEY",
+  prefixes: ["baichuan:"],
+  stripPrefix: "baichuan:",
+}));
+
+registerProvider("maritaca", makeOpenAICompatAdapter({
+  key: "maritaca",
+  baseURL: "https://chat.maritaca.ai/api",
+  envKey: "MARITACA_KEY",
+  prefixes: ["maritaca:", "sabia-"],
+  stripPrefix: "maritaca:",
+}));
+
+registerProvider("nebius", makeOpenAICompatAdapter({
+  key: "nebius",
+  baseURL: "https://api.studio.nebius.ai/v1",
+  envKey: "NEBIUS_API_KEY",
+  prefixes: ["nebius:"],
+  stripPrefix: "nebius:",
+}));
+
+registerProvider("cloudflare-ai", makeOpenAICompatAdapter({
+  key: "cloudflare-ai",
+  baseURL: "", // Set providerBaseUrl to https://api.cloudflare.com/client/v4/accounts/{CF_ACCOUNT_ID}/ai/v1
+  envKey: "CF_API_TOKEN",
+  prefixes: ["@cf/", "cloudflare-ai:"],
+  stripPrefix: "cloudflare-ai:",
+}));

@@ -1,6 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
 import type { I18nConfig } from "../runtime/i18n";
+import type { VoiceConfig } from "@fabrk/ai";
 
 export interface FabrkAIConfig {
   defaultModel?: string;
@@ -38,6 +39,7 @@ export interface FabrkConfig {
     target?: "workers" | "node" | "vercel";
   };
   i18n?: I18nConfig;
+  voice?: VoiceConfig;
 }
 
 export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {

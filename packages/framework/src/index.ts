@@ -3,6 +3,7 @@ import { fabrkPlugin, type FabrkRuntimeOptions } from "./runtime/plugin";
 import { agentPlugin } from "./agents/vite-plugin";
 import { dashboardPlugin } from "./dashboard/vite-plugin";
 import { serverActionPlugin } from "./runtime/server-action-transform";
+import { voicePlugin } from "./agents/voice-plugin";
 
 export interface FabrkOptions {
   runtime?: FabrkRuntimeOptions;
@@ -10,6 +11,8 @@ export interface FabrkOptions {
   dashboard?: boolean;
   /** Enable "use server" compiler transform. Defaults to true. */
   serverActions?: boolean;
+  /** Enable voice routes (/__ai/tts, /__ai/stt, /__ai/realtime). Defaults to true. */
+  voice?: boolean;
 }
 
 export default function fabrk(options: FabrkOptions = {}): Plugin[] {
@@ -24,6 +27,9 @@ export default function fabrk(options: FabrkOptions = {}): Plugin[] {
   }
   if (options.dashboard !== false) {
     plugins.push(dashboardPlugin());
+  }
+  if (options.voice !== false) {
+    plugins.push(voicePlugin());
   }
 
   return [...runtimePlugins, ...plugins];
@@ -174,3 +180,9 @@ export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult, Scorer, Scor
 // Built-in tools
 export { ragTool } from "./tools/builtins/rag";
 export type { RagResult, RagToolOptions } from "./tools/builtins/rag";
+
+// Voice
+export { handleTTSRequest, handleSTTRequest } from "./agents/voice-handler";
+export { handleRealtimeUpgrade } from "./agents/voice-ws-handler";
+export type { RealtimeHandlerConfig } from "./agents/voice-ws-handler";
+export { voicePlugin } from "./agents/voice-plugin";

@@ -116,3 +116,38 @@ export function piiRedactor(): Guardrail {
     return { pass: true };
   };
 }
+
+/** A guardrail that may be async. Extends the sync Guardrail type. */
+export type AsyncGuardrail = (
+  content: string,
+  ctx: GuardrailContext
+) => GuardrailResult | Promise<GuardrailResult>;
+
+/**
+ * Run all guardrails in parallel via Promise.all.
+ * Accepts both sync Guardrail and async AsyncGuardrail.
+ * Returns the first blocked result (by array order), or pass if all pass.
+ */
+export async function runGuardrailsParallel(
+  guardrails: Array<Guardrail | AsyncGuardrail>,
+  content: string,
+  ctx: GuardrailContext
+): Promise<{ content: string; blocked: boolean; reason?: string }> {
+  const results = await Promise.all(
+    guardrails.map((g) => Promise.resolve(g(content, ctx)))
+  );
+  let current = content;
+  for (const result of results) {
+    if (!result.pass) {
+      if (result.replacement !== undefined) {
+        current = result.replacement;
+        continue;
+      }
+      return { content: current, blocked: true, reason: result.reason };
+    }
+    if (result.replacement !== undefined) {
+      current = result.replacement;
+    }
+  }
+  return { content: current, blocked: false };
+}

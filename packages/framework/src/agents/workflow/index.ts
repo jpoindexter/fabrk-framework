@@ -1,9 +1,20 @@
-export { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep } from "./define-workflow";
-export { runWorkflow } from "./runner";
+export {
+  defineWorkflow,
+  agentStep,
+  toolStep,
+  conditionStep,
+  parallelStep,
+  suspendableStep,
+} from "./define-workflow";
+export { runWorkflow, resumeWorkflow } from "./runner";
 export type {
   WorkflowDefinition,
   WorkflowStep,
   WorkflowResult,
+  WorkflowSuspendedResult,
   WorkflowContext,
   StepResult,
+  SuspendableStepContext,
+  SuspendableAgentStep,
+  SuspendableToolStep,
 } from "./types";

@@ -204,3 +204,16 @@ export function useAgent(agentName: string) {
 
   return { send, stop, messages, isStreaming, cost, usage, error, toolCalls };
 }
+
+/**
+ * Infer the chat messages array type from a `useAgent` hook result.
+ *
+ * @example
+ * const agent = useAgent('my-agent');
+ * type MyMessages = InferChatMessages<typeof agent>;
+ * // MyMessages = AgentMessage[]
+ *
+ * // Or use directly:
+ * const [messages, setMessages] = useState<InferChatMessages<ReturnType<typeof useAgent>>>([]);
+ */
+export type InferChatMessages<T extends { messages: AgentMessage[] }> = T["messages"];

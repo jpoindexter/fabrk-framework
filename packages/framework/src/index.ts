@@ -127,6 +127,8 @@ export { defineAgent } from "./agents/define-agent";
 export type { AgentDefinition, DefineAgentOptions, AgentBudget, AgentMemoryConfig, GenerationOptions, ToolChoiceValue } from "./agents/define-agent";
 export { defineTool, textResult } from "./tools/define-tool";
 export type { ToolDefinition, ToolResult } from "./tools/define-tool";
+export { toolDefinition, clientTools } from "./tools/tool-definition";
+export type { IsomorphicToolDefinition, ClientToolDescriptor } from "./tools/tool-definition";
 export { sqlQueryTool } from "./tools/builtins/sql-query";
 export type { SqlQueryOptions } from "./tools/builtins/sql-query";
 export { loadFabrkConfig } from "./config/fabrk-config";
@@ -139,6 +141,8 @@ export type { I18nConfig } from "./runtime/i18n";
 export { setMemoryStore, getMemoryStore, InMemoryMemoryStore, SemanticMemoryStore } from "./agents/memory/index";
 export type { MemoryStore, Thread, ThreadMessage } from "./agents/memory/types";
 export type { SemanticMemoryOptions } from "./agents/memory/semantic-store";
+export { buildWorkingMemory } from "./agents/memory/working-memory";
+export type { WorkingMemoryConfig } from "./agents/memory/working-memory";
 
 // Orchestration
 export { agentAsTool, defineSupervisor, detectCircularDeps } from "./agents/orchestration/index";
@@ -174,8 +178,12 @@ export { handleStartAgent, handleResumeAgent, handleAgentStatus } from "./agents
 export type { DurableAgentOptions } from "./agents/durable-handler";
 
 // Guardrails
-export { runGuardrails, maxLength, denyList, requireJsonSchema, piiRedactor } from "./agents/guardrails";
-export type { Guardrail, GuardrailContext, GuardrailResult } from "./agents/guardrails";
+export { runGuardrails, maxLength, denyList, requireJsonSchema, piiRedactor, runGuardrailsParallel } from "./agents/guardrails";
+export type { Guardrail, GuardrailContext, GuardrailResult, AsyncGuardrail } from "./agents/guardrails";
+
+// Stop conditions
+export { stepCountIs, hasToolCall } from "./agents/stop-conditions";
+export type { StopCondition, StopConditionContext } from "./agents/stop-conditions";
 
 // Testing
 export { mockLLM, MockLLM, createTestAgent, calledTool, calledToolWith, respondedWith, costUnder, iterationsUnder, getToolCalls } from "./testing/index";
@@ -184,6 +192,9 @@ export type { TestAgentOptions, TestAgentResult } from "./testing/index";
 // Evals
 export { defineEval, runEvals, exactMatch, includes, llmAsJudge, toolCallSequence, jsonSchema } from "./testing/index";
 export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult, Scorer, ScorerResult } from "./testing/index";
+export { defineDataset } from "./testing/index";
+export type { EvalDataset, EvalRunRecord, EvalRunSummary, EvalRunStore } from "./testing/index";
+export { FileEvalRunStore } from "./testing/index";
 
 // Tool lifecycle hooks
 export type { ToolExecutorHooks } from "./agents/tool-executor";
@@ -202,6 +213,10 @@ export type { TypedLinkProps } from "./client/typed-navigation";
 export { ragTool, ragToolFromPipeline } from "./tools/builtins/rag";
 export type { RagResult, RagToolOptions } from "./tools/builtins/rag";
 
+// Computer use tools (Anthropic computer_use_20250124 API compatible)
+export { defineBashTool, defineTextEditorTool, defineComputerTool } from "./tools/computer-use/index.js";
+export type { BashToolOptions, TextEditorToolOptions, TextEditorCommand, TextEditorExecuteOptions, ComputerToolOptions, ComputerAction } from "./tools/computer-use/index.js";
+
 // Voice
 export { handleTTSRequest, handleSTTRequest } from "./agents/voice-handler";
 export { handleRealtimeUpgrade } from "./agents/voice-ws-handler";
@@ -209,6 +224,8 @@ export type { RealtimeHandlerConfig } from "./agents/voice-ws-handler";
 export { voicePlugin } from "./agents/voice-plugin";
 
 // Client hooks
+export { useAgent, parseSSELine } from "./client/use-agent.js";
+export type { AgentMessage, AgentContentPart, AgentUsage, AgentToolCall, InferChatMessages } from "./client/use-agent.js";
 export { useObject } from "./client/use-object";
 export type { UseObjectOptions } from "./client/use-object";
 

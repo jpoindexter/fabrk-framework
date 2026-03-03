@@ -3,6 +3,7 @@ import type { SkillDefinition } from "../skills/define-skill";
 import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
 import type { ThreadMessage } from "./memory/types";
+import type { WorkingMemoryConfig } from "./memory/working-memory";
 
 export type { GenerationOptions } from "@fabrk/ai";
 export type { ToolChoiceValue } from "@fabrk/ai";
@@ -26,6 +27,7 @@ export interface AgentMemoryConfig {
     keepRecent?: number;
     summarize: (messages: ThreadMessage[]) => Promise<string>;
   };
+  workingMemory?: WorkingMemoryConfig;
 }
 
 export interface AgentDefinition {
@@ -43,6 +45,8 @@ export interface AgentDefinition {
   outputGuardrails?: Guardrail[];
   toolHooks?: ToolExecutorHooks;
   generationOptions?: GenerationOptions;
+  /** Agent names this agent can hand off to. When a tool call matches, a handoff event is emitted. */
+  handoffs?: string[];
 }
 
 export interface DefineAgentOptions {
@@ -60,6 +64,8 @@ export interface DefineAgentOptions {
   outputGuardrails?: Guardrail[];
   toolHooks?: ToolExecutorHooks;
   generationOptions?: GenerationOptions;
+  /** Agent names this agent can hand off to. When a tool call matches, a handoff event is emitted. */
+  handoffs?: string[];
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -78,5 +84,6 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     outputGuardrails: options.outputGuardrails,
     toolHooks: options.toolHooks,
     generationOptions: options.generationOptions,
+    handoffs: options.handoffs,
   };
 }

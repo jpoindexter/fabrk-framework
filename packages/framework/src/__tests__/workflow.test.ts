@@ -39,6 +39,8 @@ describe("helper factories", () => {
 describe("runWorkflow — linear", () => {
   it("returns input unchanged for empty workflow", async () => {
     const result = await runWorkflow({ name: "empty", steps: [] }, "hello");
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("hello");
     expect(result.stepResults).toHaveLength(0);
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
@@ -52,6 +54,8 @@ describe("runWorkflow — linear", () => {
     ]);
     const result = await wf.run("start");
     expect(order).toEqual(["a", "b"]);
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("start-a-b");
   });
 
@@ -76,6 +80,8 @@ describe("runWorkflow — linear", () => {
       },
       "in"
     );
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.stepResults).toHaveLength(2);
     expect(result.stepResults[0]).toMatchObject({ stepId: "x", output: "out-x" });
     expect(result.stepResults[1]).toMatchObject({ stepId: "y", output: "out-y" });
@@ -83,6 +89,8 @@ describe("runWorkflow — linear", () => {
 
   it("durationMs is a non-negative number", async () => {
     const result = await runWorkflow({ name: "dur", steps: [agentStep("a", async () => "x")] }, "in");
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(typeof result.durationMs).toBe("number");
     expect(result.durationMs).toBeGreaterThanOrEqual(0);
   });
@@ -99,6 +107,8 @@ describe("conditionStep", () => {
       "in"
     );
     expect(thenFn).toHaveBeenCalledOnce();
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("then-output");
   });
 
@@ -112,6 +122,8 @@ describe("conditionStep", () => {
       "in"
     );
     expect(elseFn).toHaveBeenCalledOnce();
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("else-output");
   });
 
@@ -126,6 +138,8 @@ describe("conditionStep", () => {
       },
       "in"
     );
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("pre-out");
     const skipped = result.stepResults.find((r) => r.stepId === "c");
     expect(skipped?.skipped).toBe(true);
@@ -147,6 +161,8 @@ describe("conditionStep", () => {
       "in"
     );
     expect(innerFn).toHaveBeenCalledOnce();
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("inner");
   });
 });
@@ -165,6 +181,8 @@ describe("parallelStep", () => {
       },
       "in"
     );
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toBe("alpha\n---\nbeta");
   });
 
@@ -194,6 +212,8 @@ describe("parallelStep", () => {
       "in"
     );
     expect(successFn).toHaveBeenCalledOnce();
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     expect(result.output).toContain("success-output");
     expect(result.output).toContain("[error: branch failure]");
   });
@@ -212,6 +232,8 @@ describe("parallelStep", () => {
       },
       "in"
     );
+    expect(result.status).toBe("completed");
+    if (result.status !== "completed") return;
     const parts = result.output.split("\n---\n");
     expect(parts).toHaveLength(3);
     expect(parts[0]).toBe("alpha");

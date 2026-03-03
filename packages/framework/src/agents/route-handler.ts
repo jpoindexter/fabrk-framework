@@ -96,6 +96,8 @@ function agentLoopEventToSSE(event: AgentLoopEvent): SSEEvent | null {
       return { type: "error", message: event.message };
     case "approval-required":
       return { type: "approval-required", toolName: event.toolName, input: event.input, approvalId: event.approvalId, iteration: event.iteration };
+    case "handoff":
+      return { type: "handoff", targetAgent: event.targetAgent, input: event.input, iteration: event.iteration };
   }
 }
 
@@ -263,9 +265,25 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
     const sanitized = body.messages.map(({ role, content }) => ({ role, content }));
     const allMessages = [...historyMessages, ...sanitized];
-    const messages = options.systemPrompt
-      ? [{ role: "system", content: options.systemPrompt }, ...allMessages]
+
+    // Working memory: prepend computed context as a system message before systemPrompt
+    let workingMemoryPrefix: { role: string; content: string } | undefined;
+    const memoryConfig = typeof options.memory === "object" ? options.memory : undefined;
+    if (memoryConfig?.workingMemory && options.memoryStore && threadId) {
+      const { buildWorkingMemory } = await import("../agents/memory/working-memory.js");
+      const threadMessages = await options.memoryStore.getMessages(threadId);
+      const wmContent = buildWorkingMemory(threadMessages, memoryConfig.workingMemory);
+      if (wmContent.trim()) {
+        workingMemoryPrefix = { role: "system", content: wmContent };
+      }
+    }
+
+    const baseMessages = workingMemoryPrefix
+      ? [workingMemoryPrefix, ...allMessages]
       : allMessages;
+    const messages = options.systemPrompt
+      ? [{ role: "system", content: options.systemPrompt }, ...baseMessages]
+      : baseMessages;
 
     const requestStartMs = Date.now();
 
@@ -337,6 +355,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           calculateCost,
           inputGuardrails: options.inputGuardrails,
           outputGuardrails: options.outputGuardrails,
+          handoffs: options.handoffs,
         });
 
         if (options.stream) {

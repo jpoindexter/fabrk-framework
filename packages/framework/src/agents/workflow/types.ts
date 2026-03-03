@@ -38,7 +38,33 @@ export interface ParallelStep {
   steps: WorkflowStep[];
 }
 
-export type WorkflowStep = AgentStep | ToolStep | ConditionStep | ParallelStep;
+export interface SuspendableStepContext {
+  suspend: (data: unknown) => never;
+}
+
+export interface SuspendableAgentStep {
+  type: "suspendable-agent";
+  id: string;
+  suspendSchema?: Record<string, unknown>;
+  resumeSchema?: Record<string, unknown>;
+  run: (ctx: WorkflowContext, control: SuspendableStepContext) => Promise<string | void>;
+}
+
+export interface SuspendableToolStep {
+  type: "suspendable-tool";
+  id: string;
+  suspendSchema?: Record<string, unknown>;
+  resumeSchema?: Record<string, unknown>;
+  run: (ctx: WorkflowContext, control: SuspendableStepContext) => Promise<string | void>;
+}
+
+export type WorkflowStep =
+  | AgentStep
+  | ToolStep
+  | ConditionStep
+  | ParallelStep
+  | SuspendableAgentStep
+  | SuspendableToolStep;
 
 export interface WorkflowDefinition {
   name: string;
@@ -46,8 +72,14 @@ export interface WorkflowDefinition {
   maxSteps?: number;
 }
 
-export interface WorkflowResult {
-  output: string;
-  stepResults: StepResult[];
+export interface WorkflowSuspendedResult {
+  status: "suspended";
+  suspendedAtStepId: string;
+  suspendData: unknown;
+  completedSteps: StepResult[];
   durationMs: number;
 }
+
+export type WorkflowResult =
+  | { status: "completed"; output: string; stepResults: StepResult[]; durationMs: number }
+  | WorkflowSuspendedResult;

@@ -1,4 +1,11 @@
-import type { WorkflowDefinition, WorkflowStep, WorkflowResult, WorkflowContext } from "./types";
+import type {
+  WorkflowDefinition,
+  WorkflowStep,
+  WorkflowResult,
+  WorkflowContext,
+  SuspendableAgentStep,
+  SuspendableStepContext,
+} from "./types";
 import { runWorkflow } from "./runner";
 
 export function defineWorkflow(
@@ -32,4 +39,12 @@ export function conditionStep(
 
 export function parallelStep(id: string, steps: WorkflowStep[]): WorkflowStep {
   return { type: "parallel", id, steps };
+}
+
+export function suspendableStep(
+  id: string,
+  run: (ctx: WorkflowContext, control: SuspendableStepContext) => Promise<string | void>,
+  opts?: { suspendSchema?: Record<string, unknown>; resumeSchema?: Record<string, unknown> }
+): SuspendableAgentStep {
+  return { type: "suspendable-agent", id, run, ...opts };
 }

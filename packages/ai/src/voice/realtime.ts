@@ -11,8 +11,10 @@ export interface RealtimeUsage {
 export interface RealtimeProxyOptions {
   apiKey: string;
   model?: string;
+  turnDetection?: 'server_vad' | 'semantic_vad';
   onUsage?: (usage: RealtimeUsage) => void;
   onError?: (error: Error) => void;
+  onAudioInterrupted?: () => void;
 }
 
 function extractUsageFromEvent(data: string): RealtimeUsage | null {
@@ -30,7 +32,28 @@ function extractUsageFromEvent(data: string): RealtimeUsage | null {
   return null;
 }
 
+function isAudioClearedEvent(data: string): boolean {
+  try {
+    const parsed = JSON.parse(data);
+    return parsed.type === 'input_audio_buffer.cleared';
+  } catch {
+    return false;
+  }
+}
+
 export class RealtimeProxy {
+  private currentUpstream: WebSocketType | null = null;
+
+  interrupt(): void {
+    if (this.currentUpstream && this.currentUpstream.readyState === 1 /* OPEN */) {
+      try {
+        this.currentUpstream.send(JSON.stringify({ type: 'response.cancel' }));
+      } catch {
+        // non-critical
+      }
+    }
+  }
+
   async upgrade(
     _req: IncomingMessage,
     socket: Duplex,
@@ -65,6 +88,8 @@ export class RealtimeProxy {
       },
     });
 
+    this.currentUpstream = upstream;
+
     const wss = new WSServer({ noServer: true });
 
     wss.handleUpgrade(_req, socket, head, (clientWs: WebSocketType) => {
@@ -75,6 +100,19 @@ export class RealtimeProxy {
 
       upstream.on('open', () => {
         upstreamOpen = true;
+        if (options.turnDetection) {
+          const turnDetectionConfig = options.turnDetection === 'semantic_vad'
+            ? { type: 'semantic_vad' }
+            : { type: 'server_vad' };
+          try {
+            upstream.send(JSON.stringify({
+              type: 'session.update',
+              session: { turn_detection: turnDetectionConfig },
+            }));
+          } catch {
+            // non-critical
+          }
+        }
       });
 
       upstream.on('message', (data: Buffer | string) => {
@@ -87,6 +125,13 @@ export class RealtimeProxy {
             onUsage(usage);
           }
 
+          // Intercept input_audio_buffer.cleared → emit audio_interrupted to client
+          if (isAudioClearedEvent(text)) {
+            options.onAudioInterrupted?.();
+            clientWs.send(JSON.stringify({ type: 'audio_interrupted' }));
+            return;
+          }
+
           clientWs.send(text);
         } catch {
           // Send failure — client likely disconnected
@@ -95,6 +140,9 @@ export class RealtimeProxy {
 
       upstream.on('close', () => {
         upstreamOpen = false;
+        if (this.currentUpstream === upstream) {
+          this.currentUpstream = null;
+        }
         if (clientOpen) {
           clientWs.close(1000, 'Upstream closed');
         }

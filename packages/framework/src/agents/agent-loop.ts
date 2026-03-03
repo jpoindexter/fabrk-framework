@@ -5,6 +5,7 @@ import type { Guardrail } from "./guardrails";
 import { runGuardrails } from "./guardrails";
 import { checkBudget, recordCost, type BudgetContext } from "./budget-guard";
 import { setSpanAttributes } from "../runtime/tracer";
+import type { StopCondition, StopConditionContext } from "./stop-conditions";
 
 const MAX_ITERATIONS_HARD_CAP = 25;
 
@@ -16,7 +17,8 @@ export type AgentLoopEvent =
   | { type: "usage"; promptTokens: number; completionTokens: number; cost: number }
   | { type: "done" }
   | { type: "error"; message: string }
-  | { type: "approval-required"; toolName: string; input: Record<string, unknown>; approvalId: string; iteration: number };
+  | { type: "approval-required"; toolName: string; input: Record<string, unknown>; approvalId: string; iteration: number }
+  | { type: "handoff"; targetAgent: string; input: string; iteration: number };
 
 export interface AgentLoopOptions {
   messages: LLMMessage[];
@@ -43,6 +45,9 @@ export interface AgentLoopOptions {
   calculateCost: (model: string, promptTokens: number, completionTokens: number) => { costUSD: number };
   inputGuardrails?: Guardrail[];
   outputGuardrails?: Guardrail[];
+  stopWhen?: StopCondition | StopCondition[];
+  /** Agent names this agent can hand off to. A handoff event is emitted when a matching tool is called. */
+  handoffs?: string[];
 }
 
 export async function* runAgentLoop(
@@ -151,19 +156,39 @@ export async function* runAgentLoop(
           collectedToolCalls.map((tc) => options.toolExecutor.execute(tc.name, tc.arguments))
         );
 
+        const lastToolCallNames: string[] = [];
         for (let i = 0; i < collectedToolCalls.length; i++) {
           const tc = collectedToolCalls[i];
           const result = toolResults[i];
+          lastToolCallNames.push(tc.name);
           if (result.status === "fulfilled") {
             const { output, durationMs } = result.value;
             yield { type: "tool-result", name: tc.name, output, durationMs, iteration };
             messages.push({ role: "tool", content: output, toolCallId: tc.id });
+            if (options.handoffs?.includes(tc.name)) {
+              yield { type: "handoff", targetAgent: tc.name, input: output, iteration };
+            }
           } else {
             console.error(`[fabrk] Tool "${tc.name}" execution error:`, result.reason);
             yield { type: "tool-result", name: tc.name, output: "Error: Tool execution failed", durationMs: 0, iteration };
             messages.push({ role: "tool", content: "Error: Tool execution failed", toolCallId: tc.id });
+            if (options.handoffs?.includes(tc.name)) {
+              yield { type: "handoff", targetAgent: tc.name, input: "Error: Tool execution failed", iteration };
+            }
           }
         }
+
+        const conditions = options.stopWhen
+          ? Array.isArray(options.stopWhen) ? options.stopWhen : [options.stopWhen]
+          : [];
+        if (conditions.length > 0) {
+          const stopCtx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
+          if (conditions.some((c) => c(stopCtx))) {
+            yield { type: "done" };
+            return;
+          }
+        }
+
         continue; // Loop again for next LLM turn
       }
 
@@ -215,8 +240,10 @@ export async function* runAgentLoop(
         toolCalls: result.toolCalls,
       });
 
+      const lastToolCallNames: string[] = [];
       for (const tc of result.toolCalls) {
         yield { type: "tool-call", name: tc.name, input: tc.arguments, iteration };
+        lastToolCallNames.push(tc.name);
 
         try {
           const { output, durationMs } = await options.toolExecutor.execute(tc.name, tc.arguments);
@@ -226,6 +253,9 @@ export async function* runAgentLoop(
             content: output,
             toolCallId: tc.id,
           });
+          if (options.handoffs?.includes(tc.name)) {
+            yield { type: "handoff", targetAgent: tc.name, input: output, iteration };
+          }
         } catch (err) {
           console.error(`[fabrk] Tool "${tc.name}" execution error:`, err);
           yield { type: "tool-result", name: tc.name, output: "Error: Tool execution failed", durationMs: 0, iteration };
@@ -234,8 +264,23 @@ export async function* runAgentLoop(
             content: "Error: Tool execution failed",
             toolCallId: tc.id,
           });
+          if (options.handoffs?.includes(tc.name)) {
+            yield { type: "handoff", targetAgent: tc.name, input: "Error: Tool execution failed", iteration };
+          }
         }
       }
+
+      const conditions = options.stopWhen
+        ? Array.isArray(options.stopWhen) ? options.stopWhen : [options.stopWhen]
+        : [];
+      if (conditions.length > 0) {
+        const stopCtx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
+        if (conditions.some((c) => c(stopCtx))) {
+          yield { type: "done" };
+          return;
+        }
+      }
+
       continue;
     }
 

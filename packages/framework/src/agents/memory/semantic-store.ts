@@ -80,7 +80,7 @@ export class SemanticMemoryStore implements MemoryStore {
 
   async search(
     query: string,
-    opts?: { agentName?: string; limit?: number }
+    opts?: { agentName?: string; limit?: number; messageRange?: { before: number; after: number } }
   ): Promise<ThreadMessage[]> {
     if (this.embeddings.size === 0) return [];
 
@@ -122,6 +122,31 @@ export class SemanticMemoryStore implements MemoryStore {
           createdAt: stored.createdAt,
         });
       }
+    }
+
+    if (opts?.messageRange && found.length > 0) {
+      const { before, after } = opts.messageRange;
+      const seenIds = new Set(found.map((m) => m.id));
+      const expanded: ThreadMessage[] = [];
+
+      for (const match of found) {
+        expanded.push(match);
+        const threadMessages = await this.baseStore.getMessages(match.threadId);
+        const idx = threadMessages.findIndex((m) => m.id === match.id);
+        if (idx === -1) continue;
+
+        const start = Math.max(0, idx - before);
+        const end = Math.min(threadMessages.length - 1, idx + after);
+
+        for (let i = start; i <= end; i++) {
+          if (!seenIds.has(threadMessages[i].id)) {
+            seenIds.add(threadMessages[i].id);
+            expanded.push(threadMessages[i]);
+          }
+        }
+      }
+
+      return expanded;
     }
 
     return found;

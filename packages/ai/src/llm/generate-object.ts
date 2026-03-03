@@ -71,3 +71,44 @@ export async function* streamObject<T = unknown>(
     }
   }
 }
+
+/**
+ * Streams structured output, yielding partial typed objects as JSON accumulates.
+ * Equivalent to Vercel AI SDK's `partialOutputStream`.
+ *
+ * Each yield is a best-effort partial parse of the accumulated JSON buffer.
+ * The final yield is always the fully-parsed object.
+ *
+ * @example
+ *   for await (const partial of streamObjectPartial<Recipe>(messages, schema)) {
+ *     console.log(partial.name); // available before full response
+ *   }
+ */
+export async function* streamObjectPartial<T = unknown>(
+  messages: LLMMessage[],
+  schema: JsonSchema,
+  config: Partial<LLMConfig> = {}
+): AsyncGenerator<Partial<T>> {
+  let buffer = '';
+  for await (const event of streamObject<T>(messages, schema, config)) {
+    if (event.type === 'delta') {
+      buffer += event.text;
+      const partial = tryPartialParse<T>(buffer);
+      if (partial !== null) yield partial;
+    } else if (event.type === 'done') {
+      yield event.object as T;
+    } else if (event.type === 'error') {
+      throw new Error(event.message);
+    }
+  }
+}
+
+function tryPartialParse<T>(text: string): Partial<T> | null {
+  const t = text.trim();
+  if (!t.startsWith('{') && !t.startsWith('[')) return null;
+  try { return JSON.parse(t) as T; } catch { /* try partial below */ }
+  const openBrace = (t.match(/\{/g) ?? []).length - (t.match(/\}/g) ?? []).length;
+  const openBracket = (t.match(/\[/g) ?? []).length - (t.match(/\]/g) ?? []).length;
+  const closed = t + ']'.repeat(Math.max(0, openBracket)) + '}'.repeat(Math.max(0, openBrace));
+  try { return JSON.parse(closed) as T; } catch { return null; }
+}

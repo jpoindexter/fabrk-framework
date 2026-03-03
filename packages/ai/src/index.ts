@@ -70,6 +70,7 @@ export {
   LLM_DEFAULTS,
   generateObject,
   streamObject,
+  streamObjectPartial,
 } from './llm'
 
 export type {
@@ -139,8 +140,8 @@ export type {
   SimilarityResult,
 } from './embeddings';
 
-export { chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter, PineconeVectorStore, createRagPipeline, CrossEncoderReranker } from './rag';
-export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult, VectorStoreAdapter, RagPipeline, RagPipelineOptions, RetrievedChunk } from './rag';
+export { chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter, PineconeVectorStore, createRagPipeline, CrossEncoderReranker, rerank, cohereReranking, embeddingReranking } from './rag';
+export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult, VectorStoreAdapter, RagPipeline, RagPipelineOptions, RetrievedChunk, RerankProvider, RankResult, RerankOptions } from './rag';
 
 // Semantic cache
 export { SemanticCache } from './cache';

@@ -28,6 +28,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
   let root: string;
   let routes: Route[] = [];
   let appDirResolved: string;
+  let sharedFabrkConfig: FabrkConfig = {};
 
   const routerPlugin: Plugin = {
     name: "fabrk:router",
@@ -57,7 +58,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       initTracer("fabrk");
 
       let fabrkConfig: FabrkConfig = {};
-      const configReady = loadFabrkConfig(root).then((c) => { fabrkConfig = c; });
+      const configReady = loadFabrkConfig(root).then((c) => { fabrkConfig = c; sharedFabrkConfig = c; });
 
       server.watcher.on("all", (event: string, filePath: string) => {
         if (event !== "add" && event !== "unlink") return;
@@ -251,12 +252,12 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     plugins.push(rscIntegrationPlugin());
   }
 
-  plugins.push(reactRefreshPlugin());
+  plugins.push(reactRefreshPlugin({ getFabrkConfig: () => sharedFabrkConfig }));
 
   return plugins;
 }
 
-function reactRefreshPlugin(): Plugin {
+function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin {
   return {
     name: "fabrk:react-refresh",
 
@@ -266,7 +267,39 @@ function reactRefreshPlugin(): Plugin {
         const specifier = "@vitejs/plugin-react";
         const mod = await import(/* @vite-ignore */ specifier);
         const pluginReact = mod.default as (opts?: Record<string, unknown>) => Plugin[];
-        const refreshPlugins = pluginReact();
+
+        const reactPluginOptions: Record<string, unknown> = {};
+        const fabrkConfig = opts.getFabrkConfig();
+
+        if (fabrkConfig?.reactCompiler) {
+          let compilerAvailable = false;
+          try {
+            // Dynamic string prevents TS from resolving the optional peer dep
+            const compilerSpecifier = "babel-plugin-react-compiler";
+            await import(/* @vite-ignore */ compilerSpecifier);
+            compilerAvailable = true;
+          } catch {
+            // eslint-disable-next-line no-console
+            console.warn(
+              "[fabrk] reactCompiler: true requires babel-plugin-react-compiler. " +
+              "Install it with: pnpm add -D babel-plugin-react-compiler"
+            );
+          }
+
+          if (compilerAvailable) {
+            const compilerOptions =
+              typeof fabrkConfig.reactCompiler === "object"
+                ? fabrkConfig.reactCompiler
+                : {};
+            reactPluginOptions["babel"] = {
+              plugins: [["babel-plugin-react-compiler", compilerOptions]],
+            };
+          }
+        }
+
+        const refreshPlugins = pluginReact(
+          Object.keys(reactPluginOptions).length > 0 ? reactPluginOptions : undefined
+        );
         const existing = Array.isArray(config.plugins) ? config.plugins : [];
         config.plugins = [...existing, ...refreshPlugins];
       } catch {

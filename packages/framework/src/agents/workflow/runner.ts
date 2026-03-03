@@ -96,6 +96,7 @@ async function runSteps(
             input: ctx.input,
             history: [...ctx.history],
             metadata: ctx.metadata,
+            writer: ctx.writer,
           };
           const subStepResults: StepResult[] = [];
           const subCount = { n: stepCount.n };
@@ -128,10 +129,10 @@ export async function runWorkflow(
   def: WorkflowDefinition,
   input: string,
   metadata?: Record<string, unknown>,
-  opts?: { onProgress?: (event: WorkflowProgressEvent) => void }
+  opts?: { onProgress?: (event: WorkflowProgressEvent) => void; writer?: WritableStreamDefaultWriter<string> }
 ): Promise<WorkflowResult> {
   const maxSteps = Math.min(def.maxSteps ?? MAX_STEPS_HARD_CAP, MAX_STEPS_HARD_CAP);
-  const ctx: WorkflowContext = { input, history: [], metadata };
+  const ctx: WorkflowContext = { input, history: [], metadata, writer: opts?.writer };
   const results: StepResult[] = [];
   const stepCount = { n: 0 };
   const start = Date.now();
@@ -182,7 +183,7 @@ export async function resumeWorkflow(
   workflow: WorkflowDefinition,
   partialResult: WorkflowSuspendedResult,
   resumeData: unknown,
-  opts?: { onProgress?: (event: WorkflowProgressEvent) => void }
+  opts?: { onProgress?: (event: WorkflowProgressEvent) => void; writer?: WritableStreamDefaultWriter<string> }
 ): Promise<WorkflowResult> {
   const maxSteps = Math.min(
     workflow.maxSteps ?? MAX_STEPS_HARD_CAP,
@@ -204,6 +205,7 @@ export async function resumeWorkflow(
     input: resumeInput,
     history,
     metadata: { resumeData },
+    writer: opts?.writer,
   };
 
   const results: StepResult[] = [...partialResult.completedSteps];
@@ -233,4 +235,21 @@ export async function resumeWorkflow(
     }
     throw err;
   }
+}
+
+/**
+ * Creates a ReadableStream + WritableStreamDefaultWriter pair for workflow streaming.
+ * Pass `writer` to `runWorkflow`; read `stream` in your HTTP handler or SSE response.
+ *
+ * @example
+ * const { stream, writer } = createWorkflowStream();
+ * const resultPromise = runWorkflow(def, input, {}, { writer });
+ * return new Response(stream, { headers: { 'Content-Type': 'text/event-stream' } });
+ */
+export function createWorkflowStream(): {
+  stream: ReadableStream<string>;
+  writer: WritableStreamDefaultWriter<string>;
+} {
+  const { readable, writable } = new TransformStream<string, string>();
+  return { stream: readable, writer: writable.getWriter() };
 }

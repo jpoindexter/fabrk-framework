@@ -48,7 +48,7 @@ export {
   streamWithTools as ollamaStreamWithTools,
 } from './ollama-tools'
 
-export { generateObject, streamObject } from './generate-object'
+export { generateObject, streamObject, streamObjectPartial } from './generate-object'
 
 export type { ProviderAdapter } from './registry'
 

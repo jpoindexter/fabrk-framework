@@ -1,8 +1,42 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getProvider, listProviders } from '../llm/registry';
 import '../llm/openai-compat'; // trigger registrations
 import '../llm/cohere-tools';  // trigger cohere registration
 import '../llm/bedrock-tools'; // trigger bedrock registration
+
+describe('makeOpenAICompatAdapter — baseURL propagation', () => {
+  beforeEach(() => { vi.resetModules() })
+
+  it('groq adapter passes baseURL as providerBaseUrl to openai-tools', async () => {
+    const captureCtorArgs: unknown[] = []
+    vi.doMock('openai', () => ({
+      default: class {
+        chat = {
+          completions: {
+            create: vi.fn().mockResolvedValue({
+              choices: [{ message: { content: 'ok', tool_calls: undefined } }],
+              usage: { prompt_tokens: 5, completion_tokens: 3 },
+            }),
+          },
+        }
+        constructor(...args: unknown[]) { captureCtorArgs.push(args[0]) }
+      },
+    }))
+
+    const { makeOpenAICompatAdapter } = await import('../llm/openai-compat')
+    const adapter = makeOpenAICompatAdapter({
+      key: 'test-provider',
+      baseURL: 'https://api.groq.com/openai/v1',
+      envKey: 'GROQ_API_KEY',
+      prefixes: ['groq-test:'],
+    })
+    const fn = adapter.makeGenerateWithTools({ openaiApiKey: 'test-key' })
+    await fn([{ role: 'user', content: 'hi' }], [])
+
+    const ctorArg = captureCtorArgs[0] as Record<string, unknown>
+    expect(ctorArg.baseURL).toBe('https://api.groq.com/openai/v1')
+  })
+})
 
 describe('new provider registrations', () => {
   it('resolves openrouter: prefix', () => {

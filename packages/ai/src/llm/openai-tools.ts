@@ -98,7 +98,10 @@ export async function generateWithTools(
     throw new Error("openai package not installed. Install with: npm install openai");
   }
 
-  const client = new OpenAI({ apiKey: resolved.openaiApiKey });
+  const client = new OpenAI({
+    apiKey: resolved.openaiApiKey,
+    ...(resolved.providerBaseUrl ? { baseURL: resolved.providerBaseUrl } : {}),
+  });
   const response = await client.chat.completions.create(
     {
       model: resolved.openaiModel || LLM_DEFAULTS.openaiModel,
@@ -146,7 +149,10 @@ export async function* streamWithTools(
     throw new Error("openai package not installed. Install with: npm install openai");
   }
 
-  const client = new OpenAI({ apiKey: resolved.openaiApiKey });
+  const client = new OpenAI({
+    apiKey: resolved.openaiApiKey,
+    ...(resolved.providerBaseUrl ? { baseURL: resolved.providerBaseUrl } : {}),
+  });
   const stream = await client.chat.completions.create(
     {
       model: resolved.openaiModel || LLM_DEFAULTS.openaiModel,

@@ -132,6 +132,55 @@ describe('openai-tools — GenerationOptions', () => {
     expect(req.top_p).toBeUndefined()
     expect(req.stop).toBeUndefined()
   })
+
+  it('providerBaseUrl is forwarded as baseURL to the OpenAI client constructor', async () => {
+    const captureCtorArgs: unknown[] = []
+    vi.doMock('openai', () => ({
+      default: class {
+        chat = {
+          completions: {
+            create: vi.fn().mockResolvedValue({
+              choices: [{ message: { content: 'ok', tool_calls: undefined } }],
+              usage: { prompt_tokens: 5, completion_tokens: 3 },
+            }),
+          },
+        }
+        constructor(...args: unknown[]) { captureCtorArgs.push(args[0]) }
+      },
+    }))
+
+    const { generateWithTools } = await import('../llm/openai-tools')
+    await generateWithTools(MESSAGES, [], {
+      openaiApiKey: 'test-key',
+      providerBaseUrl: 'https://api.groq.com/openai/v1',
+    })
+
+    const ctorArg = captureCtorArgs[0] as Record<string, unknown>
+    expect(ctorArg.baseURL).toBe('https://api.groq.com/openai/v1')
+  })
+
+  it('providerBaseUrl absent — no baseURL in OpenAI client constructor', async () => {
+    const captureCtorArgs: unknown[] = []
+    vi.doMock('openai', () => ({
+      default: class {
+        chat = {
+          completions: {
+            create: vi.fn().mockResolvedValue({
+              choices: [{ message: { content: 'ok', tool_calls: undefined } }],
+              usage: { prompt_tokens: 5, completion_tokens: 3 },
+            }),
+          },
+        }
+        constructor(...args: unknown[]) { captureCtorArgs.push(args[0]) }
+      },
+    }))
+
+    const { generateWithTools } = await import('../llm/openai-tools')
+    await generateWithTools(MESSAGES, [], { openaiApiKey: 'test-key' })
+
+    const ctorArg = captureCtorArgs[0] as Record<string, unknown>
+    expect(ctorArg.baseURL).toBeUndefined()
+  })
 })
 
 // ── Anthropic ────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import type { LLMConfig, JsonSchema, GenerateObjectResult } from "./types";
+import type { LLMConfig, JsonSchema, GenerateObjectResult, StreamObjectEvent } from "./types";
 import { LLM_DEFAULTS, MAX_TOKENS_LIMIT } from "./types";
 import { validateOllamaUrl } from "./ollama-client";
 import type { LLMMessage } from "./tool-types";
@@ -54,4 +54,17 @@ export async function generateObject<T = unknown>(
       completionTokens: data.eval_count ?? 0,
     },
   };
+}
+
+export async function* streamObject<T = unknown>(
+  messages: LLMMessage[],
+  schema: JsonSchema,
+  config: Partial<LLMConfig> = {}
+): AsyncGenerator<StreamObjectEvent<T>> {
+  try {
+    const result = await generateObject<T>(messages, schema, config);
+    yield { type: "done", object: result.object, usage: result.usage };
+  } catch (err) {
+    yield { type: "error", message: err instanceof Error ? err.message : "streamObject failed" };
+  }
 }

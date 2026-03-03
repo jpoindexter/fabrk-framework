@@ -139,8 +139,8 @@ export type {
   SimilarityResult,
 } from './embeddings';
 
-export { chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter, PineconeVectorStore } from './rag';
-export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult, VectorStoreAdapter } from './rag';
+export { chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter, PineconeVectorStore, createRagPipeline } from './rag';
+export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult, VectorStoreAdapter, RagPipeline, RagPipelineOptions } from './rag';
 
 // Semantic cache
 export { SemanticCache } from './cache';

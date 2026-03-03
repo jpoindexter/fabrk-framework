@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { chunkText } from "../rag/chunk";
 import { InMemoryVectorStore } from "../rag/vector-store";
+import { InMemoryVectorStoreAdapter } from "../rag/adapters";
+import { createRagPipeline } from "../rag/pipeline";
+import type { EmbeddingProvider } from "../embeddings/types";
 
 describe("chunkText", () => {
   it("returns [] for empty string", () => {
@@ -139,5 +142,53 @@ describe("InMemoryVectorStore", () => {
     store.clear();
     expect(store.size).toBe(0);
     expect(store.search([1, 0])).toEqual([]);
+  });
+});
+
+describe("createRagPipeline", () => {
+  const fixedVector = [1, 0, 0];
+  const mockEmbedder: EmbeddingProvider = {
+    embed: async (_text: string) => fixedVector,
+    embedBatch: async (texts: string[]) => texts.map(() => fixedVector),
+  };
+
+  it("ingest() chunks text and stores embeddings", async () => {
+    const pipeline = createRagPipeline({ embedder: mockEmbedder });
+    const text = "hello world ".repeat(100);
+    const ids = await pipeline.ingest(text);
+    expect(ids.length).toBeGreaterThan(0);
+    const results = await pipeline.search("hello");
+    expect(results.length).toBeGreaterThan(0);
+  });
+
+  it("search() returns results from the store", async () => {
+    const pipeline = createRagPipeline({ embedder: mockEmbedder });
+    await pipeline.ingest("the quick brown fox");
+    const results = await pipeline.search("fox");
+    expect(results).toBeInstanceOf(Array);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0]).toHaveProperty("id");
+    expect(results[0]).toHaveProperty("score");
+    expect(results[0]).toHaveProperty("text");
+  });
+
+  it("uses provided store if given", async () => {
+    const customStore = new InMemoryVectorStoreAdapter();
+    const pipeline = createRagPipeline({ embedder: mockEmbedder, store: customStore });
+    expect(pipeline.store).toBe(customStore);
+    await pipeline.ingest("test document");
+    const results = await customStore.search(fixedVector, { topK: 5 });
+    expect(results.length).toBeGreaterThan(0);
+  });
+
+  it("returns chunk IDs from ingest()", async () => {
+    const pipeline = createRagPipeline({ embedder: mockEmbedder });
+    const ids = await pipeline.ingest("short text");
+    expect(ids).toBeInstanceOf(Array);
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ids) {
+      expect(typeof id).toBe("string");
+      expect(id).toMatch(/^doc-\d+-chunk-\d+$/);
+    }
   });
 });

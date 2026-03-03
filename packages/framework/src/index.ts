@@ -211,3 +211,5 @@ export { voicePlugin } from "./agents/voice-plugin";
 // Client hooks
 export { useObject } from "./client/use-object";
 export type { UseObjectOptions } from "./client/use-object";
+
+export { handleStreamObject } from "./runtime/stream-object-handler";

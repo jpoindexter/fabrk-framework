@@ -53,6 +53,16 @@ export async function* streamObject<T = unknown>(
       yield* fn<T>(messages, schema, config);
       break;
     }
+    case "google": {
+      const { streamObject: fn } = await import("./google-object");
+      yield* fn<T>(messages, schema, config);
+      break;
+    }
+    case "ollama": {
+      const { streamObject: fn } = await import("./ollama-object");
+      yield* fn<T>(messages, schema, config);
+      break;
+    }
     case "openai":
     default: {
       const { streamObject: fn } = await import("./openai-object");

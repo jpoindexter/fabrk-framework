@@ -7,3 +7,12 @@ export type { VectorStoreAdapter } from './adapters';
 export { createRagPipeline } from './pipeline';
 export type { RagPipeline, RagPipelineOptions, RetrievedChunk } from './pipeline';
 export { CrossEncoderReranker } from './cross-encoder-reranker';
+
+export {
+  rerank,
+  cohereReranking,
+  embeddingReranking,
+  type RerankProvider,
+  type RankResult,
+  type RerankOptions,
+} from './rerank.js';

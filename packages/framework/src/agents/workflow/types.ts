@@ -2,6 +2,8 @@ export interface WorkflowContext {
   input: string;
   history: Array<{ stepId: string; output: string }>;
   metadata?: Record<string, unknown>;
+  /** Optional writer — pipe streaming text to the client in real-time from within a step */
+  writer?: WritableStreamDefaultWriter<string>;
 }
 
 export interface StepResult {

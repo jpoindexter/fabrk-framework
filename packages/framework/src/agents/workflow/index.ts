@@ -6,7 +6,7 @@ export {
   parallelStep,
   suspendableStep,
 } from "./define-workflow";
-export { runWorkflow, resumeWorkflow } from "./runner";
+export { runWorkflow, resumeWorkflow, createWorkflowStream } from "./runner";
 export type {
   WorkflowDefinition,
   WorkflowStep,

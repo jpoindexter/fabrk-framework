@@ -130,6 +130,8 @@ export { defineTool, textResult } from "./tools/define-tool";
 export type { ToolDefinition, ToolResult, TextPart, ImagePart, FilePart, ToolOutputPart } from "./tools/define-tool";
 export { toolDefinition, clientTools } from "./tools/tool-definition";
 export type { IsomorphicToolDefinition, ClientToolDescriptor } from "./tools/tool-definition";
+export { zodToJsonSchema } from "./tools/zod-schema";
+export type { ZodObjectLike } from "./tools/zod-schema";
 export { sqlQueryTool } from "./tools/builtins/sql-query";
 export type { SqlQueryOptions } from "./tools/builtins/sql-query";
 export { loadFabrkConfig } from "./config/fabrk-config";
@@ -157,15 +159,15 @@ export type { SupervisorConfig } from "./agents/orchestration/supervisor";
 
 // Agent network
 export { defineAgentNetwork } from "./agents/network.js";
-export type { AgentNetwork, AgentNetworkConfig, AgentNetworkResult, NetworkContext } from "./agents/network.js";
+export type { AgentNetwork, AgentNetworkConfig, AgentNetworkResult, NetworkContext, LLMRouterConfig, RouterFn } from "./agents/network.js";
 
 // Workflows
-export { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep, runWorkflow } from "./agents/workflow/index";
+export { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep, runWorkflow, createWorkflowStream } from "./agents/workflow/index";
 export type { WorkflowDefinition, WorkflowStep, WorkflowResult, WorkflowContext, StepResult, WorkflowProgressEvent } from "./agents/workflow/index";
 
 // StateGraph (cyclic workflow)
-export { defineStateGraph } from "./agents/workflow/state-graph";
-export type { StateGraphConfig, StateGraphEvent, StateGraphEventType, GraphNode, GraphEdge, NodeResult } from "./agents/workflow/state-graph";
+export { defineStateGraph, createStateGraph, StateGraphBuilder, MessagesAnnotation, interrupt, GraphInterrupt, subgraphNode } from "./agents/workflow/state-graph";
+export type { StateGraphConfig, StateGraphEvent, StateGraphEventType, GraphNode, GraphEdge, NodeResult, StateReducers, CompileOptions, CompiledStateGraph, Command } from "./agents/workflow/state-graph";
 
 // MCP
 export { createMCPServer, connectMCPServer, startStdioServer, createStdioClient } from "./tools/mcp/index";
@@ -246,3 +248,6 @@ export { useObject } from "./client/use-object";
 export type { UseObjectOptions } from "./client/use-object";
 
 export { handleStreamObject } from "./runtime/stream-object-handler";
+
+// View Transitions API
+export { useViewTransition, ViewTransitionLink } from "./client/view-transition";

@@ -1,4 +1,5 @@
 import type { ToolDefinition, ToolResult } from "./define-tool.js";
+import { zodToJsonSchema, type ZodObjectLike } from "./zod-schema.js";
 
 export interface ClientToolDescriptor {
   name: string;
@@ -33,6 +34,23 @@ class IsomorphicToolBuilder {
 
   schema(schema: ToolDefinition["schema"]): this {
     this._schema = schema;
+    return this;
+  }
+
+  /**
+   * Set the input schema from a Zod object schema.
+   * The schema is converted to JSON Schema for LLM tool-calling.
+   * Mirrors Vercel AI SDK's Zod-based tool definition.
+   *
+   * @example
+   *   toolDefinition('weather')
+   *     .description('Get current weather')
+   *     .zod(z.object({ city: z.string().describe('City name') }))
+   *     .server(async ({ city }) => textResult(`Weather in ${city as string}: sunny`))
+   *     .build()
+   */
+  zod(schema: ZodObjectLike): this {
+    this._schema = zodToJsonSchema(schema) as ToolDefinition["schema"];
     return this;
   }
 

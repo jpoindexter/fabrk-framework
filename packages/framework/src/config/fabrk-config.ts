@@ -51,6 +51,12 @@ export interface FabrkConfig {
   i18n?: I18nConfig;
   voice?: VoiceConfig;
   tracing?: TracingConfig;
+  /**
+   * Enable React Compiler (babel-plugin-react-compiler) optimization.
+   * Requires babel-plugin-react-compiler to be installed as a dev dependency.
+   * @see https://react.dev/learn/react-compiler
+   */
+  reactCompiler?: boolean | { targets?: string };
 }
 
 export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {

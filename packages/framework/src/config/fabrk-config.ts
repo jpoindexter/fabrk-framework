@@ -3,6 +3,16 @@ import fs from "node:fs";
 import type { I18nConfig } from "../runtime/i18n";
 import type { VoiceConfig } from "@fabrk/ai";
 
+export interface TracingConfig {
+  enabled?: boolean;
+  exporter?: 'console' | 'otlp';
+  /** OTLP endpoint. Default: http://localhost:4318/v1/traces */
+  endpoint?: string;
+  headers?: Record<string, string>;
+  /** Service name reported to OTel. Default: 'fabrk' */
+  serviceName?: string;
+}
+
 export interface FabrkAIConfig {
   defaultModel?: string;
   fallback?: string[];
@@ -40,6 +50,7 @@ export interface FabrkConfig {
   };
   i18n?: I18nConfig;
   voice?: VoiceConfig;
+  tracing?: TracingConfig;
 }
 
 export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {

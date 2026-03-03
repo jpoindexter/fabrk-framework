@@ -29,7 +29,7 @@ describe("Agent Orchestration", () => {
       );
 
       const result = await tool.handler({ message: "hello" });
-      expect(result.content[0].text).toBe("Echo: hello");
+      expect((result.content[0] as { text: string }).text).toBe("Echo: hello");
     });
 
     it("handles agent errors gracefully", async () => {
@@ -43,7 +43,7 @@ describe("Agent Orchestration", () => {
       );
 
       const result = await tool.handler({ message: "hi" });
-      expect(result.content[0].text).toContain("Error:");
+      expect((result.content[0] as { text: string }).text).toContain("Error:");
     });
   });
 

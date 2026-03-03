@@ -15,10 +15,11 @@ export type AgentLoopEvent =
   | { type: "tool-call"; name: string; input: Record<string, unknown>; iteration: number }
   | { type: "tool-result"; name: string; output: string; durationMs: number; iteration: number }
   | { type: "usage"; promptTokens: number; completionTokens: number; cost: number }
-  | { type: "done" }
+  | { type: "done"; structuredOutput?: unknown }
   | { type: "error"; message: string }
   | { type: "approval-required"; toolName: string; input: Record<string, unknown>; approvalId: string; iteration: number }
-  | { type: "handoff"; targetAgent: string; input: string; iteration: number };
+  | { type: "handoff"; targetAgent: string; input: string; iteration: number }
+  | { type: "structured-output"; data: unknown; iteration: number };
 
 export interface AgentLoopOptions {
   messages: LLMMessage[];
@@ -48,6 +49,8 @@ export interface AgentLoopOptions {
   stopWhen?: StopCondition | StopCondition[];
   /** Agent names this agent can hand off to. A handoff event is emitted when a matching tool is called. */
   handoffs?: string[];
+  /** JSON Schema for structured output. When present, the final text response is parsed as JSON and emitted as a structured-output event. */
+  outputSchema?: Record<string, unknown>;
 }
 
 export async function* runAgentLoop(
@@ -206,7 +209,16 @@ export async function* runAgentLoop(
         fullText = result.content;
       }
       yield { type: "text", content: fullText };
-      yield { type: "done" };
+      let streamStructuredOutput: unknown;
+      if (options.outputSchema) {
+        try {
+          streamStructuredOutput = JSON.parse(fullText);
+          yield { type: "structured-output", data: streamStructuredOutput, iteration };
+        } catch {
+          // Not valid JSON — skip structured-output
+        }
+      }
+      yield { type: "done", structuredOutput: streamStructuredOutput };
       return;
     }
 
@@ -298,7 +310,16 @@ export async function* runAgentLoop(
       finalContent = guardResult.content;
     }
     yield { type: "text", content: finalContent };
-    yield { type: "done" };
+    let batchStructuredOutput: unknown;
+    if (options.outputSchema) {
+      try {
+        batchStructuredOutput = JSON.parse(finalContent);
+        yield { type: "structured-output", data: batchStructuredOutput, iteration };
+      } catch {
+        // Not valid JSON — skip structured-output
+      }
+    }
+    yield { type: "done", structuredOutput: batchStructuredOutput };
     return;
   }
 

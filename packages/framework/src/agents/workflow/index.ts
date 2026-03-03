@@ -17,4 +17,14 @@ export type {
   SuspendableStepContext,
   SuspendableAgentStep,
   SuspendableToolStep,
+  WorkflowProgressEvent,
 } from "./types";
+export { defineStateGraph } from "./state-graph";
+export type {
+  StateGraphConfig,
+  StateGraphEvent,
+  StateGraphEventType,
+  GraphNode,
+  GraphEdge,
+  NodeResult,
+} from "./state-graph";

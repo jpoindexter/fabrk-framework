@@ -1,7 +1,27 @@
 import type { ToolExecutorHooks } from "../agents/tool-executor";
 
+export interface TextPart {
+  type: "text";
+  text: string;
+}
+
+export interface ImagePart {
+  type: "image";
+  data: string; // base64-encoded
+  mediaType: "image/png" | "image/jpeg" | "image/gif" | "image/webp";
+}
+
+export interface FilePart {
+  type: "file";
+  name: string;
+  data: string; // base64-encoded
+  mediaType: string;
+}
+
+export type ToolOutputPart = TextPart | ImagePart | FilePart;
+
 export interface ToolResult {
-  content: Array<{ type: "text"; text: string }>;
+  content: Array<ToolOutputPart>;
 }
 
 export interface ToolDefinition {

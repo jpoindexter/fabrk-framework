@@ -1,6 +1,13 @@
 import type { ToolDefinition } from "../define-tool";
 import { createStdioClient } from "./stdio-transport";
 
+export class MCPClientError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MCPClientError";
+  }
+}
+
 export interface MCPConnection {
   tools: ToolDefinition[];
   disconnect: () => Promise<void>;
@@ -16,19 +23,72 @@ export interface MCPClientOptions {
   args?: string[];
   transport: "http" | "stdio";
   timeout?: number;
+  auth?:
+    | { type: "bearer"; token: string }
+    | { type: "oauth2"; clientId: string; clientSecret?: string; tokenUrl: string; scopes?: string[] };
+  elicitation?: (prompt: string, schema: Record<string, unknown>) => Promise<unknown>;
+}
+
+export class OAuth2TokenCache {
+  private token: string | null = null;
+  private expiresAt = 0;
+
+  async getToken(opts: {
+    clientId: string;
+    clientSecret?: string;
+    tokenUrl: string;
+    scopes?: string[];
+  }): Promise<string> {
+    if (this.token && Date.now() < this.expiresAt - 60_000) {
+      return this.token;
+    }
+
+    const body = new URLSearchParams({ grant_type: "client_credentials", client_id: opts.clientId });
+    if (opts.clientSecret) body.set("client_secret", opts.clientSecret);
+    if (opts.scopes?.length) body.set("scope", opts.scopes.join(" "));
+
+    const resp = await fetch(opts.tokenUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: body.toString(),
+    });
+
+    if (!resp.ok) throw new MCPClientError(`OAuth2 token fetch failed: ${resp.status}`);
+
+    const data = await resp.json() as { access_token: string; expires_in?: number };
+    this.token = data.access_token;
+    this.expiresAt = Date.now() + (data.expires_in ?? 3600) * 1000;
+    return this.token;
+  }
 }
 
 async function connectHTTP(
   url: string,
-  timeout: number
+  timeout: number,
+  opts: Pick<MCPClientOptions, "auth" | "elicitation">
 ): Promise<MCPConnection> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
+  const tokenCache = opts.auth?.type === "oauth2" ? new OAuth2TokenCache() : null;
+
+  async function getAuthHeader(): Promise<string | null> {
+    if (!opts.auth) return null;
+    if (opts.auth.type === "bearer") return `Bearer ${opts.auth.token}`;
+    if (opts.auth.type === "oauth2") {
+      const token = await tokenCache!.getToken(opts.auth);
+      return `Bearer ${token}`;
+    }
+    return null;
+  }
 
   async function rpcCall(method: string, params?: Record<string, unknown>): Promise<unknown> {
+    const authHeader = await getAuthHeader();
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (authHeader) headers["Authorization"] = authHeader;
+
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
       signal: controller.signal,
     });
@@ -37,7 +97,27 @@ async function connectHTTP(
       throw new Error(`MCP HTTP error: ${res.status}`);
     }
 
-    const data = await res.json();
+    const data = await res.json() as {
+      result?: unknown;
+      error?: { message: string };
+      method?: string;
+      params?: { prompt?: string; schema?: Record<string, unknown> };
+    };
+
+    // Handle elicitation/create server-initiated message
+    if (data.method === "elicitation/create" && opts.elicitation) {
+      const prompt = data.params?.prompt ?? "";
+      const schema = data.params?.schema ?? {};
+      const result = await opts.elicitation(prompt, schema);
+      // Send elicitation/respond back — fire-and-forget, no await needed for the round-trip
+      void fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(authHeader ? { Authorization: authHeader } : {}) },
+        body: JSON.stringify({ jsonrpc: "2.0", method: "elicitation/respond", params: { result } }),
+      }).catch(() => {});
+      return {};
+    }
+
     if (data.error) {
       throw new Error(`MCP error: ${data.error.message}`);
     }
@@ -131,5 +211,5 @@ export async function connectMCPServer(
     throw new Error(`Invalid MCP URL scheme: ${parsed.protocol}`);
   }
 
-  return connectHTTP(options.url, timeout);
+  return connectHTTP(options.url, timeout, { auth: options.auth, elicitation: options.elicitation });
 }

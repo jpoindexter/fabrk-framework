@@ -5,6 +5,7 @@ import type {
   WorkflowResult,
   WorkflowSuspendedResult,
   StepResult,
+  WorkflowProgressEvent,
 } from "./types";
 
 const MAX_STEPS_HARD_CAP = 50;
@@ -22,7 +23,8 @@ async function runSteps(
   results: StepResult[],
   stepCount: { n: number },
   maxSteps: number,
-  skipIds: Set<string>
+  skipIds: Set<string>,
+  onProgress?: (event: WorkflowProgressEvent) => void
 ): Promise<string> {
   let lastOutput = ctx.input;
 
@@ -37,30 +39,57 @@ async function runSteps(
     stepCount.n++;
 
     if (step.type === "agent" || step.type === "tool") {
-      const output = await step.run(ctx);
-      ctx.history.push({ stepId: step.id, output });
-      ctx.input = output;
-      lastOutput = output;
-      results.push({ stepId: step.id, output });
+      onProgress?.({ type: 'step-start', stepName: step.id });
+      const stepStart = Date.now();
+      try {
+        const output = await step.run(ctx);
+        const durationMs = Date.now() - stepStart;
+        ctx.history.push({ stepId: step.id, output });
+        ctx.input = output;
+        lastOutput = output;
+        results.push({ stepId: step.id, output });
+        onProgress?.({ type: 'step-complete', stepName: step.id, output, durationMs });
+      } catch (err) {
+        const durationMs = Date.now() - stepStart;
+        const error = err instanceof Error ? err.message : String(err);
+        onProgress?.({ type: 'step-error', stepName: step.id, error, durationMs });
+        throw err;
+      }
     } else if (step.type === "suspendable-agent" || step.type === "suspendable-tool") {
+      onProgress?.({ type: 'step-start', stepName: step.id });
+      const stepStart = Date.now();
       const control = {
         suspend: (data: unknown): never => {
           throw new SuspendError(data);
         },
       };
-      const output = (await step.run(ctx, control)) ?? "";
-      ctx.history.push({ stepId: step.id, output });
-      ctx.input = output;
-      lastOutput = output;
-      results.push({ stepId: step.id, output });
+      try {
+        const output = (await step.run(ctx, control)) ?? "";
+        const durationMs = Date.now() - stepStart;
+        ctx.history.push({ stepId: step.id, output });
+        ctx.input = output;
+        lastOutput = output;
+        results.push({ stepId: step.id, output });
+        onProgress?.({ type: 'step-complete', stepName: step.id, output, durationMs });
+      } catch (err) {
+        const durationMs = Date.now() - stepStart;
+        if (err instanceof SuspendError) {
+          // Don't emit step-error for suspend — it's intentional
+          throw err;
+        }
+        const error = err instanceof Error ? err.message : String(err);
+        onProgress?.({ type: 'step-error', stepName: step.id, error, durationMs });
+        throw err;
+      }
     } else if (step.type === "condition") {
       const branch = step.condition(ctx) ? step.then : (step.else ?? []);
       if (branch.length === 0) {
         results.push({ stepId: step.id, output: lastOutput, skipped: true });
       } else {
-        lastOutput = await runSteps(branch, ctx, results, stepCount, maxSteps, skipIds);
+        lastOutput = await runSteps(branch, ctx, results, stepCount, maxSteps, skipIds, onProgress);
       }
     } else if (step.type === "parallel") {
+      onProgress?.({ type: 'parallel-start', stepName: step.id });
       const subResults = await Promise.all(
         step.steps.map(async (sub) => {
           const subCtx: WorkflowContext = {
@@ -71,7 +100,7 @@ async function runSteps(
           const subStepResults: StepResult[] = [];
           const subCount = { n: stepCount.n };
           try {
-            const out = await runSteps([sub], subCtx, subStepResults, subCount, maxSteps, skipIds);
+            const out = await runSteps([sub], subCtx, subStepResults, subCount, maxSteps, skipIds, onProgress);
             return { out, subStepResults };
           } catch (err) {
             const errMsg = err instanceof Error ? err.message : String(err);
@@ -88,6 +117,7 @@ async function runSteps(
       ctx.input = joined;
       lastOutput = joined;
       results.push({ stepId: step.id, output: joined });
+      onProgress?.({ type: 'parallel-complete', stepName: step.id });
     }
   }
 
@@ -97,7 +127,8 @@ async function runSteps(
 export async function runWorkflow(
   def: WorkflowDefinition,
   input: string,
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>,
+  opts?: { onProgress?: (event: WorkflowProgressEvent) => void }
 ): Promise<WorkflowResult> {
   const maxSteps = Math.min(def.maxSteps ?? MAX_STEPS_HARD_CAP, MAX_STEPS_HARD_CAP);
   const ctx: WorkflowContext = { input, history: [], metadata };
@@ -106,7 +137,7 @@ export async function runWorkflow(
   const start = Date.now();
 
   try {
-    const output = await runSteps(def.steps, ctx, results, stepCount, maxSteps, new Set());
+    const output = await runSteps(def.steps, ctx, results, stepCount, maxSteps, new Set(), opts?.onProgress);
     return { status: "completed", output, stepResults: results, durationMs: Date.now() - start };
   } catch (err) {
     if (err instanceof SuspendError) {
@@ -150,7 +181,8 @@ function findFirstMissingId(steps: WorkflowStep[], completedIds: Set<string>): s
 export async function resumeWorkflow(
   workflow: WorkflowDefinition,
   partialResult: WorkflowSuspendedResult,
-  resumeData: unknown
+  resumeData: unknown,
+  opts?: { onProgress?: (event: WorkflowProgressEvent) => void }
 ): Promise<WorkflowResult> {
   const maxSteps = Math.min(
     workflow.maxSteps ?? MAX_STEPS_HARD_CAP,
@@ -185,7 +217,8 @@ export async function resumeWorkflow(
       results,
       stepCount,
       maxSteps,
-      completedIds
+      completedIds,
+      opts?.onProgress
     );
     return { status: "completed", output, stepResults: results, durationMs: Date.now() - start };
   } catch (err) {

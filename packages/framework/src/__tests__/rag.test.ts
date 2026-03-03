@@ -3,8 +3,9 @@ import { ragTool } from "../tools/builtins/rag";
 import type { RagResult } from "../tools/builtins/rag";
 
 // Extracts the text from a ToolResult for assertions.
-function getText(result: { content: Array<{ type: "text"; text: string }> }): string {
-  return result.content[0].text;
+function getText(result: { content: Array<{ type: string; text?: string }> }): string {
+  const part = result.content[0];
+  return (part as { text: string }).text;
 }
 
 // Builds a minimal RagResult.

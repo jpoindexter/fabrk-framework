@@ -47,3 +47,16 @@ export function createApprovalHandler() {
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   };
 }
+
+/** Lists pending approval IDs and tool names for a given agent. */
+export function handleListApprovals(agentName: string): Response {
+  const headers = { 'Content-Type': 'application/json', ...buildSecurityHeaders() };
+  const agentMap = pendingApprovals.get(agentName);
+  const approvals: Array<{ approvalId: string; toolName: string }> = [];
+  if (agentMap) {
+    for (const [approvalId, entry] of agentMap.entries()) {
+      approvals.push({ approvalId, toolName: entry.toolName });
+    }
+  }
+  return new Response(JSON.stringify(approvals), { status: 200, headers });
+}

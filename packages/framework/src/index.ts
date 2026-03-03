@@ -126,12 +126,16 @@ export { serverActionPlugin, generateActionId } from "./runtime/server-action-tr
 export { defineAgent } from "./agents/define-agent";
 export type { AgentDefinition, DefineAgentOptions, AgentBudget, AgentMemoryConfig, GenerationOptions, ToolChoiceValue } from "./agents/define-agent";
 export { defineTool, textResult } from "./tools/define-tool";
-export type { ToolDefinition, ToolResult } from "./tools/define-tool";
+export type { ToolDefinition, ToolResult, TextPart, ImagePart, FilePart, ToolOutputPart } from "./tools/define-tool";
 export { toolDefinition, clientTools } from "./tools/tool-definition";
 export type { IsomorphicToolDefinition, ClientToolDescriptor } from "./tools/tool-definition";
 export { sqlQueryTool } from "./tools/builtins/sql-query";
 export type { SqlQueryOptions } from "./tools/builtins/sql-query";
 export { loadFabrkConfig } from "./config/fabrk-config";
+export type { TracingConfig } from "./config/fabrk-config.js";
+
+// A2A Protocol (Agent-to-Agent)
+export * from "./agents/a2a/index.js";
 
 // i18n
 export { extractLocale, detectLocale, localePath, createI18nMiddleware } from "./runtime/i18n";
@@ -143,19 +147,30 @@ export type { MemoryStore, Thread, ThreadMessage } from "./agents/memory/types";
 export type { SemanticMemoryOptions } from "./agents/memory/semantic-store";
 export { buildWorkingMemory } from "./agents/memory/working-memory";
 export type { WorkingMemoryConfig } from "./agents/memory/working-memory";
+export { InMemoryLongTermStore } from "./agents/memory/long-term-store.js";
+export type { LongTermStore, LongTermEntry } from "./agents/memory/long-term-store.js";
 
 // Orchestration
 export { agentAsTool, defineSupervisor, detectCircularDeps } from "./agents/orchestration/index";
 export type { SupervisorConfig } from "./agents/orchestration/supervisor";
 
+// Agent network
+export { defineAgentNetwork } from "./agents/network.js";
+export type { AgentNetwork, AgentNetworkConfig, AgentNetworkResult, NetworkContext } from "./agents/network.js";
+
 // Workflows
 export { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep, runWorkflow } from "./agents/workflow/index";
-export type { WorkflowDefinition, WorkflowStep, WorkflowResult, WorkflowContext, StepResult } from "./agents/workflow/index";
+export type { WorkflowDefinition, WorkflowStep, WorkflowResult, WorkflowContext, StepResult, WorkflowProgressEvent } from "./agents/workflow/index";
+
+// StateGraph (cyclic workflow)
+export { defineStateGraph } from "./agents/workflow/state-graph";
+export type { StateGraphConfig, StateGraphEvent, StateGraphEventType, GraphNode, GraphEdge, NodeResult } from "./agents/workflow/state-graph";
 
 // MCP
 export { createMCPServer, connectMCPServer, startStdioServer, createStdioClient } from "./tools/mcp/index";
 export type { MCPServer, MCPResource, MCPPromptDef, MCPPromptArg } from "./tools/mcp/server";
 export type { MCPClientOptions, MCPConnection } from "./tools/mcp/client";
+export { MCPClientError, OAuth2TokenCache } from "./tools/mcp/client";
 
 // Skills
 export { defineSkill, applySkill, composeSkills, scanSkills, loadSkillDefinitions, docsSearch } from "./skills/index";

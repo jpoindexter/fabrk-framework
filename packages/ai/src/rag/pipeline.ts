@@ -4,12 +4,16 @@ import { InMemoryVectorStoreAdapter } from "./adapters";
 import { chunkText } from "./chunk";
 import type { ChunkOptions } from "./chunk";
 
+/** A retrieved chunk — alias for VectorSearchResult used in reranking APIs */
+export type RetrievedChunk = VectorSearchResult;
+
 export interface RagPipelineOptions {
   embedder: EmbeddingProvider;
   store?: VectorStoreAdapter;
   chunkOptions?: ChunkOptions;
   topK?: number;
   minScore?: number;
+  reranker?: (query: string, chunks: RetrievedChunk[]) => Promise<RetrievedChunk[]>;
 }
 
 export interface RagPipeline {
@@ -40,11 +44,17 @@ export function createRagPipeline(opts: RagPipelineOptions): RagPipeline {
     },
 
     async search(query: string, searchOpts?: { topK?: number; minScore?: number }): Promise<VectorSearchResult[]> {
+      const topK = searchOpts?.topK ?? opts.topK ?? 5;
+      const minScore = searchOpts?.minScore ?? opts.minScore;
       const vector = await opts.embedder.embed(query);
-      return store.search(vector, {
-        topK: searchOpts?.topK ?? opts.topK ?? 5,
-        minScore: searchOpts?.minScore ?? opts.minScore,
-      });
+
+      if (opts.reranker) {
+        const candidates = await store.search(vector, { topK: topK * 3, minScore });
+        const reranked = await opts.reranker(query, candidates);
+        return reranked.slice(0, topK);
+      }
+
+      return store.search(vector, { topK, minScore });
     },
   };
 }

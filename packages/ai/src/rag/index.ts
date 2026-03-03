@@ -5,4 +5,5 @@ export type { VectorEntry, VectorSearchResult } from './vector-store';
 export { InMemoryVectorStoreAdapter, PineconeVectorStore } from './adapters';
 export type { VectorStoreAdapter } from './adapters';
 export { createRagPipeline } from './pipeline';
-export type { RagPipeline, RagPipelineOptions } from './pipeline';
+export type { RagPipeline, RagPipelineOptions, RetrievedChunk } from './pipeline';
+export { CrossEncoderReranker } from './cross-encoder-reranker';

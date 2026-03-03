@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { runAgentLoop, type AgentLoopEvent } from "../agents/agent-loop";
 import { createToolExecutor } from "../agents/tool-executor";
 import type { ToolDefinition } from "../tools/define-tool";
+import type { LLMStreamEvent } from "@fabrk/ai";
 
 function makeTool(name: string, handler?: ToolDefinition["handler"]): ToolDefinition {
   return {
@@ -241,6 +242,31 @@ describe("runAgentLoop", () => {
     expect(textEvent).toBeDefined();
   });
 
+  it("stream: true falls through to batch when streamWithTools absent", async () => {
+    const executor = createToolExecutor([]);
+    const events = await collectEvents(
+      runAgentLoop({
+        messages: [{ role: "user", content: "Hi" }],
+        toolExecutor: executor,
+        toolSchemas: [],
+        agentName: "test",
+        sessionId: "s-stream-fallback",
+        model: "test-model",
+        stream: true, // no streamWithTools provided → batch path
+        generateWithTools: async () => ({
+          content: "Batch fallback response",
+          usage: { promptTokens: 5, completionTokens: 5 },
+        }),
+        calculateCost: mockCalculateCost(),
+      })
+    );
+
+    const textEvent = events.find((e) => e.type === "text") as Extract<AgentLoopEvent, { type: "text" }>;
+    expect(textEvent).toBeDefined();
+    expect(textEvent.content).toBe("Batch fallback response");
+    expect(events.some((e) => e.type === "done")).toBe(true);
+  });
+
   it("accumulates costs across iterations", async () => {
     const tool = makeTool("t");
     const executor = createToolExecutor([tool]);
@@ -277,5 +303,78 @@ describe("runAgentLoop", () => {
     expect(usageEvents).toHaveLength(2);
     const totalCost = usageEvents.reduce((sum, e) => sum + e.cost, 0);
     expect(totalCost).toBeGreaterThan(0);
+  });
+});
+
+describe("runAgentLoop — streaming path (stream: true + streamWithTools)", () => {
+  it("yields text-delta events and done on text-only stream", async () => {
+    const executor = createToolExecutor([]);
+
+    async function* fakeStream(): AsyncGenerator<LLMStreamEvent> {
+      yield { type: "text-delta", content: "Hello " };
+      yield { type: "text-delta", content: "world" };
+      yield { type: "usage", promptTokens: 10, completionTokens: 5 };
+    }
+
+    const events = await collectEvents(
+      runAgentLoop({
+        messages: [{ role: "user", content: "Hi" }],
+        toolExecutor: executor,
+        toolSchemas: [],
+        agentName: "test",
+        sessionId: "stream-s1",
+        model: "test-model",
+        stream: true,
+        streamWithTools: fakeStream,
+        generateWithTools: async () => ({ content: "unreachable", usage: { promptTokens: 0, completionTokens: 0 } }),
+        calculateCost: mockCalculateCost(),
+      })
+    );
+
+    const textDeltas = events.filter((e) => e.type === "text-delta") as Extract<AgentLoopEvent, { type: "text-delta" }>[];
+    expect(textDeltas).toHaveLength(2);
+    expect(textDeltas[0].content).toBe("Hello ");
+    expect(textDeltas[1].content).toBe("world");
+    expect(events.some((e) => e.type === "usage")).toBe(true);
+    expect(events.some((e) => e.type === "text")).toBe(true);
+    expect(events.some((e) => e.type === "done")).toBe(true);
+  });
+
+  it("accumulates tool-call events then executes tools and loops", async () => {
+    const pingTool = makeTool("ping");
+    const executor = createToolExecutor([pingTool]);
+    let streamCallCount = 0;
+
+    async function* fakeStream(): AsyncGenerator<LLMStreamEvent> {
+      streamCallCount++;
+      if (streamCallCount === 1) {
+        yield { type: "tool-call", id: "tc1", name: "ping", arguments: { input: "test" } };
+        yield { type: "usage", promptTokens: 10, completionTokens: 5 };
+      } else {
+        yield { type: "text-delta", content: "Done!" };
+        yield { type: "usage", promptTokens: 5, completionTokens: 3 };
+      }
+    }
+
+    const events = await collectEvents(
+      runAgentLoop({
+        messages: [{ role: "user", content: "Ping" }],
+        toolExecutor: executor,
+        toolSchemas: executor.toLLMSchema(),
+        agentName: "test",
+        sessionId: "stream-s2",
+        model: "test-model",
+        stream: true,
+        streamWithTools: fakeStream,
+        generateWithTools: async () => ({ content: "unreachable", usage: { promptTokens: 0, completionTokens: 0 } }),
+        calculateCost: mockCalculateCost(),
+      })
+    );
+
+    expect(events.some((e) => e.type === "tool-call")).toBe(true);
+    expect(events.some((e) => e.type === "tool-result")).toBe(true);
+    expect(events.some((e) => e.type === "text-delta")).toBe(true);
+    expect(events.some((e) => e.type === "done")).toBe(true);
+    expect(streamCallCount).toBe(2); // once for tools, once for final text
   });
 });

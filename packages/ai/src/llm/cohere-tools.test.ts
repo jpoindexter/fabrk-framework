@@ -162,3 +162,126 @@ describe("cohere-tools — provider registration", () => {
     expect(getProvider("command-r")?.key).toBe("cohere");
   });
 });
+
+describe("cohere-tools — streamWithTools", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let fetchSpy: any;
+
+  function makeSSEStream(lines: string[]): Response {
+    const encoder = new TextEncoder();
+    const body = new ReadableStream({
+      start(controller) {
+        for (const line of lines) {
+          controller.enqueue(encoder.encode(line + "\n"));
+        }
+        controller.close();
+      },
+    });
+    return new Response(body, {
+      status: 200,
+      headers: { "Content-Type": "text/event-stream" },
+    });
+  }
+
+  async function collectEvents(
+    gen: AsyncGenerator<Record<string, unknown>>
+  ): Promise<Array<Record<string, unknown>>> {
+    const events: Array<Record<string, unknown>> = [];
+    for await (const event of gen) {
+      events.push(event as Record<string, unknown>);
+    }
+    return events;
+  }
+
+  beforeEach(() => {
+    vi.resetModules();
+    fetchSpy = vi.spyOn(globalThis, "fetch");
+  });
+
+  afterEach(() => {
+    fetchSpy.mockRestore();
+  });
+
+  it("yields text-delta events from content-delta SSE lines", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      makeSSEStream([
+        `data: ${JSON.stringify({ type: "content-delta", delta: { message: { content: { text: "Hello" } } } })}`,
+        `data: ${JSON.stringify({ type: "content-delta", delta: { message: { content: { text: " world" } } } })}`,
+        `data: ${JSON.stringify({ type: "message-end", delta: { usage: { input_tokens: 10, output_tokens: 5 } } })}`,
+      ])
+    );
+
+    const { streamWithTools } = await import("./cohere-tools");
+    const events = await collectEvents(
+      streamWithTools(MESSAGES, [], {
+        ...({ providerApiKey: "test-key" } as Record<string, unknown>),
+      }) as AsyncGenerator<Record<string, unknown>>
+    );
+
+    const textDeltas = events.filter((e) => e.type === "text-delta");
+    expect(textDeltas).toHaveLength(2);
+    expect(textDeltas[0].content).toBe("Hello");
+    expect(textDeltas[1].content).toBe(" world");
+
+    const usageEvents = events.filter((e) => e.type === "usage");
+    expect(usageEvents).toHaveLength(1);
+    expect(usageEvents[0].promptTokens).toBe(10);
+    expect(usageEvents[0].completionTokens).toBe(5);
+  });
+
+  it("accumulates tool calls across tool-call-start/delta/end events", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      makeSSEStream([
+        `data: ${JSON.stringify({ type: "tool-call-start", delta: { message: { tool_calls: { id: "tc1", function: { name: "get_weather" } } } } })}`,
+        `data: ${JSON.stringify({ type: "tool-call-delta", delta: { message: { tool_calls: { id: "tc1", function: { arguments: '{"location"' } } } } })}`,
+        `data: ${JSON.stringify({ type: "tool-call-delta", delta: { message: { tool_calls: { id: "tc1", function: { arguments: ':"London"}' } } } } })}`,
+        `data: ${JSON.stringify({ type: "tool-call-end" })}`,
+      ])
+    );
+
+    const { streamWithTools } = await import("./cohere-tools");
+    const events = await collectEvents(
+      streamWithTools(MESSAGES, [TOOL], {
+        ...({ providerApiKey: "test-key" } as Record<string, unknown>),
+      }) as AsyncGenerator<Record<string, unknown>>
+    );
+
+    const toolCalls = events.filter((e) => e.type === "tool-call");
+    expect(toolCalls).toHaveLength(1);
+    expect(toolCalls[0].id).toBe("tc1");
+    expect(toolCalls[0].name).toBe("get_weather");
+    expect(toolCalls[0].arguments).toEqual({ location: "London" });
+  });
+
+  it("throws on non-OK streaming response", async () => {
+    fetchSpy.mockResolvedValueOnce(new Response("Forbidden", { status: 403 }));
+
+    const { streamWithTools } = await import("./cohere-tools");
+    await expect(
+      collectEvents(
+        streamWithTools(MESSAGES, [], {
+          ...({ providerApiKey: "bad-key" } as Record<string, unknown>),
+        }) as AsyncGenerator<Record<string, unknown>>
+      )
+    ).rejects.toThrow("Cohere API error: 403");
+  });
+
+  it("skips [DONE] and blank lines", async () => {
+    fetchSpy.mockResolvedValueOnce(
+      makeSSEStream([
+        "",
+        "data: [DONE]",
+        "",
+      ])
+    );
+
+    const { streamWithTools } = await import("./cohere-tools");
+    const events = await collectEvents(
+      streamWithTools(MESSAGES, [], {
+        ...({ providerApiKey: "test-key" } as Record<string, unknown>),
+      }) as AsyncGenerator<Record<string, unknown>>
+    );
+
+    expect(events).toHaveLength(0);
+  });
+});

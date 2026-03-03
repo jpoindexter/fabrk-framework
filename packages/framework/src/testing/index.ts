@@ -13,3 +13,6 @@ export { defineEval, runEvals } from "./evals";
 export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult } from "./evals";
 export { exactMatch, includes, llmAsJudge, toolCallSequence, jsonSchema } from "./scorers";
 export type { Scorer, ScorerResult } from "./scorers";
+export { defineDataset } from "./dataset";
+export type { EvalDataset, EvalRunRecord, EvalRunSummary, EvalRunStore } from "./dataset";
+export { FileEvalRunStore } from "./file-run-store";

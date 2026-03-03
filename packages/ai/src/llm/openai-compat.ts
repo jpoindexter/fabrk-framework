@@ -125,3 +125,35 @@ registerProvider("azure", makeOpenAICompatAdapter({
   prefixes: ["azure:"],
   stripPrefix: "azure:",
 }));
+
+registerProvider("openrouter", makeOpenAICompatAdapter({
+  key: "openrouter",
+  baseURL: "https://openrouter.ai/api/v1",
+  envKey: "OPENROUTER_API_KEY",
+  prefixes: ["openrouter:", "or:"],
+  stripPrefix: "or:",
+}));
+
+registerProvider("cerebras", makeOpenAICompatAdapter({
+  key: "cerebras",
+  baseURL: "https://api.cerebras.ai/v1",
+  envKey: "CEREBRAS_API_KEY",
+  prefixes: ["cerebras:"],
+  stripPrefix: "cerebras:",
+}));
+
+registerProvider("lmstudio", makeOpenAICompatAdapter({
+  key: "lmstudio",
+  baseURL: "http://localhost:1234/v1",
+  envKey: "",
+  prefixes: ["lmstudio:"],
+  stripPrefix: "lmstudio:",
+}));
+
+registerProvider("nim", makeOpenAICompatAdapter({
+  key: "nim",
+  baseURL: "https://integrate.api.nvidia.com/v1",
+  envKey: "NIM_API_KEY",
+  prefixes: ["nim:"],
+  stripPrefix: "nim:",
+}));

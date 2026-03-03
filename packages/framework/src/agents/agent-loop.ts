@@ -14,7 +14,8 @@ export type AgentLoopEvent =
   | { type: "tool-result"; name: string; output: string; durationMs: number; iteration: number }
   | { type: "usage"; promptTokens: number; completionTokens: number; cost: number }
   | { type: "done" }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "approval-required"; toolName: string; input: Record<string, unknown>; approvalId: string; iteration: number };
 
 export interface AgentLoopOptions {
   messages: LLMMessage[];

@@ -75,4 +75,19 @@ export class InMemoryMemoryStore implements MemoryStore {
     this.threads.delete(threadId);
     this.messages.delete(threadId);
   }
+
+  async replaceMessages(
+    threadId: string,
+    messages: Omit<ThreadMessage, "id" | "createdAt">[]
+  ): Promise<void> {
+    const thread = this.threads.get(threadId);
+    if (!thread) throw new Error(`Thread not found: ${threadId}`);
+    const newMessages: ThreadMessage[] = messages.map((m) => ({
+      ...m,
+      id: crypto.randomUUID(),
+      createdAt: new Date(),
+    }));
+    this.messages.set(threadId, newMessages);
+    thread.updatedAt = new Date();
+  }
 }

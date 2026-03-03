@@ -9,6 +9,11 @@ export interface ToolExecutorHooks {
   onAfter?: (toolName: string, input: unknown, output: unknown, durationMs: number) => void | Promise<void>;
   onTimeout?: (toolName: string, input: unknown, timeoutMs: number) => void | Promise<void>;
   onError?: (toolName: string, input: unknown, error: Error) => void | Promise<void>;
+  onApprovalRequired?: (
+    toolName: string,
+    input: Record<string, unknown>,
+    approvalId: string
+  ) => Promise<{ approved: boolean; modifiedInput?: Record<string, unknown> }>;
 }
 
 export interface ToolExecutor {
@@ -60,6 +65,7 @@ function mergeHooks(
     onAfter: toolHooks.onAfter ?? executorHooks.onAfter,
     onTimeout: toolHooks.onTimeout ?? executorHooks.onTimeout,
     onError: toolHooks.onError ?? executorHooks.onError,
+    onApprovalRequired: toolHooks.onApprovalRequired ?? executorHooks.onApprovalRequired,
   };
 }
 
@@ -87,6 +93,18 @@ export function createToolExecutor(
       }
 
       const merged = mergeHooks(hooks, tool.hooks);
+
+      // Human-in-the-loop approval check
+      if (tool.requiresApproval && merged.onApprovalRequired) {
+        const approvalId = crypto.randomUUID();
+        const result = await merged.onApprovalRequired(name, input, approvalId);
+        if (!result.approved) {
+          throw new Error(`Tool execution rejected by user: ${name}`);
+        }
+        if (result.modifiedInput) {
+          input = { ...input, ...result.modifiedInput };
+        }
+      }
 
       await safeHook(() => merged.onBefore?.(name, input));
 

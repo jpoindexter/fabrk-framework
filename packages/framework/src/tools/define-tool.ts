@@ -14,6 +14,7 @@ export interface ToolDefinition {
   };
   handler: (input: Record<string, unknown>) => Promise<ToolResult>;
   hooks?: ToolExecutorHooks;
+  requiresApproval?: boolean;
 }
 
 export function defineTool(options: ToolDefinition): ToolDefinition {

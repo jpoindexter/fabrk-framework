@@ -14,3 +14,4 @@ export function getMemoryStore(): MemoryStore {
 export { InMemoryMemoryStore } from "./in-memory-store";
 export { SemanticMemoryStore, type SemanticMemoryOptions } from "./semantic-store";
 export type { MemoryStore, Thread, ThreadMessage } from "./types";
+export { compressThread, type CompressionOptions } from "./compress";

@@ -1,6 +1,7 @@
 import type { ToolDefinition } from "../tools/define-tool";
 import type { Scorer, ScorerResult } from "./scorers";
 import type { MockLLM } from "./mock-llm";
+import type { EvalDataset, EvalRunRecord, EvalRunStore } from "./dataset.js";
 
 export interface EvalCase {
   input: string;
@@ -40,7 +41,14 @@ export function defineEval(suite: EvalSuite): EvalSuite {
   return suite;
 }
 
-export async function runEvals(suite: EvalSuite): Promise<EvalSuiteResult> {
+export async function runEvals(
+  suite: EvalSuite,
+  opts?: {
+    dataset?: EvalDataset;
+    store?: EvalRunStore;
+    compareWith?: EvalRunRecord;
+  },
+): Promise<EvalSuiteResult> {
   const { createTestAgent } = await import("./create-test-agent");
 
   const threshold = suite.threshold ?? 1.0;
@@ -81,10 +89,32 @@ export async function runEvals(suite: EvalSuite): Promise<EvalSuiteResult> {
   const passCount = results.filter((r) => r.pass).length;
   const passRate = results.length > 0 ? passCount / results.length : 0;
 
-  return {
+  const result: EvalSuiteResult = {
     name: suite.name,
     results,
     passRate,
     pass: passRate >= threshold,
   };
+
+  if (opts?.store && opts?.dataset) {
+    await opts.store.save({
+      datasetName: opts.dataset.name,
+      datasetVersion: opts.dataset.version,
+      runAt: new Date(),
+      passRate: result.passRate,
+      pass: result.pass,
+      results: result.results,
+    });
+  }
+
+  if (opts?.compareWith) {
+    for (const r of result.results) {
+      const prev = opts.compareWith.results.find((p) => p.input === r.input);
+      if (prev?.pass && !r.pass) {
+        console.warn(`[eval regression] "${r.input.slice(0, 80)}" passed before but fails now`);
+      }
+    }
+  }
+
+  return result;
 }

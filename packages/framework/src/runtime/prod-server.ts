@@ -44,6 +44,9 @@ import {
 import { handleTTSRequest, handleSTTRequest } from "../agents/voice-handler";
 import { handleRealtimeUpgrade } from "../agents/voice-ws-handler";
 import type { VoiceConfig } from "@fabrk/ai";
+import { createApprovalHandler } from "../agents/approval-handler";
+
+const approvalHandler = createApprovalHandler();
 
 export interface ProdServerOptions {
   /** Path to dist/ directory. */
@@ -689,6 +692,43 @@ export async function startProdServer(
           await drainStream(ogRes.body.getReader(), res);
         }
         res.end();
+        return;
+      }
+
+      // Agent approval endpoint: POST /__ai/agents/:name/approve
+      const approvalUrl = new URL(req.url || "/", "http://localhost");
+      if (
+        approvalUrl.pathname.startsWith("/__ai/agents/") &&
+        approvalUrl.pathname.endsWith("/approve") &&
+        req.method === "POST"
+      ) {
+        const agentName = decodeURIComponent(
+          approvalUrl.pathname.slice("/__ai/agents/".length, -"/approve".length)
+        );
+        const bodyChunks: Buffer[] = [];
+        let bodySize = 0;
+        const APPROVE_MAX_BODY = 64 * 1024;
+        for await (const chunk of req) {
+          bodySize += chunk.length;
+          if (bodySize > APPROVE_MAX_BODY) {
+            const secHeaders = buildSecurityHeaders();
+            res.writeHead(413, { "Content-Type": "application/json", ...secHeaders });
+            res.end(JSON.stringify({ error: "Request body too large" }));
+            return;
+          }
+          bodyChunks.push(chunk);
+        }
+        const approveBody = Buffer.concat(bodyChunks);
+        const approveWebReq = new Request(`http://localhost${req.url || "/"}`, {
+          method: "POST",
+          headers: nodeHeadersToRecord(req.headers),
+          body: approveBody,
+        });
+        const approveRes = await approvalHandler(approveWebReq, agentName);
+        const approveHeaders: Record<string, string> = {};
+        approveRes.headers.forEach((v: string, k: string) => { approveHeaders[k] = v; });
+        res.writeHead(approveRes.status, approveHeaders);
+        res.end(await approveRes.text());
         return;
       }
 

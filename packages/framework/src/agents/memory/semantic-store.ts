@@ -69,6 +69,15 @@ export class SemanticMemoryStore implements MemoryStore {
     return this.baseStore.deleteThread(threadId);
   }
 
+  async replaceMessages(
+    threadId: string,
+    messages: Omit<import("./types").ThreadMessage, "id" | "createdAt">[]
+  ): Promise<void> {
+    if (this.baseStore.replaceMessages) {
+      return this.baseStore.replaceMessages(threadId, messages);
+    }
+  }
+
   async search(
     query: string,
     opts?: { agentName?: string; limit?: number }

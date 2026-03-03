@@ -1,6 +1,7 @@
 import type { SkillDefinition } from "../skills/define-skill";
 import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
+import type { ThreadMessage } from "./memory/types";
 
 export interface AgentBudget {
   daily?: number;
@@ -11,6 +12,12 @@ export interface AgentBudget {
 export interface AgentMemoryConfig {
   maxMessages?: number;
   semantic?: boolean | { topK?: number; threshold?: number };
+  compression?: {
+    enabled?: boolean;
+    triggerAt?: number;
+    keepRecent?: number;
+    summarize: (messages: ThreadMessage[]) => Promise<string>;
+  };
 }
 
 export interface AgentDefinition {

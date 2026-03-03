@@ -13,6 +13,10 @@ import { createSSEResponse, type SSEEvent } from "./sse-stream";
 import { createToolExecutor } from "./tool-executor";
 import { runAgentLoop, type AgentLoopEvent } from "./agent-loop";
 import { checkDelegationDepth } from "./orchestration/agent-tool";
+import { getAgentApprovals, createApprovalHandler } from "./approval-handler";
+import { compressThread } from "./memory/compress";
+
+const approvalHandler = createApprovalHandler();
 
 export interface AgentHandlerOptions
   extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt" | "tools" | "stream"> {
@@ -41,6 +45,9 @@ export interface AgentHandlerOptions
     model: string;
     tokens: number;
     cost: number;
+    durationMs?: number;
+    inputMessages?: Array<{ role: string; content: string }>;
+    outputText?: string;
   }) => void;
   onToolCall?: (record: {
     agent: string;
@@ -81,6 +88,8 @@ function agentLoopEventToSSE(event: AgentLoopEvent): SSEEvent | null {
       return { type: "done" };
     case "error":
       return { type: "error", message: event.message };
+    case "approval-required":
+      return { type: "approval-required", toolName: event.toolName, input: event.input, approvalId: event.approvalId, iteration: event.iteration };
   }
 }
 
@@ -196,6 +205,17 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         if (!thread || thread.agentName !== agentName) {
           return jsonResponse({ error: "Thread not found or does not belong to this agent" }, 404);
         }
+
+        // Compression: run before loading history so the compressed version is used
+        const memoryConfig = typeof options.memory === "object" ? options.memory : undefined;
+        if (memoryConfig?.compression?.enabled && options.memoryStore) {
+          await compressThread(threadId, options.memoryStore, {
+            triggerAt: memoryConfig.compression.triggerAt,
+            keepRecent: memoryConfig.compression.keepRecent,
+            summarize: memoryConfig.compression.summarize,
+          });
+        }
+
         const maxMsgs = typeof options.memory === "object" ? options.memory.maxMessages ?? 50 : 50;
         const history = await options.memoryStore.getMessages(threadId, { limit: maxMsgs });
         historyMessages = history.map((m) => ({
@@ -214,10 +234,28 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       ? [{ role: "system", content: options.systemPrompt }, ...allMessages]
       : allMessages;
 
+    const requestStartMs = Date.now();
+
     try {
       // Agent loop path — when tools are available
       if (hasTools) {
-        const toolExecutor = createToolExecutor(options.toolDefinitions as ToolDefinition[], options.toolHooks);
+        // onApprovalRequired: stores resolve in pendingApprovals, suspends until POST /approve
+        const onApprovalRequired: ToolExecutorHooks["onApprovalRequired"] = (
+          toolName,
+          _input,
+          approvalId
+        ) => {
+          return new Promise<{ approved: boolean; modifiedInput?: Record<string, unknown> }>((resolve) => {
+            getAgentApprovals(agentName).set(approvalId, { resolve, toolName });
+          });
+        };
+
+        const mergedHooks: ToolExecutorHooks = {
+          ...options.toolHooks,
+          onApprovalRequired,
+        };
+
+        const toolExecutor = createToolExecutor(options.toolDefinitions as ToolDefinition[], mergedHooks);
         const toolSchemas = toolExecutor.toLLMSchema();
 
         const getGenerateWithTools = async () => {
@@ -304,6 +342,9 @@ export function createAgentHandler(options: AgentHandlerOptions) {
               model: options.model,
               tokens: totalTokens,
               cost: totalCost,
+              durationMs: Date.now() - requestStartMs,
+              inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+              outputText: streamContent || undefined,
             });
 
             // Persist to memory after stream completes
@@ -368,6 +409,9 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           model: options.model,
           tokens: totalPromptTokens + totalCompletionTokens,
           cost: totalCost,
+          durationMs: Date.now() - requestStartMs,
+          inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+          outputText: content || undefined,
         });
 
         // Persist to memory
@@ -421,6 +465,9 @@ export function createAgentHandler(options: AgentHandlerOptions) {
             model: options.model,
             tokens: totalTokens,
             cost: result.cost,
+            durationMs: Date.now() - requestStartMs,
+            inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+            outputText: result.content || undefined,
           });
 
           // Persist to memory after streaming completes
@@ -473,6 +520,9 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         model: options.model,
         tokens: totalTokens,
         cost: result.cost,
+        durationMs: Date.now() - requestStartMs,
+        inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+        outputText: result.content || undefined,
       });
 
       // Persist to memory

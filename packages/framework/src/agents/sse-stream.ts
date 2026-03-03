@@ -12,7 +12,8 @@ export type SSEEvent =
       cost: number;
     }
   | { type: "done" }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "approval-required"; toolName: string; input: Record<string, unknown>; approvalId: string; iteration: number };
 
 export function formatSSEEvent(event: SSEEvent): string {
   return `data: ${JSON.stringify(event)}\n\n`;

@@ -37,6 +37,10 @@ export type LLMProvider =
   | 'mistral'
   | 'cohere'
   | 'bedrock'
+  | 'openrouter'
+  | 'cerebras'
+  | 'lmstudio'
+  | 'nim'
 
 export interface LLMConfig {
   provider: LLMProvider

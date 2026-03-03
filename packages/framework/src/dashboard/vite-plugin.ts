@@ -3,11 +3,33 @@ import type { ServerResponse } from "node:http";
 import { applySecurityHeaders } from "../middleware/security";
 
 interface CallRecord {
+  id: string;
   timestamp: number;
   agent: string;
   model: string;
   tokens: number;
   cost: number;
+  durationMs?: number;
+  inputMessages?: Array<{ role: string; content: string }>;
+  outputText?: string;
+}
+
+const MAX_MESSAGES = 20;
+const MAX_CONTENT_CHARS = 4000;
+const MAX_OUTPUT_CHARS = 8000;
+
+function capMessages(
+  msgs: Array<{ role: string; content: string }>
+): Array<{ role: string; content: string }> {
+  const capped = msgs.length > MAX_MESSAGES
+    ? [...msgs.slice(0, 5), ...msgs.slice(-15)]
+    : msgs;
+  return capped.map((m) => ({
+    role: m.role,
+    content: m.content.length > MAX_CONTENT_CHARS
+      ? m.content.slice(0, MAX_CONTENT_CHARS)
+      : m.content,
+  }));
 }
 
 interface ToolCallRecord {
@@ -86,8 +108,17 @@ export function setMCPExposed(exposed: boolean) {
   mcpExposed = exposed;
 }
 
-export function recordCall(record: CallRecord) {
-  calls.push(record);
+export function recordCall(record: Omit<CallRecord, 'id'> & { id?: string }) {
+  const id = record.id ?? crypto.randomUUID();
+  const entry: CallRecord = {
+    ...record,
+    id,
+    inputMessages: record.inputMessages ? capMessages(record.inputMessages) : undefined,
+    outputText: record.outputText && record.outputText.length > MAX_OUTPUT_CHARS
+      ? record.outputText.slice(0, MAX_OUTPUT_CHARS)
+      : record.outputText,
+  };
+  calls.push(entry);
   if (Number.isFinite(record.cost)) {
     totalCost += record.cost;
   }
@@ -195,6 +226,26 @@ function generateDashboardHtml(): string {
     .refresh { font-size: 0.7rem; opacity: 0.4; margin-top: 1rem; }
     .error-msg { color: #ff4141; font-size: 0.75rem; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .empty { opacity: 0.3; font-size: 0.8rem; padding: 1rem 0; }
+    #inspector-dialog {
+      background: var(--bg, #0a0a0a);
+      color: var(--fg, #00ff41);
+      border: 1px solid #333;
+      border-radius: 4px;
+      max-width: 900px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    #inspector-dialog::backdrop { background: rgba(0,0,0,0.7); }
+    .inspector-section { margin-bottom: 16px; }
+    .inspector-section h3 { color: #888; font-size: 11px; letter-spacing: 1px; margin-bottom: 8px; }
+    .msg { margin-bottom: 8px; }
+    .msg .role { font-size: 10px; color: #666; display: block; margin-bottom: 2px; }
+    .msg pre { margin: 0; font-size: 11px; white-space: pre-wrap; word-break: break-all; max-height: 200px; overflow-y: auto; background: #111; padding: 8px; border-radius: 2px; }
+    .inspector-meta { font-size: 11px; color: #888; border-top: 1px solid #222; padding-top: 8px; margin-top: 12px; }
+    .inspector-close { float: right; background: none; border: 1px solid #444; color: #888; font-family: inherit; font-size: 0.7rem; padding: 0.25rem 0.5rem; cursor: pointer; text-transform: uppercase; }
+    .inspector-close:hover { border-color: #00ff41; color: #00ff41; }
   </style>
 </head>
 <body>
@@ -220,7 +271,7 @@ function generateDashboardHtml(): string {
 
   <h1>RECENT CALLS</h1>
   <table>
-    <thead><tr><th>TIME</th><th>AGENT</th><th>MODEL</th><th>TOKENS</th><th>COST</th></tr></thead>
+    <thead><tr><th>TIME</th><th>AGENT</th><th>MODEL</th><th>TOKENS</th><th>COST</th><th>LATENCY</th><th></th></tr></thead>
     <tbody id="callsBody"></tbody>
   </table>
 
@@ -240,6 +291,12 @@ function generateDashboardHtml(): string {
     <button class="btn" id="exportBtn"> > EXPORT JSON</button>
   </div>
   <p class="refresh">Auto-refreshes every 2s</p>
+
+  <dialog id="inspector-dialog">
+    <button class="inspector-close" id="inspector-close-btn">[X] CLOSE</button>
+    <h1 style="margin-top:0">[CALL INSPECTOR]</h1>
+    <div id="inspector-body"></div>
+  </dialog>
 
   <script>
     var latestData = null;
@@ -335,10 +392,25 @@ function generateDashboardHtml(): string {
         var tbody = document.getElementById('callsBody');
         tbody.textContent = '';
         data.calls.slice(-20).reverse().forEach(function(c) {
-          tbody.appendChild(makeTableRow([
+          var tr = document.createElement('tr');
+          var fields = [
             new Date(c.timestamp).toLocaleTimeString(), c.agent, c.model,
-            String(c.tokens), '$' + c.cost.toFixed(4)
-          ]));
+            String(c.tokens), '$' + c.cost.toFixed(4),
+            c.durationMs != null ? c.durationMs + 'ms' : '?'
+          ];
+          fields.forEach(function(f) {
+            var td = document.createElement('td');
+            td.textContent = f;
+            tr.appendChild(td);
+          });
+          var btnCell = document.createElement('td');
+          var btn = document.createElement('button');
+          btn.className = 'btn';
+          btn.setAttribute('data-inspect-id', c.id);
+          btn.textContent = '[INSPECT]';
+          btnCell.appendChild(btn);
+          tr.appendChild(btnCell);
+          tbody.appendChild(tr);
         });
 
         // Tool call timeline
@@ -382,6 +454,56 @@ function generateDashboardHtml(): string {
         }
       } catch(e) {}
     }
+
+    function el(tag, attrs, text) {
+      var node = document.createElement(tag);
+      Object.entries(attrs || {}).forEach(function(kv) { node.setAttribute(kv[0], kv[1]); });
+      if (text !== undefined) node.textContent = String(text);
+      return node;
+    }
+
+    async function inspectCall(callId) {
+      try {
+        var resp = await fetch('/__ai/api/calls/' + encodeURIComponent(callId));
+        if (!resp.ok) return;
+        var call = await resp.json();
+        var body = document.getElementById('inspector-body');
+        body.replaceChildren();
+        var section = el('div', { class: 'inspector-section' });
+        section.appendChild(el('h3', {}, 'INPUT (' + (call.inputMessages ? call.inputMessages.length : 0) + ' messages)'));
+        (call.inputMessages || []).forEach(function(msg) {
+          var row = el('div', { class: 'msg' });
+          row.appendChild(el('span', { class: 'role' }, '[' + String(msg.role).toUpperCase() + ']'));
+          row.appendChild(el('pre', {}, String(msg.content)));
+          section.appendChild(row);
+        });
+        body.appendChild(section);
+        var outSection = el('div', { class: 'inspector-section' });
+        outSection.appendChild(el('h3', {}, 'OUTPUT'));
+        outSection.appendChild(el('pre', {}, call.outputText || '(not captured)'));
+        body.appendChild(outSection);
+        var meta = el('div', { class: 'inspector-meta' });
+        meta.textContent = 'Model: ' + String(call.model) + ' · Tokens: ' + String(call.tokens) + ' · Latency: ' + String(call.durationMs != null ? call.durationMs : '?') + 'ms · Cost: $' + (+(call.cost || 0)).toFixed(6);
+        body.appendChild(meta);
+        document.getElementById('inspector-dialog').showModal();
+      } catch(e) {}
+    }
+
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-inspect-id]');
+      if (btn) inspectCall(btn.getAttribute('data-inspect-id'));
+    });
+
+    var dialog = document.getElementById('inspector-dialog');
+    if (dialog) {
+      dialog.addEventListener('click', function(e) {
+        if (e.target === dialog) dialog.close();
+      });
+    }
+
+    document.getElementById('inspector-close-btn').addEventListener('click', function() {
+      document.getElementById('inspector-dialog').close();
+    });
 
     document.getElementById('exportBtn').addEventListener('click', function() {
       if (!latestData) return;
@@ -430,6 +552,23 @@ export function dashboardPlugin(): Plugin {
             res.setHeader("Content-Type", "application/json");
             applySecurityHeaders(res);
             res.end(JSON.stringify({ error: "Dashboard only available on localhost" }));
+            return;
+          }
+
+          if (pathname.startsWith("/__ai/api/calls/") && req.method === "GET") {
+            const callId = pathname.slice("/__ai/api/calls/".length);
+            const call = calls.toArray().find((c) => c.id === callId);
+            if (!call) {
+              res.statusCode = 404;
+              res.setHeader("Content-Type", "application/json");
+              applySecurityHeaders(res);
+              res.end(JSON.stringify({ error: "Not found" }));
+              return;
+            }
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            applySecurityHeaders(res);
+            res.end(JSON.stringify(call));
             return;
           }
 

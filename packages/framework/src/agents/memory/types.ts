@@ -20,4 +20,8 @@ export interface MemoryStore {
   appendMessage(threadId: string, msg: Omit<ThreadMessage, "id" | "createdAt">): Promise<ThreadMessage>;
   getMessages(threadId: string, opts?: { limit?: number }): Promise<ThreadMessage[]>;
   deleteThread(threadId: string): Promise<void>;
+  replaceMessages?(
+    threadId: string,
+    messages: Omit<ThreadMessage, "id" | "createdAt">[]
+  ): Promise<void>;
 }

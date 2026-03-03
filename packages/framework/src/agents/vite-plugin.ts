@@ -11,6 +11,9 @@ import { applySecurityHeaders } from "../middleware/security";
 import { nodeToWebRequest, writeWebResponse } from "../runtime/node-web-bridge";
 import type { ToolDefinition } from "../tools/define-tool";
 import { getMemoryStore } from "./memory/index";
+import { createApprovalHandler } from "./approval-handler";
+
+const approvalHandler = createApprovalHandler();
 
 export function agentPlugin(): Plugin {
   let root: string;
@@ -57,6 +60,15 @@ export function agentPlugin(): Plugin {
         server.middlewares.use(async (req: Connect.IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
           const url = req.url ?? "/";
           const pathname = url.split("?")[0];
+
+          // Handle approval endpoint: POST /__ai/agents/:name/approve
+          if (pathname.startsWith("/__ai/agents/") && pathname.endsWith("/approve") && req.method === "POST") {
+            const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approve".length));
+            const webReq = await nodeToWebRequest(req, url);
+            const webRes = await approvalHandler(webReq, agentName);
+            await writeWebResponse(res, webRes);
+            return;
+          }
 
           if (!pathname.startsWith("/api/agents/")) return next();
 
@@ -144,6 +156,9 @@ export function agentPlugin(): Plugin {
                   model: record.model,
                   tokens: record.tokens,
                   cost: record.cost,
+                  durationMs: record.durationMs,
+                  inputMessages: record.inputMessages,
+                  outputText: record.outputText,
                 });
               },
               onToolCall: (record) => {

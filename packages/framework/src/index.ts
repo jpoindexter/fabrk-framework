@@ -146,8 +146,8 @@ export type { SupervisorConfig } from "./agents/orchestration/supervisor";
 
 // MCP
 export { createMCPServer, connectMCPServer, startStdioServer, createStdioClient } from "./tools/mcp/index";
-export type { MCPServer } from "./tools/mcp/server";
-export type { MCPClientOptions } from "./tools/mcp/client";
+export type { MCPServer, MCPResource, MCPPromptDef, MCPPromptArg } from "./tools/mcp/server";
+export type { MCPClientOptions, MCPConnection } from "./tools/mcp/client";
 
 // Skills
 export { defineSkill, applySkill, composeSkills, scanSkills, loadSkillDefinitions, docsSearch } from "./skills/index";
@@ -156,6 +156,10 @@ export type { ScannedSkill } from "./skills/scanner";
 
 // Agent loop
 export { runAgentLoop } from "./agents/agent-loop";
+
+// Prompt versioning + A/B testing
+export { definePromptVersion, resolvePrompt, abTestPrompt, clearPromptRegistry } from "./agents/prompt-registry";
+export type { PromptVersion } from "./agents/prompt-registry";
 export type { AgentLoopEvent, AgentLoopOptions } from "./agents/agent-loop";
 export { createToolExecutor } from "./agents/tool-executor";
 

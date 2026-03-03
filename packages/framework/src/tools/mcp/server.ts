@@ -40,6 +40,27 @@ class RateLimiter {
   }
 }
 
+export interface MCPResource {
+  uri: string;
+  name: string;
+  description?: string;
+  mimeType?: string;
+  read: () => Promise<string>;
+}
+
+export interface MCPPromptArg {
+  name: string;
+  description?: string;
+  required?: boolean;
+}
+
+export interface MCPPromptDef {
+  name: string;
+  description?: string;
+  arguments?: MCPPromptArg[];
+  handler: (args: Record<string, string>) => string;
+}
+
 export interface MCPServer {
   name: string;
   version: string;
@@ -75,6 +96,8 @@ export function createMCPServer(options: {
   name: string;
   version: string;
   tools: ToolDefinition[];
+  resources?: MCPResource[];
+  prompts?: MCPPromptDef[];
   rateLimit?: number;
   rateLimitWindowMs?: number;
 }): MCPServer {
@@ -92,7 +115,11 @@ export function createMCPServer(options: {
       case "initialize":
         return rpcResponse(id, {
           protocolVersion: PROTOCOL_VERSION,
-          capabilities: { tools: {} },
+          capabilities: {
+            tools: {},
+            ...(options.resources?.length ? { resources: {} } : {}),
+            ...(options.prompts?.length ? { prompts: {} } : {}),
+          },
           serverInfo: { name: options.name, version: options.version },
         });
 
@@ -135,6 +162,62 @@ export function createMCPServer(options: {
             isError: true,
           });
         }
+      }
+
+      case "resources/list":
+        return rpcResponse(id, {
+          resources: (options.resources ?? []).map((r) => ({
+            uri: r.uri,
+            name: r.name,
+            description: r.description,
+            mimeType: r.mimeType,
+          })),
+        });
+
+      case "resources/read": {
+        const uri = params?.uri;
+        if (typeof uri !== "string") {
+          return rpcError(id, -32602, "Missing resource uri");
+        }
+        const resource = (options.resources ?? []).find((r) => r.uri === uri);
+        if (!resource) {
+          return rpcError(id, -32602, `Unknown resource: ${uri}`);
+        }
+        try {
+          const text = await resource.read();
+          return rpcResponse(id, {
+            contents: [{ uri: resource.uri, mimeType: resource.mimeType ?? "text/plain", text }],
+          });
+        } catch (err) {
+          console.error(`[fabrk] MCP resource "${uri}" error:`, err);
+          return rpcError(id, -32603, "Resource read failed");
+        }
+      }
+
+      case "prompts/list":
+        return rpcResponse(id, {
+          prompts: (options.prompts ?? []).map((p) => ({
+            name: p.name,
+            description: p.description,
+            arguments: p.arguments,
+          })),
+        });
+
+      case "prompts/get": {
+        const promptName = params?.name;
+        if (typeof promptName !== "string") {
+          return rpcError(id, -32602, "Missing prompt name");
+        }
+        const prompt = (options.prompts ?? []).find((p) => p.name === promptName);
+        if (!prompt) {
+          return rpcError(id, -32602, `Unknown prompt: ${promptName}`);
+        }
+        const args = (params?.arguments as Record<string, string>) ?? {};
+        const text = prompt.handler(args);
+        return rpcResponse(id, {
+          description: prompt.description,
+          messages: [{ role: "user", content: { type: "text", text } }],
+        });
       }
 
       default:

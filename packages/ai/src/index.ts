@@ -132,6 +132,9 @@ export type {
   SimilarityResult,
 } from './embeddings';
 
+export { chunkText, InMemoryVectorStore } from './rag';
+export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult } from './rag';
+
 export {
   createAIMiddleware,
   budgetEnforcement,

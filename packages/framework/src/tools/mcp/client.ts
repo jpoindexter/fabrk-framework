@@ -1,6 +1,15 @@
 import type { ToolDefinition } from "../define-tool";
 import { createStdioClient } from "./stdio-transport";
 
+export interface MCPConnection {
+  tools: ToolDefinition[];
+  disconnect: () => Promise<void>;
+  listResources: () => Promise<Array<{ uri: string; name: string; description?: string; mimeType?: string }>>;
+  readResource: (uri: string) => Promise<string>;
+  listPrompts: () => Promise<Array<{ name: string; description?: string }>>;
+  getPrompt: (name: string, args?: Record<string, string>) => Promise<string>;
+}
+
 export interface MCPClientOptions {
   url?: string;
   command?: string;
@@ -12,7 +21,7 @@ export interface MCPClientOptions {
 async function connectHTTP(
   url: string,
   timeout: number
-): Promise<{ tools: ToolDefinition[]; disconnect: () => Promise<void> }> {
+): Promise<MCPConnection> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
@@ -67,20 +76,49 @@ async function connectHTTP(
 
   return {
     tools,
-    disconnect: async () => { /* HTTP is stateless — nothing to clean up */ },
+    disconnect: async () => {},
+    listResources: async () => {
+      try {
+        const r = await rpcCall("resources/list") as { resources?: Array<{ uri: string; name: string; description?: string; mimeType?: string }> };
+        return r.resources ?? [];
+      } catch { return []; }
+    },
+    readResource: async (uri: string) => {
+      const r = await rpcCall("resources/read", { uri }) as { contents?: Array<{ text?: string }> };
+      return r.contents?.[0]?.text ?? "";
+    },
+    listPrompts: async () => {
+      try {
+        const r = await rpcCall("prompts/list") as { prompts?: Array<{ name: string; description?: string }> };
+        return r.prompts ?? [];
+      } catch { return []; }
+    },
+    getPrompt: async (name: string, args?: Record<string, string>) => {
+      const r = await rpcCall("prompts/get", { name, arguments: args ?? {} }) as {
+        messages?: Array<{ content?: { text?: string } }>
+      };
+      return r.messages?.[0]?.content?.text ?? "";
+    },
   };
 }
 
 export async function connectMCPServer(
   options: MCPClientOptions
-): Promise<{ tools: ToolDefinition[]; disconnect: () => Promise<void> }> {
+): Promise<MCPConnection> {
   const timeout = options.timeout ?? 30_000;
 
   if (options.transport === "stdio") {
     if (!options.command) {
       throw new Error("MCP stdio transport requires a command");
     }
-    return createStdioClient(options.command, options.args);
+    const result = await createStdioClient(options.command, options.args);
+    return {
+      ...result,
+      listResources: async () => [],
+      readResource: async () => "",
+      listPrompts: async () => [],
+      getPrompt: async () => "",
+    };
   }
 
   if (!options.url) {

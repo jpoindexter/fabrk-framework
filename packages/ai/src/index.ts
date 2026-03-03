@@ -121,3 +121,28 @@ export type {
   FallbackConfig,
   ProviderName,
 } from './middleware'
+
+export {
+  OpenAITTSProvider,
+  ElevenLabsTTSProvider,
+  OpenAISTTProvider,
+  RealtimeProxy,
+  getTTSContentType,
+  VOICE_DEFAULTS,
+  ALLOWED_TTS_FORMATS,
+  ALLOWED_AUDIO_TYPES,
+  TTS_MAX_TEXT_LENGTH,
+  TTS_MIN_SPEED,
+  TTS_MAX_SPEED,
+} from './voice'
+
+export type {
+  VoiceTTSProvider,
+  VoiceSTTProvider,
+  TTSOptions,
+  STTOptions,
+  STTResult,
+  VoiceConfig,
+  RealtimeUsage,
+  RealtimeProxyOptions,
+} from './voice'

@@ -40,6 +40,9 @@ import {
   getPageTags,
   type ISRCacheHandler,
 } from "./isr-cache";
+import { handleTTSRequest, handleSTTRequest } from "../agents/voice-handler";
+import { handleRealtimeUpgrade } from "../agents/voice-ws-handler";
+import type { VoiceConfig } from "@fabrk/ai";
 
 export interface ProdServerOptions {
   /** Path to dist/ directory. */
@@ -54,6 +57,8 @@ export interface ProdServerOptions {
   middlewarePath?: string;
   /** Optional ISR cache handler. Defaults to InMemoryISRCache. */
   isrCache?: ISRCacheHandler;
+  /** Voice configuration for TTS/STT/Realtime routes. */
+  voice?: VoiceConfig;
 }
 
 interface ServerEntry {
@@ -543,6 +548,7 @@ export async function startProdServer(
     serverEntryPath,
     middlewarePath,
     isrCache = new InMemoryISRCache(),
+    voice: voiceConfig,
   } = options;
 
   const clientDir = path.join(distDir, "client");
@@ -591,6 +597,43 @@ export async function startProdServer(
         res.writeHead(imgRes.status, imgHeaders);
         if (imgRes.body) {
           await drainStream(imgRes.body.getReader(), res);
+        }
+        res.end();
+        return;
+      }
+
+      // Voice routes
+      const voiceUrl = new URL(req.url || "/", "http://localhost");
+      if (voiceConfig?.enabled && (voiceUrl.pathname === "/__ai/tts" || voiceUrl.pathname === "/__ai/stt")) {
+        const bodyChunks: Buffer[] = [];
+        let bodySize = 0;
+        const VOICE_MAX_BODY = 26 * 1024 * 1024; // 26 MB for STT files + overhead
+        for await (const chunk of req) {
+          bodySize += chunk.length;
+          if (bodySize > VOICE_MAX_BODY) {
+            const secHeaders = buildSecurityHeaders();
+            res.writeHead(413, { "Content-Type": "application/json", ...secHeaders });
+            res.end(JSON.stringify({ error: "Request body too large" }));
+            return;
+          }
+          bodyChunks.push(chunk);
+        }
+        const voiceBody = Buffer.concat(bodyChunks);
+        const voiceWebReq = new Request(`http://localhost${req.url || "/"}`, {
+          method: req.method,
+          headers: nodeHeadersToRecord(req.headers),
+          body: req.method !== "GET" && req.method !== "HEAD" ? voiceBody : undefined,
+        });
+
+        const voiceRes = voiceUrl.pathname === "/__ai/tts"
+          ? await handleTTSRequest(voiceWebReq, { voice: voiceConfig })
+          : await handleSTTRequest(voiceWebReq, { voice: voiceConfig });
+
+        const voiceHeaders: Record<string, string> = {};
+        voiceRes.headers.forEach((v: string, k: string) => { voiceHeaders[k] = v; });
+        res.writeHead(voiceRes.status, voiceHeaders);
+        if (voiceRes.body) {
+          await drainStream(voiceRes.body.getReader(), res);
         }
         res.end();
         return;
@@ -680,6 +723,19 @@ export async function startProdServer(
       res.end("Internal server error");
     }
   });
+
+  // Realtime WebSocket upgrade
+  if (voiceConfig?.enabled && voiceConfig?.realtime?.enabled) {
+    server.on("upgrade", (req, socket, head) => {
+      const upgradeUrl = req.url ?? "";
+      if (!upgradeUrl.startsWith("/__ai/realtime")) return;
+
+      handleRealtimeUpgrade(req, socket, head, {
+        voice: voiceConfig,
+        isDev: false,
+      });
+    });
+  }
 
   const connections = new Set<import("node:net").Socket>();
 

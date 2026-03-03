@@ -27,7 +27,8 @@
   },
   "peerDependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
-    "openai": "^4.28.0"
+    "openai": "^4.28.0",
+    "ws": "^8.0.0"
   },
   "peerDependenciesMeta": {
     "@anthropic-ai/sdk": {
@@ -35,16 +36,21 @@
     },
     "openai": {
       "optional": true
+    },
+    "ws": {
+      "optional": true
     }
   },
   "dependencies": {},
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
     "@types/node": "^22.0.0",
+    "@types/ws": "^8.0.0",
     "openai": "^4.28.0",
     "tsup": "^8.0.1",
     "typescript": "^5.3.3",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "ws": "^8.0.0"
   },
   "author": "Jason Poindexter",
   "keywords": [

@@ -39,4 +39,8 @@ export type { AgentsMdInput } from "./build/agents-md";
 export { agentPlugin } from "./agents/vite-plugin";
 export { dashboardPlugin } from "./dashboard/vite-plugin";
 export { serverActionPlugin } from "./runtime/server-action-transform";
+export { voicePlugin } from "./agents/voice-plugin";
+export { handleTTSRequest, handleSTTRequest } from "./agents/voice-handler";
+export { handleRealtimeUpgrade } from "./agents/voice-ws-handler";
+export type { RealtimeHandlerConfig } from "./agents/voice-ws-handler";
 

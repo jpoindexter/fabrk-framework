@@ -1,0 +1,135 @@
+import type { IncomingMessage } from 'node:http';
+import type { Duplex } from 'node:stream';
+import type WebSocketType from 'ws';
+import { VOICE_DEFAULTS } from './types';
+
+export interface RealtimeUsage {
+  inputTokens: number;
+  outputTokens: number;
+}
+
+export interface RealtimeProxyOptions {
+  apiKey: string;
+  model?: string;
+  onUsage?: (usage: RealtimeUsage) => void;
+  onError?: (error: Error) => void;
+}
+
+function extractUsageFromEvent(data: string): RealtimeUsage | null {
+  try {
+    const parsed = JSON.parse(data);
+    if (parsed.type === 'response.done' && parsed.response?.usage) {
+      const { input_tokens, output_tokens } = parsed.response.usage;
+      if (typeof input_tokens === 'number' && typeof output_tokens === 'number') {
+        return { inputTokens: input_tokens, outputTokens: output_tokens };
+      }
+    }
+  } catch {
+    // Not JSON or missing fields — ignore
+  }
+  return null;
+}
+
+export class RealtimeProxy {
+  async upgrade(
+    _req: IncomingMessage,
+    socket: Duplex,
+    head: Buffer,
+    options: RealtimeProxyOptions,
+  ): Promise<void> {
+    const { apiKey, model, onUsage, onError } = options;
+
+    if (!apiKey) {
+      socket.destroy(new Error('API key required for realtime'));
+      return;
+    }
+
+    let WS: typeof WebSocketType;
+    let WSServer: typeof WebSocketType.Server;
+    try {
+      const ws = await import('ws');
+      WS = (ws.default ?? ws) as unknown as typeof WebSocketType;
+      WSServer = (ws.default?.Server ?? ws.Server ?? (ws as Record<string, unknown>).WebSocketServer) as typeof WebSocketType.Server;
+    } catch {
+      socket.destroy(new Error('ws package not installed — add ws as a dependency'));
+      return;
+    }
+
+    const realtimeModel = model || VOICE_DEFAULTS.realtime.model;
+    const upstreamUrl = `wss://api.openai.com/v1/realtime?model=${encodeURIComponent(realtimeModel)}`;
+
+    const upstream = new WS(upstreamUrl, {
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'OpenAI-Beta': 'realtime=v1',
+      },
+    });
+
+    const wss = new WSServer({ noServer: true });
+
+    wss.handleUpgrade(_req, socket, head, (clientWs: WebSocketType) => {
+      wss.emit('connection', clientWs, _req);
+
+      let upstreamOpen = false;
+      let clientOpen = true;
+
+      upstream.on('open', () => {
+        upstreamOpen = true;
+      });
+
+      upstream.on('message', (data: Buffer | string) => {
+        if (!clientOpen) return;
+        try {
+          const text = typeof data === 'string' ? data : data.toString('utf-8');
+
+          const usage = extractUsageFromEvent(text);
+          if (usage && onUsage) {
+            onUsage(usage);
+          }
+
+          clientWs.send(text);
+        } catch {
+          // Send failure — client likely disconnected
+        }
+      });
+
+      upstream.on('close', () => {
+        upstreamOpen = false;
+        if (clientOpen) {
+          clientWs.close(1000, 'Upstream closed');
+        }
+      });
+
+      upstream.on('error', (err: Error) => {
+        onError?.(err);
+        if (clientOpen) {
+          clientWs.close(1011, 'Upstream error');
+        }
+      });
+
+      clientWs.on('message', (data: Buffer | string) => {
+        if (!upstreamOpen) return;
+        try {
+          upstream.send(typeof data === 'string' ? data : data.toString('utf-8'));
+        } catch {
+          // Upstream send failure
+        }
+      });
+
+      clientWs.on('close', () => {
+        clientOpen = false;
+        if (upstreamOpen) {
+          upstream.close();
+        }
+      });
+
+      clientWs.on('error', (err: Error) => {
+        onError?.(err);
+        clientOpen = false;
+        if (upstreamOpen) {
+          upstream.close();
+        }
+      });
+    });
+  }
+}

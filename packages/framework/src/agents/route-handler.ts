@@ -331,6 +331,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           budgetContext,
           maxIterations: options.maxIterations,
           stream: options.stream ?? false,
+          generationOptions: options.generationOptions,
           generateWithTools: generateFn,
           streamWithTools: streamFn,
           calculateCost,

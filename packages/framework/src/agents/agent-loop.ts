@@ -1,4 +1,4 @@
-import type { LLMMessage, LLMToolSchema, LLMToolResult, LLMStreamEvent, LLMContentPart } from "@fabrk/ai";
+import type { LLMMessage, LLMToolSchema, LLMToolResult, LLMStreamEvent, LLMContentPart, GenerationOptions } from "@fabrk/ai";
 import type { AgentBudget } from "./define-agent";
 import type { ToolExecutor } from "./tool-executor";
 import type { Guardrail } from "./guardrails";
@@ -29,13 +29,16 @@ export interface AgentLoopOptions {
   budgetContext?: BudgetContext;
   maxIterations?: number;
   stream: boolean;
+  generationOptions?: GenerationOptions;
   generateWithTools: (
     messages: LLMMessage[],
     tools: LLMToolSchema[],
+    opts?: GenerationOptions,
   ) => Promise<LLMToolResult>;
   streamWithTools?: (
     messages: LLMMessage[],
     tools: LLMToolSchema[],
+    opts?: GenerationOptions,
   ) => AsyncGenerator<LLMStreamEvent>;
   calculateCost: (model: string, promptTokens: number, completionTokens: number) => { costUSD: number };
   inputGuardrails?: Guardrail[];
@@ -98,7 +101,7 @@ export async function* runAgentLoop(
       let totalPromptTokens = 0;
       let totalCompletionTokens = 0;
 
-      for await (const event of options.streamWithTools(messages, options.toolSchemas)) {
+      for await (const event of options.streamWithTools(messages, options.toolSchemas, options.generationOptions)) {
         if (event.type === "text-delta") {
           fullText += event.content;
           yield { type: "text-delta", content: event.content };
@@ -183,7 +186,7 @@ export async function* runAgentLoop(
     }
 
     // Batch path
-    const result = await options.generateWithTools(messages, options.toolSchemas);
+    const result = await options.generateWithTools(messages, options.toolSchemas, options.generationOptions);
     const { costUSD } = options.calculateCost(
       options.model,
       result.usage.promptTokens,

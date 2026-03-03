@@ -1,7 +1,11 @@
+import type { GenerationOptions } from "@fabrk/ai";
 import type { SkillDefinition } from "../skills/define-skill";
 import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
 import type { ThreadMessage } from "./memory/types";
+
+export type { GenerationOptions } from "@fabrk/ai";
+export type { ToolChoiceValue } from "@fabrk/ai";
 
 export interface AgentBudget {
   daily?: number;
@@ -38,6 +42,7 @@ export interface AgentDefinition {
   inputGuardrails?: Guardrail[];
   outputGuardrails?: Guardrail[];
   toolHooks?: ToolExecutorHooks;
+  generationOptions?: GenerationOptions;
 }
 
 export interface DefineAgentOptions {
@@ -54,6 +59,7 @@ export interface DefineAgentOptions {
   inputGuardrails?: Guardrail[];
   outputGuardrails?: Guardrail[];
   toolHooks?: ToolExecutorHooks;
+  generationOptions?: GenerationOptions;
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -71,5 +77,6 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     inputGuardrails: options.inputGuardrails,
     outputGuardrails: options.outputGuardrails,
     toolHooks: options.toolHooks,
+    generationOptions: options.generationOptions,
   };
 }

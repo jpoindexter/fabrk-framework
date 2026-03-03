@@ -7,6 +7,8 @@ import type {
   LLMToolCall,
   LLMStreamEvent,
   LLMContentPart,
+  GenerationOptions,
+  ToolChoiceValue,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -58,6 +60,13 @@ function toOpenAIMessages(messages: LLMMessage[]): unknown[] {
   });
 }
 
+function toOpenAIToolChoice(toolChoice: ToolChoiceValue): unknown {
+  if (toolChoice === "auto" || toolChoice === "none" || toolChoice === "required") {
+    return toolChoice;
+  }
+  return { type: "function", function: { name: toolChoice.toolName } };
+}
+
 function parseToolCalls(choices: unknown[]): LLMToolCall[] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const choice = (choices as any[])[0];
@@ -75,7 +84,8 @@ function parseToolCalls(choices: unknown[]): LLMToolCall[] {
 export async function generateWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): Promise<LLMToolResult> {
   const resolved = resolveConfig(config);
 
@@ -96,6 +106,11 @@ export async function generateWithTools(
       tools: tools.length > 0 ? tools : undefined,
       max_tokens: Math.min(resolved.maxTokens ?? MAX_TOKENS_LIMIT, MAX_TOKENS_LIMIT),
       temperature: resolved.temperature,
+      ...(opts?.topP !== undefined && { top_p: opts.topP }),
+      ...(opts?.stop !== undefined && { stop: opts.stop }),
+      ...(tools.length > 0 && opts?.toolChoice !== undefined && {
+        tool_choice: toOpenAIToolChoice(opts.toolChoice),
+      }),
     },
     { timeout: resolved.timeoutMs }
   );
@@ -117,7 +132,8 @@ export async function generateWithTools(
 export async function* streamWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): AsyncGenerator<LLMStreamEvent> {
   const resolved = resolveConfig(config);
 
@@ -140,6 +156,11 @@ export async function* streamWithTools(
       temperature: resolved.temperature,
       stream: true,
       stream_options: { include_usage: true },
+      ...(opts?.topP !== undefined && { top_p: opts.topP }),
+      ...(opts?.stop !== undefined && { stop: opts.stop }),
+      ...(tools.length > 0 && opts?.toolChoice !== undefined && {
+        tool_choice: toOpenAIToolChoice(opts.toolChoice),
+      }),
     },
     { timeout: resolved.timeoutMs }
   );

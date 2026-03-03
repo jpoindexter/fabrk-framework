@@ -4,6 +4,7 @@ import type {
   LLMToolSchema,
   LLMToolResult,
   LLMStreamEvent,
+  GenerationOptions,
 } from "./tool-types";
 
 export interface ProviderAdapter {
@@ -15,12 +16,14 @@ export interface ProviderAdapter {
   ) => (
     messages: LLMMessage[],
     tools: LLMToolSchema[],
+    opts?: GenerationOptions,
   ) => Promise<LLMToolResult>;
   makeStreamWithTools: (
     config: Partial<LLMConfig>
   ) => (
     messages: LLMMessage[],
     tools: LLMToolSchema[],
+    opts?: GenerationOptions,
   ) => AsyncGenerator<LLMStreamEvent>;
 }
 
@@ -62,21 +65,21 @@ registerProvider("openai", {
   prefixes: ["gpt-", "o1-", "o3-", "o4-", "chatgpt-"],
   envKey: "OPENAI_API_KEY",
   makeGenerateWithTools(config) {
-    return async (messages, tools) => {
+    return async (messages, tools, opts) => {
       const { generateWithTools } = await import("./openai-tools");
       return generateWithTools(messages, tools, {
         ...config,
         openaiModel: config.openaiModel || extractModel(config),
-      });
+      }, opts);
     };
   },
   makeStreamWithTools(config) {
-    return async function* (messages, tools) {
+    return async function* (messages, tools, opts) {
       const { streamWithTools } = await import("./openai-tools");
       yield* streamWithTools(messages, tools, {
         ...config,
         openaiModel: config.openaiModel || extractModel(config),
-      });
+      }, opts);
     };
   },
 });
@@ -86,21 +89,21 @@ registerProvider("anthropic", {
   prefixes: ["claude-"],
   envKey: "ANTHROPIC_API_KEY",
   makeGenerateWithTools(config) {
-    return async (messages, tools) => {
+    return async (messages, tools, opts) => {
       const { generateWithTools } = await import("./anthropic-tools");
       return generateWithTools(messages, tools, {
         ...config,
         anthropicModel: config.anthropicModel || extractModel(config),
-      });
+      }, opts);
     };
   },
   makeStreamWithTools(config) {
-    return async function* (messages, tools) {
+    return async function* (messages, tools, opts) {
       const { streamWithTools } = await import("./anthropic-tools");
       yield* streamWithTools(messages, tools, {
         ...config,
         anthropicModel: config.anthropicModel || extractModel(config),
-      });
+      }, opts);
     };
   },
 });
@@ -110,24 +113,24 @@ registerProvider("google", {
   prefixes: ["gemini-"],
   envKey: "GOOGLE_AI_API_KEY",
   makeGenerateWithTools(config) {
-    return async (messages, tools) => {
+    return async (messages, tools, opts) => {
       // Google uses OpenAI-compatible endpoint via openai SDK
       const { generateWithTools } = await import("./openai-tools");
       return generateWithTools(messages, tools, {
         ...config,
         openaiApiKey: resolveEnv("GOOGLE_AI_API_KEY"),
         openaiModel: extractModel(config),
-      });
+      }, opts);
     };
   },
   makeStreamWithTools(config) {
-    return async function* (messages, tools) {
+    return async function* (messages, tools, opts) {
       const { streamWithTools } = await import("./openai-tools");
       yield* streamWithTools(messages, tools, {
         ...config,
         openaiApiKey: resolveEnv("GOOGLE_AI_API_KEY"),
         openaiModel: extractModel(config),
-      });
+      }, opts);
     };
   },
 });
@@ -137,21 +140,20 @@ registerProvider("ollama", {
   prefixes: ["ollama:"],
   envKey: "",
   makeGenerateWithTools(config) {
-    return async (messages, tools) => {
+    return async (messages, tools, opts) => {
       const { generateWithTools } = await import("./openai-tools");
       const model = extractModel(config);
       const stripped = model.startsWith("ollama:") ? model.slice(7) : model;
-      const baseUrl = config.ollamaBaseUrl || "http://localhost:11434";
       return generateWithTools(messages, tools, {
         ...config,
         openaiApiKey: "ollama",
         openaiModel: stripped,
         // OpenAI SDK accepts baseURL via config — we set it via env resolution
-      });
+      }, opts);
     };
   },
   makeStreamWithTools(config) {
-    return async function* (messages, tools) {
+    return async function* (messages, tools, opts) {
       const { streamWithTools } = await import("./openai-tools");
       const model = extractModel(config);
       const stripped = model.startsWith("ollama:") ? model.slice(7) : model;
@@ -159,7 +161,7 @@ registerProvider("ollama", {
         ...config,
         openaiApiKey: "ollama",
         openaiModel: stripped,
-      });
+      }, opts);
     };
   },
 });

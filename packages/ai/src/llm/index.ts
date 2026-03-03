@@ -11,6 +11,7 @@ export type {
   TaskComplexity,
   JsonSchema,
   GenerateObjectResult,
+  StreamObjectEvent,
 } from './types'
 export { LLM_DEFAULTS } from './types'
 
@@ -23,6 +24,8 @@ export type {
   LLMTextPart,
   LLMImagePart,
   LLMContentPart,
+  GenerationOptions,
+  ToolChoiceValue,
 } from './tool-types'
 
 export {
@@ -45,7 +48,7 @@ export {
   streamWithTools as ollamaStreamWithTools,
 } from './ollama-tools'
 
-export { generateObject } from './generate-object'
+export { generateObject, streamObject } from './generate-object'
 
 export type { ProviderAdapter } from './registry'
 

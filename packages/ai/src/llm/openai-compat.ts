@@ -41,25 +41,25 @@ export function makeOpenAICompatAdapter(opts: OpenAICompatOptions): ProviderAdap
     envKey: opts.envKey,
 
     makeGenerateWithTools(config) {
-      return async (messages, tools) => {
+      return async (messages, tools, opts) => {
         const { generateWithTools } = await import("./openai-tools");
         return generateWithTools(messages, tools, {
           ...config,
           openaiApiKey: resolveApiKey(config),
           openaiModel: resolveModel(config),
           // baseURL is injected via env-based OpenAI client construction
-        });
+        }, opts);
       };
     },
 
     makeStreamWithTools(config) {
-      return async function* (messages, tools) {
+      return async function* (messages, tools, opts) {
         const { streamWithTools } = await import("./openai-tools");
         yield* streamWithTools(messages, tools, {
           ...config,
           openaiApiKey: resolveApiKey(config),
           openaiModel: resolveModel(config),
-        });
+        }, opts);
       };
     },
   };

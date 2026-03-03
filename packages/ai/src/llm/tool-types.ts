@@ -34,3 +34,15 @@ export type LLMStreamEvent =
   | { type: "text-delta"; content: string }
   | { type: "tool-call"; id: string; name: string; arguments: Record<string, unknown> }
   | { type: "usage"; promptTokens: number; completionTokens: number };
+
+export type ToolChoiceValue =
+  | "auto"
+  | "none"
+  | "required"
+  | { type: "tool"; toolName: string };
+
+export interface GenerationOptions {
+  toolChoice?: ToolChoiceValue;
+  topP?: number;
+  stop?: string | string[];
+}

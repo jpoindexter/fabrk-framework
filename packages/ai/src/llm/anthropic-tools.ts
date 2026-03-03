@@ -6,6 +6,8 @@ import type {
   LLMToolResult,
   LLMStreamEvent,
   LLMContentPart,
+  GenerationOptions,
+  ToolChoiceValue,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -84,6 +86,13 @@ function toAnthropicMessages(messages: LLMMessage[]): { system?: string; message
   return { system, messages: out };
 }
 
+function toAnthropicToolChoice(toolChoice: ToolChoiceValue): unknown | undefined {
+  if (toolChoice === "auto") return { type: "auto" };
+  if (toolChoice === "none") return undefined; // Anthropic doesn't support "none" — pass no tools
+  if (toolChoice === "required") return { type: "any" };
+  return { type: "tool", name: toolChoice.toolName };
+}
+
 function toAnthropicTools(tools: LLMToolSchema[]): unknown[] {
   return tools.map((t) => ({
     name: t.function.name,
@@ -95,7 +104,8 @@ function toAnthropicTools(tools: LLMToolSchema[]): unknown[] {
 export async function generateWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): Promise<LLMToolResult> {
   const resolved = resolveConfig(config);
 
@@ -111,14 +121,25 @@ export async function generateWithTools(
   const client = new Anthropic({ apiKey: resolved.anthropicApiKey });
   const { system, messages: anthropicMessages } = toAnthropicMessages(messages);
 
+  const noneChoice = opts?.toolChoice === "none";
+  const toolChoice = opts?.toolChoice !== undefined
+    ? toAnthropicToolChoice(opts.toolChoice)
+    : undefined;
+
   const response = await client.messages.create(
     {
       model: resolved.anthropicModel || LLM_DEFAULTS.anthropicModel,
       max_tokens: Math.min(resolved.maxTokens ?? 4096, MAX_TOKENS_LIMIT),
       temperature: resolved.temperature,
+      ...(opts?.topP !== undefined && { top_p: opts.topP }),
+      ...(opts?.stop !== undefined && {
+        stop_sequences: Array.isArray(opts.stop) ? opts.stop : [opts.stop],
+      }),
       system,
       messages: anthropicMessages,
-      tools: tools.length > 0 ? toAnthropicTools(tools) : undefined,
+      // "none" maps to passing no tools (Anthropic doesn't have a tool_choice: none)
+      tools: !noneChoice && tools.length > 0 ? toAnthropicTools(tools) : undefined,
+      ...(toolChoice !== undefined && { tool_choice: toolChoice }),
     },
     { timeout: resolved.timeoutMs }
   );
@@ -152,7 +173,8 @@ export async function generateWithTools(
 export async function* streamWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): AsyncGenerator<LLMStreamEvent> {
   const resolved = resolveConfig(config);
 
@@ -168,14 +190,24 @@ export async function* streamWithTools(
   const client = new Anthropic({ apiKey: resolved.anthropicApiKey });
   const { system, messages: anthropicMessages } = toAnthropicMessages(messages);
 
+  const noneChoice = opts?.toolChoice === "none";
+  const toolChoice = opts?.toolChoice !== undefined
+    ? toAnthropicToolChoice(opts.toolChoice)
+    : undefined;
+
   const stream = client.messages.stream(
     {
       model: resolved.anthropicModel || LLM_DEFAULTS.anthropicModel,
       max_tokens: Math.min(resolved.maxTokens ?? 4096, MAX_TOKENS_LIMIT),
       temperature: resolved.temperature,
+      ...(opts?.topP !== undefined && { top_p: opts.topP }),
+      ...(opts?.stop !== undefined && {
+        stop_sequences: Array.isArray(opts.stop) ? opts.stop : [opts.stop],
+      }),
       system,
       messages: anthropicMessages,
-      tools: tools.length > 0 ? toAnthropicTools(tools) : undefined,
+      tools: !noneChoice && tools.length > 0 ? toAnthropicTools(tools) : undefined,
+      ...(toolChoice !== undefined && { tool_choice: toolChoice }),
     },
     { timeout: resolved.timeoutMs }
   );

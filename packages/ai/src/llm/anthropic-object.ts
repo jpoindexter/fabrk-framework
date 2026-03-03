@@ -1,4 +1,4 @@
-import type { LLMConfig, JsonSchema, GenerateObjectResult } from "./types";
+import type { LLMConfig, JsonSchema, GenerateObjectResult, StreamObjectEvent } from "./types";
 import { LLM_DEFAULTS, MAX_TOKENS_LIMIT } from "./types";
 import type { LLMMessage } from "./tool-types";
 
@@ -86,4 +86,67 @@ export async function generateObject<T = unknown>(
       completionTokens: response.usage?.output_tokens ?? 0,
     },
   };
+}
+
+export async function* streamObject<T = unknown>(
+  messages: LLMMessage[],
+  schema: JsonSchema,
+  config: Partial<LLMConfig> = {}
+): AsyncGenerator<StreamObjectEvent<T>> {
+  const resolved = resolveConfig(config);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let Anthropic: any;
+  try {
+    const mod = await import("@anthropic-ai/sdk");
+    Anthropic = mod.default || mod.Anthropic || mod;
+  } catch {
+    throw new Error("@anthropic-ai/sdk not installed.");
+  }
+
+  const client = new Anthropic({ apiKey: resolved.anthropicApiKey });
+  const { system, messages: anthropicMessages } = extractSystemAndMessages(messages);
+  const toolName = "__structured_output";
+
+  const stream = client.messages.stream(
+    {
+      model: resolved.anthropicModel || LLM_DEFAULTS.anthropicModel,
+      max_tokens: Math.min(resolved.maxTokens ?? 4096, MAX_TOKENS_LIMIT),
+      temperature: resolved.temperature,
+      system,
+      messages: anthropicMessages,
+      tools: [{ name: toolName, description: "Return structured output.", input_schema: schema }],
+      tool_choice: { type: "tool", name: toolName },
+    },
+    { timeout: resolved.timeoutMs }
+  );
+
+  let accumulated = "";
+  let promptTokens = 0;
+  let completionTokens = 0;
+
+  for await (const event of stream) {
+    if (event.type === "content_block_delta") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const delta = (event as any).delta;
+      if (delta?.type === "input_json_delta") {
+        accumulated += delta.partial_json;
+        yield { type: "delta", text: delta.partial_json };
+      }
+    } else if (event.type === "message_start") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const usage = (event as any).message?.usage;
+      if (usage) promptTokens = usage.input_tokens ?? 0;
+    } else if (event.type === "message_delta") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const usage = (event as any).usage;
+      if (usage) completionTokens = usage.output_tokens ?? 0;
+    }
+  }
+
+  try {
+    const object = JSON.parse(accumulated || "{}") as T;
+    yield { type: "done", object, usage: { promptTokens, completionTokens } };
+  } catch {
+    yield { type: "error", message: "Failed to parse streamed JSON response" };
+  }
 }

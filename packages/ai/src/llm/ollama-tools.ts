@@ -8,6 +8,7 @@ import type {
   LLMToolCall,
   LLMStreamEvent,
   LLMContentPart,
+  GenerationOptions,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -64,7 +65,8 @@ function toOllamaTools(tools: LLMToolSchema[]): unknown[] {
 export async function generateWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): Promise<LLMToolResult> {
   const resolved = resolveConfig(config);
   const baseUrl = resolved.ollamaBaseUrl || LLM_DEFAULTS.ollamaBaseUrl;
@@ -83,6 +85,9 @@ export async function generateWithTools(
       options: {
         temperature: resolved.temperature,
         num_predict: Math.min(resolved.maxTokens ?? MAX_TOKENS_LIMIT, MAX_TOKENS_LIMIT),
+        ...(opts?.topP !== undefined && { top_p: opts.topP }),
+        ...(opts?.stop !== undefined && { stop: opts.stop }),
+        // Ollama does not support tool_choice — silently ignored
       },
     }),
     signal: AbortSignal.timeout(resolved.timeoutMs || LLM_DEFAULTS.timeoutMs),
@@ -118,7 +123,8 @@ export async function generateWithTools(
 export async function* streamWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): AsyncGenerator<LLMStreamEvent> {
   const resolved = resolveConfig(config);
   const baseUrl = resolved.ollamaBaseUrl || LLM_DEFAULTS.ollamaBaseUrl;
@@ -137,6 +143,9 @@ export async function* streamWithTools(
       options: {
         temperature: resolved.temperature,
         num_predict: Math.min(resolved.maxTokens ?? MAX_TOKENS_LIMIT, MAX_TOKENS_LIMIT),
+        ...(opts?.topP !== undefined && { top_p: opts.topP }),
+        ...(opts?.stop !== undefined && { stop: opts.stop }),
+        // Ollama does not support tool_choice — silently ignored
       },
     }),
     signal: AbortSignal.timeout(resolved.timeoutMs || LLM_DEFAULTS.timeoutMs),

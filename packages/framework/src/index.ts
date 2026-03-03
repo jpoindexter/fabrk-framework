@@ -124,7 +124,7 @@ export type { ServerActionRegistry } from "./runtime/server-actions";
 export { serverActionPlugin, generateActionId } from "./runtime/server-action-transform";
 
 export { defineAgent } from "./agents/define-agent";
-export type { AgentDefinition, DefineAgentOptions, AgentBudget, AgentMemoryConfig } from "./agents/define-agent";
+export type { AgentDefinition, DefineAgentOptions, AgentBudget, AgentMemoryConfig, GenerationOptions, ToolChoiceValue } from "./agents/define-agent";
 export { defineTool, textResult } from "./tools/define-tool";
 export type { ToolDefinition, ToolResult } from "./tools/define-tool";
 export { sqlQueryTool } from "./tools/builtins/sql-query";
@@ -143,6 +143,10 @@ export type { SemanticMemoryOptions } from "./agents/memory/semantic-store";
 // Orchestration
 export { agentAsTool, defineSupervisor, detectCircularDeps } from "./agents/orchestration/index";
 export type { SupervisorConfig } from "./agents/orchestration/supervisor";
+
+// Workflows
+export { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep, runWorkflow } from "./agents/workflow/index";
+export type { WorkflowDefinition, WorkflowStep, WorkflowResult, WorkflowContext, StepResult } from "./agents/workflow/index";
 
 // MCP
 export { createMCPServer, connectMCPServer, startStdioServer, createStdioClient } from "./tools/mcp/index";
@@ -203,3 +207,7 @@ export { handleTTSRequest, handleSTTRequest } from "./agents/voice-handler";
 export { handleRealtimeUpgrade } from "./agents/voice-ws-handler";
 export type { RealtimeHandlerConfig } from "./agents/voice-ws-handler";
 export { voicePlugin } from "./agents/voice-plugin";
+
+// Client hooks
+export { useObject } from "./client/use-object";
+export type { UseObjectOptions } from "./client/use-object";

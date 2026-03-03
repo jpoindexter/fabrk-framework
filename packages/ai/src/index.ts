@@ -69,6 +69,7 @@ export {
   OllamaClient,
   LLM_DEFAULTS,
   generateObject,
+  streamObject,
 } from './llm'
 
 export type {
@@ -79,6 +80,7 @@ export type {
   TaskComplexity,
   JsonSchema,
   GenerateObjectResult,
+  StreamObjectEvent,
   LLMToolSchema,
   LLMToolCall,
   LLMToolResult,
@@ -87,6 +89,8 @@ export type {
   LLMTextPart,
   LLMImagePart,
   LLMContentPart,
+  GenerationOptions,
+  ToolChoiceValue,
 } from './llm'
 
 export {
@@ -118,6 +122,9 @@ export {
   getEmbeddingProvider,
   OpenAIEmbeddingProvider,
   OllamaEmbeddingProvider,
+  CohereEmbeddingProvider,
+  VoyageEmbeddingProvider,
+  AzureEmbeddingProvider,
   cosineSimilarity,
   cosineDistance,
   findNearest,
@@ -132,8 +139,12 @@ export type {
   SimilarityResult,
 } from './embeddings';
 
-export { chunkText, InMemoryVectorStore } from './rag';
-export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult } from './rag';
+export { chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter, PineconeVectorStore } from './rag';
+export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult, VectorStoreAdapter } from './rag';
+
+// Semantic cache
+export { SemanticCache } from './cache';
+export type { CachedEntry, SemanticCacheOptions } from './cache';
 
 export {
   createAIMiddleware,

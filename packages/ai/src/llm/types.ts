@@ -87,6 +87,11 @@ export interface GenerateObjectResult<T = unknown> {
   usage: { promptTokens: number; completionTokens: number }
 }
 
+export type StreamObjectEvent<T = unknown> =
+  | { type: "delta"; text: string }
+  | { type: "done"; object: T; usage: { promptTokens: number; completionTokens: number } }
+  | { type: "error"; message: string };
+
 /** Hard cap on tokens per request to prevent runaway cost from untrusted input */
 export const MAX_TOKENS_LIMIT = 100_000
 

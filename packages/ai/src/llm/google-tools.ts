@@ -7,6 +7,8 @@ import type {
   LLMToolCall,
   LLMStreamEvent,
   LLMContentPart,
+  GenerationOptions,
+  ToolChoiceValue,
 } from "./tool-types";
 
 function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
@@ -77,6 +79,13 @@ function toGeminiContents(messages: LLMMessage[]): { systemInstruction?: any; co
   return { systemInstruction, contents };
 }
 
+function toGeminiToolConfig(toolChoice: ToolChoiceValue): unknown {
+  if (toolChoice === "auto") return { functionCallingConfig: { mode: "AUTO" } };
+  if (toolChoice === "none") return { functionCallingConfig: { mode: "NONE" } };
+  if (toolChoice === "required") return { functionCallingConfig: { mode: "ANY" } };
+  return { functionCallingConfig: { mode: "ANY", allowedFunctionNames: [toolChoice.toolName] } };
+}
+
 function toGeminiTools(tools: LLMToolSchema[]): unknown[] {
   return [{
     functionDeclarations: tools.map((t) => ({
@@ -138,19 +147,29 @@ async function getClient(config: LLMConfig): Promise<any> {
 export async function generateWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): Promise<LLMToolResult> {
   const resolved = resolveConfig(config);
   const model = await getClient(resolved);
   const { systemInstruction, contents } = toGeminiContents(messages);
 
+  const stopSequences = opts?.stop !== undefined
+    ? (Array.isArray(opts.stop) ? opts.stop : [opts.stop])
+    : undefined;
+
   const response = await model.generateContent({
     systemInstruction,
     contents,
     tools: tools.length > 0 ? toGeminiTools(tools) : undefined,
+    ...(opts?.toolChoice !== undefined && tools.length > 0 && {
+      toolConfig: toGeminiToolConfig(opts.toolChoice),
+    }),
     generationConfig: {
       maxOutputTokens: Math.min(resolved.maxTokens ?? MAX_TOKENS_LIMIT, MAX_TOKENS_LIMIT),
       temperature: resolved.temperature,
+      ...(opts?.topP !== undefined && { topP: opts.topP }),
+      ...(stopSequences !== undefined && { stopSequences }),
     },
   });
 
@@ -171,19 +190,29 @@ export async function generateWithTools(
 export async function* streamWithTools(
   messages: LLMMessage[],
   tools: LLMToolSchema[],
-  config: Partial<LLMConfig> = {}
+  config: Partial<LLMConfig> = {},
+  opts?: GenerationOptions
 ): AsyncGenerator<LLMStreamEvent> {
   const resolved = resolveConfig(config);
   const model = await getClient(resolved);
   const { systemInstruction, contents } = toGeminiContents(messages);
 
+  const stopSequences = opts?.stop !== undefined
+    ? (Array.isArray(opts.stop) ? opts.stop : [opts.stop])
+    : undefined;
+
   const response = await model.generateContentStream({
     systemInstruction,
     contents,
     tools: tools.length > 0 ? toGeminiTools(tools) : undefined,
+    ...(opts?.toolChoice !== undefined && tools.length > 0 && {
+      toolConfig: toGeminiToolConfig(opts.toolChoice),
+    }),
     generationConfig: {
       maxOutputTokens: Math.min(resolved.maxTokens ?? MAX_TOKENS_LIMIT, MAX_TOKENS_LIMIT),
       temperature: resolved.temperature,
+      ...(opts?.topP !== undefined && { topP: opts.topP }),
+      ...(stopSequences !== undefined && { stopSequences }),
     },
   });
 

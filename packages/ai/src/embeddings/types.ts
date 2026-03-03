@@ -15,7 +15,7 @@ export interface EmbeddingProvider {
 /** Embedding configuration */
 export interface EmbeddingConfig {
   /** Provider to use */
-  provider: 'openai' | 'ollama'
+  provider: 'openai' | 'ollama' | 'cohere' | 'voyage' | 'azure'
   /** Model name */
   model?: string
   /** API key (for cloud providers) */

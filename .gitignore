@@ -118,3 +118,6 @@ docs/api/
 # Internal development files
 tasks/
 docs/plans/
+
+# Git worktrees
+.worktrees/

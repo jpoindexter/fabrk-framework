@@ -7,8 +7,7 @@ import type { EmbeddingProvider } from '@fabrk/ai';
 function makeEmbedder(): EmbeddingProvider {
   let callCount = 0;
   return {
-    model: 'test',
-    embed: vi.fn().mockImplementation(async (text: string) => {
+    embed: vi.fn().mockImplementation(async (_text: string) => {
       // Return orthogonal-ish vectors based on which call this is
       callCount++;
       const dim = 4;
@@ -71,10 +70,10 @@ describe('SemanticMemoryStore', () => {
     expect(embedder.embed).toHaveBeenCalledWith('I can help');
   });
 
-  it('appendMessage does NOT embed system/tool messages', async () => {
+  it('appendMessage does NOT embed tool-call/tool-result messages', async () => {
     const thread = await store.createThread('agentA');
     vi.clearAllMocks();
-    await store.appendMessage(thread.id, { role: 'system', content: 'Be helpful', threadId: thread.id });
+    await store.appendMessage(thread.id, { role: 'tool-call', content: 'call data', threadId: thread.id });
     expect(embedder.embed).not.toHaveBeenCalled();
   });
 
@@ -148,7 +147,6 @@ describe('SemanticMemoryStore', () => {
 
   it('embedding failure is silently ignored', async () => {
     const failingEmbedder: EmbeddingProvider = {
-      model: 'fail',
       embed: vi.fn().mockRejectedValue(new Error('embed error')),
       embedBatch: vi.fn().mockRejectedValue(new Error('embed error')),
     };

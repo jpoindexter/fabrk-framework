@@ -61,6 +61,7 @@ describe('handleStreamObject', () => {
 
   it('emits error SSE event when streamObject throws', async () => {
     vi.doMock('@fabrk/ai', () => ({
+      // eslint-disable-next-line require-yield
       streamObject: async function* () {
         throw new Error('provider failure');
       },
@@ -96,6 +97,7 @@ describe('handleStreamObject', () => {
 
   it('emits error event for non-Error thrown value', async () => {
     vi.doMock('@fabrk/ai', () => ({
+      // eslint-disable-next-line require-yield
       streamObject: async function* () {
         // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw 'string error';

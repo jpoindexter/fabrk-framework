@@ -178,6 +178,46 @@ describe("parallelStep", () => {
     expect(fn1).toHaveBeenCalledOnce();
     expect(fn2).toHaveBeenCalledOnce();
   });
+
+  it("one failing branch does not cancel sibling branches", async () => {
+    const successFn = vi.fn(async () => "success-output");
+    const result = await runWorkflow(
+      {
+        name: "par-error-isolation",
+        steps: [
+          parallelStep("p", [
+            agentStep("ok", successFn),
+            agentStep("fail", async () => { throw new Error("branch failure"); }),
+          ]),
+        ],
+      },
+      "in"
+    );
+    expect(successFn).toHaveBeenCalledOnce();
+    expect(result.output).toContain("success-output");
+    expect(result.output).toContain("[error: branch failure]");
+  });
+
+  it("failing branch output is joined with separator alongside successful branches", async () => {
+    const result = await runWorkflow(
+      {
+        name: "par-error-join",
+        steps: [
+          parallelStep("p", [
+            agentStep("a", async () => "alpha"),
+            agentStep("b", async () => { throw new Error("boom"); }),
+            agentStep("c", async () => "gamma"),
+          ]),
+        ],
+      },
+      "in"
+    );
+    const parts = result.output.split("\n---\n");
+    expect(parts).toHaveLength(3);
+    expect(parts[0]).toBe("alpha");
+    expect(parts[1]).toBe("[error: boom]");
+    expect(parts[2]).toBe("gamma");
+  });
 });
 
 describe("maxSteps guard", () => {

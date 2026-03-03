@@ -1,5 +1,6 @@
 import { defineTool, textResult } from "../define-tool";
 import type { ToolDefinition } from "../define-tool";
+import type { RagPipeline } from "@fabrk/ai";
 
 export interface RagResult {
   content: string;
@@ -37,6 +38,23 @@ function defaultFormat(results: RagResult[], _query: string): string {
       return lines.join("\n");
     })
     .join("\n\n");
+}
+
+export function ragToolFromPipeline(
+  pipeline: RagPipeline,
+  options?: Omit<RagToolOptions, "search">,
+): ToolDefinition {
+  return ragTool({
+    ...options,
+    search: async (query, topK) => {
+      const results = await pipeline.search(query, { topK });
+      return results.map((r) => ({
+        content: r.text,
+        score: r.score,
+        metadata: r.metadata,
+      }));
+    },
+  });
 }
 
 export function ragTool(options: RagToolOptions): ToolDefinition {

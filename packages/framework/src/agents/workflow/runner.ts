@@ -46,8 +46,13 @@ async function runSteps(
           };
           const subStepResults: StepResult[] = [];
           const subCount = { n: stepCount.n };
-          const out = await runSteps([sub], subCtx, subStepResults, subCount, maxSteps);
-          return { out, subStepResults };
+          try {
+            const out = await runSteps([sub], subCtx, subStepResults, subCount, maxSteps);
+            return { out, subStepResults };
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            return { out: `[error: ${errMsg}]`, subStepResults };
+          }
         })
       );
 

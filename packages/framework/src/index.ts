@@ -199,7 +199,7 @@ export { useParams, buildHref } from "./client/typed-navigation";
 export type { TypedLinkProps } from "./client/typed-navigation";
 
 // Built-in tools
-export { ragTool } from "./tools/builtins/rag";
+export { ragTool, ragToolFromPipeline } from "./tools/builtins/rag";
 export type { RagResult, RagToolOptions } from "./tools/builtins/rag";
 
 // Voice

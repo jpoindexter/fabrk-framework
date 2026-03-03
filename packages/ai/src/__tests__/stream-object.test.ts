@@ -178,6 +178,109 @@ describe('streamObject — Anthropic dispatch', () => {
   })
 })
 
+describe('streamObject — Google dispatch', () => {
+  beforeEach(() => { vi.resetModules() })
+
+  it('dispatches to google-object for provider: "google" and yields single done event', async () => {
+    const mockResponse = {
+      text: () => '{"name":"John","age":30}',
+      usageMetadata: { promptTokenCount: 12, candidatesTokenCount: 8 },
+    }
+    vi.doMock('@google/generative-ai', () => ({
+      GoogleGenerativeAI: class {
+        getGenerativeModel() {
+          return {
+            generateContent: vi.fn().mockResolvedValue({ response: mockResponse }),
+          }
+        }
+      },
+    }))
+
+    const { streamObject } = await import('../llm/generate-object')
+    const events = await collect(streamObject(MESSAGES, SCHEMA, {
+      provider: 'google',
+      googleApiKey: 'test-key',
+    }))
+
+    // Google uses batch-fallback: single done event, no deltas
+    expect(events).toHaveLength(1)
+    expect(events[0].type).toBe('done')
+    const done = events[0]
+    expect(done.type === 'done' && done.object).toEqual({ name: 'John', age: 30 })
+    expect(done.type === 'done' && done.usage).toEqual({ promptTokens: 12, completionTokens: 8 })
+  })
+
+  it('yields error event when google generateContent throws', async () => {
+    vi.doMock('@google/generative-ai', () => ({
+      GoogleGenerativeAI: class {
+        getGenerativeModel() {
+          return {
+            generateContent: vi.fn().mockRejectedValue(new Error('quota exceeded')),
+          }
+        }
+      },
+    }))
+
+    const { streamObject } = await import('../llm/generate-object')
+    const events = await collect(streamObject(MESSAGES, SCHEMA, {
+      provider: 'google',
+      googleApiKey: 'test-key',
+    }))
+
+    expect(events).toHaveLength(1)
+    expect(events[0].type).toBe('error')
+    expect(events[0].type === 'error' && events[0].message).toContain('quota exceeded')
+  })
+})
+
+describe('streamObject — Ollama dispatch', () => {
+  beforeEach(() => { vi.resetModules() })
+
+  it('dispatches to ollama-object for provider: "ollama" and yields single done event', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        message: { content: '{"name":"John","age":30}' },
+        prompt_eval_count: 7,
+        eval_count: 5,
+      }),
+    }))
+
+    const { streamObject } = await import('../llm/generate-object')
+    const events = await collect(streamObject(MESSAGES, SCHEMA, {
+      provider: 'ollama',
+      ollamaBaseUrl: 'http://localhost:11434',
+    }))
+
+    vi.unstubAllGlobals()
+
+    expect(events).toHaveLength(1)
+    expect(events[0].type).toBe('done')
+    const done = events[0]
+    expect(done.type === 'done' && done.object).toEqual({ name: 'John', age: 30 })
+    expect(done.type === 'done' && done.usage).toEqual({ promptTokens: 7, completionTokens: 5 })
+  })
+
+  it('yields error event when ollama fetch fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: false,
+      status: 503,
+      statusText: 'Service Unavailable',
+    }))
+
+    const { streamObject } = await import('../llm/generate-object')
+    const events = await collect(streamObject(MESSAGES, SCHEMA, {
+      provider: 'ollama',
+      ollamaBaseUrl: 'http://localhost:11434',
+    }))
+
+    vi.unstubAllGlobals()
+
+    expect(events).toHaveLength(1)
+    expect(events[0].type).toBe('error')
+  })
+})
+
 describe('StreamObjectEvent type export', () => {
   it('StreamObjectEvent is exported from @fabrk/ai llm barrel', async () => {
     // Type-level check — if this compiles without error, export exists

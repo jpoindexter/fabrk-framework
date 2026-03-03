@@ -89,8 +89,8 @@ describe('handleStartAgent', () => {
     const toolDef = {
       name: 'myTool',
       description: 'a test tool',
-      schema: { type: 'object', properties: {} },
-      handler: async () => ({ content: [{ type: 'text', text: 'tool output' }] }),
+      schema: { type: 'object' as const, properties: {} },
+      handler: async () => ({ content: [{ type: 'text' as const, text: 'tool output' }] }),
     };
     const opts = makeOptions({
       checkpointStore: store,

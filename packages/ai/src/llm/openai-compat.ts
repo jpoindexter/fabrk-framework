@@ -331,3 +331,214 @@ registerProvider("cloudflare-ai", makeOpenAICompatAdapter({
   prefixes: ["@cf/", "cloudflare-ai:"],
   stripPrefix: "cloudflare-ai:",
 }));
+
+// === Batch 3: 27 more providers — 67 direct total ===
+
+registerProvider("scaleway", makeOpenAICompatAdapter({
+  key: "scaleway",
+  baseURL: "https://api.scaleway.ai/v1",
+  envKey: "SCALEWAY_API_KEY",
+  prefixes: ["scaleway:"],
+  stripPrefix: "scaleway:",
+}));
+
+registerProvider("siliconflow", makeOpenAICompatAdapter({
+  key: "siliconflow",
+  baseURL: "https://api.siliconflow.cn/v1",
+  envKey: "SILICONFLOW_API_KEY",
+  prefixes: ["siliconflow:", "sf:"],
+  stripPrefix: "sf:",
+}));
+
+registerProvider("volcengine", makeOpenAICompatAdapter({
+  key: "volcengine",
+  baseURL: "https://ark.cn-beijing.volces.com/api/v3",
+  envKey: "VOLCENGINE_API_KEY",
+  prefixes: ["volcengine:", "doubao:"],
+  stripPrefix: "volcengine:",
+}));
+
+registerProvider("anyscale", makeOpenAICompatAdapter({
+  key: "anyscale",
+  baseURL: "https://api.endpoints.anyscale.com/v1",
+  envKey: "ANYSCALE_API_KEY",
+  prefixes: ["anyscale:"],
+  stripPrefix: "anyscale:",
+}));
+
+registerProvider("lepton", makeOpenAICompatAdapter({
+  key: "lepton",
+  baseURL: "https://api.lepton.ai/v1",
+  envKey: "LEPTON_API_KEY",
+  prefixes: ["lepton:"],
+  stripPrefix: "lepton:",
+}));
+
+registerProvider("featherless", makeOpenAICompatAdapter({
+  key: "featherless",
+  baseURL: "https://api.featherless.ai/v1",
+  envKey: "FEATHERLESS_API_KEY",
+  prefixes: ["featherless:"],
+  stripPrefix: "featherless:",
+}));
+
+registerProvider("arliai", makeOpenAICompatAdapter({
+  key: "arliai",
+  baseURL: "https://api.arliai.com/v1",
+  envKey: "ARLIAI_API_KEY",
+  prefixes: ["arliai:"],
+  stripPrefix: "arliai:",
+}));
+
+registerProvider("kluster", makeOpenAICompatAdapter({
+  key: "kluster",
+  baseURL: "https://api.kluster.ai/v1",
+  envKey: "KLUSTER_API_KEY",
+  prefixes: ["kluster:"],
+  stripPrefix: "kluster:",
+}));
+
+registerProvider("aimlapi", makeOpenAICompatAdapter({
+  key: "aimlapi",
+  baseURL: "https://api.aimlapi.com/v1",
+  envKey: "AIMLAPI_API_KEY",
+  prefixes: ["aimlapi:", "aim:"],
+  stripPrefix: "aim:",
+}));
+
+registerProvider("nscale", makeOpenAICompatAdapter({
+  key: "nscale",
+  baseURL: "https://inference.api.nscale.com/v1",
+  envKey: "NSCALE_API_KEY",
+  prefixes: ["nscale:"],
+  stripPrefix: "nscale:",
+}));
+
+registerProvider("octoai", makeOpenAICompatAdapter({
+  key: "octoai",
+  baseURL: "https://text.octoai.run/v1",
+  envKey: "OCTOAI_TOKEN",
+  prefixes: ["octoai:"],
+  stripPrefix: "octoai:",
+}));
+
+registerProvider("github-models", makeOpenAICompatAdapter({
+  key: "github-models",
+  baseURL: "https://models.github.ai/inference",
+  envKey: "GITHUB_TOKEN",
+  prefixes: ["github:"],
+  stripPrefix: "github:",
+}));
+
+registerProvider("azure-ai-inference", makeOpenAICompatAdapter({
+  key: "azure-ai-inference",
+  baseURL: "https://models.inference.ai.azure.com",
+  envKey: "AZURE_AI_API_KEY",
+  prefixes: ["azure-ai:"],
+  stripPrefix: "azure-ai:",
+}));
+
+registerProvider("prem", makeOpenAICompatAdapter({
+  key: "prem",
+  baseURL: "https://app.premai.io/api/v1",
+  envKey: "PREM_API_KEY",
+  prefixes: ["prem:"],
+  stripPrefix: "prem:",
+}));
+
+registerProvider("aleph-alpha", makeOpenAICompatAdapter({
+  key: "aleph-alpha",
+  baseURL: "https://api.aleph-alpha.com",
+  envKey: "AA_TOKEN",
+  prefixes: ["aleph-alpha:"],
+  stripPrefix: "aleph-alpha:",
+}));
+
+registerProvider("ovhcloud", makeOpenAICompatAdapter({
+  key: "ovhcloud",
+  baseURL: "https://oai.endpoints.kepler.ai.cloud.ovh.net/api/openai_compat/v1",
+  envKey: "OVH_API_KEY",
+  prefixes: ["ovh:", "ovhcloud:"],
+  stripPrefix: "ovh:",
+}));
+
+registerProvider("chutes", makeOpenAICompatAdapter({
+  key: "chutes",
+  baseURL: "https://llm.chutes.ai/v1",
+  envKey: "CHUTES_API_KEY",
+  prefixes: ["chutes:"],
+  stripPrefix: "chutes:",
+}));
+
+registerProvider("infermatic", makeOpenAICompatAdapter({
+  key: "infermatic",
+  baseURL: "https://api.infermatic.ai/v1",
+  envKey: "INFERMATIC_API_KEY",
+  prefixes: ["infermatic:"],
+  stripPrefix: "infermatic:",
+}));
+
+registerProvider("predibase", makeOpenAICompatAdapter({
+  key: "predibase",
+  baseURL: "https://serving.app.predibase.com",
+  envKey: "PREDIBASE_API_KEY",
+  prefixes: ["predibase:"],
+  stripPrefix: "predibase:",
+}));
+
+registerProvider("spark", makeOpenAICompatAdapter({
+  key: "spark",
+  baseURL: "https://spark-api-open.xf-yun.com/v1",
+  envKey: "SPARK_API_KEY",
+  prefixes: ["spark:"],
+  stripPrefix: "spark:",
+}));
+
+registerProvider("hunyuan", makeOpenAICompatAdapter({
+  key: "hunyuan",
+  baseURL: "https://api.lkeap.cloud.tencent.com/v1",
+  envKey: "TENCENTCLOUD_API_KEY",
+  prefixes: ["hunyuan:"],
+  stripPrefix: "hunyuan:",
+}));
+
+// Local / self-hosted OpenAI-compatible servers
+registerProvider("vllm", makeOpenAICompatAdapter({
+  key: "vllm",
+  baseURL: "http://localhost:8000/v1",
+  envKey: "",
+  prefixes: ["vllm:"],
+  stripPrefix: "vllm:",
+}));
+
+registerProvider("jan", makeOpenAICompatAdapter({
+  key: "jan",
+  baseURL: "http://localhost:1337/v1",
+  envKey: "",
+  prefixes: ["jan:"],
+  stripPrefix: "jan:",
+}));
+
+registerProvider("llamacpp", makeOpenAICompatAdapter({
+  key: "llamacpp",
+  baseURL: "http://localhost:8080/v1",
+  envKey: "",
+  prefixes: ["llamacpp:"],
+  stripPrefix: "llamacpp:",
+}));
+
+registerProvider("localai", makeOpenAICompatAdapter({
+  key: "localai",
+  baseURL: "http://localhost:8888/v1",
+  envKey: "",
+  prefixes: ["localai:"],
+  stripPrefix: "localai:",
+}));
+
+registerProvider("text-generation-webui", makeOpenAICompatAdapter({
+  key: "text-generation-webui",
+  baseURL: "http://localhost:5000/v1",
+  envKey: "",
+  prefixes: ["tgwui:"],
+  stripPrefix: "tgwui:",
+}));

@@ -47,6 +47,13 @@ export type LLMProvider =
   | 'moonshot' | 'zhipu' | 'yi' | 'qwen'
   | 'minimax' | 'stepfun' | 'baichuan' | 'maritaca'
   | 'nebius' | 'cloudflare-ai'
+  | 'scaleway' | 'siliconflow' | 'volcengine' | 'anyscale'
+  | 'lepton' | 'featherless' | 'arliai' | 'kluster'
+  | 'aimlapi' | 'nscale' | 'octoai' | 'github-models'
+  | 'azure-ai-inference' | 'prem' | 'aleph-alpha' | 'ovhcloud'
+  | 'chutes' | 'infermatic' | 'predibase' | 'spark'
+  | 'hunyuan' | 'vllm' | 'jan' | 'llamacpp'
+  | 'localai' | 'text-generation-webui'
 
 export interface LLMConfig {
   provider: LLMProvider

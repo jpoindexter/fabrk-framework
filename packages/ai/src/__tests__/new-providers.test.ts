@@ -98,3 +98,91 @@ describe('batch 2 provider registrations', () => {
     expect(listProviders().length).toBeGreaterThanOrEqual(40);
   });
 });
+
+describe('batch 3 provider registrations', () => {
+  it('resolves scaleway: prefix', () => {
+    expect(getProvider('scaleway:llama-3.3-70b-instruct')?.key).toBe('scaleway');
+  });
+  it('resolves siliconflow: and sf: prefixes', () => {
+    expect(getProvider('siliconflow:Qwen/Qwen2.5-7B-Instruct')?.key).toBe('siliconflow');
+    expect(getProvider('sf:deepseek-ai/DeepSeek-V3')?.key).toBe('siliconflow');
+  });
+  it('resolves volcengine: and doubao: prefixes', () => {
+    expect(getProvider('volcengine:ep-20250101-abcdef')?.key).toBe('volcengine');
+    expect(getProvider('doubao:doubao-pro-32k')?.key).toBe('volcengine');
+  });
+  it('resolves anyscale: prefix', () => {
+    expect(getProvider('anyscale:meta-llama/Llama-2-70b-chat-hf')?.key).toBe('anyscale');
+  });
+  it('resolves lepton: prefix', () => {
+    expect(getProvider('lepton:llama3-1-70b')?.key).toBe('lepton');
+  });
+  it('resolves featherless: prefix', () => {
+    expect(getProvider('featherless:meta-llama/Meta-Llama-3.1-8B-Instruct')?.key).toBe('featherless');
+  });
+  it('resolves arliai: prefix', () => {
+    expect(getProvider('arliai:Meta-Llama-3.1-8B-Instruct')?.key).toBe('arliai');
+  });
+  it('resolves kluster: prefix', () => {
+    expect(getProvider('kluster:meta-llama/Llama-3.3-70B-Instruct')?.key).toBe('kluster');
+  });
+  it('resolves aimlapi: and aim: prefixes', () => {
+    expect(getProvider('aimlapi:gpt-4o')?.key).toBe('aimlapi');
+    expect(getProvider('aim:claude-3-5-sonnet')?.key).toBe('aimlapi');
+  });
+  it('resolves nscale: prefix', () => {
+    expect(getProvider('nscale:llama-3.1-8b-instruct')?.key).toBe('nscale');
+  });
+  it('resolves octoai: prefix', () => {
+    expect(getProvider('octoai:meta-llama-3-1-8b-instruct')?.key).toBe('octoai');
+  });
+  it('resolves github: prefix for github-models', () => {
+    expect(getProvider('github:gpt-4o')?.key).toBe('github-models');
+  });
+  it('resolves azure-ai: prefix for azure-ai-inference', () => {
+    expect(getProvider('azure-ai:Phi-4')?.key).toBe('azure-ai-inference');
+  });
+  it('resolves prem: prefix', () => {
+    expect(getProvider('prem:gpt-4o')?.key).toBe('prem');
+  });
+  it('resolves aleph-alpha: prefix', () => {
+    expect(getProvider('aleph-alpha:luminous-supreme')?.key).toBe('aleph-alpha');
+  });
+  it('resolves ovh: and ovhcloud: prefixes', () => {
+    expect(getProvider('ovh:llama-3.1-70b-instruct')?.key).toBe('ovhcloud');
+    expect(getProvider('ovhcloud:mistral-7b-instruct')?.key).toBe('ovhcloud');
+  });
+  it('resolves chutes: prefix', () => {
+    expect(getProvider('chutes:deepseek-ai/DeepSeek-V3')?.key).toBe('chutes');
+  });
+  it('resolves infermatic: prefix', () => {
+    expect(getProvider('infermatic:meta-llama/llama-3.1-8b-instruct')?.key).toBe('infermatic');
+  });
+  it('resolves predibase: prefix', () => {
+    expect(getProvider('predibase:llama-3-1-8b-instruct')?.key).toBe('predibase');
+  });
+  it('resolves spark: prefix', () => {
+    expect(getProvider('spark:generalv3.5')?.key).toBe('spark');
+  });
+  it('resolves hunyuan: prefix', () => {
+    expect(getProvider('hunyuan:hunyuan-pro')?.key).toBe('hunyuan');
+  });
+  it('resolves vllm: prefix (local)', () => {
+    expect(getProvider('vllm:meta-llama/Llama-3.1-8B-Instruct')?.key).toBe('vllm');
+  });
+  it('resolves jan: prefix (local)', () => {
+    expect(getProvider('jan:llama3.2-3b-instruct')?.key).toBe('jan');
+  });
+  it('resolves llamacpp: prefix (local)', () => {
+    expect(getProvider('llamacpp:llama-3.1-8b')?.key).toBe('llamacpp');
+  });
+  it('resolves localai: prefix (local)', () => {
+    expect(getProvider('localai:gpt-3.5-turbo')?.key).toBe('localai');
+  });
+  it('resolves tgwui: prefix for text-generation-webui (local)', () => {
+    expect(getProvider('tgwui:llama-3.1-8b')?.key).toBe('text-generation-webui');
+  });
+  it('lists at least 65 providers', () => {
+    expect(listProviders().length).toBeGreaterThanOrEqual(65);
+  });
+});

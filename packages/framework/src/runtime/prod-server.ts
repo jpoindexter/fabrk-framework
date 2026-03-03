@@ -464,7 +464,13 @@ async function handlePageRoute(
     }
 
     if (typeof renderToReadableStream === "function") {
-      const reactStream = await renderToReadableStream(element);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const renderOpts: any = {};
+      const routeAny = route as Record<string, unknown>;
+      if (routeAny.ppr === true) {
+        renderOpts.onPostpone = () => { /* PPR: allow deferred streaming */ };
+      }
+      const reactStream = await renderToReadableStream(element, renderOpts);
 
       const prefix = `<!DOCTYPE html>
 <html lang="en">
@@ -551,6 +557,55 @@ async function handlePageRoute(
       },
       body: "Internal server error",
     };
+  }
+}
+
+async function handleEdgeRoute(
+  req: http.IncomingMessage,
+  route: ServerEntry["routes"][number],
+  params: Record<string, string>,
+): Promise<Response> {
+  const method = (req.method || "GET").toUpperCase();
+  const handler = route.module[method] ?? route.module[method.toLowerCase()] ?? route.module.default;
+
+  if (typeof handler !== "function") {
+    return new Response(JSON.stringify({ error: "Edge handler not found" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+    });
+  }
+
+  const bodyChunks: Buffer[] = [];
+  let totalSize = 0;
+  const MAX_BODY = 1024 * 1024;
+
+  for await (const chunk of req) {
+    totalSize += chunk.length;
+    if (totalSize > MAX_BODY) {
+      return new Response(JSON.stringify({ error: "Request body too large" }), {
+        status: 413,
+        headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+      });
+    }
+    bodyChunks.push(chunk);
+  }
+
+  const webRequest = new Request(`http://localhost${req.url || "/"}`, {
+    method: req.method,
+    headers: nodeHeadersToRecord(req.headers),
+    body: method !== "GET" && method !== "HEAD"
+      ? Buffer.concat(bodyChunks).toString()
+      : undefined,
+  });
+
+  try {
+    return await handler(webRequest, { params });
+  } catch (err) {
+    console.error("[fabrk] Edge route error:", err);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+    });
   }
 }
 
@@ -733,6 +788,24 @@ export async function startProdServer(
           ...securityHeaders,
         });
         res.end("Not Found");
+        return;
+      }
+
+      // Edge runtime routes — use fetch-style handler
+      const routeAny = matched.route as Record<string, unknown>;
+      if (routeAny.runtime === "edge" && typeof routeAny.module === "object" && routeAny.module !== null) {
+        const edgeResult = await handleEdgeRoute(req, matched.route, matched.params);
+        const edgeHeaders: Record<string, string> = {};
+        edgeResult.headers.forEach((value: string, key: string) => {
+          edgeHeaders[key] = value;
+        });
+        res.writeHead(edgeResult.status, { ...edgeHeaders, ...buildSecurityHeaders() });
+        if (edgeResult.body) {
+          await drainStream(edgeResult.body.getReader(), res);
+          res.end();
+        } else {
+          res.end();
+        }
         return;
       }
 

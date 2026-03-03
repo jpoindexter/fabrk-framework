@@ -26,6 +26,12 @@ export interface Route {
   interceptDepth?: number;
   /** For intercepting routes, the original (non-intercepted) route pattern. */
   interceptTarget?: string;
+  /** Enable Partial Pre-Rendering — static shell + streamed dynamic holes. */
+  ppr?: boolean;
+  /** Server island components — maps island name to file path. */
+  islands?: Record<string, string>;
+  /** Edge or Node.js runtime for this route. */
+  runtime?: "node" | "edge";
 }
 
 /** Regex for `@slotName` parallel route directories. */
@@ -153,6 +159,7 @@ const DYNAMIC_SEG = /^\[([^[\].]+)\]$/;
 const CATCH_ALL_SEG = /^\[\.\.\.([^[\].]+)\]$/;
 const OPTIONAL_CATCH_ALL_SEG = /^\[\[\.\.\.([^[\].]+)\]\]$/;
 const ROUTE_GROUP_SEG = /^\(([^)]+)\)$/;
+const ISLAND_FILE = /^island\.([a-zA-Z0-9_-]+)\.(tsx|ts|jsx|js)$/;
 
 function walkDir(dir: string, appDir: string, routes: Route[]): void {
   let entries: fs.Dirent[];
@@ -243,11 +250,22 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
     }
   }
 
-  if (Object.keys(slots).length > 0 || Object.keys(slotDefaults).length > 0) {
+  // Scan for island files in this directory
+  const islands: Record<string, string> = {};
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const islandMatch = ISLAND_FILE.exec(entry.name);
+    if (islandMatch) {
+      islands[islandMatch[1]] = path.join(dir, entry.name);
+    }
+  }
+
+  if (Object.keys(slots).length > 0 || Object.keys(slotDefaults).length > 0 || Object.keys(islands).length > 0) {
     for (const route of routes) {
       if (path.dirname(route.filePath) === dir && route.type === "page") {
         if (Object.keys(slots).length > 0) route.slots = slots;
         if (Object.keys(slotDefaults).length > 0) route.slotDefaults = slotDefaults;
+        if (Object.keys(islands).length > 0) route.islands = islands;
       }
     }
   }

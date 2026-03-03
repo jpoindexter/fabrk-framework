@@ -1,3 +1,5 @@
+import type { ToolExecutorHooks } from "../agents/tool-executor";
+
 export interface ToolResult {
   content: Array<{ type: "text"; text: string }>;
 }
@@ -11,6 +13,7 @@ export interface ToolDefinition {
     required?: string[];
   };
   handler: (input: Record<string, unknown>) => Promise<ToolResult>;
+  hooks?: ToolExecutorHooks;
 }
 
 export function defineTool(options: ToolDefinition): ToolDefinition {

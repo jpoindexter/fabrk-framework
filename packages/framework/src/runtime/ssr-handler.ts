@@ -13,6 +13,7 @@ import {
 import { extractLocale, type I18nConfig } from "./i18n";
 import fs from "node:fs";
 import path from "node:path";
+import { startSpan } from "./tracer";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReactModuleLoader = () => Promise<[any, any]>;
@@ -113,7 +114,9 @@ export async function handleRequest(
     return handleRscPayload(matched, viteServer, appDir);
   }
 
-  const response = await handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale);
+  const response = await startSpan("fabrk.ssr.request", () =>
+    handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale)
+  );
 
   if (mwResponseHeaders) {
     mwResponseHeaders.forEach((value, key) => {
@@ -305,10 +308,24 @@ async function handlePageRoute(
       }
     }
 
+    // Load island components
+    const islandComponents: Record<string, React.ComponentType> = {};
+    if (matched.route.islands) {
+      for (const [islandName, islandPath] of Object.entries(matched.route.islands)) {
+        try {
+          const islandMod = await viteServer.ssrLoadModule(islandPath);
+          if (typeof islandMod.default === "function") {
+            islandComponents[islandName] = islandMod.default;
+          }
+        } catch { /* island failed to load — skip */ }
+      }
+    }
+
     const modules: PageModules = {
       page: PageComponent,
       layouts,
       slots: Object.keys(slotComponents).length > 0 ? slotComponents : undefined,
+      islands: Object.keys(islandComponents).length > 0 ? islandComponents : undefined,
     };
 
     if (matched.route.errorPath) {
@@ -436,7 +453,7 @@ async function handlePageRoute(
     }
 
     if (typeof renderToReadableStream === "function") {
-      return streamingRender(element, renderToReadableStream, metadata, htmlShell, routeHeaders);
+      return streamingRender(element, renderToReadableStream, metadata, htmlShell, routeHeaders, matched.route.ppr);
     }
 
     if (typeof renderToString === "function") {
@@ -493,12 +510,18 @@ async function handlePageRoute(
 async function streamingRender(
   element: unknown,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  renderToReadableStream: (element: any) => Promise<ReadableStream>,
+  renderToReadableStream: (element: any, options?: any) => Promise<ReadableStream>,
   metadata: Metadata,
   htmlShell: (options: { head: string; body: string }) => string,
   extraHeaders: Record<string, string> = {},
+  ppr?: boolean,
 ): Promise<Response> {
-  const reactStream = await renderToReadableStream(element);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderOptions: any = {};
+  if (ppr) {
+    renderOptions.onPostpone = () => { /* PPR: allow deferred streaming */ };
+  }
+  const reactStream = await renderToReadableStream(element, renderOptions);
   const head = buildMetadataHtml(metadata);
   const marker = "<!--FABRK_BODY-->";
   const shell = htmlShell({ head, body: marker });

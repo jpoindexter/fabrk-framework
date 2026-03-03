@@ -1,5 +1,6 @@
 import type { SkillDefinition } from "../skills/define-skill";
 import type { Guardrail } from "./guardrails";
+import type { ToolExecutorHooks } from "./tool-executor";
 
 export interface AgentBudget {
   daily?: number;
@@ -25,6 +26,7 @@ export interface AgentDefinition {
   skills?: SkillDefinition[];
   inputGuardrails?: Guardrail[];
   outputGuardrails?: Guardrail[];
+  toolHooks?: ToolExecutorHooks;
 }
 
 export interface DefineAgentOptions {
@@ -40,6 +42,7 @@ export interface DefineAgentOptions {
   skills?: SkillDefinition[];
   inputGuardrails?: Guardrail[];
   outputGuardrails?: Guardrail[];
+  toolHooks?: ToolExecutorHooks;
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -56,5 +59,6 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     skills: options.skills,
     inputGuardrails: options.inputGuardrails,
     outputGuardrails: options.outputGuardrails,
+    toolHooks: options.toolHooks,
   };
 }

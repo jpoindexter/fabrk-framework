@@ -3,6 +3,7 @@ import type { ToolDefinition } from "../tools/define-tool";
 import type { LLMMessage, LLMToolResult, LLMToolSchema, LLMStreamEvent } from "@fabrk/ai";
 import type { MemoryStore } from "./memory/types";
 import type { Guardrail } from "./guardrails";
+import type { ToolExecutorHooks } from "./tool-executor";
 import { createLLMBridge } from "./llm-bridge";
 import { callWithFallback, type LLMCallResult } from "./llm-caller";
 import { checkBudget, recordCost } from "./budget-guard";
@@ -216,7 +217,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     try {
       // Agent loop path — when tools are available
       if (hasTools) {
-        const toolExecutor = createToolExecutor(options.toolDefinitions as ToolDefinition[]);
+        const toolExecutor = createToolExecutor(options.toolDefinitions as ToolDefinition[], options.toolHooks);
         const toolSchemas = toolExecutor.toLLMSchema();
 
         const getGenerateWithTools = async () => {

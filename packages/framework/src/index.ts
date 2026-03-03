@@ -177,6 +177,19 @@ export type { TestAgentOptions, TestAgentResult } from "./testing/index";
 export { defineEval, runEvals, exactMatch, includes, llmAsJudge, toolCallSequence, jsonSchema } from "./testing/index";
 export type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult, Scorer, ScorerResult } from "./testing/index";
 
+// Tool lifecycle hooks
+export type { ToolExecutorHooks } from "./agents/tool-executor";
+
+// OpenTelemetry tracer
+export { initTracer, startSpan, getActiveSpan } from "./runtime/tracer";
+
+// Route type generation
+export { generateRouteTypes } from "./runtime/route-types-gen";
+
+// Typed navigation
+export { useParams, buildHref } from "./client/typed-navigation";
+export type { TypedLinkProps } from "./client/typed-navigation";
+
 // Built-in tools
 export { ragTool } from "./tools/builtins/rag";
 export type { RagResult, RagToolOptions } from "./tools/builtins/rag";

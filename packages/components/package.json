@@ -20,6 +20,11 @@
       "types": "./dist/charts/*.d.ts",
       "import": "./dist/charts/*.mjs",
       "require": "./dist/charts/*.js"
+    },
+    "./web-components": {
+      "types": "./dist/web-components/index.d.ts",
+      "import": "./dist/web-components/index.mjs",
+      "require": "./dist/web-components/index.js"
     }
   },
   "files": [

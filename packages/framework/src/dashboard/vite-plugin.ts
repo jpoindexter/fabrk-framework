@@ -2,6 +2,12 @@ import type { Plugin, ViteDevServer, Connect } from "vite";
 import type { ServerResponse } from "node:http";
 import { applySecurityHeaders } from "../middleware/security";
 
+// ---------------------------------------------------------------------------
+// SSE sink registry — module-level so all middleware instances share it
+// ---------------------------------------------------------------------------
+const sinks = new Set<ServerResponse>();
+const MAX_SSE_CONNECTIONS = 5;
+
 interface CallRecord {
   id: string;
   timestamp: number;
@@ -127,6 +133,15 @@ export function recordCall(record: Omit<CallRecord, 'id' | 'inputMessages'> & { 
   calls.push(entry);
   if (Number.isFinite(record.cost)) {
     totalCost += record.cost;
+  }
+  // Broadcast to SSE subscribers
+  const sseData = `data: ${JSON.stringify({ type: 'call-recorded', call: entry })}\n\n`;
+  for (const sink of sinks) {
+    try {
+      sink.write(sseData);
+    } catch {
+      sinks.delete(sink);
+    }
   }
 }
 
@@ -529,6 +544,19 @@ function generateDashboardHtml(): string {
       refresh().finally(function() { refreshPending = false; });
     }
     debouncedRefresh();
+
+    // EventSource for real-time updates (falls back to polling on error)
+    if (typeof EventSource !== 'undefined') {
+      var es = new EventSource('/__ai/events');
+      es.onmessage = function(e) {
+        try {
+          var data = JSON.parse(e.data);
+          if (data.type === 'call-recorded') debouncedRefresh();
+        } catch(_) {}
+      };
+      es.onerror = function() { es.close(); };
+    }
+
     setInterval(debouncedRefresh, 2000);
   </script>
 </body>
@@ -558,6 +586,58 @@ export function dashboardPlugin(): Plugin {
             res.setHeader("Content-Type", "application/json");
             applySecurityHeaders(res);
             res.end(JSON.stringify({ error: "Dashboard only available on localhost" }));
+            return;
+          }
+
+          if (pathname === "/__ai/events" && req.method === "GET") {
+            if (sinks.size >= MAX_SSE_CONNECTIONS) {
+              res.statusCode = 429;
+              res.setHeader("Content-Type", "text/plain");
+              applySecurityHeaders(res);
+              res.end("Too many connections");
+              return;
+            }
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "text/event-stream");
+            res.setHeader("Cache-Control", "no-cache");
+            res.setHeader("Connection", "keep-alive");
+            applySecurityHeaders(res);
+            res.flushHeaders();
+            sinks.add(res);
+            const cleanup = () => { sinks.delete(res); };
+            res.on("close", cleanup);
+            res.on("error", cleanup);
+            // Keep the connection open — do not call res.end()
+            return;
+          }
+
+          if (pathname === "/__ai/api/dataset" && req.method === "GET") {
+            const params = new URL(req.url ?? "/", "http://localhost").searchParams;
+            const agentFilter = params.get("agent") ?? undefined;
+            const limitParam = parseInt(params.get("limit") ?? "50", 10);
+            const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 50;
+
+            let records = calls.toArray();
+            if (agentFilter) records = records.filter((r) => r.agent === agentFilter);
+            records = records.slice(-limit);
+
+            const cases = records
+              .filter((r) => r.inputMessages?.length && r.outputText)
+              .map((r) => ({
+                input: r.inputMessages!.at(-1)!.content.slice(0, 2000),
+                expectedOutput: r.outputText!.slice(0, 2000),
+              }));
+
+            const dataset = {
+              name: `${agentFilter ?? "all"}-traces`,
+              version: 1,
+              cases,
+              createdAt: new Date().toISOString(),
+            };
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            applySecurityHeaders(res);
+            res.end(JSON.stringify(dataset));
             return;
           }
 

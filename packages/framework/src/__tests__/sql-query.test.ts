@@ -18,7 +18,7 @@ async function run(
   input: Record<string, unknown>
 ) {
   const result = await tool.handler(input);
-  return result.content[0].text;
+  return (result.content[0] as { text: string }).text;
 }
 
 // ---------------------------------------------------------------------------
@@ -297,7 +297,7 @@ describe("row truncation", () => {
     const tool = sqlQueryTool({ query: makeQuery(rows), maxRows: 10 });
     const text = await run(tool, { sql: "SELECT id FROM t" });
     // 10 data rows + 1 header + 1 divider = 12 lines in the table block
-    const tableLines = text.split("\n").filter((l) => l.startsWith("|"));
+    const tableLines = text.split("\n").filter((l: string) => l.startsWith("|"));
     expect(tableLines.length).toBe(12); // header + divider + 10 rows
     expect(text).toMatch(/truncated to 10 rows/i);
   });

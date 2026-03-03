@@ -146,7 +146,7 @@ describe("createStdioClient — full flow", () => {
 
     const client = await createStdioClient("node", []);
     const result = await client.tools[0].handler({ name: "world" });
-    expect(result.content[0].text).toBe("result:greet");
+    expect((result.content[0] as { text: string }).text).toBe("result:greet");
     await client.disconnect();
   });
 

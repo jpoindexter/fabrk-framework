@@ -41,12 +41,15 @@ export function defineEval(suite: EvalSuite): EvalSuite {
   return suite;
 }
 
+const MAX_CONCURRENCY = 20;
+
 export async function runEvals(
   suite: EvalSuite,
   opts?: {
     dataset?: EvalDataset;
     store?: EvalRunStore;
     compareWith?: EvalRunRecord;
+    concurrency?: number;
   },
 ): Promise<EvalSuiteResult> {
   const { createTestAgent } = await import("./create-test-agent");
@@ -54,7 +57,7 @@ export async function runEvals(
   const threshold = suite.threshold ?? 1.0;
   const results: EvalCaseResult[] = [];
 
-  for (const evalCase of suite.cases) {
+  const runCase = async (evalCase: EvalCase): Promise<EvalCaseResult> => {
     const agent = createTestAgent({
       systemPrompt: suite.agent.systemPrompt,
       tools: suite.agent.tools,
@@ -76,14 +79,28 @@ export async function runEvals(
     }
 
     const casePass = scores.every((s) => s.pass);
-    results.push({
+    return {
       input: evalCase.input,
       output: agentResult.content,
       expected: evalCase.expected,
       toolCalls: agentResult.toolCalls,
       scores,
       pass: casePass,
-    });
+    };
+  };
+
+  const concurrency = Math.min(opts?.concurrency ?? 1, MAX_CONCURRENCY);
+
+  if (concurrency <= 1) {
+    for (const evalCase of suite.cases) {
+      results.push(await runCase(evalCase));
+    }
+  } else {
+    for (let i = 0; i < suite.cases.length; i += concurrency) {
+      const chunk = suite.cases.slice(i, i + concurrency);
+      const chunkResults = await Promise.all(chunk.map((c) => runCase(c)));
+      results.push(...chunkResults);
+    }
   }
 
   const passCount = results.filter((r) => r.pass).length;

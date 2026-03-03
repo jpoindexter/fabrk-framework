@@ -4,6 +4,7 @@ import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
 import type { ThreadMessage } from "./memory/types";
 import type { WorkingMemoryConfig } from "./memory/working-memory";
+import type { LongTermStore } from "./memory/long-term-store";
 
 export type { GenerationOptions } from "@fabrk/ai";
 export type { ToolChoiceValue } from "@fabrk/ai";
@@ -28,6 +29,13 @@ export interface AgentMemoryConfig {
     summarize: (messages: ThreadMessage[]) => Promise<string>;
   };
   workingMemory?: WorkingMemoryConfig;
+  longTerm?: {
+    store: LongTermStore;
+    /** Defaults to agent name */
+    namespace?: string;
+    /** Auto-inject memory_store and memory_recall tools. Defaults to true. */
+    autoInjectTool?: boolean;
+  };
 }
 
 export interface AgentDefinition {
@@ -47,6 +55,8 @@ export interface AgentDefinition {
   generationOptions?: GenerationOptions;
   /** Agent names this agent can hand off to. When a tool call matches, a handoff event is emitted. */
   handoffs?: string[];
+  /** JSON Schema for structured output. When present, the final response is parsed as JSON and emitted as a structured-output event. */
+  outputSchema?: Record<string, unknown>;
 }
 
 export interface DefineAgentOptions {
@@ -66,6 +76,8 @@ export interface DefineAgentOptions {
   generationOptions?: GenerationOptions;
   /** Agent names this agent can hand off to. When a tool call matches, a handoff event is emitted. */
   handoffs?: string[];
+  /** JSON Schema for structured output. When present, the final response is parsed as JSON and emitted as a structured-output event. */
+  outputSchema?: Record<string, unknown>;
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -85,5 +97,6 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     toolHooks: options.toolHooks,
     generationOptions: options.generationOptions,
     handoffs: options.handoffs,
+    outputSchema: options.outputSchema,
   };
 }

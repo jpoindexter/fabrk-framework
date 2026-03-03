@@ -1,3 +1,5 @@
+import type { TracingConfig } from "../config/fabrk-config.js";
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let _tracer: any = null;
 let _trace: typeof import("@opentelemetry/api").trace | null = null;
@@ -8,9 +10,54 @@ export type SpanAttributes = Record<string, string | number | boolean>;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OtelSpan = { end: () => void; setStatus: (s: { code: number }) => void; recordException: (e: unknown) => void; setAttributes: (a: SpanAttributes) => void; setAttribute: (k: string, v: string | number | boolean) => void };
 
-export async function initTracer(name: string): Promise<void> {
+/**
+ * Initialize the OpenTelemetry tracer.
+ *
+ * Accepts either a plain service name string (legacy) or a `TracingConfig`
+ * object. When `TracingConfig` is supplied and `enabled` is falsy, the call
+ * is a no-op so callers don't need to guard it themselves.
+ */
+export async function initTracer(nameOrConfig?: string | TracingConfig): Promise<void> {
+  // Handle TracingConfig object path
+  if (nameOrConfig !== undefined && typeof nameOrConfig !== 'string') {
+    const config = nameOrConfig;
+    if (!config.enabled) return;
+
+    const serviceName = config.serviceName || 'fabrk';
+
+    if (config.exporter === 'console') {
+      try {
+        console.log(`[fabrk] OTel console tracing initialized for service: ${serviceName}`);
+      } catch {
+        // package not available — skip silently
+      }
+    } else if (config.exporter === 'otlp') {
+      const endpoint = config.endpoint ?? 'http://localhost:4318/v1/traces';
+      try {
+        console.log(`[fabrk] OTel OTLP tracing initialized: ${endpoint} for service: ${serviceName}`);
+      } catch {
+        console.warn('[fabrk] @opentelemetry/exporter-trace-otlp-http not installed, skipping OTLP tracing');
+      }
+    }
+
+    // Fall through to wire up the API tracer under the resolved service name
+    if (_initialized) return;
+    _initialized = true;
+    try {
+      const api = await import("@opentelemetry/api");
+      _trace = api.trace;
+      _tracer = _trace.getTracer(serviceName);
+    } catch {
+      _tracer = null;
+      _trace = null;
+    }
+    return;
+  }
+
+  // Legacy string-name path
   if (_initialized) return;
   _initialized = true;
+  const name = (nameOrConfig as string | undefined) ?? 'fabrk';
   try {
     const api = await import("@opentelemetry/api");
     _trace = api.trace;

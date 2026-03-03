@@ -230,3 +230,41 @@ export async function handleAgentStatus(
     messageCount: state.messages.length,
   }, 200);
 }
+
+export async function handleAgentHistory(
+  agentName: string,
+  sessionId: string,
+  store: CheckpointStore,
+): Promise<Response> {
+  const history = await store.listHistory(agentName, sessionId);
+  return jsonResponse(history, 200);
+}
+
+export async function handleAgentRollback(
+  agentName: string,
+  req: Request,
+  store: CheckpointStore,
+): Promise<Response> {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return jsonResponse({ error: "Invalid JSON" }, 400);
+  }
+
+  const { sessionId, targetIteration } = body as Record<string, unknown>;
+  if (typeof sessionId !== "string" || typeof targetIteration !== "number") {
+    return jsonResponse(
+      { error: "sessionId (string) and targetIteration (number) required" },
+      400
+    );
+  }
+
+  try {
+    const restored = await store.rollback(agentName, sessionId, targetIteration);
+    return jsonResponse(restored, 200);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Rollback failed";
+    return jsonResponse({ error: message }, 404);
+  }
+}

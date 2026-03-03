@@ -1,6 +1,7 @@
 import type { AgentDefinition } from "./define-agent";
 import type { ToolDefinition } from "../tools/define-tool";
 import type { LLMMessage, LLMToolResult, LLMToolSchema, LLMStreamEvent } from "@fabrk/ai";
+import { textResult } from "../tools/define-tool";
 import type { MemoryStore } from "./memory/types";
 import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
@@ -98,6 +99,8 @@ function agentLoopEventToSSE(event: AgentLoopEvent): SSEEvent | null {
       return { type: "approval-required", toolName: event.toolName, input: event.input, approvalId: event.approvalId, iteration: event.iteration };
     case "handoff":
       return { type: "handoff", targetAgent: event.targetAgent, input: event.input, iteration: event.iteration };
+    case "structured-output":
+      return { type: "structured-output", data: event.data, iteration: event.iteration };
   }
 }
 
@@ -152,7 +155,56 @@ async function resolveStreamFn(bridge: { provider: string; resolvedModel: string
 export function createAgentHandler(options: AgentHandlerOptions) {
   const authGuard = createAuthGuard(options.auth);
   const agentName = options.model.split("/").pop() || "agent";
-  const hasTools = (options.toolDefinitions?.length ?? 0) > 0;
+
+  // Build long-term memory tools if configured
+  const longTermConfig = typeof options.memory === "object" ? options.memory?.longTerm : undefined;
+  const longTermTools: ToolDefinition[] = [];
+  if (longTermConfig && longTermConfig.autoInjectTool !== false) {
+    const ltStore = longTermConfig.store;
+    const ltNamespace = longTermConfig.namespace || agentName;
+
+    longTermTools.push({
+      name: "memory_store",
+      description: "Store a value in long-term memory across threads. Use this to persist important information for future conversations.",
+      schema: {
+        type: "object",
+        properties: {
+          key: { type: "string", description: "The key to store the value under" },
+          value: { type: "string", description: "The value to store" },
+        },
+        required: ["key", "value"],
+      },
+      handler: async (input) => {
+        const key = String(input.key ?? "");
+        const value = String(input.value ?? "");
+        await ltStore.set(ltNamespace, key, value);
+        return textResult(`Stored "${key}" in long-term memory.`);
+      },
+    });
+
+    longTermTools.push({
+      name: "memory_recall",
+      description: "Search long-term memory for relevant information from past conversations.",
+      schema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query to find relevant memories" },
+        },
+        required: ["query"],
+      },
+      handler: async (input) => {
+        const query = String(input.query ?? "");
+        const results = await ltStore.search(ltNamespace, query, 5);
+        if (results.length === 0) {
+          return textResult("No relevant memories found.");
+        }
+        return textResult(JSON.stringify(results));
+      },
+    });
+  }
+
+  const resolvedToolDefinitions = [...(options.toolDefinitions ?? []), ...longTermTools];
+  const hasTools = resolvedToolDefinitions.length > 0;
 
   return async (req: Request): Promise<Response> => {
     if (req.method !== "POST") {
@@ -306,7 +358,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           onApprovalRequired,
         };
 
-        const toolExecutor = createToolExecutor(options.toolDefinitions as ToolDefinition[], mergedHooks);
+        const toolExecutor = createToolExecutor(resolvedToolDefinitions as ToolDefinition[], mergedHooks);
         const toolSchemas = toolExecutor.toLLMSchema();
 
         const getGenerateWithTools = async () => {
@@ -356,6 +408,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           inputGuardrails: options.inputGuardrails,
           outputGuardrails: options.outputGuardrails,
           handoffs: options.handoffs,
+          outputSchema: options.outputSchema,
         });
 
         if (options.stream) {

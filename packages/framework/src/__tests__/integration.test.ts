@@ -89,7 +89,7 @@ describe("E2E integration", () => {
     });
 
     const result = await tool.handler({ query: "react hooks" });
-    expect(result.content[0].text).toBe("Found: react hooks");
+    expect((result.content[0] as { text: string }).text).toBe("Found: react hooks");
   });
 
   it("full prompt flow: load → interpolate → include partials", async () => {

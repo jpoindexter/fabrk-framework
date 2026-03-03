@@ -5,7 +5,7 @@ describe('defineBashTool', () => {
   it('returns safe message when no executor configured', async () => {
     const tool = defineBashTool();
     const result = await tool.handler({ command: 'ls' });
-    expect(result.content[0].text).toContain('no executor configured');
+    expect((result.content[0] as { text: string }).text).toContain('no executor configured');
   });
 
   it('calls onExecute with the command', async () => {
@@ -13,13 +13,13 @@ describe('defineBashTool', () => {
     const tool = defineBashTool({ onExecute });
     const result = await tool.handler({ command: 'ls -la' });
     expect(onExecute).toHaveBeenCalledWith('ls -la');
-    expect(result.content[0].text).toBe('file1.txt\nfile2.txt');
+    expect((result.content[0] as { text: string }).text).toBe('file1.txt\nfile2.txt');
   });
 
   it('returns error message when onExecute throws', async () => {
     const tool = defineBashTool({ onExecute: async () => { throw new Error('permission denied'); } });
     const result = await tool.handler({ command: 'rm -rf /' });
-    expect(result.content[0].text).toContain('permission denied');
+    expect((result.content[0] as { text: string }).text).toContain('permission denied');
   });
 
   it('has correct name and schema', () => {
@@ -33,7 +33,7 @@ describe('defineTextEditorTool', () => {
   it('returns safe message when no executor configured', async () => {
     const tool = defineTextEditorTool();
     const result = await tool.handler({ command: 'view', path: '/tmp/test.txt' });
-    expect(result.content[0].text).toContain('no executor configured');
+    expect((result.content[0] as { text: string }).text).toContain('no executor configured');
   });
 
   it('calls onExecute with all required params', async () => {
@@ -51,7 +51,7 @@ describe('defineTextEditorTool', () => {
       oldStr: 'old',
       newStr: 'new',
     }));
-    expect(result.content[0].text).toBe('file contents here');
+    expect((result.content[0] as { text: string }).text).toBe('file contents here');
   });
 
   it('has correct tool name', () => {
@@ -64,7 +64,7 @@ describe('defineComputerTool', () => {
   it('returns safe message for non-screenshot actions when no executor', async () => {
     const tool = defineComputerTool();
     const result = await tool.handler({ action: 'left_click', coordinate: [100, 200] });
-    expect(result.content[0].text).toContain('not configured');
+    expect((result.content[0] as { text: string }).text).toContain('not configured');
   });
 
   it('calls onScreenshot for screenshot action', async () => {
@@ -72,7 +72,7 @@ describe('defineComputerTool', () => {
     const tool = defineComputerTool({ onScreenshot });
     const result = await tool.handler({ action: 'screenshot' });
     expect(onScreenshot).toHaveBeenCalled();
-    expect(result.content[0].text).toBe('base64encodedpng==');
+    expect((result.content[0] as { text: string }).text).toBe('base64encodedpng==');
   });
 
   it('calls onAction for click/type actions', async () => {
@@ -80,7 +80,7 @@ describe('defineComputerTool', () => {
     const tool = defineComputerTool({ onAction });
     const result = await tool.handler({ action: 'type', text: 'hello world' });
     expect(onAction).toHaveBeenCalledWith('type', expect.objectContaining({ text: 'hello world' }));
-    expect(result.content[0].text).toContain('completed');
+    expect((result.content[0] as { text: string }).text).toContain('completed');
   });
 
   it('uses configured display dimensions', () => {
@@ -93,6 +93,6 @@ describe('defineComputerTool', () => {
       onAction: async () => { throw new Error('display error'); },
     });
     const result = await tool.handler({ action: 'left_click', coordinate: [0, 0] });
-    expect(result.content[0].text).toContain('display error');
+    expect((result.content[0] as { text: string }).text).toContain('display error');
   });
 });

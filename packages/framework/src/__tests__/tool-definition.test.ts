@@ -33,7 +33,7 @@ describe("toolDefinition builder", () => {
     const tool = toolDefinition("lookup").description("Lookup").server(handler).build();
 
     const result = await tool.handler({ id: "123" });
-    expect(result.content[0].text).toBe("found it");
+    expect((result.content[0] as { text: string }).text).toBe("found it");
     expect(handler).toHaveBeenCalledWith({ id: "123" });
   });
 

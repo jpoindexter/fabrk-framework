@@ -83,3 +83,11 @@ export interface WorkflowSuspendedResult {
 export type WorkflowResult =
   | { status: "completed"; output: string; stepResults: StepResult[]; durationMs: number }
   | WorkflowSuspendedResult;
+
+export interface WorkflowProgressEvent {
+  type: 'step-start' | 'step-complete' | 'step-error' | 'parallel-start' | 'parallel-complete';
+  stepName: string;
+  output?: unknown;
+  error?: string;
+  durationMs?: number;
+}

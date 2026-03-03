@@ -150,22 +150,22 @@ describe("Skills", () => {
       const skill = docsSearch({ dir: tmpDir });
       const tool = skill.tools[0];
       const result = await tool.handler({ query: "install" });
-      expect(result.content[0].text).toContain("getting-started.md");
-      expect(result.content[0].text).toContain("install");
+      expect((result.content[0] as { text: string }).text).toContain("getting-started.md");
+      expect((result.content[0] as { text: string }).text).toContain("install");
     });
 
     it("returns no results for non-matching query", async () => {
       const skill = docsSearch({ dir: tmpDir });
       const tool = skill.tools[0];
       const result = await tool.handler({ query: "zyxwvutsrqp" });
-      expect(result.content[0].text).toContain("No results found");
+      expect((result.content[0] as { text: string }).text).toContain("No results found");
     });
 
     it("handles non-existent directory", async () => {
       const skill = docsSearch({ dir: "/tmp/nonexistent-dir-xyz" });
       const tool = skill.tools[0];
       const result = await tool.handler({ query: "test" });
-      expect(result.content[0].text).toContain("not found");
+      expect((result.content[0] as { text: string }).text).toContain("not found");
     });
   });
 });

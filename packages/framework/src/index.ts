@@ -149,6 +149,19 @@ export { createToolExecutor } from "./agents/tool-executor";
 export { mockLLM, MockLLM, createTestAgent, calledTool, calledToolWith, respondedWith, costUnder, iterationsUnder, getToolCalls } from "./testing/index";
 export type { TestAgentOptions, TestAgentResult } from "./testing/index";
 
+// Tool lifecycle hooks
+export type { ToolExecutorHooks } from "./agents/tool-executor";
+
+// OpenTelemetry tracer
+export { initTracer, startSpan, getActiveSpan } from "./runtime/tracer";
+
+// Route type generation
+export { generateRouteTypes } from "./runtime/route-types-gen";
+
+// Typed navigation
+export { useParams, buildHref } from "./client/typed-navigation";
+export type { TypedLinkProps } from "./client/typed-navigation";
+
 // Built-in tools
 export { ragTool } from "./tools/builtins/rag";
 export type { RagResult, RagToolOptions } from "./tools/builtins/rag";

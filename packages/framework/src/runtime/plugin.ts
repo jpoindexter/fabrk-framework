@@ -7,6 +7,8 @@ import { handleRequest } from "./ssr-handler";
 import { nodeToWebRequest, writeWebResponse } from "./node-web-bridge";
 import { isImageRequest, handleImageRequest } from "./image-handler";
 import { loadFabrkConfig, type FabrkConfig } from "../config/fabrk-config";
+import { generateRouteTypes } from "./route-types-gen";
+import { initTracer } from "./tracer";
 
 const MIDDLEWARE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 
@@ -49,6 +51,8 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     },
 
     configureServer(server: ViteDevServer) {
+      initTracer("fabrk");
+
       let fabrkConfig: FabrkConfig = {};
       const configReady = loadFabrkConfig(root).then((c) => { fabrkConfig = c; });
 
@@ -57,8 +61,10 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
         if (!filePath.startsWith(appDirResolved)) return;
 
         const basename = path.basename(filePath, path.extname(filePath));
+        const fullBasename = path.basename(filePath);
+        const isIsland = /^island\.[a-zA-Z0-9_-]+\.(tsx|ts|jsx|js)$/.test(fullBasename);
         const watchedFiles = new Set(["page", "route", "layout", "error", "loading", "not-found", "global-error"]);
-        if (!watchedFiles.has(basename)) return;
+        if (!watchedFiles.has(basename) && !isIsland) return;
 
         routes = scanRoutes(appDirResolved);
         // eslint-disable-next-line no-console
@@ -112,12 +118,16 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       if (id === "virtual:fabrk/entry-ssr") return "\0virtual:fabrk/entry-ssr";
       if (id === "virtual:fabrk/entry-rsc") return "\0virtual:fabrk/entry-rsc";
       if (id === "virtual:fabrk/routes") return "\0virtual:fabrk/routes";
+      if (id === "virtual:fabrk/route-types") return "\0virtual:fabrk/route-types";
       return null;
     },
 
     load(id: string) {
       if (id === "\0virtual:fabrk/routes") {
         return generateRoutesModule(routes);
+      }
+      if (id === "\0virtual:fabrk/route-types") {
+        return generateRouteTypes(routes);
       }
       if (id === "\0virtual:fabrk/entry-client") {
         return ENTRY_CLIENT_CODE;

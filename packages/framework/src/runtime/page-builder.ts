@@ -42,6 +42,8 @@ export interface PageModules {
   }>;
   /** Parallel route slot components — maps slot name to component. */
   slots?: Record<string, React.ComponentType>;
+  /** Server island components — each rendered in its own Suspense boundary. */
+  islands?: Record<string, React.ComponentType>;
 }
 
 export interface BuildPageTreeOptions {
@@ -68,12 +70,29 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     notFoundFallback,
     globalErrorFallback,
     slots,
+    islands,
   } = modules;
 
   // We use React.createElement throughout to avoid JSX transform issues in SSR
 
-  // Innermost: the page component
-  let element: React.ReactElement = React.createElement(Page, { params, searchParams });
+  // Innermost: the page component + islands (each island in its own Suspense)
+  const children: React.ReactElement[] = [React.createElement(Page, { key: "__page", params, searchParams })];
+
+  if (islands) {
+    for (const [name, IslandComponent] of Object.entries(islands)) {
+      children.push(
+        React.createElement(
+          React.Suspense,
+          { key: `island-${name}`, fallback: null },
+          React.createElement(IslandComponent)
+        )
+      );
+    }
+  }
+
+  let element: React.ReactElement = children.length === 1
+    ? React.createElement(Page, { params, searchParams })
+    : React.createElement(React.Fragment, null, ...children);
 
   // Wrap in Suspense if loading.tsx exists
   if (loadingFallback) {

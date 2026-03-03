@@ -1,4 +1,5 @@
 import type { SkillDefinition } from "../skills/define-skill";
+import type { ToolExecutorHooks } from "./tool-executor";
 
 export interface AgentBudget {
   daily?: number;
@@ -22,6 +23,7 @@ export interface AgentDefinition {
   memory?: boolean | AgentMemoryConfig;
   agents?: Array<{ name: string; description: string }>;
   skills?: SkillDefinition[];
+  toolHooks?: ToolExecutorHooks;
 }
 
 export interface DefineAgentOptions {
@@ -35,6 +37,7 @@ export interface DefineAgentOptions {
   memory?: boolean | AgentMemoryConfig;
   agents?: Array<{ name: string; description: string }>;
   skills?: SkillDefinition[];
+  toolHooks?: ToolExecutorHooks;
 }
 
 export function defineAgent(options: DefineAgentOptions): AgentDefinition {
@@ -49,5 +52,6 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     memory: options.memory,
     agents: options.agents,
     skills: options.skills,
+    toolHooks: options.toolHooks,
   };
 }

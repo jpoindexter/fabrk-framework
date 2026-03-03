@@ -8,7 +8,7 @@ export interface AICostEvent {
   id: string;
   timestamp: Date;
   model: string;
-  provider: 'anthropic' | 'openai' | 'other';
+  provider: string;
   promptTokens: number;
   completionTokens: number;
   totalTokens: number;

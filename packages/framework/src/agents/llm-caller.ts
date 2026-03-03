@@ -37,6 +37,23 @@ export async function callLLM(
 }
 
 async function resolveGenerateWithTools(bridge: LLMBridge) {
+  // Try registry first
+  try {
+    const { getProviderByKey } = await import("@fabrk/ai");
+    const adapter = getProviderByKey(bridge.provider);
+    if (adapter) {
+      return adapter.makeGenerateWithTools({
+        openaiModel: bridge.resolvedModel,
+        anthropicModel: bridge.resolvedModel,
+        // Pass resolved model via _model for registry adapters
+        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
+      });
+    }
+  } catch {
+    // Fall through to hardcoded providers
+  }
+
+  // Fallback for core providers
   if (bridge.provider === "anthropic") {
     const { anthropicGenerateWithTools } = await import("@fabrk/ai");
     return (msgs: LLMMessage[], tools: never[]) =>

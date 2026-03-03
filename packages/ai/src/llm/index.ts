@@ -1,18 +1,3 @@
-/**
- * Unified LLM provider abstraction
- *
- * @example
- * ```ts
- * import { getLLMClient } from '@fabrk/ai'
- *
- * const client = getLLMClient({ provider: 'openai' })
- * const response = await client.generate({
- *   system: 'You are a helpful assistant.',
- *   prompt: 'What is TypeScript?',
- * })
- * ```
- */
-
 export { getLLMClient } from './factory'
 export { OpenAIClient } from './openai-client'
 export { AnthropicClient } from './anthropic-client'
@@ -58,3 +43,25 @@ export {
 } from './ollama-tools'
 
 export { generateObject } from './generate-object'
+
+export type { ProviderAdapter } from './registry'
+
+export {
+  registerProvider,
+  getProvider,
+  getProviderByKey,
+  listProviders,
+} from './registry'
+
+export { makeOpenAICompatAdapter } from './openai-compat'
+export type { OpenAICompatOptions } from './openai-compat'
+
+export {
+  generateWithTools as cohereGenerateWithTools,
+  streamWithTools as cohereStreamWithTools,
+} from './cohere-tools'
+
+export {
+  generateWithTools as bedrockGenerateWithTools,
+  streamWithTools as bedrockStreamWithTools,
+} from './bedrock-tools'

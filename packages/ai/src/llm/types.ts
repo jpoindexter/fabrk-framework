@@ -22,7 +22,21 @@ export interface LLMClient {
 export type TaskComplexity = 'simple' | 'complex'
 
 /** Supported LLM providers */
-export type LLMProvider = 'openai' | 'anthropic' | 'google' | 'ollama'
+export type LLMProvider =
+  | 'openai'
+  | 'anthropic'
+  | 'google'
+  | 'ollama'
+  | 'azure'
+  | 'groq'
+  | 'together'
+  | 'fireworks'
+  | 'deepseek'
+  | 'xai'
+  | 'perplexity'
+  | 'mistral'
+  | 'cohere'
+  | 'bedrock'
 
 export interface LLMConfig {
   provider: LLMProvider
@@ -38,6 +52,12 @@ export interface LLMConfig {
   temperature?: number
   /** Request timeout in ms */
   timeoutMs?: number
+  /** Override API key for any provider */
+  providerApiKey?: string
+  /** Override base URL for OpenAI-compatible providers */
+  providerBaseUrl?: string
+  /** Provider-specific options (e.g., AWS region, API version) */
+  providerOptions?: Record<string, unknown>
 }
 
 /** JSON Schema object for structured output */
@@ -54,7 +74,7 @@ export interface GenerateObjectResult<T = unknown> {
 export const MAX_TOKENS_LIMIT = 100_000
 
 /** Default LLM configuration values */
-export const LLM_DEFAULTS: Required<Omit<LLMConfig, 'openaiApiKey' | 'anthropicApiKey' | 'googleApiKey'>> = {
+export const LLM_DEFAULTS: Required<Omit<LLMConfig, 'openaiApiKey' | 'anthropicApiKey' | 'googleApiKey' | 'providerApiKey' | 'providerBaseUrl' | 'providerOptions'>> = {
   provider: 'openai',
   openaiModel: 'gpt-4o',
   anthropicModel: 'claude-sonnet-4-5-20250929',

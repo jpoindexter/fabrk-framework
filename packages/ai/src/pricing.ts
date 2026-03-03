@@ -1,7 +1,7 @@
 /** AI model pricing per 1K tokens. Update as providers change rates. */
 export const MODEL_PRICING: Record<
   string,
-  { input: number; output: number; provider: 'anthropic' | 'openai' | 'other' }
+  { input: number; output: number; provider: string }
 > = {
   // Anthropic Claude models
   'claude-sonnet-4-20250514': {
@@ -131,6 +131,73 @@ export const MODEL_PRICING: Record<
     output: 0,
     provider: 'openai',
   },
+
+  // DeepSeek
+  'deepseek-chat': {
+    input: 0.00014,
+    output: 0.00028,
+    provider: 'deepseek',
+  },
+  'deepseek-reasoner': {
+    input: 0.00055,
+    output: 0.00219,
+    provider: 'deepseek',
+  },
+
+  // Mistral
+  'mistral-large-latest': {
+    input: 0.002,
+    output: 0.006,
+    provider: 'mistral',
+  },
+  'mistral-small-latest': {
+    input: 0.0002,
+    output: 0.0006,
+    provider: 'mistral',
+  },
+  'codestral-latest': {
+    input: 0.0003,
+    output: 0.0009,
+    provider: 'mistral',
+  },
+
+  // Cohere
+  'command-r-plus': {
+    input: 0.0025,
+    output: 0.01,
+    provider: 'cohere',
+  },
+  'command-r': {
+    input: 0.00015,
+    output: 0.0006,
+    provider: 'cohere',
+  },
+
+  // xAI / Grok
+  'grok-3': {
+    input: 0.003,
+    output: 0.015,
+    provider: 'xai',
+  },
+  'grok-3-mini': {
+    input: 0.0003,
+    output: 0.0005,
+    provider: 'xai',
+  },
+
+  // Groq (inference pricing, not model training)
+  'llama-3.3-70b-versatile': {
+    input: 0.00059,
+    output: 0.00079,
+    provider: 'groq',
+  },
+
+  // Perplexity Sonar
+  'llama-3.1-sonar-large-128k-online': {
+    input: 0.001,
+    output: 0.001,
+    provider: 'perplexity',
+  },
 };
 
 /**
@@ -140,7 +207,7 @@ export function calculateCost(
   model: string,
   promptTokens: number,
   completionTokens: number
-): { costUSD: number; provider: 'anthropic' | 'openai' | 'other' } {
+): { costUSD: number; provider: string } {
   if (promptTokens < 0 || completionTokens < 0) {
     throw new Error('Token counts must be non-negative');
   }

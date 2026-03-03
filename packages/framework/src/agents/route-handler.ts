@@ -83,6 +83,54 @@ function agentLoopEventToSSE(event: AgentLoopEvent): SSEEvent | null {
   }
 }
 
+async function resolveGenerateFn(bridge: { provider: string; resolvedModel: string }) {
+  try {
+    const { getProviderByKey } = await import("@fabrk/ai");
+    const adapter = getProviderByKey(bridge.provider);
+    if (adapter) {
+      return adapter.makeGenerateWithTools({
+        openaiModel: bridge.resolvedModel,
+        anthropicModel: bridge.resolvedModel,
+        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
+      });
+    }
+  } catch {
+    // Fall through to core providers
+  }
+  if (bridge.provider === "anthropic") {
+    const { anthropicGenerateWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+      anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
+  }
+  const { openaiGenerateWithTools } = await import("@fabrk/ai");
+  return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+    openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
+}
+
+async function resolveStreamFn(bridge: { provider: string; resolvedModel: string }) {
+  try {
+    const { getProviderByKey } = await import("@fabrk/ai");
+    const adapter = getProviderByKey(bridge.provider);
+    if (adapter) {
+      return adapter.makeStreamWithTools({
+        openaiModel: bridge.resolvedModel,
+        anthropicModel: bridge.resolvedModel,
+        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
+      });
+    }
+  } catch {
+    // Fall through to core providers
+  }
+  if (bridge.provider === "anthropic") {
+    const { anthropicStreamWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+      anthropicStreamWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
+  }
+  const { openaiStreamWithTools } = await import("@fabrk/ai");
+  return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+    openaiStreamWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
+}
+
 export function createAgentHandler(options: AgentHandlerOptions) {
   const authGuard = createAuthGuard(options.auth);
   const agentName = options.model.split("/").pop() || "agent";
@@ -174,47 +222,13 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         const getGenerateWithTools = async () => {
           if (options._generateWithTools) return options._generateWithTools;
           const bridge = createLLMBridge({ model: options.model });
-          if (bridge.provider === "anthropic") {
-            const { anthropicGenerateWithTools } = await import("@fabrk/ai");
-            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-              anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
-          }
-          if (bridge.provider === "google") {
-            const { googleGenerateWithTools } = await import("@fabrk/ai");
-            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-              googleGenerateWithTools(msgs, tools, { googleModel: bridge.resolvedModel });
-          }
-          if (bridge.provider === "ollama") {
-            const { ollamaGenerateWithTools } = await import("@fabrk/ai");
-            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-              ollamaGenerateWithTools(msgs, tools, { ollamaModel: bridge.resolvedModel });
-          }
-          const { openaiGenerateWithTools } = await import("@fabrk/ai");
-          return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-            openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
+          return resolveGenerateFn(bridge);
         };
 
         const getStreamWithTools = async () => {
           if (options._streamWithTools) return options._streamWithTools;
           const bridge = createLLMBridge({ model: options.model });
-          if (bridge.provider === "anthropic") {
-            const { anthropicStreamWithTools } = await import("@fabrk/ai");
-            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-              anthropicStreamWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
-          }
-          if (bridge.provider === "google") {
-            const { googleStreamWithTools } = await import("@fabrk/ai");
-            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-              googleStreamWithTools(msgs, tools, { googleModel: bridge.resolvedModel });
-          }
-          if (bridge.provider === "ollama") {
-            const { ollamaStreamWithTools } = await import("@fabrk/ai");
-            return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-              ollamaStreamWithTools(msgs, tools, { ollamaModel: bridge.resolvedModel });
-          }
-          const { openaiStreamWithTools } = await import("@fabrk/ai");
-          return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-            openaiStreamWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
+          return resolveStreamFn(bridge);
         };
 
         const getCalculateCost = async () => {

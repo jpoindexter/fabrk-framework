@@ -199,6 +199,46 @@ describe("Phase 1 Bug Fixes", () => {
     });
   });
 
+  describe("no-tools streaming path persists memory", () => {
+    it("saves user and assistant messages to memory store", async () => {
+      const store = new InMemoryMemoryStore();
+      const thread = await store.createThread("test-model");
+
+      const handler = createAgentHandler({
+        model: "test-model",
+        auth: "none",
+        stream: true,
+        memory: true,
+        memoryStore: store,
+        _llmCall: async () => ({
+          content: "Streamed response",
+          usage: { promptTokens: 10, completionTokens: 5 },
+          cost: 0.001,
+        }),
+      });
+
+      const req = new Request("http://localhost/api/agents/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: "Hello stream" }],
+          threadId: thread.id,
+        }),
+      });
+
+      const res = await handler(req);
+      await res.text();
+      await new Promise((r) => setTimeout(r, 100));
+
+      const messages = await store.getMessages(thread.id);
+      expect(messages.length).toBe(2);
+      expect(messages[0].role).toBe("user");
+      expect(messages[0].content).toBe("Hello stream");
+      expect(messages[1].role).toBe("assistant");
+      expect(messages[1].content).toBe("Streamed response");
+    });
+  });
+
   describe("delegation depth reads from parent request", () => {
     it("increments depth from parent request header", async () => {
       let capturedReq: Request | null = null;
@@ -266,6 +306,25 @@ describe("Phase 1 Bug Fixes", () => {
       });
 
       expect(def.maxDelegations).toBe(10);
+    });
+
+    it("returns actual ToolDefinition objects in toolDefinitions", () => {
+      const def = defineSupervisor({
+        name: "sup",
+        model: "gpt-4o",
+        agents: [
+          { name: "writer", description: "Writes content" },
+          { name: "reviewer", description: "Reviews content" },
+        ],
+        strategy: "planner",
+        handlerFactory: async () => async () => new Response(""),
+      });
+
+      expect(def.toolDefinitions).toHaveLength(2);
+      expect(def.toolDefinitions[0].name).toBe("writer");
+      expect(def.toolDefinitions[1].name).toBe("reviewer");
+      expect(typeof def.toolDefinitions[0].handler).toBe("function");
+      expect(typeof def.toolDefinitions[1].handler).toBe("function");
     });
   });
 

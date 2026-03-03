@@ -1,4 +1,5 @@
 import type { LLMBridge } from "./llm-bridge";
+import type { LLMMessage } from "@fabrk/ai";
 
 export interface LLMCallResult {
   content: string;
@@ -12,46 +13,38 @@ export async function callLLM(
   bridge: LLMBridge,
   messages: Message[]
 ): Promise<LLMCallResult> {
-  const { ai, calculateModelCost } = await import("@fabrk/ai");
+  const { calculateModelCost } = await import("@fabrk/ai");
 
-  // Build a single prompt from the full conversation history
-  // so multi-turn context is preserved
-  const systemMessage = messages.find((m) => m.role === "system");
-  const conversationMessages = messages.filter((m) => m.role !== "system");
+  const llmMessages: LLMMessage[] = messages.map((m) => ({
+    role: m.role as LLMMessage["role"],
+    content: m.content,
+  }));
 
-  const conversationPrompt = conversationMessages
-    .map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
-    .join("\n\n");
-
-  const result = await ai.generate({
-    prompt: conversationPrompt,
-    feature: `agent:${bridge.resolvedModel}`,
-    model: bridge.resolvedModel,
-    systemPrompt: systemMessage?.content,
-  });
-
-  if (!result.success) {
-    throw new Error(result.error?.message ?? "LLM call failed");
-  }
-
-  const promptTokens = Math.ceil(
-    messages.reduce((sum, m) => sum + m.content.length, 0) / 4
-  );
-  const completionTokens = Math.ceil(
-    (result.data?.content.length ?? 0) / 4
-  );
+  const generateFn = await resolveGenerateWithTools(bridge);
+  const result = await generateFn(llmMessages, []);
 
   const { costUSD } = calculateModelCost(
     bridge.resolvedModel,
-    promptTokens,
-    completionTokens
+    result.usage.promptTokens,
+    result.usage.completionTokens
   );
 
   return {
-    content: result.data?.content ?? "",
-    usage: { promptTokens, completionTokens },
+    content: result.content ?? "",
+    usage: result.usage,
     cost: costUSD,
   };
+}
+
+async function resolveGenerateWithTools(bridge: LLMBridge) {
+  if (bridge.provider === "anthropic") {
+    const { anthropicGenerateWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: never[]) =>
+      anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
+  }
+  const { openaiGenerateWithTools } = await import("@fabrk/ai");
+  return (msgs: LLMMessage[], tools: never[]) =>
+    openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
 }
 
 export async function callWithFallback(

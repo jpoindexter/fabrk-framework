@@ -8,10 +8,6 @@ import {
   NAVIGATE_EVENT,
 } from "./navigation-state";
 
-// ---------------------------------------------------------------------------
-// usePathname — reactive current pathname
-// ---------------------------------------------------------------------------
-
 function subscribePathname(callback: () => void): () => void {
   window.addEventListener("popstate", callback);
   window.addEventListener(NAVIGATE_EVENT, callback);
@@ -33,10 +29,6 @@ export function usePathname(): string {
   return useSyncExternalStore(subscribePathname, getPathname, getServerPathname);
 }
 
-// ---------------------------------------------------------------------------
-// useSearchParams — reactive URLSearchParams
-// ---------------------------------------------------------------------------
-
 function getSearch(): string {
   return typeof window !== "undefined" ? window.location.search : "";
 }
@@ -49,10 +41,6 @@ export function useSearchParams(): URLSearchParams {
   const search = useSyncExternalStore(subscribePathname, getSearch, getServerSearch);
   return new URLSearchParams(search);
 }
-
-// ---------------------------------------------------------------------------
-// useParams — route params set by the router
-// ---------------------------------------------------------------------------
 
 function getParams(): Record<string, string> {
   return typeof window !== "undefined"
@@ -68,10 +56,6 @@ export function useParams(): Record<string, string> {
   return useSyncExternalStore(subscribePathname, getParams, getServerParams);
 }
 
-// ---------------------------------------------------------------------------
-// useRouter — imperative navigation
-// ---------------------------------------------------------------------------
-
 export interface FabrkRouter {
   push(url: string, options?: NavigateOptions): void;
   replace(url: string, options?: NavigateOptions): void;
@@ -85,14 +69,24 @@ export interface NavigateOptions {
   scroll?: boolean;
 }
 
+function isSafeUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin === window.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 async function navigateImpl(
   url: string,
   mode: "push" | "replace",
   options?: NavigateOptions
 ): Promise<void> {
+  if (!isSafeUrl(url)) return;
+
   const scroll = options?.scroll ?? true;
 
-  // Save scroll position before navigation
   const currentState = history.state ?? {};
   history.replaceState(
     { ...currentState, __fabrkScrollY: window.scrollY },
@@ -105,33 +99,25 @@ async function navigateImpl(
     history.replaceState({}, "", url);
   }
 
-  // If RSC navigation is available, use it (Phase 5 wires this up)
   if (window.__FABRK_RSC_NAVIGATE__) {
     await window.__FABRK_RSC_NAVIGATE__(url);
   } else {
-    // Fallback: fetch full HTML
     const cached = getPrefetchResponse(url);
     if (!cached) {
       try {
         const res = await fetch(url, {
-          headers: { "X-Fabrk-Navigate": "1" },
+          headers: { "X-Fabrk-Navigate": "1", "X-Fabrk-Navigation": "soft" },
         });
-        if (!res.ok) {
-          // Fall back to full page load
-          window.location.href = url;
-          return;
+        if (res.ok) {
+          storePrefetchResponse(url, await res.text());
         }
-        // For non-RSC mode, trigger full page navigation
-        // RSC mode (Phase 5) will handle DOM updates via React re-render
-        window.location.href = url;
-        return;
-      } catch {
-        window.location.href = url;
-        return;
-      }
+      } catch { /* hard navigation is the fallback for RSC-less mode */ }
+      window.location.href = url;
+      return;
     }
   }
 
+  window.dispatchEvent(new CustomEvent(NAVIGATE_EVENT));
   if (scroll) {
     window.scrollTo(0, 0);
   }
@@ -139,24 +125,21 @@ async function navigateImpl(
 
 export function prefetchUrl(url: string): void {
   if (getPrefetchResponse(url)) return;
+  if (!isSafeUrl(url)) return;
 
-  // Use requestIdleCallback for non-blocking prefetch
   const schedule =
     typeof requestIdleCallback !== "undefined" ? requestIdleCallback : setTimeout;
 
   schedule(() => {
     fetch(url, {
-      headers: { "X-Fabrk-Prefetch": "1" },
+      headers: { "X-Fabrk-Prefetch": "1", "X-Fabrk-Navigation": "soft" },
     })
       .then(async (res) => {
         if (res.ok) {
-          const html = await res.text();
-          storePrefetchResponse(url, html);
+          storePrefetchResponse(url, await res.text());
         }
       })
-      .catch(() => {
-        // Prefetch failure is not critical
-      });
+      .catch(() => {});
   });
 }
 
@@ -184,10 +167,6 @@ export function useRouter(): FabrkRouter {
 
   return routerRef.current;
 }
-
-// ---------------------------------------------------------------------------
-// useLinkStatus — pending state during navigation
-// ---------------------------------------------------------------------------
 
 let navigating = false;
 const navListeners = new Set<() => void>();

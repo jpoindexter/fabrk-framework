@@ -1,9 +1,5 @@
 import { buildSecurityHeaders } from "../middleware/security";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface ServerActionRegistry {
   /** Register a server action function by ID. */
   register(id: string, fn: (...args: unknown[]) => Promise<unknown>): void;
@@ -13,13 +9,7 @@ export interface ServerActionRegistry {
   has(id: string): boolean;
 }
 
-// ---------------------------------------------------------------------------
-// Registry
-// ---------------------------------------------------------------------------
-
 /**
- * Create a server action registry.
- *
  * Server actions are functions marked with `"use server"` that can be
  * called from the client via RSC or form submissions.
  *
@@ -51,10 +41,6 @@ export function createActionRegistry(): ServerActionRegistry {
   };
 }
 
-// ---------------------------------------------------------------------------
-// CSRF validation
-// ---------------------------------------------------------------------------
-
 /**
  * Validate that the request Origin matches the Host to prevent CSRF.
  *
@@ -79,10 +65,6 @@ export function validateCsrf(request: Request): boolean {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Request handler
-// ---------------------------------------------------------------------------
-
 /**
  * Handle a server action request.
  *
@@ -96,7 +78,6 @@ export async function handleServerAction(
   request: Request,
   registry: ServerActionRegistry,
 ): Promise<Response> {
-  // CSRF check
   if (!validateCsrf(request)) {
     return new Response(
       JSON.stringify({ error: "CSRF validation failed" }),
@@ -110,12 +91,10 @@ export async function handleServerAction(
     );
   }
 
-  // Extract action ID
   let actionId = request.headers.get("x-action-id");
   let args: unknown[] = [];
 
   if (!actionId) {
-    // Try form data
     const contentType = request.headers.get("content-type") ?? "";
     if (
       contentType.includes("multipart/form-data") ||
@@ -126,7 +105,6 @@ export async function handleServerAction(
         actionId = formData.get("$ACTION_ID") as string | null;
 
         if (actionId) {
-          // Convert form data to plain object (excluding the action ID)
           const data: Record<string, FormDataEntryValue> = {};
           formData.forEach((value, key) => {
             if (key !== "$ACTION_ID") data[key] = value;
@@ -149,7 +127,6 @@ export async function handleServerAction(
   }
 
   if (!actionId) {
-    // Try JSON body
     try {
       const body = await request.json();
       actionId = body.actionId as string;

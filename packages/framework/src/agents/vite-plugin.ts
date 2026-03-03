@@ -102,10 +102,19 @@ export function agentPlugin(): Plugin {
             }
 
             // Resolve tool definitions — match agent's tool names to loaded tools
+            // Merge: scanned tools + supervisor toolDefinitions + skill toolDefinitions
             const agentToolNames: string[] = agentDef.tools ?? [];
-            const toolDefs = agentToolNames.length > 0
+            const supervisorToolDefs: ToolDefinition[] = agentDef.toolDefinitions ?? [];
+            const skillToolDefs: ToolDefinition[] = agentDef.skillToolDefinitions ?? [];
+            const scannedToolDefs = agentToolNames.length > 0
               ? loadedTools.filter((t) => agentToolNames.includes(t.name))
               : [];
+            // Deduplicate by name — supervisor/skill defs take precedence over scanned
+            const toolMap = new Map<string, ToolDefinition>();
+            for (const t of scannedToolDefs) toolMap.set(t.name, t);
+            for (const t of skillToolDefs) toolMap.set(t.name, t);
+            for (const t of supervisorToolDefs) toolMap.set(t.name, t);
+            const toolDefs = Array.from(toolMap.values());
 
             // Apply config defaults
             const defaultModel = fabrkConfig.ai?.defaultModel;

@@ -4,6 +4,42 @@ import { buildSecurityHeaders } from "../../middleware/security";
 const JSONRPC_VERSION = "2.0";
 const PROTOCOL_VERSION = "2024-11-05";
 
+const DEFAULT_RATE_LIMIT = 60;
+const DEFAULT_RATE_WINDOW_MS = 60_000;
+const MAX_IPS = 10_000;
+const MAX_REQUEST_BYTES = 1024 * 1024;
+
+class RateLimiter {
+  private buckets = new Map<string, { count: number; resetAt: number }>();
+  constructor(private limit = DEFAULT_RATE_LIMIT, private windowMs = DEFAULT_RATE_WINDOW_MS) {}
+
+  check(ip: string): { allowed: boolean; remaining: number; resetAt: number } {
+    const now = Date.now();
+    let bucket = this.buckets.get(ip);
+
+    if (!bucket || now >= bucket.resetAt) {
+      if (this.buckets.size >= MAX_IPS) {
+        for (const [key, b] of this.buckets) {
+          if (now >= b.resetAt) { this.buckets.delete(key); break; }
+        }
+        if (this.buckets.size >= MAX_IPS) {
+          const oldest = this.buckets.keys().next();
+          if (!oldest.done) this.buckets.delete(oldest.value);
+        }
+      }
+      bucket = { count: 0, resetAt: now + this.windowMs };
+      this.buckets.set(ip, bucket);
+    }
+
+    bucket.count++;
+    return {
+      allowed: bucket.count <= this.limit,
+      remaining: Math.max(0, this.limit - bucket.count),
+      resetAt: bucket.resetAt,
+    };
+  }
+}
+
 export interface MCPServer {
   name: string;
   version: string;
@@ -39,8 +75,11 @@ export function createMCPServer(options: {
   name: string;
   version: string;
   tools: ToolDefinition[];
+  rateLimit?: number;
+  rateLimitWindowMs?: number;
 }): MCPServer {
   const toolMap = new Map(options.tools.map((t) => [t.name, t]));
+  const limiter = new RateLimiter(options.rateLimit, options.rateLimitWindowMs);
 
   async function handleRequest(jsonRpc: unknown): Promise<unknown> {
     if (!isJsonRpc(jsonRpc)) {
@@ -100,9 +139,27 @@ export function createMCPServer(options: {
     }
   }
 
-  const MAX_REQUEST_BYTES = 1024 * 1024; // 1 MB
-
   async function httpHandler(req: Request): Promise<Response> {
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      ?? req.headers.get("x-real-ip")
+      ?? "unknown";
+    const rateResult = limiter.check(clientIp);
+    if (!rateResult.allowed) {
+      return new Response(
+        JSON.stringify(rpcError(undefined, -32600, "Rate limit exceeded")),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(Math.ceil((rateResult.resetAt - Date.now()) / 1000)),
+            "X-RateLimit-Limit": String(options.rateLimit ?? DEFAULT_RATE_LIMIT),
+            "X-RateLimit-Remaining": "0",
+            ...buildSecurityHeaders(),
+          },
+        },
+      );
+    }
+
     if (req.method !== "POST") {
       return new Response(JSON.stringify(rpcError(undefined, -32600, "POST required")), {
         status: 405,
@@ -110,7 +167,6 @@ export function createMCPServer(options: {
       });
     }
 
-    // Validate Content-Length if present
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_BYTES) {
       return new Response(

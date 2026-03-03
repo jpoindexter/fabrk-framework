@@ -24,15 +24,42 @@ interface ErrorRecord {
   error: string;
 }
 
+/** Fixed-capacity ring buffer — O(1) insert, O(N) snapshot for reads (acceptable for dashboard polling). */
+class RingBuffer<T> {
+  private buf: T[];
+  private head = 0;
+  private count = 0;
+
+  constructor(private capacity: number) {
+    this.buf = new Array(capacity);
+  }
+
+  push(item: T): void {
+    this.buf[this.head] = item;
+    this.head = (this.head + 1) % this.capacity;
+    if (this.count < this.capacity) this.count++;
+  }
+
+  toArray(): T[] {
+    if (this.count === 0) return [];
+    if (this.count < this.capacity) return this.buf.slice(0, this.count);
+    return [...this.buf.slice(this.head), ...this.buf.slice(0, this.head)];
+  }
+
+  get length(): number {
+    return this.count;
+  }
+}
+
 let agentCount = 0;
 let toolCount = 0;
 let skillCount = 0;
 let threadCount = 0;
 let maxDelegationDepth = 0;
 let mcpExposed = false;
-let calls: CallRecord[] = [];
-let toolCalls: ToolCallRecord[] = [];
-let errors: ErrorRecord[] = [];
+const calls = new RingBuffer<CallRecord>(100);
+const toolCalls = new RingBuffer<ToolCallRecord>(200);
+const errors = new RingBuffer<ErrorRecord>(100);
 let totalCost = 0;
 
 export function setAgents(count: number) {
@@ -64,17 +91,14 @@ export function recordCall(record: CallRecord) {
   if (Number.isFinite(record.cost)) {
     totalCost += record.cost;
   }
-  if (calls.length > 100) calls = calls.slice(-100);
 }
 
 export function recordToolCall(record: ToolCallRecord) {
   toolCalls.push(record);
-  if (toolCalls.length > 200) toolCalls = toolCalls.slice(-200);
 }
 
 export function recordError(record: ErrorRecord) {
   errors.push(record);
-  if (errors.length > 100) errors = errors.slice(-100);
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +108,7 @@ export function recordError(record: ErrorRecord) {
 function getCostTrends(): Array<{ hour: string; cost: number; calls: number; byAgent: Record<string, number> }> {
   const buckets = new Map<string, { cost: number; calls: number; byAgent: Record<string, number> }>();
 
-  for (const c of calls) {
+  for (const c of calls.toArray()) {
     const d = new Date(c.timestamp);
     const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:00`;
     let bucket = buckets.get(key);
@@ -105,7 +129,7 @@ function getCostTrends(): Array<{ hour: string; cost: number; calls: number; byA
 function getToolStats(): Array<{ tool: string; count: number; avgMs: number; agents: string[] }> {
   const stats = new Map<string, { count: number; totalMs: number; agents: Set<string> }>();
 
-  for (const tc of toolCalls) {
+  for (const tc of toolCalls.toArray()) {
     let s = stats.get(tc.tool);
     if (!s) {
       s = { count: 0, totalMs: 0, agents: new Set() };
@@ -128,10 +152,11 @@ function getToolStats(): Array<{ tool: string; count: number; avgMs: number; age
 
 function getErrorStats(): { total: number; byAgent: Record<string, number>; recent: ErrorRecord[] } {
   const byAgent: Record<string, number> = {};
-  for (const e of errors) {
+  for (const e of errors.toArray()) {
     byAgent[e.agent] = (byAgent[e.agent] ?? 0) + 1;
   }
-  return { total: errors.length, byAgent, recent: errors.slice(-20).reverse() };
+  const all = errors.toArray();
+  return { total: all.length, byAgent, recent: all.slice(-20).reverse() };
 }
 
 function generateDashboardHtml(): string {
@@ -369,8 +394,14 @@ function generateDashboardHtml(): string {
       URL.revokeObjectURL(url);
     });
 
-    refresh();
-    setInterval(refresh, 2000);
+    var refreshPending = false;
+    function debouncedRefresh() {
+      if (refreshPending) return;
+      refreshPending = true;
+      refresh().finally(function() { refreshPending = false; });
+    }
+    debouncedRefresh();
+    setInterval(debouncedRefresh, 2000);
   </script>
 </body>
 </html>`;
@@ -413,9 +444,9 @@ export function dashboardPlugin(): Plugin {
                 agents: agentCount,
                 tools: toolCount,
                 totalCost,
-                calls,
-                toolCalls,
-                errors,
+                calls: calls.toArray(),
+                toolCalls: toolCalls.toArray(),
+                errors: errors.toArray(),
                 costTrends: getCostTrends(),
                 toolStats: getToolStats(),
                 errorStats: getErrorStats(),
@@ -436,8 +467,8 @@ export function dashboardPlugin(): Plugin {
                 threads: threadCount,
                 maxDelegationDepth,
                 mcpExposed,
-                calls,
-                toolCalls,
+                calls: calls.toArray(),
+                toolCalls: toolCalls.toArray(),
                 totalCost,
                 costTrends: getCostTrends(),
                 toolStats: getToolStats(),

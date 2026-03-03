@@ -1,9 +1,5 @@
 import { buildSecurityHeaders } from "../middleware/security";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface MiddlewareResult {
   /** If false, the response is returned directly (short-circuit). */
   continue: boolean;
@@ -26,17 +22,10 @@ export type MiddlewareHandler = (
   request: Request,
 ) => Promise<Response | MiddlewareResult | null | void>;
 
-// ---------------------------------------------------------------------------
-// Matcher compilation
-// ---------------------------------------------------------------------------
-
 /**
  * Compile a matcher pattern to a RegExp.
  *
- * Supported syntax:
- * - `/dashboard` — exact prefix match
- * - `/api/:path*` — wildcard segment (matches rest of path)
- * - `/blog/:slug` — single dynamic segment
+ * Supports: exact strings, * globs, :param segments
  *
  * Rejects patterns with nested quantifiers (ReDoS protection).
  */
@@ -47,15 +36,10 @@ export function compileMatcher(pattern: string): RegExp {
     );
   }
 
-  // Normalize: remove trailing slash (except root)
   let normalized = pattern === "/" ? "/" : pattern.replace(/\/+$/, "");
-
-  // Replace :param* with (.+) for wildcard
   normalized = normalized.replace(/:[\w]+\*/g, "(.+)");
-  // Replace :param with ([^/]+) for single segment
   normalized = normalized.replace(/:[\w]+/g, "([^/]+)");
 
-  // Anchor to start, allow trailing slash
   return new RegExp(`^${normalized}(?:\\/)?$`);
 }
 
@@ -71,26 +55,16 @@ export function matchesMiddleware(
   return matchers.some((re) => re.test(pathname));
 }
 
-// ---------------------------------------------------------------------------
-// ReDoS protection
-// ---------------------------------------------------------------------------
-
 /**
  * Detect patterns that could cause catastrophic backtracking:
  * - Adjacent quantifiers: `a**`, `a+*`, `a?+`
  * - Quantified groups containing quantifiers: `(a+)+`, `(a*)*`
  */
 function hasNestedQuantifiers(pattern: string): boolean {
-  // Direct adjacent quantifiers
   if (/[+*?}]\s*[+*?{]/.test(pattern)) return true;
-  // Quantifier after closing paren of a group that contains a quantifier
   if (/\([^)]*[+*?]\)[+*?{]/.test(pattern)) return true;
   return false;
 }
-
-// ---------------------------------------------------------------------------
-// Middleware runner
-// ---------------------------------------------------------------------------
 
 /**
  * Run a middleware handler and normalize the result into a Response or null.
@@ -118,17 +92,14 @@ export async function runMiddleware(
 
   const result = await handler(request);
 
-  // null/undefined → continue
   if (result == null) {
     return { response: null };
   }
 
-  // Direct Response
   if (result instanceof Response) {
     return { response: result };
   }
 
-  // MiddlewareResult object
   if (result.response) {
     return { response: result.response, responseHeaders: result.responseHeaders };
   }
@@ -169,18 +140,11 @@ export async function runMiddleware(
   };
 }
 
-// ---------------------------------------------------------------------------
-// Middleware module loader
-// ---------------------------------------------------------------------------
-
 export interface MiddlewareModule {
   default: MiddlewareHandler;
   config?: MiddlewareConfig;
 }
 
-/**
- * Extract handler and compiled matchers from a loaded middleware module.
- */
 export function extractMiddleware(mod: MiddlewareModule): {
   handler: MiddlewareHandler;
   matchers: RegExp[] | undefined;

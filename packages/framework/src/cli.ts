@@ -119,6 +119,9 @@ async function build(): Promise<void> {
   // eslint-disable-next-line no-console
   console.log(`\n  fabrk build v${VERSION} (target: ${target})\n`);
 
+  const { loadFabrkConfig } = await import("./config/fabrk-config");
+  const fabrkConfig = await loadFabrkConfig(root);
+
   const { build: viteBuild } = await import("vite");
   const { fabrkPlugin, agentPlugin, dashboardPlugin, userConfigPath } =
     await loadFabrkViteConfig(root);
@@ -129,7 +132,7 @@ async function build(): Promise<void> {
 
   // Step 1: Client build → dist/client/
   // eslint-disable-next-line no-console
-  console.log("  [1/5] Building client bundle...");
+  console.log("  [1/6] Building client bundle...");
   await viteBuild({
     configFile: userConfigPath ?? false,
     root,
@@ -147,7 +150,7 @@ async function build(): Promise<void> {
 
     if (routes.length > 0) {
       // eslint-disable-next-line no-console
-      console.log("  [2/5] Building server bundle...");
+      console.log("  [2/6] Building server bundle...");
 
       const { generateServerEntry } = await import("./runtime/server-entry-gen");
       const entrySource = generateServerEntry(routes, appDir);
@@ -215,16 +218,16 @@ export default { fetch: handler.fetch };
       }
     } else {
       // eslint-disable-next-line no-console
-      console.log("  [2/5] No routes found, skipping server build.");
+      console.log("  [2/6] No routes found, skipping server build.");
     }
   } else {
     // eslint-disable-next-line no-console
-    console.log("  [2/5] No app/ directory, skipping server build.");
+    console.log("  [2/6] No app/ directory, skipping server build.");
   }
 
   // Step 3: Static generation (pre-render eligible pages)
   // eslint-disable-next-line no-console
-  console.log("  [3/5] Static generation...");
+  console.log("  [3/6] Static generation...");
   const serverDir = path.join(root, "dist", "server");
   if (fs.existsSync(serverDir)) {
     try {
@@ -310,9 +313,47 @@ export default { fetch: handler.fetch };
     console.log("        No server build, skipping.");
   }
 
-  // Step 4: Generate AGENTS.md
+  // Step 4: Sitemap + robots.txt
   // eslint-disable-next-line no-console
-  console.log("  [4/5] Generating AGENTS.md...");
+  console.log("  [4/6] Sitemap generation...");
+  if (fabrkConfig.siteUrl) {
+    try {
+      const appDir = path.join(root, "app");
+      if (fs.existsSync(appDir)) {
+        const { scanRoutes } = await import("./runtime/router");
+        const { generateSitemap } = await import("./build/sitemap-gen");
+        const sitemapRoutes = scanRoutes(appDir);
+
+        if (sitemapRoutes.length > 0) {
+          const clientDir = path.join(root, "dist", "client");
+          await generateSitemap({
+            baseUrl: fabrkConfig.siteUrl,
+            routes: sitemapRoutes,
+            outDir: clientDir,
+          });
+          // eslint-disable-next-line no-console
+          console.log(
+            `        Generated sitemap.xml + robots.txt (${sitemapRoutes.filter((r) => r.type === "page").length} pages)`
+          );
+        } else {
+          // eslint-disable-next-line no-console
+          console.log("        No routes for sitemap.");
+        }
+      } else {
+        // eslint-disable-next-line no-console
+        console.log("        No app/ directory, skipping.");
+      }
+    } catch (err) {
+      console.warn("  [fabrk] Sitemap generation failed:", err);
+    }
+  } else {
+    // eslint-disable-next-line no-console
+    console.log("        No siteUrl in fabrk.config — skipping. Set siteUrl to enable.");
+  }
+
+  // Step 5: Generate AGENTS.md
+  // eslint-disable-next-line no-console
+  console.log("  [5/6] Generating AGENTS.md...");
   try {
     const { scanAgents } = await import("./agents/scanner");
     const { scanTools } = await import("./tools/scanner");
@@ -378,7 +419,7 @@ export default { fetch: handler.fetch };
 
   // Step 5: Done
   // eslint-disable-next-line no-console
-  console.log("  [5/5] Build complete.\n");
+  console.log("  [6/6] Build complete.\n");
   // eslint-disable-next-line no-console
   console.log("  Output:");
   // eslint-disable-next-line no-console
@@ -774,7 +815,7 @@ function printHelp(): void {
 
   Commands:
     dev      Start dev server with file-system routing + AI agents
-    build    Build for production (client + SSR + AGENTS.md)
+    build    Build for production (client + SSR + sitemap + AGENTS.md)
     start    Start production server
     info     Show project agents, tools, and prompts
     agents   List all discovered agents with config details

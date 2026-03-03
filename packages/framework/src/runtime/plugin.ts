@@ -6,6 +6,7 @@ import { scanRoutes, type Route } from "./router";
 import { handleRequest } from "./ssr-handler";
 import { nodeToWebRequest, writeWebResponse } from "./node-web-bridge";
 import { isImageRequest, handleImageRequest } from "./image-handler";
+import { loadFabrkConfig, type FabrkConfig } from "../config/fabrk-config";
 
 const MIDDLEWARE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 
@@ -48,6 +49,9 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     },
 
     configureServer(server: ViteDevServer) {
+      let fabrkConfig: FabrkConfig = {};
+      const configReady = loadFabrkConfig(root).then((c) => { fabrkConfig = c; });
+
       server.watcher.on("all", (event: string, filePath: string) => {
         if (event !== "add" && event !== "unlink") return;
         if (!filePath.startsWith(appDirResolved)) return;
@@ -68,8 +72,9 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
 
           if (shouldSkipPath(pathname)) return next();
 
+          await configReady;
+
           try {
-            // Image optimization endpoint
             if (isImageRequest(pathname)) {
               const publicDir = path.join(root, "public");
               const webReq = await nodeToWebRequest(req, url);
@@ -86,6 +91,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
               middlewarePath: middlewarePath ?? undefined,
               appDir: appDirResolved,
               rsc: options.rsc !== false,
+              i18n: fabrkConfig.i18n,
             });
 
             await writeWebResponse(res, webRes);

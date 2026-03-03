@@ -3,11 +3,7 @@ import {
   createClientManifest,
 } from "@vitejs/plugin-rsc/rsc";
 
-/**
- * Render a React element to an RSC Flight stream.
- *
- * Accepts either a bare element or an options object for backwards compat.
- */
+// Accepts either a bare element or an options object for backwards compat.
 export function renderRsc(
   elementOrOptions: React.ReactElement | { element: React.ReactElement },
 ): ReadableStream<Uint8Array> {

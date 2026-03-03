@@ -1,9 +1,5 @@
 import React from "react";
 
-// ---------------------------------------------------------------------------
-// Metadata types
-// ---------------------------------------------------------------------------
-
 export interface MetadataTitle {
   /** Default title when no child overrides. */
   default: string;
@@ -79,10 +75,6 @@ export interface GenerateMetadataContext {
   searchParams?: Record<string, string>;
 }
 
-// ---------------------------------------------------------------------------
-// Resolution — extract metadata from a module
-// ---------------------------------------------------------------------------
-
 export async function resolveMetadata(
   mod: Record<string, unknown>,
   context: GenerateMetadataContext
@@ -93,17 +85,12 @@ export async function resolveMetadata(
     if (result && typeof result === "object") return result as Metadata;
   }
 
-  // Static metadata export
   if (mod.metadata && typeof mod.metadata === "object") {
     return mod.metadata as Metadata;
   }
 
   return {};
 }
-
-// ---------------------------------------------------------------------------
-// Merging — left-fold from root layout → page
-// ---------------------------------------------------------------------------
 
 export function mergeMetadata(layers: Metadata[]): Metadata {
   if (layers.length === 0) return {};
@@ -127,19 +114,16 @@ export function mergeMetadata(layers: Metadata[]): Metadata {
             : titleObj.default;
         }
       } else {
-        // String title
         merged.title = titleTemplate
           ? titleTemplate.replace("%s", layer.title)
           : layer.title;
       }
     }
 
-    // Simple overrides
     if (layer.description !== undefined) merged.description = layer.description;
     if (layer.viewport !== undefined) merged.viewport = layer.viewport;
     if (layer.themeColor !== undefined) merged.themeColor = layer.themeColor;
 
-    // Deep merge for objects
     if (layer.openGraph) {
       merged.openGraph = { ...merged.openGraph, ...layer.openGraph };
     }
@@ -170,21 +154,12 @@ export function mergeMetadata(layers: Metadata[]): Metadata {
   return merged;
 }
 
-// ---------------------------------------------------------------------------
-// resolveTitle — utility for getting final title string
-// ---------------------------------------------------------------------------
-
 export function resolveTitle(metadata: Metadata): string | undefined {
   if (!metadata.title) return undefined;
   if (typeof metadata.title === "string") return metadata.title;
   if (metadata.title.absolute) return metadata.title.absolute;
   return metadata.title.default;
 }
-
-// ---------------------------------------------------------------------------
-// MetadataHead — renders <head> tags
-// React 19 auto-hoists <title>, <meta>, <link> to <head>
-// ---------------------------------------------------------------------------
 
 function escapeAttr(str: string): string {
   return str
@@ -194,17 +169,18 @@ function escapeAttr(str: string): string {
     .replace(/>/g, "&gt;");
 }
 
+/**
+ * Renders <head> tags. React 19 auto-hoists <title>, <meta>, <link> to <head>.
+ */
 export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactElement {
   const elements: React.ReactElement[] = [];
   let key = 0;
 
-  // Title
   const title = resolveTitle(metadata);
   if (title) {
     elements.push(React.createElement("title", { key: key++ }, title));
   }
 
-  // Description
   if (metadata.description) {
     elements.push(
       React.createElement("meta", {
@@ -215,7 +191,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     );
   }
 
-  // Viewport
   if (metadata.viewport) {
     elements.push(
       React.createElement("meta", {
@@ -226,7 +201,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     );
   }
 
-  // Theme color
   if (metadata.themeColor) {
     elements.push(
       React.createElement("meta", {
@@ -237,7 +211,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     );
   }
 
-  // Open Graph
   if (metadata.openGraph) {
     const og = metadata.openGraph;
     if (og.title) {
@@ -334,7 +307,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     }
   }
 
-  // Twitter
   if (metadata.twitter) {
     const tw = metadata.twitter;
     if (tw.card) {
@@ -395,7 +367,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     }
   }
 
-  // Icons
   if (metadata.icons) {
     const icons = metadata.icons;
     if (typeof icons.icon === "string") {
@@ -441,7 +412,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     }
   }
 
-  // Robots
   if (metadata.robots) {
     const parts: string[] = [];
     if (metadata.robots.index === false) parts.push("noindex");
@@ -481,7 +451,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     }
   }
 
-  // Alternates / canonical
   if (metadata.alternates) {
     if (metadata.alternates.canonical) {
       elements.push(
@@ -508,7 +477,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
     }
   }
 
-  // Other meta tags
   if (metadata.other) {
     for (const [name, content] of Object.entries(metadata.other)) {
       elements.push(
@@ -519,10 +487,6 @@ export function MetadataHead({ metadata }: { metadata: Metadata }): React.ReactE
 
   return React.createElement(React.Fragment, null, ...elements);
 }
-
-// ---------------------------------------------------------------------------
-// buildMetadataHtml — for SSR, render metadata to HTML string
-// ---------------------------------------------------------------------------
 
 export function buildMetadataHtml(metadata: Metadata): string {
   const parts: string[] = [];

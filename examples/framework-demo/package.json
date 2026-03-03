@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fabrk/components": "workspace:*",
     "@fabrk/design-system": "workspace:*",
     "@tanstack/react-table": "^8.20.5",
     "@fabrk/framework": "workspace:*",

@@ -40,6 +40,8 @@ export interface PageModules {
     error: Error & { digest?: string };
     reset: () => void;
   }>;
+  /** Parallel route slot components — maps slot name to component. */
+  slots?: Record<string, React.ComponentType>;
 }
 
 export interface BuildPageTreeOptions {
@@ -65,6 +67,7 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     loadingFallback,
     notFoundFallback,
     globalErrorFallback,
+    slots,
   } = modules;
 
   // We use React.createElement throughout to avoid JSX transform issues in SSR
@@ -99,8 +102,18 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
   }
 
   // Wrap in layouts (innermost layout first, then outward)
+  // The innermost layout receives parallel route slots as named props
   for (let i = layouts.length - 1; i >= 0; i--) {
-    element = React.createElement(layouts[i], { children: element });
+    const layoutProps: Record<string, unknown> = { children: element };
+
+    // Pass slot components to the innermost layout
+    if (i === layouts.length - 1 && slots) {
+      for (const [slotName, SlotComponent] of Object.entries(slots)) {
+        layoutProps[slotName] = React.createElement(SlotComponent);
+      }
+    }
+
+    element = React.createElement(layouts[i], layoutProps as { children: React.ReactNode });
   }
 
   // Outermost: global error boundary

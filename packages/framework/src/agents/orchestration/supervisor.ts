@@ -17,6 +17,8 @@ export interface SupervisorConfig {
 
 export interface SupervisorDefinition extends AgentDefinition {
   maxDelegations: number;
+  /** Actual ToolDefinition objects for agent-as-tool delegations. */
+  toolDefinitions: ToolDefinition[];
 }
 
 export function defineSupervisor(config: SupervisorConfig): SupervisorDefinition {
@@ -41,6 +43,7 @@ export function defineSupervisor(config: SupervisorConfig): SupervisorDefinition
     model: config.model,
     systemPrompt,
     tools: agentTools.map((t) => t.name),
+    toolDefinitions: agentTools,
     budget: config.budget,
     stream: true,
     auth: "none",

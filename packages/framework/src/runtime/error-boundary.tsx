@@ -1,9 +1,5 @@
 import React from "react";
 
-// ---------------------------------------------------------------------------
-// Error digests — stable strings that survive RSC serialization
-// ---------------------------------------------------------------------------
-
 export const FABRK_NOT_FOUND = "FABRK_NOT_FOUND";
 export const FABRK_REDIRECT = "FABRK_REDIRECT";
 
@@ -24,10 +20,6 @@ export function isDigestError(error: unknown): error is FabrkError {
   const digest = (error as FabrkError).digest;
   return digest === FABRK_NOT_FOUND || digest === FABRK_REDIRECT;
 }
-
-// ---------------------------------------------------------------------------
-// ErrorBoundary — wraps page content, renders error.tsx fallback on throw
-// ---------------------------------------------------------------------------
 
 export interface ErrorBoundaryProps {
   /** The error.tsx fallback component. Receives { error, reset }. */
@@ -86,7 +78,6 @@ export class ErrorBoundary extends React.Component<
           reset: this.reset,
         });
       }
-      // Default fallback when no error.tsx is provided
       return React.createElement(
         "div",
         { style: { padding: "2rem", fontFamily: "monospace" } },
@@ -114,10 +105,6 @@ export class ErrorBoundary extends React.Component<
     return children;
   }
 }
-
-// ---------------------------------------------------------------------------
-// NotFoundBoundary — catches FABRK_NOT_FOUND digest, renders not-found.tsx
-// ---------------------------------------------------------------------------
 
 export interface NotFoundBoundaryProps {
   /** The not-found.tsx fallback component. */
@@ -147,7 +134,6 @@ export class NotFoundBoundary extends React.Component<
     if ((error as FabrkError).digest === FABRK_NOT_FOUND) {
       return { notFound: true };
     }
-    // Re-throw non-not-found errors
     throw error;
   }
 
@@ -181,11 +167,6 @@ export class NotFoundBoundary extends React.Component<
   }
 }
 
-// ---------------------------------------------------------------------------
-// GlobalErrorBoundary — outermost boundary, wraps the root layout
-// Renders global-error.tsx or a minimal HTML shell on catastrophic failure.
-// ---------------------------------------------------------------------------
-
 export interface GlobalErrorBoundaryProps {
   fallback?: React.ComponentType<{
     error: Error & { digest?: string };
@@ -198,6 +179,10 @@ interface GlobalErrorBoundaryState {
   error: (Error & { digest?: string }) | null;
 }
 
+/**
+ * Outermost boundary wrapping the root layout.
+ * Renders global-error.tsx or a minimal HTML shell on catastrophic failure.
+ */
 export class GlobalErrorBoundary extends React.Component<
   GlobalErrorBoundaryProps,
   GlobalErrorBoundaryState

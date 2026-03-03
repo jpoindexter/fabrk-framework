@@ -4,6 +4,24 @@ import path from "node:path";
 import zlib from "node:zlib";
 import { pipeline } from "node:stream/promises";
 import { buildSecurityHeaders } from "../middleware/security";
+
+function nodeHeadersToRecord(headers: http.IncomingHttpHeaders): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(headers).filter(([, v]) => typeof v === "string") as [string, string][]
+  );
+}
+
+async function drainStream(reader: ReadableStreamDefaultReader<Uint8Array>, res: http.ServerResponse): Promise<void> {
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      res.write(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
 import {
   runMiddleware,
   extractMiddleware,
@@ -15,10 +33,13 @@ import {
   buildMetadataHtml,
 } from "./metadata";
 import { isImageRequest, handleImageRequest } from "./image-handler";
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import {
+  InMemoryISRCache,
+  serveFromISR,
+  getRevalidateInterval,
+  getPageTags,
+  type ISRCacheHandler,
+} from "./isr-cache";
 
 export interface ProdServerOptions {
   /** Path to dist/ directory. */
@@ -31,6 +52,8 @@ export interface ProdServerOptions {
   serverEntryPath: string;
   /** Optional middleware module path. */
   middlewarePath?: string;
+  /** Optional ISR cache handler. Defaults to InMemoryISRCache. */
+  isrCache?: ISRCacheHandler;
 }
 
 interface ServerEntry {
@@ -45,10 +68,6 @@ interface ServerEntry {
   boundaryModules: Record<string, Record<string, unknown>>;
   globalError: Record<string, unknown> | null;
 }
-
-// ---------------------------------------------------------------------------
-// MIME types
-// ---------------------------------------------------------------------------
 
 const MIME_TYPES: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -75,20 +94,11 @@ const MIME_TYPES: Record<string, string> = {
   ".wasm": "application/wasm",
 };
 
-// ---------------------------------------------------------------------------
-// Static file serving with path traversal protection
-// ---------------------------------------------------------------------------
-
 function getMimeType(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
   return MIME_TYPES[ext] || "application/octet-stream";
 }
 
-/**
- * Determine cache headers based on filename pattern.
- * Hashed assets (e.g. chunk-abc123.js) get immutable cache.
- * Unhashed assets get must-revalidate.
- */
 function getCacheHeaders(filename: string): Record<string, string> {
   const isHashed = /[-.][\da-f]{8,}\./i.test(filename);
   if (isHashed) {
@@ -101,25 +111,24 @@ function getCacheHeaders(filename: string): Record<string, string> {
   };
 }
 
-/**
- * Serve a static file from dist/client/.
- * Returns true if file was served, false if not found.
- */
 async function serveStaticFile(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   clientDir: string
 ): Promise<boolean> {
   const url = new URL(req.url || "/", "http://localhost");
-  let pathname = decodeURIComponent(url.pathname);
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch {
+    return false;
+  }
 
-  // Normalize double slashes
   pathname = pathname.replace(/\/+/g, "/");
 
   const filePath = path.join(clientDir, pathname);
   const resolvedPath = path.resolve(filePath);
 
-  // Path traversal protection — resolved path must be under client dir
   const resolvedClientDir = path.resolve(clientDir);
   if (!resolvedPath.startsWith(resolvedClientDir + path.sep) && resolvedPath !== resolvedClientDir) {
     return false;
@@ -138,7 +147,6 @@ async function serveStaticFile(
   const cacheHeaders = getCacheHeaders(path.basename(resolvedPath));
   const securityHeaders = buildSecurityHeaders();
 
-  // Content negotiation for compression
   const acceptEncoding = (req.headers["accept-encoding"] as string) || "";
   const isCompressible = mimeType.includes("text/") ||
     mimeType.includes("javascript") ||
@@ -146,7 +154,6 @@ async function serveStaticFile(
     mimeType.includes("xml") ||
     mimeType.includes("svg");
 
-  // Determine encoding before writing headers
   let encoding: "br" | "gzip" | null = null;
   if (isCompressible && stat.size > 1024) {
     if (acceptEncoding.includes("br")) encoding = "br";
@@ -177,19 +184,15 @@ async function serveStaticFile(
     return true;
   }
 
-  // Uncompressed
   const readStream = fs.createReadStream(resolvedPath);
   await pipeline(readStream, res);
   return true;
 }
 
-// ---------------------------------------------------------------------------
-// SSR request handling
-// ---------------------------------------------------------------------------
-
 function matchRoute(
   routes: ServerEntry["routes"],
-  pathname: string
+  pathname: string,
+  _softNavigation = false,
 ): {
   route: ServerEntry["routes"][number];
   params: Record<string, string>;
@@ -252,11 +255,7 @@ async function handleApiRoute(
 
     const webRequest = new Request(url, {
       method: req.method,
-      headers: Object.fromEntries(
-        Object.entries(req.headers).filter(
-          ([, v]) => typeof v === "string"
-        ) as [string, string][]
-      ),
+      headers: nodeHeadersToRecord(req.headers),
       body: method !== "GET" && method !== "HEAD"
         ? Buffer.concat(bodyChunks).toString()
         : undefined,
@@ -287,11 +286,76 @@ async function handleApiRoute(
   }
 }
 
+async function renderPageToString(
+  route: ServerEntry["routes"][number],
+  params: Record<string, string>,
+  serverEntry: ServerEntry,
+  reqUrl: string,
+): Promise<{ status: number; body: string }> {
+  const [reactDomServer, React] = await Promise.all([
+    import("react-dom/server"),
+    import("react"),
+  ]);
+
+  const createElement = React.createElement ?? React.default?.createElement;
+  const renderToString =
+    reactDomServer.renderToString ?? reactDomServer.default?.renderToString;
+
+  if (typeof createElement !== "function" || typeof renderToString !== "function") {
+    return { status: 500, body: "React SSR modules not available" };
+  }
+
+  const url = new URL(reqUrl, "http://localhost");
+  const searchParams = Object.fromEntries(url.searchParams.entries());
+  const metadataContext = { params, searchParams };
+
+  const metadataLayers = [];
+  const routeEntry = route as unknown as { layoutPaths?: string[] };
+  if (routeEntry.layoutPaths) {
+    for (const lp of routeEntry.layoutPaths) {
+      const layoutMod = serverEntry.layoutModules[lp];
+      if (layoutMod) metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
+    }
+  }
+  metadataLayers.push(await resolveMetadata(route.module, metadataContext));
+  const metadata = mergeMetadata(metadataLayers);
+  const head = buildMetadataHtml(metadata);
+
+  let element: React.ReactNode = createElement(
+    route.module.default as React.FC<Record<string, unknown>>,
+    { params, searchParams }
+  );
+
+  if (routeEntry.layoutPaths) {
+    for (const lp of routeEntry.layoutPaths.slice().reverse()) {
+      const layoutMod = serverEntry.layoutModules[lp];
+      if (layoutMod && typeof layoutMod.default === "function") {
+        element = createElement(layoutMod.default as React.FC<Record<string, unknown>>, { children: element });
+      }
+    }
+  }
+
+  const ssrBody = renderToString(element);
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  ${head}
+</head>
+<body>
+  <div id="root">${ssrBody}</div>
+</body>
+</html>`;
+
+  return { status: 200, body: html };
+}
+
 async function handlePageRoute(
   route: ServerEntry["routes"][number],
   params: Record<string, string>,
   serverEntry: ServerEntry,
-  reqUrl: string
+  reqUrl: string,
+  isrCache?: ISRCacheHandler,
 ): Promise<{ status: number; headers: Record<string, string>; body: string | ReadableStream }> {
   try {
     const PageComponent = route.module.default;
@@ -303,6 +367,31 @@ async function handlePageRoute(
           ...buildSecurityHeaders(),
         },
         body: "Page component must export a default function",
+      };
+    }
+
+    const revalidateInterval = getRevalidateInterval(route.module);
+    if (isrCache && revalidateInterval !== null) {
+      const url = new URL(reqUrl, "http://localhost");
+      const tags = getPageTags(route.module);
+      const isrResult = await serveFromISR(
+        isrCache,
+        url.pathname,
+        revalidateInterval,
+        async () => {
+          const result = await renderPageToString(route, params, serverEntry, reqUrl);
+          return result.body;
+        },
+        tags,
+      );
+      return {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          ...buildSecurityHeaders(),
+          ...(isrResult.revalidating ? { "X-Fabrk-ISR": "stale" } : { "X-Fabrk-ISR": isrResult.cached ? "hit" : "miss" }),
+        },
+        body: isrResult.html,
       };
     }
 
@@ -325,12 +414,10 @@ async function handlePageRoute(
       };
     }
 
-    // Extract searchParams
     const url = new URL(reqUrl, "http://localhost");
     const searchParams = Object.fromEntries(url.searchParams.entries());
     const metadataContext = { params, searchParams };
 
-    // Resolve metadata from layouts + page
     const metadataLayers = [];
     const routeEntry = route as unknown as { layoutPaths?: string[] };
     if (routeEntry.layoutPaths) {
@@ -357,7 +444,6 @@ async function handlePageRoute(
       }
     }
 
-    // Streaming SSR path — preferred when available
     if (typeof renderToReadableStream === "function") {
       const reactStream = await renderToReadableStream(element);
 
@@ -406,7 +492,6 @@ async function handlePageRoute(
       };
     }
 
-    // Fallback: synchronous renderToString
     if (typeof renderToString !== "function") {
       return {
         status: 500,
@@ -448,10 +533,6 @@ async function handlePageRoute(
   }
 }
 
-// ---------------------------------------------------------------------------
-// Server lifecycle
-// ---------------------------------------------------------------------------
-
 export async function startProdServer(
   options: ProdServerOptions
 ): Promise<http.Server> {
@@ -461,6 +542,7 @@ export async function startProdServer(
     host = "localhost",
     serverEntryPath,
     middlewarePath,
+    isrCache = new InMemoryISRCache(),
   } = options;
 
   const clientDir = path.join(distDir, "client");
@@ -475,7 +557,6 @@ export async function startProdServer(
     );
   }
 
-  // Load middleware if available
   let middlewareHandler: MiddlewareHandler | undefined;
   let middlewareMatchers: RegExp[] | undefined;
   if (middlewarePath) {
@@ -496,16 +577,11 @@ export async function startProdServer(
       const served = await serveStaticFile(req, res, clientDir);
       if (served) return;
 
-      // Image optimization endpoint
       const imgUrl = new URL(req.url || "/", "http://localhost");
       if (isImageRequest(imgUrl.pathname)) {
         const imgReq = new Request(`http://localhost${req.url || "/"}`, {
           method: "GET",
-          headers: Object.fromEntries(
-            Object.entries(req.headers).filter(
-              ([, v]) => typeof v === "string",
-            ) as [string, string][],
-          ),
+          headers: nodeHeadersToRecord(req.headers),
         });
         const imgRes = await handleImageRequest(imgReq, clientDir);
         const imgHeaders: Record<string, string> = {};
@@ -514,30 +590,16 @@ export async function startProdServer(
         });
         res.writeHead(imgRes.status, imgHeaders);
         if (imgRes.body) {
-          const reader = imgRes.body.getReader();
-          try {
-            for (;;) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              res.write(value);
-            }
-          } finally {
-            reader.releaseLock();
-          }
+          await drainStream(imgRes.body.getReader(), res);
         }
         res.end();
         return;
       }
 
-      // Run middleware before routing
       if (middlewareHandler) {
         const webReq = new Request(`http://localhost${req.url || "/"}`, {
           method: req.method,
-          headers: Object.fromEntries(
-            Object.entries(req.headers).filter(
-              ([, v]) => typeof v === "string",
-            ) as [string, string][],
-          ),
+          headers: nodeHeadersToRecord(req.headers),
         });
 
         const mwResult = await runMiddleware(
@@ -556,14 +618,14 @@ export async function startProdServer(
           return;
         }
 
-        // Handle rewrites — change the effective URL
         if (mwResult.rewriteUrl) {
           req.url = mwResult.rewriteUrl;
         }
       }
 
       const url = new URL(req.url || "/", "http://localhost");
-      const matched = matchRoute(serverEntry.routes, url.pathname);
+      const isSoftNav = req.headers["x-fabrk-navigation"] === "soft";
+      const matched = matchRoute(serverEntry.routes, url.pathname, isSoftNav);
 
       if (!matched) {
         const indexPath = path.join(clientDir, "index.html");
@@ -596,22 +658,13 @@ export async function startProdServer(
           matched.route,
           matched.params,
           serverEntry,
-          req.url || "/"
+          req.url || "/",
+          isrCache,
         );
         res.writeHead(result.status, result.headers);
 
-        // Handle streaming body (ReadableStream) or string
         if (result.body instanceof ReadableStream) {
-          const reader = result.body.getReader();
-          try {
-            for (;;) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              res.write(value);
-            }
-          } finally {
-            reader.releaseLock();
-          }
+          await drainStream(result.body.getReader(), res);
           res.end();
         } else {
           res.end(result.body);
@@ -628,7 +681,6 @@ export async function startProdServer(
     }
   });
 
-  // Graceful shutdown — track connections for force-close after timeout
   const connections = new Set<import("node:net").Socket>();
 
   server.on("connection", (socket) => {
@@ -645,7 +697,6 @@ export async function startProdServer(
       process.exit(0);
     });
 
-    // Force-close after 5s
     setTimeout(() => {
       for (const socket of connections) {
         socket.destroy();

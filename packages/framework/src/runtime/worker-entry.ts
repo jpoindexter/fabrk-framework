@@ -8,10 +8,6 @@ import {
 } from "./metadata";
 import { isImageRequest } from "./image-handler";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface FetchHandlerOptions {
   routes: Route[];
   /** Pre-imported route modules, keyed by filePath. */
@@ -24,23 +20,17 @@ export interface FetchHandlerOptions {
   middleware?: (request: Request) => Promise<Response | null>;
 }
 
-// ---------------------------------------------------------------------------
-// Handler factory
-// ---------------------------------------------------------------------------
-
 export function createFetchHandler(options: FetchHandlerOptions) {
   const { routes, modules, layoutModules, getAsset, middleware } = options;
 
   return {
     async fetch(request: Request): Promise<Response> {
       try {
-        // Static assets first
         if (getAsset) {
           const assetResponse = await getAsset(request);
           if (assetResponse) return assetResponse;
         }
 
-        // Middleware
         if (middleware) {
           const middlewareResponse = await middleware(request);
           if (middlewareResponse) return middlewareResponse;
@@ -48,18 +38,15 @@ export function createFetchHandler(options: FetchHandlerOptions) {
 
         const url = new URL(request.url);
 
-        // Image optimization endpoint
         if (isImageRequest(url.pathname)) {
-          // In workers, images are served from static assets
-          // The handler needs a root dir — not available in workers,
-          // so delegate to getAsset for the original file
           return new Response(JSON.stringify({ error: "Image optimization not available in worker mode" }), {
             status: 501,
             headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
           });
         }
 
-        const matched = matchRoute(routes, url.pathname);
+        const isSoftNav = request.headers.get("x-fabrk-navigation") === "soft";
+        const matched = matchRoute(routes, url.pathname, isSoftNav);
 
         if (!matched) {
           return new Response("Not Found", {
@@ -77,7 +64,6 @@ export function createFetchHandler(options: FetchHandlerOptions) {
 
         return handlePageRoute(request, matched, modules, layoutModules);
       } catch (err) {
-        // Handle redirect errors
         if (isRedirectError(err)) {
           return new Response(null, {
             status: err.statusCode,
@@ -88,7 +74,6 @@ export function createFetchHandler(options: FetchHandlerOptions) {
           });
         }
 
-        // Handle not-found errors
         if (isNotFoundError(err)) {
           return new Response("Not Found", {
             status: 404,
@@ -112,10 +97,6 @@ export function createFetchHandler(options: FetchHandlerOptions) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// API route dispatch
-// ---------------------------------------------------------------------------
-
 async function handleApiRoute(
   request: Request,
   matched: { route: Route; params: Record<string, string> },
@@ -123,7 +104,6 @@ async function handleApiRoute(
 ): Promise<Response> {
   const method = request.method.toUpperCase();
 
-  // Get pre-imported module
   const mod = modules?.get(matched.route.filePath);
   if (!mod) {
     return new Response(
@@ -169,10 +149,6 @@ async function handleApiRoute(
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Page route dispatch
-// ---------------------------------------------------------------------------
 
 async function handlePageRoute(
   request: Request,
@@ -226,12 +202,10 @@ async function handlePageRoute(
       });
     }
 
-    // Extract searchParams
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams.entries());
     const metadataContext = { params: matched.params, searchParams };
 
-    // Resolve metadata from layouts + page
     const metadataLayers = [];
     if (layoutModules) {
       for (const lp of matched.route.layoutPaths) {
@@ -243,13 +217,11 @@ async function handlePageRoute(
     const metadata = mergeMetadata(metadataLayers);
     const head = buildMetadataHtml(metadata);
 
-    // Build element tree with searchParams
     let element: React.ReactNode = createElement(
       PageComponent as React.FC<Record<string, unknown>>,
       { params: matched.params, searchParams }
     );
 
-    // Apply layouts
     if (layoutModules) {
       for (const lp of matched.route.layoutPaths.slice().reverse()) {
         const layoutMod = layoutModules.get(lp);
@@ -259,7 +231,6 @@ async function handlePageRoute(
       }
     }
 
-    // Prefer streaming if available (Cloudflare Workers supports it)
     if (typeof renderToReadableStream === "function") {
       const stream = await renderToReadableStream(element);
 
@@ -302,7 +273,6 @@ async function handlePageRoute(
       });
     }
 
-    // Fallback to renderToString
     if (typeof renderToString === "function") {
       const ssrBody = renderToString(element);
       const html = `<!DOCTYPE html>

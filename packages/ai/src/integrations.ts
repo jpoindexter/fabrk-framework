@@ -229,12 +229,10 @@ export const ai = {
    * @remarks Falls back through: claude → openai. Both paths track costs.
    */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
-    // Try Claude first (preferred)
     if (claude.isAvailable()) {
       return claude.generate(options);
     }
 
-    // Fall back to OpenAI
     if (openai.isAvailable()) {
       return openai.generate(options);
     }

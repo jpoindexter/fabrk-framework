@@ -1,10 +1,5 @@
 import { FABRK_NOT_FOUND, FABRK_REDIRECT, type FabrkError } from "./error-boundary";
 
-/**
- * Throw from a Server Component or route handler to render the nearest
- * not-found.tsx boundary. The error carries the FABRK_NOT_FOUND digest
- * so it survives RSC serialization.
- */
 export function notFound(): never {
   const error = new Error("Not Found") as FabrkError;
   error.digest = FABRK_NOT_FOUND;
@@ -13,10 +8,6 @@ export function notFound(): never {
 
 export type RedirectStatusCode = 301 | 302 | 307 | 308;
 
-/**
- * Throw from a Server Component or route handler to issue an HTTP redirect.
- * Defaults to 307 (temporary redirect, preserves method).
- */
 export function redirect(
   url: string,
   status: RedirectStatusCode = 307
@@ -44,7 +35,6 @@ export function permanentRedirect(url: string): never {
 function validateRedirectUrl(url: string): void {
   const lower = url.toLowerCase().trim();
 
-  // Block dangerous schemes
   const dangerousSchemes = ["javascript:", "data:", "vbscript:"];
   for (const scheme of dangerousSchemes) {
     if (lower.startsWith(scheme)) {
@@ -53,10 +43,6 @@ function validateRedirectUrl(url: string): void {
   }
 }
 
-/**
- * Check if a caught error is a redirect that should be converted to
- * an HTTP response. Used by the SSR handler.
- */
 export function isRedirectError(
   error: unknown
 ): error is FabrkError & { url: string; statusCode: number } {
@@ -68,9 +54,6 @@ export function isRedirectError(
   );
 }
 
-/**
- * Check if a caught error is a not-found that should render 404.
- */
 export function isNotFoundError(error: unknown): error is FabrkError {
   return (
     error instanceof Error &&

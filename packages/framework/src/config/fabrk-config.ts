@@ -1,5 +1,6 @@
 import path from "node:path";
 import fs from "node:fs";
+import type { I18nConfig } from "../runtime/i18n";
 
 export interface FabrkAIConfig {
   defaultModel?: string;
@@ -12,6 +13,8 @@ export interface FabrkAIConfig {
 }
 
 export interface FabrkConfig {
+  /** Base URL for sitemap generation and canonical links (e.g. "https://myapp.com"). */
+  siteUrl?: string;
   ai?: FabrkAIConfig;
   agents?: {
     maxIterations?: number;
@@ -34,6 +37,7 @@ export interface FabrkConfig {
   deploy?: {
     target?: "workers" | "node" | "vercel";
   };
+  i18n?: I18nConfig;
 }
 
 export function defineFabrkConfig(config: FabrkConfig): FabrkConfig {

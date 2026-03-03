@@ -5,8 +5,6 @@ export default defineConfig({
     'src/index.ts',
     'src/cli.ts',
     'src/fabrk.ts',
-    'src/components.ts',
-    'src/themes.ts',
     'src/client/use-agent.ts',
     'src/client/navigation.ts',
     'src/client/link.tsx',

@@ -224,3 +224,149 @@ describe("collectLayouts", () => {
     expect(routes[0].layoutPaths[0]).toContain("layout.tsx");
   });
 });
+
+describe("parallel routes (@slot)", () => {
+  let tmpDir: string;
+  let appDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-slot-"));
+    appDir = path.join(tmpDir, "app");
+    fs.mkdirSync(appDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+
+  it("detects @slot directories as parallel route slots", () => {
+    fs.writeFileSync(path.join(appDir, "page.tsx"), "export default function Home() {}");
+    const modalDir = path.join(appDir, "@modal");
+    fs.mkdirSync(modalDir, { recursive: true });
+    fs.writeFileSync(path.join(modalDir, "page.tsx"), "export default function Modal() {}");
+
+    const routes = scanRoutes(appDir);
+    expect(routes).toHaveLength(1);
+    expect(routes[0].slots).toBeDefined();
+    expect(routes[0].slots?.modal).toContain("page.tsx");
+  });
+
+  it("detects slot default.tsx fallbacks", () => {
+    fs.writeFileSync(path.join(appDir, "page.tsx"), "export default function Home() {}");
+    const sidebarDir = path.join(appDir, "@sidebar");
+    fs.mkdirSync(sidebarDir, { recursive: true });
+    fs.writeFileSync(path.join(sidebarDir, "default.tsx"), "export default function Default() {}");
+
+    const routes = scanRoutes(appDir);
+    expect(routes).toHaveLength(1);
+    expect(routes[0].slotDefaults?.sidebar).toContain("default.tsx");
+  });
+
+  it("supports multiple slots", () => {
+    fs.writeFileSync(path.join(appDir, "page.tsx"), "export default function Home() {}");
+    for (const name of ["@modal", "@sidebar", "@header"]) {
+      const dir = path.join(appDir, name);
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(path.join(dir, "page.tsx"), `export default function ${name.slice(1)}() {}`);
+    }
+
+    const routes = scanRoutes(appDir);
+    expect(routes).toHaveLength(1);
+    expect(Object.keys(routes[0].slots!)).toEqual(
+      expect.arrayContaining(["modal", "sidebar", "header"])
+    );
+  });
+
+  it("slot directories don't create standalone routes", () => {
+    fs.writeFileSync(path.join(appDir, "page.tsx"), "export default function Home() {}");
+    const modalDir = path.join(appDir, "@modal");
+    fs.mkdirSync(modalDir, { recursive: true });
+    fs.writeFileSync(path.join(modalDir, "page.tsx"), "export default function Modal() {}");
+
+    const routes = scanRoutes(appDir);
+    // Only the root page route should exist, not a /@modal route
+    expect(routes).toHaveLength(1);
+    expect(routes[0].pattern).toBe("/");
+  });
+});
+
+describe("intercepting routes", () => {
+  let tmpDir: string;
+  let appDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-intercept-"));
+    appDir = path.join(tmpDir, "app");
+    fs.mkdirSync(appDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+
+  it("detects (.) same-level intercepting route", () => {
+    const dir = path.join(appDir, "feed", "(.)photo");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "page.tsx"), "export default function InterceptPhoto() {}");
+
+    const routes = scanRoutes(appDir);
+    expect(routes).toHaveLength(1);
+    expect(routes[0].interceptDepth).toBe(0);
+    expect(routes[0].interceptTarget).toBe("photo");
+  });
+
+  it("detects (..) parent-level intercepting route", () => {
+    const dir = path.join(appDir, "feed", "(..)photo");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "page.tsx"), "export default function InterceptPhoto() {}");
+
+    const routes = scanRoutes(appDir);
+    expect(routes).toHaveLength(1);
+    expect(routes[0].interceptDepth).toBe(1);
+  });
+
+  it("detects (...) root-level intercepting route", () => {
+    const dir = path.join(appDir, "feed", "(...)photo");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "page.tsx"), "export default function InterceptPhoto() {}");
+
+    const routes = scanRoutes(appDir);
+    expect(routes).toHaveLength(1);
+    expect(routes[0].interceptDepth).toBe(-1);
+    expect(routes[0].interceptTarget).toBe("/photo");
+  });
+
+  it("soft navigation prefers intercepting route over normal route", () => {
+    // (.)photo under feed/ creates /feed/photo which intercepts the normal /feed/photo route
+    fs.mkdirSync(path.join(appDir, "feed", "photo"), { recursive: true });
+    fs.writeFileSync(path.join(appDir, "feed", "photo", "page.tsx"), "export default function Photo() {}");
+    const dir = path.join(appDir, "feed", "(.)photo");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "page.tsx"), "export default function InterceptPhoto() {}");
+
+    const routes = scanRoutes(appDir);
+    expect(routes.length).toBeGreaterThanOrEqual(2);
+
+    // Full page load: should get the real /feed/photo route (no interception)
+    const fullMatch = matchRoute(routes, "/feed/photo", false);
+    expect(fullMatch).not.toBeNull();
+    expect(fullMatch!.route.interceptDepth).toBeUndefined();
+
+    // Soft navigation: should get the intercepting route
+    const softMatch = matchRoute(routes, "/feed/photo", true);
+    expect(softMatch).not.toBeNull();
+    expect(softMatch!.route.interceptDepth).toBeDefined();
+  });
+
+  it("full page load skips intercepting route and uses normal route", () => {
+    fs.mkdirSync(path.join(appDir, "feed", "photo"), { recursive: true });
+    fs.writeFileSync(path.join(appDir, "feed", "photo", "page.tsx"), "");
+    fs.mkdirSync(path.join(appDir, "feed", "(.)photo"), { recursive: true });
+    fs.writeFileSync(path.join(appDir, "feed", "(.)photo", "page.tsx"), "");
+
+    const routes = scanRoutes(appDir);
+    const match = matchRoute(routes, "/feed/photo", false);
+    expect(match).not.toBeNull();
+    expect(match!.route.interceptDepth).toBeUndefined();
+  });
+});

@@ -1,9 +1,5 @@
 import { useEffect, useRef, createElement, type ReactElement } from "react";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 type Strategy = "beforeInteractive" | "afterInteractive" | "lazyOnload";
 
 export interface ScriptProps {
@@ -25,19 +21,11 @@ export interface ScriptProps {
   [key: `data-${string}`]: string | undefined;
 }
 
-// ---------------------------------------------------------------------------
-// Dedup tracking (module-level singleton)
-// ---------------------------------------------------------------------------
-
 const loadedScripts = new Set<string>();
 
 function scriptKey(src: string, id?: string): string {
   return id ?? src;
 }
-
-// ---------------------------------------------------------------------------
-// DOM injection
-// ---------------------------------------------------------------------------
 
 function injectScript(
   props: ScriptProps,
@@ -56,7 +44,6 @@ function injectScript(
   if (props.async !== false) el.async = true;
   if (props.defer) el.defer = true;
 
-  // Forward data-* attributes
   for (const [k, v] of Object.entries(props)) {
     if (k.startsWith("data-") && typeof v === "string") {
       el.setAttribute(k, v);
@@ -73,10 +60,6 @@ function injectScript(
 
   document.head.appendChild(el);
 }
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 
 /**
  * Load an external script with configurable strategy.
@@ -112,7 +95,6 @@ export function Script(props: ScriptProps): ReactElement | null {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // beforeInteractive: emit a real <script> tag during SSR
   if (strategy === "beforeInteractive") {
     return createElement("script", {
       src: props.src,

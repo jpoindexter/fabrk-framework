@@ -1,7 +1,3 @@
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface FetchCacheOptions {
   /** Maximum number of cached entries. Default: 200. */
   maxEntries?: number;
@@ -26,10 +22,6 @@ interface ExtendedRequestInit extends RequestInit {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Cache state
-// ---------------------------------------------------------------------------
-
 const cache = new Map<string, CachedResponse>();
 let maxEntries = 200;
 let defaultRevalidate = Infinity;
@@ -47,10 +39,6 @@ const AUTH_HEADERS = new Set([
   "x-api-key",
   "x-auth-token",
 ]);
-
-// ---------------------------------------------------------------------------
-// Cache key generation
-// ---------------------------------------------------------------------------
 
 function generateCacheKey(
   url: string,
@@ -93,14 +81,9 @@ function simpleHash(str: string): string {
   return hash.toString(36);
 }
 
-// ---------------------------------------------------------------------------
-// LRU eviction
-// ---------------------------------------------------------------------------
-
 function evictIfNeeded(): void {
   if (cache.size <= maxEntries) return;
 
-  // Remove oldest entries
   const entries = [...cache.entries()];
   entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
 
@@ -116,7 +99,6 @@ function removeEntry(key: string): void {
 
   cache.delete(key);
 
-  // Clean up tag index
   for (const tag of entry.tags) {
     const keys = tagIndex.get(tag);
     if (keys) {
@@ -126,30 +108,17 @@ function removeEntry(key: string): void {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
-/**
- * Initialize the fetch cache. Call once at server startup.
- */
 export function initFetchCache(options: FetchCacheOptions = {}): void {
   maxEntries = options.maxEntries ?? 200;
   defaultRevalidate = options.defaultRevalidate ?? Infinity;
 }
 
-/**
- * Clear all cached entries.
- */
 export function clearFetchCache(): void {
   cache.clear();
   tagIndex.clear();
   pathIndex.clear();
 }
 
-/**
- * Invalidate all cache entries with a specific tag.
- */
 export function revalidateTag(tag: string): void {
   const keys = tagIndex.get(tag);
   if (!keys) return;
@@ -159,9 +128,6 @@ export function revalidateTag(tag: string): void {
   }
 }
 
-/**
- * Invalidate all cache entries associated with a specific path.
- */
 export function revalidatePath(urlPath: string): void {
   const keys = pathIndex.get(urlPath);
   if (!keys) return;
@@ -172,9 +138,6 @@ export function revalidatePath(urlPath: string): void {
   pathIndex.delete(urlPath);
 }
 
-/**
- * Get cache stats for debugging.
- */
 export function getCacheStats(): {
   size: number;
   maxEntries: number;
@@ -186,10 +149,6 @@ export function getCacheStats(): {
     tags: tagIndex.size,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Patched fetch
-// ---------------------------------------------------------------------------
 
 /**
  * Create a patched `fetch` that respects caching directives.
@@ -217,12 +176,10 @@ export function createCachedFetch(
       return originalFetch(input, init);
     }
 
-    // Check for explicit no-store
     if (init?.cache === "no-store") {
       return originalFetch(input, init);
     }
 
-    // Skip caching if auth headers present
     if (init?.headers) {
       const h = new Headers(init.headers as Record<string, string>);
       for (const authHeader of AUTH_HEADERS) {
@@ -236,14 +193,12 @@ export function createCachedFetch(
     const revalidate = init?.next?.revalidate ?? defaultRevalidate;
     const tags = init?.next?.tags ?? [];
 
-    // Check cache
     const cached = cache.get(cacheKey);
     if (cached) {
       const age = (Date.now() - cached.timestamp) / 1000;
       const isStale = age > cached.revalidate;
 
       if (!isStale || init?.cache === "force-cache") {
-        // Serve from cache
         return new Response(cached.body, {
           status: cached.status,
           statusText: cached.statusText,
@@ -251,14 +206,11 @@ export function createCachedFetch(
         });
       }
 
-      // Stale — remove and re-fetch
       removeEntry(cacheKey);
     }
 
-    // Fetch from origin
     const response = await originalFetch(input, init);
 
-    // Only cache successful responses
     if (response.ok) {
       const body = await response.text();
       const headers: [string, string][] = [];
@@ -276,7 +228,6 @@ export function createCachedFetch(
 
       cache.set(cacheKey, entry);
 
-      // Update tag index
       for (const tag of tags) {
         let tagKeys = tagIndex.get(tag);
         if (!tagKeys) {
@@ -286,7 +237,6 @@ export function createCachedFetch(
         tagKeys.add(cacheKey);
       }
 
-      // Update path index
       try {
         const urlPath = new URL(url).pathname;
         let pathKeys = pathIndex.get(urlPath);
@@ -301,7 +251,6 @@ export function createCachedFetch(
 
       evictIfNeeded();
 
-      // Return a new Response with the cached body
       return new Response(body, {
         status: response.status,
         statusText: response.statusText,

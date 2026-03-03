@@ -1,10 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface Route {
   pattern: string;
   regex: RegExp;
@@ -42,10 +38,6 @@ export interface RouteMatch {
   params: Record<string, string>;
 }
 
-// ---------------------------------------------------------------------------
-// Public API
-// ---------------------------------------------------------------------------
-
 export function scanRoutes(appDir: string): Route[] {
   if (!fs.existsSync(appDir)) return [];
 
@@ -59,25 +51,34 @@ export function scanRoutes(appDir: string): Route[] {
 
 export function matchRoute(
   routes: Route[],
-  pathname: string
+  pathname: string,
+  softNavigation = false,
 ): RouteMatch | null {
   const normalized = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
+  let fallback: RouteMatch | null = null;
 
   for (const route of routes) {
     const match = route.regex.exec(normalized);
-    if (match) {
-      const params: Record<string, string> = {};
-      for (let i = 0; i < route.paramNames.length; i++) {
-        const value = match[i + 1];
-        if (value !== undefined) {
-          params[route.paramNames[i]] = value;
-        }
-      }
-      return { route, params };
+    if (!match) continue;
+
+    const params: Record<string, string> = {};
+    for (let i = 0; i < route.paramNames.length; i++) {
+      const value = match[i + 1];
+      if (value !== undefined) params[route.paramNames[i]] = value;
     }
+
+    const isIntercepting = route.interceptDepth !== undefined;
+
+    if (softNavigation && isIntercepting) return { route, params };
+    if (!softNavigation && isIntercepting) {
+      if (!fallback) fallback = { route, params };
+      continue;
+    }
+
+    return { route, params };
   }
 
-  return null;
+  return fallback;
 }
 
 export function collectLayouts(
@@ -146,19 +147,11 @@ export function collectBoundaries(
   return { errorPath, loadingPath, notFoundPath };
 }
 
-// ---------------------------------------------------------------------------
-// Internals
-// ---------------------------------------------------------------------------
-
 const PAGE_EXTENSIONS = [".tsx", ".ts", ".jsx", ".js"];
 
-/** Regex for `[param]` */
 const DYNAMIC_SEG = /^\[([^[\].]+)\]$/;
-/** Regex for `[...param]` catch-all */
 const CATCH_ALL_SEG = /^\[\.\.\.([^[\].]+)\]$/;
-/** Regex for `[[...param]]` optional catch-all */
 const OPTIONAL_CATCH_ALL_SEG = /^\[\[\.\.\.([^[\].]+)\]\]$/;
-/** Regex for `(group)` route groups — stripped from URL */
 const ROUTE_GROUP_SEG = /^\(([^)]+)\)$/;
 
 function walkDir(dir: string, appDir: string, routes: Route[]): void {
@@ -169,7 +162,6 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
     return;
   }
 
-  // Collect parallel slots for page routes in this directory
   const slots: Record<string, string> = {};
   const slotDefaults: Record<string, string> = {};
 
@@ -179,8 +171,6 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
     if (entry.isDirectory()) {
       if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
 
-      // Detect @slot parallel route directories
-      // Slots don't create standalone routes — they render alongside the parent page
       const slotMatch = PARALLEL_SLOT_SEG.exec(entry.name);
       if (slotMatch) {
         const slotName = slotMatch[1];
@@ -212,7 +202,6 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
       const layoutPaths = collectLayouts(appDir, routeDir);
       const boundaries = collectBoundaries(appDir, routeDir);
 
-      // Detect intercepting routes from directory name
       const interceptInfo = detectInterceptingRoute(routeDir, appDir);
 
       const route: Route = {
@@ -254,7 +243,6 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
     }
   }
 
-  // Attach collected slots to page routes in this directory
   if (Object.keys(slots).length > 0 || Object.keys(slotDefaults).length > 0) {
     for (const route of routes) {
       if (path.dirname(route.filePath) === dir && route.type === "page") {
@@ -290,13 +278,11 @@ function dirToPattern(
   const segments: SegmentInfo[] = [];
 
   for (const seg of rawSegments) {
-    // Parallel route slots: @modal, @sidebar — stripped from URL
     if (PARALLEL_SLOT_SEG.test(seg)) {
       segments.push({ urlSegment: "", type: "group" });
       continue;
     }
 
-    // Intercepting route prefix: strip (.) (..) (...) prefix from segment
     const interceptMatch = INTERCEPT_PREFIX.exec(seg);
     if (interceptMatch) {
       const realName = seg.slice(interceptMatch[0].length);
@@ -306,13 +292,11 @@ function dirToPattern(
       }
     }
 
-    // Route groups: (admin), (marketing) — stripped from URL
     if (ROUTE_GROUP_SEG.test(seg)) {
       segments.push({ urlSegment: "", type: "group" });
       continue;
     }
 
-    // Optional catch-all: [[...slug]]
     const optCatchAll = OPTIONAL_CATCH_ALL_SEG.exec(seg);
     if (optCatchAll) {
       segments.push({
@@ -323,7 +307,6 @@ function dirToPattern(
       continue;
     }
 
-    // Catch-all: [...slug]
     const catchAll = CATCH_ALL_SEG.exec(seg);
     if (catchAll) {
       segments.push({
@@ -334,7 +317,6 @@ function dirToPattern(
       continue;
     }
 
-    // Dynamic: [slug]
     const dynamic = DYNAMIC_SEG.exec(seg);
     if (dynamic) {
       segments.push({
@@ -345,11 +327,9 @@ function dirToPattern(
       continue;
     }
 
-    // Static segment
     segments.push({ urlSegment: seg, type: "static" });
   }
 
-  // Build pattern string — skip group segments
   const urlParts = segments
     .filter((s) => s.type !== "group")
     .map((s) => s.urlSegment)
@@ -377,7 +357,6 @@ function patternToRegex(
     return { regex: /^\/$/, paramNames, catchAll, optionalCatchAll };
   }
 
-  // Filter out group segments for regex building
   const urlSegments = segments.filter((s) => s.type !== "group");
 
   if (urlSegments.length === 0) {
@@ -391,14 +370,12 @@ function patternToRegex(
       case "optionalCatchAll":
         if (seg.paramName) paramNames.push(seg.paramName);
         optionalCatchAll = true;
-        // Matches zero or more path segments
         regexParts.push("(?:/(.*))?");
         break;
 
       case "catchAll":
         if (seg.paramName) paramNames.push(seg.paramName);
         catchAll = true;
-        // Matches one or more path segments
         regexParts.push("/(.+)");
         break;
 
@@ -480,18 +457,15 @@ function detectInterceptingRoute(
     const targetName = seg.slice(prefix.length);
     if (!targetName) continue;
 
-    // (...) = intercept from root
     if (prefix === "(...)") {
       return { depth: -1, targetPattern: `/${targetName}` };
     }
 
-    // Count (..) occurrences
     const dotDotCount = (prefix.match(/\(\.\.\)/g) || []).length;
     if (dotDotCount > 0) {
       return { depth: dotDotCount, targetPattern: targetName };
     }
 
-    // (.) = same level
     if (prefix === "(.)") {
       return { depth: 0, targetPattern: targetName };
     }

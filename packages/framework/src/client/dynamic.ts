@@ -8,20 +8,12 @@ import {
   type ComponentType,
 } from "react";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface DynamicOptions {
   /** Component to render while loading. */
   loading?: () => ReactNode;
   /** Set to false to skip SSR and only render on the client. Default: true. */
   ssr?: boolean;
 }
-
-// ---------------------------------------------------------------------------
-// dynamic()
-// ---------------------------------------------------------------------------
 
 /**
  * Dynamically import a component with optional loading fallback.
@@ -68,7 +60,6 @@ export function dynamic<P extends Record<string, any> = Record<string, any>>(
     return ClientOnlyDynamic;
   }
 
-  // SSR-safe: React.lazy + Suspense
   const LazyComponent = lazy(loader);
 
   function DynamicComponent(props: P) {

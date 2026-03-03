@@ -1,9 +1,5 @@
 "use client";
 
-// ---------------------------------------------------------------------------
-// History patching — emit custom events on pushState/replaceState
-// ---------------------------------------------------------------------------
-
 const NAVIGATE_EVENT = "fabrk:navigate";
 let patched = false;
 
@@ -32,10 +28,6 @@ export function patchHistory(): void {
     window.dispatchEvent(new PopStateEvent(NAVIGATE_EVENT, { state: data }));
   };
 }
-
-// ---------------------------------------------------------------------------
-// Prefetch cache — LRU with TTL
-// ---------------------------------------------------------------------------
 
 const MAX_ENTRIES = 50;
 const TTL_MS = 30_000;
@@ -70,7 +62,6 @@ function getCache(): Map<string, CacheEntry> {
 export function storePrefetchResponse(url: string, html: string): void {
   const cache = getCache();
 
-  // LRU eviction
   if (cache.size >= MAX_ENTRIES) {
     const oldest = cache.keys().next().value;
     if (oldest !== undefined) cache.delete(oldest);
@@ -84,13 +75,11 @@ export function getPrefetchResponse(url: string): string | null {
   const entry = cache.get(url);
   if (!entry) return null;
 
-  // TTL check
   if (Date.now() - entry.timestamp > TTL_MS) {
     cache.delete(url);
     return null;
   }
 
-  // Move to end (LRU refresh)
   cache.delete(url);
   cache.set(url, entry);
 

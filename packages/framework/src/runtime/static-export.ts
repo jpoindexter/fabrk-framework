@@ -1,9 +1,5 @@
 import type { Route } from "./router";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface StaticRoute {
   route: Route;
   params: Record<string, string>;
@@ -18,13 +14,7 @@ export interface StaticExportOptions {
   routes: Route[];
 }
 
-// ---------------------------------------------------------------------------
-// Static route collection
-// ---------------------------------------------------------------------------
-
 /**
- * Collect all routes that should be statically generated at build time.
- *
  * A route is eligible if it:
  * 1. Exports `generateStaticParams()` → call it to get param combinations
  * 2. Exports `dynamic = 'force-static'` → pre-render with empty params
@@ -48,7 +38,6 @@ export async function collectStaticRoutes(
     const dynamicExport = mod.dynamic as string | undefined;
 
     if (typeof generateStaticParams === "function") {
-      // Call generateStaticParams to get all param combinations
       try {
         const paramsList = await generateStaticParams();
         if (!Array.isArray(paramsList)) {
@@ -70,11 +59,9 @@ export async function collectStaticRoutes(
         );
       }
     } else if (dynamicExport === "force-static") {
-      // Pre-render with empty params
       const outputPath = resolveOutputPath(route.pattern, {});
       result.push({ route, params: {}, outputPath });
     } else if (!hasDynamicSegments(route.pattern)) {
-      // Static route with no dynamic segments — always pre-render
       const outputPath = resolveOutputPath(route.pattern, {});
       result.push({ route, params: {}, outputPath });
     }
@@ -83,17 +70,11 @@ export async function collectStaticRoutes(
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 function hasDynamicSegments(pattern: string): boolean {
   return pattern.includes(":");
 }
 
 /**
- * Resolve a route pattern + params into an output file path.
- *
  * `/blog/:slug` + `{ slug: "hello" }` → `/blog/hello/index.html`
  * `/` → `/index.html`
  * `/about` → `/about/index.html`
@@ -104,22 +85,18 @@ export function resolveOutputPath(
 ): string {
   let resolved = pattern;
 
-  // Replace :paramName with actual values
   for (const [key, value] of Object.entries(params)) {
     resolved = resolved.replace(`:${key}`, value);
   }
 
-  // Normalize
   if (resolved === "/") return "/index.html";
   resolved = resolved.replace(/\/+$/, "");
   return `${resolved}/index.html`;
 }
 
 /**
- * Render a page component to an HTML string for static export.
- *
- * This function dynamically imports React/ReactDOM to avoid
- * bundling them into the build tool itself.
+ * Dynamically imports React/ReactDOM to avoid bundling them into the
+ * build tool itself.
  */
 export async function renderStaticPage(
   mod: Record<string, unknown>,
@@ -147,7 +124,6 @@ export async function renderStaticPage(
 
   let element: React.ReactNode = createElement(PageComponent as React.FC<Record<string, unknown>>, { params });
 
-  // Apply layouts in reverse order
   if (layoutModules && layoutPaths) {
     for (const lp of layoutPaths.slice().reverse()) {
       const layoutMod = layoutModules.get(lp);
@@ -159,7 +135,6 @@ export async function renderStaticPage(
 
   const ssrBody = renderToString(element);
 
-  // Extract metadata
   const metadata = mod.metadata as
     | { title?: string; description?: string }
     | undefined;

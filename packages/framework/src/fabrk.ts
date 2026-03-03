@@ -38,4 +38,5 @@ export type { AgentsMdInput } from "./build/agents-md";
 
 export { agentPlugin } from "./agents/vite-plugin";
 export { dashboardPlugin } from "./dashboard/vite-plugin";
+export { serverActionPlugin } from "./runtime/server-action-transform";
 

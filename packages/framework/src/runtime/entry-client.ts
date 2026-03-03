@@ -3,10 +3,6 @@ import { rscStream } from "rsc-html-stream/client";
 import { hydrateRoot } from "react-dom/client";
 import React from "react";
 
-// ---------------------------------------------------------------------------
-// RSC client entry — hydrates the initial RSC payload and supports navigation
-// ---------------------------------------------------------------------------
-
 declare global {
   interface Window {
     __FABRK_RSC_NAVIGATE__?: (url: string) => Promise<void>;

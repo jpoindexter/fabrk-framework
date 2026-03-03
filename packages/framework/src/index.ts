@@ -2,17 +2,23 @@ import type { Plugin } from "vite";
 import { fabrkPlugin, type FabrkRuntimeOptions } from "./runtime/plugin";
 import { agentPlugin } from "./agents/vite-plugin";
 import { dashboardPlugin } from "./dashboard/vite-plugin";
+import { serverActionPlugin } from "./runtime/server-action-transform";
 
 export interface FabrkOptions {
   runtime?: FabrkRuntimeOptions;
   agents?: boolean;
   dashboard?: boolean;
+  /** Enable "use server" compiler transform. Defaults to true. */
+  serverActions?: boolean;
 }
 
 export default function fabrk(options: FabrkOptions = {}): Plugin[] {
   const runtimePlugins = fabrkPlugin(options.runtime);
   const plugins: Plugin[] = [];
 
+  if (options.serverActions !== false) {
+    plugins.push(serverActionPlugin());
+  }
   if (options.agents !== false) {
     plugins.push(agentPlugin());
   }
@@ -101,6 +107,8 @@ export {
 } from "./runtime/server-actions";
 export type { ServerActionRegistry } from "./runtime/server-actions";
 
+export { serverActionPlugin, generateActionId } from "./runtime/server-action-transform";
+
 export { defineAgent } from "./agents/define-agent";
 export type { AgentDefinition, DefineAgentOptions, AgentBudget, AgentMemoryConfig } from "./agents/define-agent";
 export { defineTool, textResult } from "./tools/define-tool";
@@ -108,6 +116,10 @@ export type { ToolDefinition, ToolResult } from "./tools/define-tool";
 export { sqlQueryTool } from "./tools/builtins/sql-query";
 export type { SqlQueryOptions } from "./tools/builtins/sql-query";
 export { loadFabrkConfig } from "./config/fabrk-config";
+
+// i18n
+export { extractLocale, detectLocale, localePath, createI18nMiddleware } from "./runtime/i18n";
+export type { I18nConfig } from "./runtime/i18n";
 
 // Memory
 export { setMemoryStore, getMemoryStore, InMemoryMemoryStore, SemanticMemoryStore } from "./agents/memory/index";

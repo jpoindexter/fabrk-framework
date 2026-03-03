@@ -10,6 +10,7 @@ import {
   buildMetadataHtml,
   type Metadata,
 } from "./metadata";
+import { extractLocale, type I18nConfig } from "./i18n";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -26,6 +27,8 @@ export interface SSRHandlerOptions {
   appDir?: string;
   /** Whether RSC mode is active (plugin-rsc installed and configured). */
   rsc?: boolean;
+  /** i18n configuration for locale-prefix routing. */
+  i18n?: I18nConfig;
   /** @internal Override react module loading for testing. */
   _reactLoader?: ReactModuleLoader;
 }
@@ -46,7 +49,7 @@ export async function handleRequest(
   request: Request,
   options: SSRHandlerOptions
 ): Promise<Response> {
-  const { routes, viteServer, htmlShell = DEFAULT_HTML_SHELL, middlewarePath, appDir, rsc } = options;
+  const { routes, viteServer, htmlShell = DEFAULT_HTML_SHELL, middlewarePath, appDir, rsc, i18n } = options;
 
   if (middlewarePath) {
     try {
@@ -57,7 +60,6 @@ export async function handleRequest(
         if (middlewareResult instanceof Response) {
           return middlewareResult;
         }
-        // Support middleware rewrites (object with rewriteUrl)
         if (middlewareResult && typeof middlewareResult === "object" && typeof middlewareResult.rewriteUrl === "string") {
           request = new Request(
             new URL(middlewareResult.rewriteUrl, request.url).toString(),
@@ -65,21 +67,26 @@ export async function handleRequest(
           );
         }
       }
-    } catch {
-      // Middleware not found or errored — continue
-    }
+    } catch { /* ignore */ }
   }
 
   const url = new URL(request.url);
   let pathname = url.pathname;
 
-  // Detect RSC payload requests (/path.rsc → return RSC stream)
   const isRscRequest = pathname.endsWith(".rsc");
   if (isRscRequest) {
     pathname = pathname.slice(0, -4) || "/";
   }
 
-  const matched = matchRoute(routes, pathname);
+  let locale: string | undefined;
+  if (i18n) {
+    const extracted = extractLocale(pathname, i18n);
+    locale = extracted.locale;
+    pathname = extracted.pathname;
+  }
+
+  const isSoftNav = request.headers.get("x-fabrk-navigation") === "soft";
+  const matched = matchRoute(routes, pathname, isSoftNav);
 
   if (!matched) {
     return new Response("Not Found", {
@@ -95,12 +102,11 @@ export async function handleRequest(
     return handleApiRoute(request, matched, viteServer);
   }
 
-  // RSC payload request — return Flight stream for client-side navigation
   if (isRscRequest && rsc) {
     return handleRscPayload(matched, viteServer, appDir);
   }
 
-  return handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc);
+  return handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale);
 }
 
 async function handleApiRoute(
@@ -150,10 +156,6 @@ async function handleApiRoute(
   }
 }
 
-// ---------------------------------------------------------------------------
-// RSC payload (Flight stream for client-side navigation)
-// ---------------------------------------------------------------------------
-
 async function handleRscPayload(
   matched: RouteMatch,
   viteServer: ViteDevServer,
@@ -170,7 +172,6 @@ async function handleRscPayload(
       });
     }
 
-    // Load RSC entry via virtual module
     const rscEntry = await viteServer.ssrLoadModule("virtual:fabrk/entry-rsc");
     const renderRsc = rscEntry.renderRsc;
 
@@ -181,7 +182,6 @@ async function handleRscPayload(
       });
     }
 
-    // Load React for createElement
     const React = await import("react");
     const createElement = React.createElement ?? React.default?.createElement;
 
@@ -192,10 +192,8 @@ async function handleRscPayload(
       });
     }
 
-    // Build the element tree
     let element: React.ReactNode = createElement(PageComponent as React.FC<Record<string, unknown>>, { params: matched.params });
 
-    // Apply layouts
     for (const layoutPath of matched.route.layoutPaths.slice().reverse()) {
       const layoutMod = await viteServer.ssrLoadModule(layoutPath);
       if (typeof layoutMod.default === "function") {
@@ -234,18 +232,15 @@ async function handleRscPayload(
   }
 }
 
-// ---------------------------------------------------------------------------
-// Page route SSR
-// ---------------------------------------------------------------------------
-
 async function handlePageRoute(
-  _request: Request,
+  request: Request,
   matched: RouteMatch,
   viteServer: ViteDevServer,
   htmlShell: (options: { head: string; body: string }) => string,
   reactLoader?: ReactModuleLoader,
   appDir?: string,
   rsc?: boolean,
+  locale?: string,
 ): Promise<Response> {
   try {
     const pageMod = await viteServer.ssrLoadModule(matched.route.filePath);
@@ -261,18 +256,44 @@ async function handlePageRoute(
       });
     }
 
+    const layoutMods = new Map<string, Record<string, unknown>>();
     const layouts: Array<React.ComponentType<{ children: React.ReactNode }>> = [];
     for (const layoutPath of matched.route.layoutPaths) {
       const layoutMod = await viteServer.ssrLoadModule(layoutPath);
+      layoutMods.set(layoutPath, layoutMod);
       if (typeof layoutMod.default === "function") {
         layouts.push(layoutMod.default);
       }
     }
 
-    // Load boundary modules if paths exist
+    const slotComponents: Record<string, React.ComponentType> = {};
+    if (matched.route.slots) {
+      for (const [slotName, slotPath] of Object.entries(matched.route.slots)) {
+        try {
+          const slotMod = await viteServer.ssrLoadModule(slotPath);
+          if (typeof slotMod.default === "function") {
+            slotComponents[slotName] = slotMod.default;
+          }
+        } catch { /* slot failed to load — skip */ }
+      }
+    }
+    if (matched.route.slotDefaults) {
+      for (const [slotName, defaultPath] of Object.entries(matched.route.slotDefaults)) {
+        if (!slotComponents[slotName]) {
+          try {
+            const defaultMod = await viteServer.ssrLoadModule(defaultPath);
+            if (typeof defaultMod.default === "function") {
+              slotComponents[slotName] = defaultMod.default;
+            }
+          } catch { /* default slot failed — skip */ }
+        }
+      }
+    }
+
     const modules: PageModules = {
       page: PageComponent,
       layouts,
+      slots: Object.keys(slotComponents).length > 0 ? slotComponents : undefined,
     };
 
     if (matched.route.errorPath) {
@@ -294,7 +315,6 @@ async function handlePageRoute(
       } catch { /* boundary file failed to load — skip */ }
     }
 
-    // Load global-error.tsx from app root if available
     if (appDir) {
       const globalErrorPath = findFile(appDir, "global-error");
       if (globalErrorPath) {
@@ -305,14 +325,16 @@ async function handlePageRoute(
       }
     }
 
-    const url = new URL(_request.url);
+    const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams.entries());
+    const pageProps = locale
+      ? { params: matched.params, searchParams, locale }
+      : { params: matched.params, searchParams };
     const metadataContext = { params: matched.params, searchParams };
 
-    // Resolve metadata from layouts + page (full pipeline)
     const metadataLayers: Metadata[] = [];
     for (const layoutPath of matched.route.layoutPaths) {
-      const layoutMod = await viteServer.ssrLoadModule(layoutPath);
+      const layoutMod = layoutMods.get(layoutPath) ?? await viteServer.ssrLoadModule(layoutPath);
       metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
     }
     metadataLayers.push(await resolveMetadata(pageMod, metadataContext));
@@ -329,7 +351,6 @@ async function handlePageRoute(
       });
     }
 
-    // Build the full element tree with error/loading/not-found boundaries
     const hasBoundaries = modules.errorFallback || modules.loadingFallback ||
       modules.notFoundFallback || modules.globalErrorFallback;
 
@@ -344,14 +365,12 @@ async function handlePageRoute(
         React,
       });
     } else {
-      // Fast path: no boundaries, build tree directly (backwards compat)
-      element = createElement(PageComponent, { params: matched.params, searchParams });
+      element = createElement(PageComponent, pageProps);
       for (let i = layouts.length - 1; i >= 0; i--) {
         element = createElement(layouts[i], { children: element });
       }
     }
 
-    // RSC path: render via Flight protocol → HTML stream
     if (rsc) {
       try {
         const rscEntry = await viteServer.ssrLoadModule("virtual:fabrk/entry-rsc");
@@ -372,12 +391,9 @@ async function handlePageRoute(
             },
           });
         }
-      } catch {
-        // RSC modules not available — fall through to basic SSR
-      }
+      } catch { /* ignore */ }
     }
 
-    // Basic SSR path
     const renderToReadableStream = reactDomServer.renderToReadableStream ?? reactDomServer.default?.renderToReadableStream;
     const renderToString = reactDomServer.renderToString ?? reactDomServer.default?.renderToString;
 
@@ -417,7 +433,6 @@ async function handlePageRoute(
       headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
     });
   } catch (err) {
-    // Handle redirect errors thrown by redirect()/permanentRedirect()
     if (isRedirectError(err)) {
       return new Response(null, {
         status: err.statusCode,
@@ -428,7 +443,6 @@ async function handlePageRoute(
       });
     }
 
-    // Handle not-found errors thrown by notFound()
     if (isNotFoundError(err)) {
       return new Response("Not Found", {
         status: 404,
@@ -473,13 +487,17 @@ async function streamingRender(
       controller.enqueue(encoder.encode(prefix));
     },
     async pull(controller) {
-      const { done, value } = await reader.read();
-      if (done) {
-        controller.enqueue(encoder.encode(suffix));
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.enqueue(encoder.encode(suffix));
+          controller.close();
+          return;
+        }
+        controller.enqueue(value);
+      } catch {
         controller.close();
-        return;
       }
-      controller.enqueue(value);
     },
   });
 
@@ -493,12 +511,6 @@ async function streamingRender(
   });
 }
 
-/**
- * Build HTML for dev mode:
- * 1. Try to read project's index.html and transform via Vite (injects HMR client + CSS)
- * 2. Inject SSR-rendered body and a hydration script
- * 3. Fall back to bare HTML shell if index.html doesn't exist
- */
 async function buildDevHtml(
   viteServer: ViteDevServer,
   matched: RouteMatch,
@@ -543,7 +555,6 @@ import "${pageRelative}";
     `<div id="root">${ssrBody}</div>`
   );
 
-  // Inject full metadata into <head>
   const metadataHtml = buildMetadataHtml(metadata);
   if (metadataHtml) {
     template = template.replace("</head>", `  ${metadataHtml}\n</head>`);

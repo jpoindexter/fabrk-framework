@@ -2,10 +2,6 @@
 
 import React, { forwardRef, useMemo, type ImgHTMLAttributes } from "react";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
 export interface ImageProps
   extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "width" | "height"> {
   /** Image source: relative path for local, URL for remote. */
@@ -32,10 +28,6 @@ export interface ImageProps
   placeholder?: "blur" | "empty";
 }
 
-// ---------------------------------------------------------------------------
-// Image optimization URL builder
-// ---------------------------------------------------------------------------
-
 const DEFAULT_QUALITY = 75;
 const DEFAULT_WIDTHS = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
 const DEVICE_WIDTHS = [640, 750, 828, 1080, 1200, 1920];
@@ -50,11 +42,9 @@ function buildOptimizedUrl(
   width: number,
   quality: number
 ): string {
-  // Only optimize relative URLs through our endpoint
   if (isRelativeUrl(src)) {
     return `/_fabrk/image?url=${encodeURIComponent(src)}&w=${width}&q=${quality}`;
   }
-  // Remote URLs — return as-is (CDN handles optimization)
   return src;
 }
 
@@ -62,9 +52,6 @@ function isRelativeUrl(src: string): boolean {
   return src.startsWith("/") && !src.startsWith("//");
 }
 
-/**
- * Generate srcSet for responsive images.
- */
 function buildSrcSet(
   src: string,
   quality: number,
@@ -91,20 +78,14 @@ function sanitizeBlurDataURL(url: string): string | undefined {
   if (!url) return undefined;
 
   const lower = url.toLowerCase().trim();
-  // Only allow data: URIs with image MIME types
   const validPrefix = /^data:image\/(png|jpeg|jpg|gif|webp|avif|svg\+xml);base64,/;
   if (!validPrefix.test(lower)) return undefined;
 
-  // Validate base64 content doesn't contain suspicious characters
   const base64Part = url.slice(url.indexOf(",") + 1);
   if (!/^[A-Za-z0-9+/=]+$/.test(base64Part)) return undefined;
 
   return url;
 }
-
-// ---------------------------------------------------------------------------
-// Image component
-// ---------------------------------------------------------------------------
 
 export const Image = forwardRef<HTMLImageElement, ImageProps>(
   function Image(
@@ -136,10 +117,8 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(
       [src, quality, width]
     );
 
-    // Compute sizes attribute
     const computedSizes = sizes ?? (fill ? "100vw" : width ? `${width}px` : undefined);
 
-    // Fill mode styles
     const fillStyles: React.CSSProperties = fill
       ? {
           position: "absolute",
@@ -151,7 +130,6 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(
         }
       : {};
 
-    // Blur placeholder styles
     const sanitizedBlur =
       placeholder === "blur" && blurDataURL
         ? sanitizeBlurDataURL(blurDataURL)
@@ -192,10 +170,6 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(
     return React.createElement("img", imgProps);
   }
 );
-
-// ---------------------------------------------------------------------------
-// Image optimization endpoint utilities
-// ---------------------------------------------------------------------------
 
 const MAX_WIDTH = 3840;
 const MIN_WIDTH = 16;

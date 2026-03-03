@@ -10,6 +10,7 @@ import { buildSecurityHeaders } from "../middleware/security";
 import { createSSEResponse, type SSEEvent } from "./sse-stream";
 import { createToolExecutor } from "./tool-executor";
 import { runAgentLoop, type AgentLoopEvent } from "./agent-loop";
+import { checkDelegationDepth } from "./orchestration/agent-tool";
 
 export interface AgentHandlerOptions
   extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt" | "tools" | "stream"> {
@@ -91,6 +92,11 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
     const authResult = await authGuard(req);
     if (authResult) return authResult;
+
+    const depthError = checkDelegationDepth(req);
+    if (depthError) {
+      return jsonResponse({ error: depthError }, 429);
+    }
 
     let body: { messages?: Array<{ role: string; content: string }>; sessionId?: string; threadId?: string };
     try {
@@ -376,6 +382,25 @@ export function createAgentHandler(options: AgentHandlerOptions) {
             tokens: totalTokens,
             cost: result.cost,
           });
+
+          // Persist to memory after streaming completes
+          if (options.memoryStore && threadId) {
+            const lastUserMsg = sanitized[sanitized.length - 1];
+            if (lastUserMsg) {
+              await options.memoryStore.appendMessage(threadId, {
+                threadId,
+                role: "user",
+                content: lastUserMsg.content,
+              });
+            }
+            if (result.content) {
+              await options.memoryStore.appendMessage(threadId, {
+                threadId,
+                role: "assistant",
+                content: result.content,
+              });
+            }
+          }
 
           yield { type: "text", content: result.content };
           yield {

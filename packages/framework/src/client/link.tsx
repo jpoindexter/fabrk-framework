@@ -11,10 +11,6 @@ import React, {
 import { prefetchUrl } from "./navigation";
 import { patchHistory } from "./navigation-state";
 
-// ---------------------------------------------------------------------------
-// Shared IntersectionObserver singleton for viewport prefetch
-// ---------------------------------------------------------------------------
-
 let observer: IntersectionObserver | null = null;
 const observedElements = new Map<Element, () => void>();
 
@@ -40,10 +36,6 @@ function getObserver(): IntersectionObserver | null {
 
   return observer;
 }
-
-// ---------------------------------------------------------------------------
-// Link component
-// ---------------------------------------------------------------------------
 
 export interface LinkProps
   extends Omit<AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
@@ -79,12 +71,10 @@ function isDangerousScheme(href: string): boolean {
 }
 
 function shouldNavigate(event: MouseEvent<HTMLAnchorElement>): boolean {
-  // Don't intercept: modifier keys, middle/right click
   if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
     return false;
   }
   if (event.button !== 0) return false;
-  // Don't intercept if default was prevented
   if (event.defaultPrevented) return false;
   return true;
 }
@@ -125,9 +115,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
 
         const mode = useReplace ? "replace" : "push";
 
-        // Navigate using history API
         if (mode === "push") {
-          // Save scroll position
           const state = history.state ?? {};
           history.replaceState(
             { ...state, __fabrkScrollY: window.scrollY },
@@ -138,7 +126,6 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
           history.replaceState({}, "", href);
         }
 
-        // Trigger RSC navigation if available
         if (window.__FABRK_RSC_NAVIGATE__) {
           window.__FABRK_RSC_NAVIGATE__(href);
         }
@@ -160,7 +147,6 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       [href, prefetchStrategy, onMouseEnter]
     );
 
-    // Viewport-based prefetch
     useEffect(() => {
       if (prefetchStrategy !== "viewport") return;
       if (isExternalUrl(href) || isDangerousScheme(href)) return;

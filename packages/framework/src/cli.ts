@@ -139,6 +139,7 @@ async function build(): Promise<void> {
     plugins: buildPlugins,
     build: {
       outDir: "dist/client",
+      manifest: true,
     },
   });
 

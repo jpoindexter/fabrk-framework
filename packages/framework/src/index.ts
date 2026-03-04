@@ -253,3 +253,5 @@ export { handleStreamObject } from "./runtime/stream-object-handler";
 export { useViewTransition, ViewTransitionLink } from "./client/view-transition";
 export { readManifest, getEntryAssets, buildAssetTags } from "./runtime/asset-manifest";
 export { cookies, headers, runWithContext } from "./runtime/server-context";
+export { createAuthGuard } from "./middleware/auth";
+export type { AuthGuardOptions as AuthGuardMiddlewareOptions } from "./middleware/auth";

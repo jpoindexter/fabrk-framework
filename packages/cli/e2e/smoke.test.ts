@@ -51,23 +51,30 @@ describe('fabrk create', () => {
         expect(pkg.name).toBe(projectName)
         expect(pkg.dependencies['@fabrk/core']).toBeDefined()
         expect(pkg.dependencies['@fabrk/components']).toBeDefined()
-        expect(pkg.dependencies['next']).toBeDefined()
+        // basic template uses FABRK runtime, not Next.js
+        if (template === 'basic') {
+          expect(pkg.dependencies['@fabrk/framework']).toBeDefined()
+        } else {
+          expect(pkg.dependencies['next']).toBeDefined()
+        }
         expect(pkg.dependencies['react']).toMatch(/19/)
         expect(pkg.scripts?.dev).toBeDefined()
         expect(pkg.scripts?.build).toBeDefined()
       })
 
       it('creates all required files', () => {
-        const requiredFiles = [
+        const commonFiles = [
           'tsconfig.json',
-          'next.config.js',
           'fabrk.config.ts',
           'app/page.tsx',
           'app/layout.tsx',
           'app/globals.css',
           '.fabrk/manifest.json',
         ]
-        for (const file of requiredFiles) {
+        const templateFiles = template === 'basic'
+          ? [...commonFiles, 'vite.config.ts', 'index.html']
+          : [...commonFiles, 'next.config.js']
+        for (const file of templateFiles) {
           expect(fs.existsSync(path.join(projectDir, file)), `Missing: ${file}`).toBe(true)
         }
       })
@@ -77,7 +84,7 @@ describe('fabrk create', () => {
           fs.readFileSync(path.join(projectDir, '.fabrk', 'manifest.json'), 'utf-8')
         )
         expect(manifest.framework).toBe('fabrk')
-        expect(manifest.runtime).toBe('nextjs')
+        expect(manifest.runtime).toBe(template === 'basic' ? 'fabrk' : 'nextjs')
         expect(manifest.name).toBe(projectName)
       })
     })

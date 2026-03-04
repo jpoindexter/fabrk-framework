@@ -104,7 +104,7 @@ export function generateManifest(root: string): object {
     name: pkg.name || 'unknown',
     version: pkg.version || '0.0.0',
     framework: 'fabrk',
-    runtime: 'nextjs',
+    runtime: allDeps['@fabrk/framework'] ? 'fabrk' : 'nextjs',
     generatedAt: new Date().toISOString(),
     packages: fabrkPackages,
     components,

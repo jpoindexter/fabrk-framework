@@ -1,5 +1,6 @@
 import { createAudit, updateAudit } from '../../../src/store.js';
 import { getMockEvaluation, getMockCompetitorEvaluation, getMockGapAnalysis } from '../../../src/mock-data.js';
+import * as ollama from '../../../src/ollama-evaluator.js';
 import type { ProductEvaluation } from '../../../src/heuristics.js';
 
 export async function POST(req: Request): Promise<Response> {
@@ -21,7 +22,6 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const auditId = crypto.randomUUID();
-
   createAudit(auditId, {
     status: 'pending',
     yourProduct: null,
@@ -32,7 +32,7 @@ export async function POST(req: Request): Promise<Response> {
   });
 
   const filtered = competitorUrls.filter(Boolean).slice(0, 3);
-  void runMockPipeline(auditId, yourUrl, filtered, userType, keyFlows);
+  void runPipeline(auditId, yourUrl, filtered, userType, keyFlows);
 
   return new Response(JSON.stringify({ id: auditId }), {
     status: 200,
@@ -40,45 +40,53 @@ export async function POST(req: Request): Promise<Response> {
   });
 }
 
-async function runMockPipeline(
+async function runPipeline(
   auditId: string,
   yourUrl: string,
   competitorUrls: string[],
-  _userType: string,
-  _keyFlows: string,
+  userType: string,
+  keyFlows: string,
 ): Promise<void> {
   try {
     await delay(600);
     updateAudit(auditId, { status: 'processing' });
 
-    await delay(2800); // simulate screenshot capture
-    await delay(3200); // simulate Claude evaluation
+    const useOllama = await ollama.isAvailable();
+    console.log(`[audit] using ${useOllama ? 'Ollama' : 'mock'} evaluator`);
 
-    const yourProduct: ProductEvaluation = {
-      url: yourUrl,
-      screenshot: '',
-      ...getMockEvaluation(0),
-    };
+    let yourProduct: ProductEvaluation;
+    let competitors: ProductEvaluation[];
 
-    const competitors: ProductEvaluation[] = competitorUrls.map((url, i) => ({
-      url,
-      screenshot: '',
-      ...getMockCompetitorEvaluation(i),
-    }));
+    if (useOllama) {
+      // Evaluate all URLs in parallel
+      const [yourEval, ...competitorEvals] = await Promise.all([
+        ollama.evaluateUrl(yourUrl, userType, keyFlows),
+        ...competitorUrls.map(url => ollama.evaluateUrl(url, userType, keyFlows)),
+      ]);
 
-    await delay(1500); // simulate gap analysis
+      yourProduct = { url: yourUrl, screenshot: '', ...yourEval };
+      competitors = competitorUrls.map((url, i) => ({ url, screenshot: '', ...competitorEvals[i] }));
 
-    const { gapAnalysis, roadmap } = getMockGapAnalysis(yourProduct, competitors);
+      const { gapAnalysis, roadmap } = competitorUrls.length > 0
+        ? await ollama.buildGapAnalysis(yourProduct, competitors)
+        : { gapAnalysis: { youWin: [], theyWin: [], comparable: [] }, roadmap: [] };
 
-    updateAudit(auditId, {
-      status: 'complete',
-      yourProduct,
-      competitors,
-      gapAnalysis,
-      roadmap,
-      completedAt: new Date().toISOString(),
-    });
+      updateAudit(auditId, { status: 'complete', yourProduct, competitors, gapAnalysis, roadmap, completedAt: new Date().toISOString() });
+    } else {
+      // Mock pipeline with realistic delays
+      await delay(2800);
+      await delay(3200);
+
+      yourProduct = { url: yourUrl, screenshot: '', ...getMockEvaluation(0) };
+      competitors = competitorUrls.map((url, i) => ({ url, screenshot: '', ...getMockCompetitorEvaluation(i) }));
+
+      await delay(1500);
+
+      const { gapAnalysis, roadmap } = getMockGapAnalysis(yourProduct, competitors);
+      updateAudit(auditId, { status: 'complete', yourProduct, competitors, gapAnalysis, roadmap, completedAt: new Date().toISOString() });
+    }
   } catch (err) {
+    console.error('[audit] pipeline error:', err);
     updateAudit(auditId, { status: 'failed', error: String(err) });
   }
 }

@@ -192,7 +192,7 @@ export { createToolExecutor } from "./agents/tool-executor";
 // Durable agent execution (checkpoint/resume)
 export { InMemoryCheckpointStore, generateCheckpointId } from "./agents/checkpoint";
 export type { CheckpointStore, CheckpointState, CheckpointStatus } from "./agents/checkpoint";
-export { handleStartAgent, handleResumeAgent, handleAgentStatus } from "./agents/durable-handler";
+export { handleStartAgent, handleResumeAgent, handleAgentStatus, handleAgentHistory, handleAgentRollback } from "./agents/durable-handler";
 export type { DurableAgentOptions } from "./agents/durable-handler";
 
 // Guardrails

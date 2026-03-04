@@ -3,10 +3,16 @@ import { fabrkPlugin } from "../runtime/plugin";
 
 describe("RSC Integration", () => {
   describe("fabrkPlugin RSC option", () => {
-    it("returns rsc-integration plugin when rsc is not disabled", () => {
-      const plugins = fabrkPlugin();
+    it("returns rsc-integration plugin when rsc is explicitly true", () => {
+      const plugins = fabrkPlugin({ rsc: true });
       const names = plugins.map((p) => p.name);
       expect(names).toContain("fabrk:rsc-integration");
+    });
+
+    it("omits rsc-integration plugin by default (RSC is opt-in)", () => {
+      const plugins = fabrkPlugin();
+      const names = plugins.map((p) => p.name);
+      expect(names).not.toContain("fabrk:rsc-integration");
     });
 
     it("omits rsc-integration plugin when rsc is false", () => {
@@ -22,9 +28,14 @@ describe("RSC Integration", () => {
       expect(names).toContain("fabrk:virtual-entries");
     });
 
-    it("includes 4 plugins with RSC enabled", () => {
-      const plugins = fabrkPlugin();
+    it("includes 4 plugins with RSC explicitly enabled", () => {
+      const plugins = fabrkPlugin({ rsc: true });
       expect(plugins).toHaveLength(4);
+    });
+
+    it("includes 3 plugins with RSC default (opt-in not set)", () => {
+      const plugins = fabrkPlugin();
+      expect(plugins).toHaveLength(3);
     });
 
     it("includes 3 plugins with RSC disabled", () => {
@@ -138,7 +149,7 @@ describe("RSC Integration", () => {
 
   describe("rsc-integration plugin graceful fallback", () => {
     it("config hook does not throw when @vitejs/plugin-rsc is missing", async () => {
-      const plugins = fabrkPlugin();
+      const plugins = fabrkPlugin({ rsc: true });
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const rscPlugin = plugins.find((p) => p.name === "fabrk:rsc-integration")!;
       const configHook = rscPlugin.config as (config: { plugins?: unknown[] }) => Promise<void>;

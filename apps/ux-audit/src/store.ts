@@ -1,9 +1,18 @@
 /**
  * In-memory audit store — swap for Supabase/Redis in production.
+ *
+ * Uses globalThis so the Map survives Vite SSR module re-evaluation
+ * (each route handler gets a fresh module namespace, but globalThis is shared).
  */
 import type { AuditResult } from './heuristics.js';
 
-const audits = new Map<string, AuditResult>();
+declare global {
+  // eslint-disable-next-line no-var
+  var __uxAudits: Map<string, AuditResult> | undefined;
+}
+
+const audits: Map<string, AuditResult> = globalThis.__uxAudits ?? new Map();
+globalThis.__uxAudits = audits;
 
 export function createAudit(id: string, initial: Omit<AuditResult, 'id'>): AuditResult {
   const audit: AuditResult = { id, ...initial };

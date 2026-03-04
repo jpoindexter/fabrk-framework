@@ -107,7 +107,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
               viteServer: server,
               middlewarePath: middlewarePath ?? undefined,
               appDir: appDirResolved,
-              rsc: options.rsc !== false,
+              rsc: options.rsc === true,
               i18n: fabrkConfig.i18n,
             });
 
@@ -248,11 +248,21 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       }
       return null;
     },
+
+    transformIndexHtml(html: string) {
+      // Rewrite virtual: script src to the /@id/ path that Vite actually serves.
+      // Without this the browser receives a literal `virtual:` URL (unknown scheme)
+      // and refuses to load it, breaking client-side hydration.
+      return html.replace(
+        /src="virtual:fabrk\/([^"]+)"/g,
+        (_: string, rest: string) => `src="/@id/__x00__virtual:fabrk/${rest}"`,
+      );
+    },
   };
 
   const plugins: Plugin[] = [routerPlugin, virtualPlugin];
 
-  if (options.rsc !== false) {
+  if (options.rsc === true) {
     plugins.push(rscIntegrationPlugin());
   }
 
@@ -366,6 +376,9 @@ function generateRoutesModule(routes: Route[]): string {
 
   for (let i = 0; i < routes.length; i++) {
     const route = routes[i];
+    // API routes must never be imported in the client bundle — they use
+    // server-only modules (Node.js APIs, env vars, etc.) that crash in the browser.
+    if (route.type !== "page") continue;
     const varName = `route${i}`;
     imports.push(`import * as ${varName} from ${JSON.stringify(route.filePath)};`);
     routeEntries.push(
@@ -469,16 +482,17 @@ import { routes } from 'virtual:fabrk/routes';
 
 function patternToRegex(pattern) {
   const p = pattern
-    .replace(/\\[\\.\\.\\.(\\w+)\\]/g, '(.+)')
-    .replace(/\\[(\\w+)\\]/g, '([^/]+)');
+    .replace(/\\[\\.\\.\\.(\\w+)\\]/g, '(.+)')   // [...param] catch-all
+    .replace(/\\[(\\w+)\\]/g, '([^/]+)')          // [param] Next.js style
+    .replace(/:(\\w+)/g, '([^/]+)');              // :param Express style
   return new RegExp('^' + p + '$');
 }
 
 function extractParams(pattern, pathname) {
   const paramNames = [];
-  const re = /\\[(?:\\.\\.\\.)?([\\w]+)\\]/g;
+  const re = /\\[(?:\\.\\.\\.)?([\\w]+)\\]|:(\\w+)/g;
   let m;
-  while ((m = re.exec(pattern)) !== null) paramNames.push(m[1]); // eslint-disable-line
+  while ((m = re.exec(pattern)) !== null) paramNames.push(m[1] || m[2]); // eslint-disable-line
   const match = pathname.match(patternToRegex(pattern));
   if (!match) return {};
   const params = {};

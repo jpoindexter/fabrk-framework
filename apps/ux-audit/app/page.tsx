@@ -202,7 +202,7 @@ export default function HomePage() {
 
       {/* Pricing table */}
       <div style={{ borderTop: '1px solid #E4E4E2' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: '#E4E4E2', border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden', maxWidth: 560 }}>
+        <div style={{ maxWidth: 560, margin: '0 auto', padding: '40px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: '#E4E4E2', border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden' }}>
           {[
             { plan: 'Solo', price: '$149', desc: 'Your product + 1 competitor', features: ['10 heuristic categories', 'Side-by-side gap analysis', 'Prioritized roadmap'] },
             { plan: 'Deep Dive', price: '$299', desc: 'Your product + up to 3 competitors', features: ['Everything in Solo', 'Multi-competitor comparison', 'Broader gap analysis'] },

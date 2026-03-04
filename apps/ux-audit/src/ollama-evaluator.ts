@@ -1,8 +1,11 @@
 import { HEURISTICS } from './heuristics.js';
 import type { HeuristicScore, ProductEvaluation, GapAnalysis, RoadmapItem } from './heuristics.js';
 
-const BASE_URL = process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
-const MODEL = process.env.OLLAMA_MODEL ?? 'qwen2.5:7b';
+// Lazy helpers — safe if this module is inadvertently evaluated in a browser context
+const getBaseUrl = () =>
+  (typeof process !== 'undefined' ? process.env?.OLLAMA_BASE_URL : undefined) ?? 'http://localhost:11434';
+const getModel = () =>
+  (typeof process !== 'undefined' ? process.env?.OLLAMA_MODEL : undefined) ?? 'qwen3.5:9b';
 
 const SYSTEM_PROMPT = `You are a senior UX evaluator with 15 years of experience shipping product at Apple, Google, and YouTube. You apply Nielsen Norman heuristics calibrated to BigTech design standards.
 
@@ -15,12 +18,18 @@ For each heuristic, score 1–5 (1=critical failure, 5=exemplary) and assign sev
 
 Be specific and actionable. Reference real characteristics of the product. No generic advice. Return only valid JSON, no markdown fences.`;
 
-async function ollamaChat(messages: Array<{ role: string; content: string }>): Promise<string> {
-  const res = await fetch(`${BASE_URL}/v1/chat/completions`, {
+type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string } };
+
+type ChatMessage = { role: string; content: string | ContentPart[] };
+
+async function ollamaChat(messages: ChatMessage[]): Promise<string> {
+  const res = await fetch(`${getBaseUrl()}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: MODEL,
+      model: getModel(),
       messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages],
       temperature: 0.3,
       stream: false,
@@ -49,12 +58,14 @@ export async function evaluateUrl(
   url: string,
   userType: string,
   keyFlows: string,
+  screenshotBase64?: string,
 ): Promise<Omit<ProductEvaluation, 'url' | 'screenshot'>> {
-  const prompt = `Evaluate the UX of: ${url}
+  const textPrompt = `Evaluate the UX of: ${url}
 User type: ${userType}
 Key flows to assess: ${keyFlows}
+${screenshotBase64 ? '\nA screenshot of the product is attached. Use it to ground your evaluation in what the user actually sees.' : '\nEvaluate based on your knowledge of this product.'}
 
-Evaluate all 10 Nielsen Norman heuristics based on your knowledge of this product. Return JSON exactly:
+Evaluate all 10 Nielsen Norman heuristics. Return JSON exactly:
 {
   "scores": [
     {
@@ -71,7 +82,14 @@ Evaluate all 10 Nielsen Norman heuristics based on your knowledge of this produc
 
 Heuristic IDs (use exactly): ${HEURISTICS.map(h => h.id).join(', ')}`;
 
-  const text = await ollamaChat([{ role: 'user', content: prompt }]);
+  const userContent: ContentPart[] = screenshotBase64
+    ? [
+        { type: 'image_url', image_url: { url: `data:image/png;base64,${screenshotBase64}` } },
+        { type: 'text', text: textPrompt },
+      ]
+    : [{ type: 'text', text: textPrompt }];
+
+  const text = await ollamaChat([{ role: 'user', content: userContent }]);
   const parsed = JSON.parse(extractJson(text)) as {
     scores: HeuristicScore[];
     overall: number;
@@ -119,7 +137,7 @@ Sort roadmap: P0 first, then by effort (low before high within same priority).`;
 
 export async function isAvailable(): Promise<boolean> {
   try {
-    const res = await fetch(`${BASE_URL}/api/tags`, { signal: AbortSignal.timeout(2000) });
+    const res = await fetch(`${getBaseUrl()}/api/tags`, { signal: AbortSignal.timeout(2000) });
     return res.ok;
   } catch {
     return false;

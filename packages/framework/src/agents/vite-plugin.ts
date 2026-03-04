@@ -11,7 +11,7 @@ import { applySecurityHeaders } from "../middleware/security";
 import { nodeToWebRequest, writeWebResponse } from "../runtime/node-web-bridge";
 import type { ToolDefinition } from "../tools/define-tool";
 import { getMemoryStore } from "./memory/index";
-import { createApprovalHandler } from "./approval-handler";
+import { createApprovalHandler, handleListApprovals } from "./approval-handler";
 
 const approvalHandler = createApprovalHandler();
 
@@ -60,6 +60,14 @@ export function agentPlugin(): Plugin {
         server.middlewares.use(async (req: Connect.IncomingMessage, res: ServerResponse, next: Connect.NextFunction) => {
           const url = req.url ?? "/";
           const pathname = url.split("?")[0];
+
+          // Handle approvals listing: GET /__ai/agents/:name/approvals
+          if (pathname.startsWith("/__ai/agents/") && pathname.endsWith("/approvals") && req.method === "GET") {
+            const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approvals".length));
+            const webRes = handleListApprovals(agentName);
+            await writeWebResponse(res, webRes);
+            return;
+          }
 
           // Handle approval endpoint: POST /__ai/agents/:name/approve
           if (pathname.startsWith("/__ai/agents/") && pathname.endsWith("/approve") && req.method === "POST") {

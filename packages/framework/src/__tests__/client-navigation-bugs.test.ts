@@ -464,3 +464,99 @@ describe("1c: Link uses navigateImpl for unified navigation", () => {
     expect(linkSource).not.toContain("__FABRK_RSC_NAVIGATE__");
   });
 });
+
+// --- Bug fix: generateRoutesModule skips API routes ---
+
+describe("Bug fix: generateRoutesModule excludes API routes from client bundle", () => {
+  it("plugin source contains guard skipping non-page routes in generateRoutesModule", async () => {
+    const fs = await import("node:fs");
+    const pluginSource = fs.readFileSync(
+      new URL("../runtime/plugin.ts", import.meta.url).pathname,
+      "utf-8"
+    );
+    expect(pluginSource).toContain('route.type !== "page"');
+    expect(pluginSource).toContain("// API routes must never be imported in the client bundle");
+  });
+
+  it("ENTRY_CLIENT_HYDRATE_CODE skips non-page routes when rendering", async () => {
+    const pluginModule = await import("../runtime/plugin");
+    const plugins = pluginModule.fabrkPlugin({ rsc: false });
+    const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries");
+    const loadFn = virtualPlugin!.load as (id: string) => string | null;
+    const code = loadFn("\0virtual:fabrk/entry-client-hydrate")!;
+    expect(code).toContain("route.type !== 'page'");
+  });
+});
+
+// --- Bug fix: Express :param style in patternToRegex / extractParams ---
+//
+// Mirror the exact logic shipped in ENTRY_CLIENT_HYDRATE_CODE so we can run unit
+// tests without evaluating generated code strings at runtime.
+
+function patternToRegex(pattern: string): RegExp {
+  const p = pattern
+    .replace(/\[\.\.\.(\w+)\]/g, "(.+)")
+    .replace(/\[(\w+)\]/g, "([^/]+)")
+    .replace(/:(\w+)/g, "([^/]+)");
+  return new RegExp("^" + p + "$");
+}
+
+function extractParams(pattern: string, pathname: string): Record<string, string> {
+  const paramNames = [...pattern.matchAll(/\[(?:\.\.\.)?(\w+)\]|:(\w+)/g)]
+    .map((m) => (m[1] ?? m[2])!);
+  const match = pathname.match(patternToRegex(pattern));
+  if (!match) return {};
+  const params: Record<string, string> = {};
+  paramNames.forEach((name, i) => { params[name] = match[i + 1] ?? ""; });
+  return params;
+}
+
+describe("Bug fix: ENTRY_CLIENT_HYDRATE_CODE patternToRegex handles Express :param style", () => {
+  it("source code contains Express :param handler in ENTRY_CLIENT_HYDRATE_CODE", async () => {
+    const pluginModule = await import("../runtime/plugin");
+    const plugins = pluginModule.fabrkPlugin({ rsc: false });
+    const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries");
+    const loadFn = virtualPlugin!.load as (id: string) => string | null;
+    const code = loadFn("\0virtual:fabrk/entry-client-hydrate")!;
+    expect(code).toContain(":(\\w+)");
+    expect(code).toContain("Express style");
+  });
+
+  it("matches Next.js [id] bracket-style params", () => {
+    expect("/post/123".match(patternToRegex("/post/[id]"))).toBeTruthy();
+  });
+
+  it("matches Express :id style params", () => {
+    expect("/post/123".match(patternToRegex("/post/:id"))).toBeTruthy();
+  });
+
+  it("does not match wrong path with Express :id pattern", () => {
+    expect("/other/foo/bar".match(patternToRegex("/post/:id"))).toBeNull();
+  });
+
+  it("extracts params from [id] bracket style", () => {
+    expect(extractParams("/post/[id]", "/post/123")).toEqual({ id: "123" });
+  });
+
+  it("extracts params from :id Express style", () => {
+    expect(extractParams("/post/:id", "/post/123")).toEqual({ id: "123" });
+  });
+
+  it("extracts from dynamic audit route /audit/:id", () => {
+    expect(extractParams("/audit/:id", "/audit/abc-123")).toEqual({ id: "abc-123" });
+  });
+
+  it("returns {} when Express pattern does not match pathname", () => {
+    expect(extractParams("/post/:id", "/blog/123")).toEqual({});
+  });
+
+  it("handles catch-all [...rest] style", () => {
+    expect("/a/b/c".match(patternToRegex("/[...rest]"))).toBeTruthy();
+  });
+
+  it("[id] and :id both extract the same value for identical URLs", () => {
+    const bracket = extractParams("/audit/[id]", "/audit/xyz");
+    const express = extractParams("/audit/:id", "/audit/xyz");
+    expect(bracket).toEqual(express);
+  });
+});

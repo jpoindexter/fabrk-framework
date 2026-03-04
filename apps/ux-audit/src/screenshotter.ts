@@ -1,5 +1,3 @@
-"use server";
-
 import puppeteer from 'puppeteer';
 
 export async function screenshot(url: string): Promise<string> {

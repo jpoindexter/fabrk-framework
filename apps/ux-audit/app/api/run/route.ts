@@ -1,6 +1,7 @@
 import { createAudit, updateAudit } from '../../../src/store.js';
 import { getMockEvaluation, getMockCompetitorEvaluation, getMockGapAnalysis } from '../../../src/mock-data.js';
 import * as ollama from '../../../src/ollama-evaluator.js';
+import { screenshot } from '../../../src/screenshotter.js';
 import type { ProductEvaluation } from '../../../src/heuristics.js';
 
 export async function POST(req: Request): Promise<Response> {
@@ -58,14 +59,23 @@ async function runPipeline(
     let competitors: ProductEvaluation[];
 
     if (useOllama) {
-      // Evaluate all URLs in parallel
-      const [yourEval, ...competitorEvals] = await Promise.all([
-        ollama.evaluateUrl(yourUrl, userType, keyFlows),
-        ...competitorUrls.map(url => ollama.evaluateUrl(url, userType, keyFlows)),
-      ]);
+      // Screenshot → evaluate pipeline: capture once, pass to vision model + store
+      const allUrls = [yourUrl, ...competitorUrls];
+      const results = await Promise.all(
+        allUrls.map(async (url) => {
+          const ss = await screenshot(url).catch(() => '');
+          const evaluation = await ollama.evaluateUrl(url, userType, keyFlows, ss || undefined);
+          return { ss, evaluation };
+        })
+      );
 
-      yourProduct = { url: yourUrl, screenshot: '', ...yourEval };
-      competitors = competitorUrls.map((url, i) => ({ url, screenshot: '', ...competitorEvals[i] }));
+      const [{ ss: yourSS, evaluation: yourEval }, ...competitorResults] = results;
+      yourProduct = { url: yourUrl, screenshot: yourSS, ...yourEval };
+      competitors = competitorUrls.map((url, i) => ({
+        url,
+        screenshot: competitorResults[i]?.ss ?? '',
+        ...competitorResults[i]!.evaluation,
+      }));
 
       const { gapAnalysis, roadmap } = competitorUrls.length > 0
         ? await ollama.buildGapAnalysis(yourProduct, competitors)

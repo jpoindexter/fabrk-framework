@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { AuditResult, RoadmapItem } from '../../../src/heuristics.js';
 
 const SEV: Record<string, { bg: string; color: string }> = {
@@ -56,13 +56,12 @@ function RoadmapRow({ item }: { item: RoadmapItem }) {
 
 function ProcessingScreen({ status }: { status: 'pending' | 'processing' }) {
   const [step, setStep] = useState(0);
-  const startRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (status === 'pending') { setStep(0); return; }
-    if (!startRef.current) startRef.current = Date.now();
+    const start = Date.now();
     const interval = setInterval(() => {
-      const elapsed = Date.now() - (startRef.current ?? Date.now());
+      const elapsed = Date.now() - start;
       if (elapsed < 2800) setStep(1);
       else if (elapsed < 5600) setStep(2);
       else if (elapsed < 7200) setStep(3);
@@ -164,9 +163,7 @@ export default function AuditPage({ params }: { params: { id: string } }) {
           <div style={{ marginTop: 40, padding: '12px 16px', background: '#FFF0F0', border: '1px solid #FECACA', borderRadius: 3, fontSize: 13, color: '#C20000' }}>{error}</div>
         )}
 
-        {!audit && !error && (
-          <ProcessingScreen status="pending" />
-        )}
+        {!audit && !error && <ProcessingScreen status="pending" />}
 
         {(audit?.status === 'pending' || audit?.status === 'processing') && (
           <ProcessingScreen status={audit.status} />
@@ -183,7 +180,6 @@ export default function AuditPage({ params }: { params: { id: string } }) {
         {audit?.status === 'complete' && audit.yourProduct && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 56, paddingTop: 48 }}>
 
-            {/* Header */}
             <div>
               <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>Audit complete</p>
               <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 12px' }}>{audit.yourProduct.url}</h1>
@@ -191,18 +187,19 @@ export default function AuditPage({ params }: { params: { id: string } }) {
                 <ScoreBar score={audit.yourProduct.overall} />
                 <span style={{ fontSize: 12, color: '#6B6B69' }}>Overall score</span>
               </div>
-              <p style={{ fontSize: 14, color: '#6B6B69', lineHeight: 1.65, maxWidth: 620, margin: 0 }}>{audit.yourProduct.summary}</p>
+              <p style={{ fontSize: 14, color: '#6B6B69', lineHeight: 1.65, maxWidth: 620, margin: '0 0 20px' }}>{audit.yourProduct.summary}</p>
+              {audit.yourProduct.screenshot && (
+                <div style={{ border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden', maxWidth: 720 }}>
+                  <img src={`data:image/png;base64,${audit.yourProduct.screenshot}`} alt={`Screenshot of ${audit.yourProduct.url}`} style={{ width: '100%', display: 'block' }} />
+                </div>
+              )}
             </div>
 
-            {/* Heuristic scores */}
             <div>
               <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 16px' }}>Heuristic scores</p>
               <div style={{ border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden', background: '#fff' }}>
                 {audit.yourProduct.scores.map((s, i) => (
-                  <div
-                    key={s.id}
-                    style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, padding: '14px 18px', borderBottom: i < audit.yourProduct!.scores.length - 1 ? '1px solid #F2F2F0' : 'none', alignItems: 'start' }}
-                  >
+                  <div key={s.id} style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, padding: '14px 18px', borderBottom: i < audit.yourProduct!.scores.length - 1 ? '1px solid #F2F2F0' : 'none', alignItems: 'start' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                         <SevBadge sev={s.severity} />
@@ -215,15 +212,12 @@ export default function AuditPage({ params }: { params: { id: string } }) {
                         <p style={{ fontSize: 11, color: '#9A9A98', margin: 0, lineHeight: 1.5 }}>{s.recommendation}</p>
                       )}
                     </div>
-                    <div style={{ paddingTop: 2 }}>
-                      <ScoreBar score={s.score} />
-                    </div>
+                    <div style={{ paddingTop: 2 }}><ScoreBar score={s.score} /></div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Gap analysis */}
             {audit.competitors.length > 0 && audit.gapAnalysis && (
               <div>
                 <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 16px' }}>Gap analysis</p>
@@ -255,29 +249,30 @@ export default function AuditPage({ params }: { params: { id: string } }) {
               </div>
             )}
 
-            {/* Roadmap */}
             {audit.roadmap && audit.roadmap.length > 0 && (
               <div>
                 <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 4px' }}>Prioritized roadmap</p>
                 <p style={{ fontSize: 12, color: '#6B6B69', margin: '0 0 16px' }}>Sorted by priority, then effort</p>
-                <div>
-                  {audit.roadmap.map((item, i) => <RoadmapRow key={i} item={item} />)}
-                </div>
+                <div>{audit.roadmap.map((item, i) => <RoadmapRow key={i} item={item} />)}</div>
               </div>
             )}
 
-            {/* Competitor summaries */}
             {audit.competitors.length > 0 && (
               <div>
                 <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 16px' }}>Competitor evaluations</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {audit.competitors.map((comp, i) => (
-                    <div key={i} style={{ border: '1px solid #E4E4E2', borderRadius: 4, padding: '16px 18px', background: '#fff' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: '#111110' }}>{comp.url}</span>
-                        <ScoreBar score={comp.overall} />
+                    <div key={i} style={{ border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden', background: '#fff' }}>
+                      {comp.screenshot && (
+                        <img src={`data:image/png;base64,${comp.screenshot}`} alt={`Screenshot of ${comp.url}`} style={{ width: '100%', display: 'block', borderBottom: '1px solid #E4E4E2' }} />
+                      )}
+                      <div style={{ padding: '14px 18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: '#111110' }}>{comp.url}</span>
+                          <ScoreBar score={comp.overall} />
+                        </div>
+                        <p style={{ fontSize: 12, color: '#6B6B69', lineHeight: 1.6, margin: 0 }}>{comp.summary}</p>
                       </div>
-                      <p style={{ fontSize: 12, color: '#6B6B69', lineHeight: 1.6, margin: 0 }}>{comp.summary}</p>
                     </div>
                   ))}
                 </div>

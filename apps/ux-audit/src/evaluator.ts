@@ -1,5 +1,3 @@
-"use server";
-
 import Anthropic from '@anthropic-ai/sdk';
 import { HEURISTICS } from './heuristics.js';
 import type { HeuristicScore, ProductEvaluation, GapAnalysis, RoadmapItem } from './heuristics.js';

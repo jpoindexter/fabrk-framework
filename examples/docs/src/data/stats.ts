@@ -14,5 +14,5 @@ export const STATS = {
   packages: 13,
   components: '109+',
   themes: 18,
-  tests: 858,
+  tests: 2690,
 } as const

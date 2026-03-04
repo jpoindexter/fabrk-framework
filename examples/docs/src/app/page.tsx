@@ -24,13 +24,15 @@ const features = [
   {
     label: 'TESTS',
     value: String(STATS.tests),
-    description: 'Comprehensive test coverage across all packages',
+    description: 'Comprehensive test coverage across agents, tools, memory, workflows, and UI',
   },
 ]
 
 const quickLinks = [
   { label: '> LIVE DEMO', href: '/demo', description: 'See a full CodeScan dashboard built entirely with FABRK components' },
   { label: '> GET STARTED', href: '/getting-started', description: 'Create your first FABRK app in 5 minutes' },
+  { label: '> AGENTS', href: '/agents', description: 'Build AI agents with tools, memory, guardrails, workflows, MCP, and evals' },
+  { label: '> TUTORIALS', href: '/tutorials/agents', description: 'Step-by-step: build a production AI agent from scratch' },
   { label: '> PACKAGES', href: '/packages', description: `Explore ${STATS.packages} modular packages` },
   { label: '> COMPONENTS', href: '/components', description: `Browse ${STATS.components} UI components` },
   { label: '> GUIDES', href: '/guides', description: 'Build a dashboard, add auth, integrate payments' },
@@ -53,6 +55,9 @@ export default function HomePage() {
           Stop generating 500 lines of custom components from scratch.
           Import pre-built, theme-aware components and tools.
           Ship full-stack apps in minutes, not hours.
+        </p>
+        <p className="mt-3 text-muted-foreground max-w-2xl">
+          Build AI agents that remember, reason, and act — with tools, memory, guardrails, multi-agent orchestration, and built-in evals. One framework, from UI to AI.
         </p>
 
         <div className="mt-8 flex gap-4">

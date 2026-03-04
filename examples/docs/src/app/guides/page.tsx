@@ -1141,486 +1141,418 @@ export default function PricingPage() {
       {/* ──────────────────────────────────────────────────────────────── */}
       <Section id="ai" title="AI INTEGRATION">
         <p className="text-sm text-muted-foreground mb-4">
-          Add AI capabilities with cost tracking, streaming, provider fallback, budget
-          enforcement, and prompt composition. FABRK supports Claude (Anthropic), OpenAI,
-          and Ollama (local) through a unified <code>LLMClient</code> interface.
+          FABRK ships a full agent runtime built into the framework package. Agents are
+          defined in plain TypeScript, served via SSE, consumed from React with a single
+          hook, and tested without any real LLM. This guide walks every layer from agent
+          definition through testing.
         </p>
 
         <InfoCard title="ARCHITECTURE OVERVIEW">
-          The AI package has four layers:
+          The agent system is built in layers inside <code>fabrk</code> (the framework package):
           <ul className="space-y-1 mt-2">
-            <li><strong>LLM Client</strong> (<code>getLLMClient</code>) — Unified interface to all providers. Every provider
-            implements <code>generate(opts): Promise&lt;string&gt;</code>. You switch providers
-            by changing config, not code.</li>
-            <li><strong>Cost Tracker</strong> (<code>AICostTracker</code>) — Wraps API calls to record token usage,
-            latency, and cost in USD. Stores events via an injectable <code>CostStore</code> (in-memory
-            for dev, Prisma for production).</li>
-            <li><strong>AI Middleware</strong> (<code>createAIMiddleware</code>) — Composable pipeline for budget enforcement
-            and provider fallback. Runs before the LLM call.</li>
-            <li><strong>Prompt Templates</strong> — Reusable templates with <code>{`{{variable}}`}</code> interpolation
-            and a fluent <code>PromptBuilder</code> for complex multi-section prompts.</li>
+            <li><strong>defineAgent</strong> — declares model, tools, systemPrompt, budget, guardrails, memory</li>
+            <li><strong>runAgentLoop</strong> — ReAct async generator: observe → think → act, up to 25 iterations</li>
+            <li><strong>SSE route handler</strong> — serves the loop as a Server-Sent Events stream at <code>/api/agents/:name</code></li>
+            <li><strong>useAgent hook</strong> — client-side React hook that POSTs a message and subscribes to the SSE stream</li>
+            <li><strong>Memory stores</strong> — InMemoryMemoryStore (per-session), SemanticMemoryStore (vector search)</li>
+            <li><strong>Guardrails</strong> — synchronous or async input/output validation gates</li>
+            <li><strong>Testing</strong> — MockLLM + createTestAgent for deterministic unit tests, no API keys</li>
           </ul>
         </InfoCard>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          1. SET UP THE LLM CLIENT
+          1. DEFINE AN AGENT
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          The <code>getLLMClient</code> factory returns a client for the configured provider.
-          All three providers have the same interface: <code>generate({`{ prompt, system?, maxTokens?, temperature? }`})</code>{' '}
-          returns a <code>Promise&lt;string&gt;</code>. This simplicity is intentional; for
-          structured output, parse the response yourself.
+          <code>defineAgent</code> is the entry point. Place this file anywhere in your
+          project — the route handler imports it directly. The <code>tools</code> field
+          takes an array of tool names that must be registered in the tool registry before
+          the agent handles its first request.
         </p>
-        <CodeBlock title="src/lib/ai.ts">{`import { getLLMClient, AICostTracker, InMemoryCostStore } from '@fabrk/ai'
+        <CodeBlock title="src/agents/assistant.ts">{`import { defineAgent } from 'fabrk'
+import { defineTool, textResult } from 'fabrk'
 
-// Initialize the LLM client. Reads API keys from environment variables:
-// - OPENAI_API_KEY for OpenAI
-// - ANTHROPIC_API_KEY for Anthropic
-// - Ollama needs no key (runs locally)
-export const llm = getLLMClient({
-  provider: 'anthropic',
-  anthropicModel: 'claude-sonnet-4-5-20250929',
-  maxTokens: 4000,
-  temperature: 0.3,
-  timeoutMs: 90000,  // 90s timeout
+// 1. Define a tool
+export const searchDocs = defineTool({
+  name: 'search_docs',
+  description: 'Search the documentation for a query',
+  schema: {
+    type: 'object',
+    properties: {
+      query: { type: 'string', description: 'Search query' },
+    },
+    required: ['query'],
+  },
+  handler: async ({ query }) => {
+    // Your implementation here
+    const results = await doSearch(String(query))
+    return textResult(results)
+  },
 })
 
-// For dev/testing, InMemoryCostStore is fine.
-// In production, use PrismaCostStore from @fabrk/ai.
-const costStore = new InMemoryCostStore()
-export const costTracker = new AICostTracker(costStore, {
-  dailyBudget: 50,  // $50/day budget cap
-})
-
-// Simple generate helper
-export async function generate(prompt: string, system?: string): Promise<string> {
-  return llm.generate({ prompt, system })
-}
-
-// Hybrid routing: use cloud for complex tasks, local Ollama for simple ones
-// This is useful when you have Ollama running locally for cost savings
-import { getLLMClient as createClient } from '@fabrk/ai'
-
-export const simpleLLM = createClient({ provider: 'ollama' }, 'simple')
-export const complexLLM = createClient({ provider: 'ollama' }, 'complex')
-// complexLLM automatically upgrades to OpenAI if OPENAI_API_KEY is set`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          2. COST TRACKING WITH PROVIDER-SPECIFIC WRAPPERS
-        </h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          The <code>AICostTracker</code> wraps your raw SDK calls and automatically extracts
-          token counts, calculates cost, and stores the event. It uses provider-specific
-          wrappers because Claude and OpenAI have different response shapes. The tracker also
-          enforces budget limits before making the call.
-        </p>
-        <CodeBlock title="src/app/api/chat/route.ts">{`import { costTracker } from '@/lib/ai'
-import { withAuth } from '@fabrk/auth'
-import Anthropic from '@anthropic-ai/sdk'
-
-const anthropic = new Anthropic()
-
-export const POST = withAuth(auth, async (req, session) => {
-  const { messages } = await req.json()
-
-  // Check budget BEFORE making the API call
-  const budget = await costTracker.checkBudget(session.userId)
-  // budget: { withinBudget, currentCost, budget, percentUsed, remainingBudget }
-
-  if (!budget.withinBudget) {
-    return new Response(
-      JSON.stringify({
-        error: 'Daily AI budget exceeded',
-        currentCost: budget.currentCost.toFixed(2),
-        budget: budget.budget,
-        resetTime: 'Midnight UTC',
-      }),
-      { status: 429 }
-    )
-  }
-
-  try {
-    // trackClaudeCall wraps the Anthropic SDK call:
-    // 1. Checks budget (throws if exceeded)
-    // 2. Times the call
-    // 3. Extracts tokens from response.usage.input_tokens / output_tokens
-    // 4. Calculates cost using built-in pricing table
-    // 5. Stores the cost event
-    // 6. Returns the text content from the response
-    const content = await costTracker.trackClaudeCall<string>({
-      model: 'claude-sonnet-4-5-20250929',
-      feature: 'chat',
-      userId: session.userId,
-      prompt: messages[messages.length - 1]?.content,
-      fn: () =>
-        anthropic.messages.create({
-          model: 'claude-sonnet-4-5-20250929',
-          max_tokens: 4096,
-          messages,
-        }),
-    })
-
-    return Response.json({ content })
-  } catch (err) {
-    // Budget exceeded errors and API errors are both caught here.
-    // The tracker records failed calls too (with costUSD: 0).
-    if (err instanceof Error && err.message.includes('budget exceeded')) {
-      return new Response(
-        JSON.stringify({ error: err.message }),
-        { status: 429 }
-      )
-    }
-
-    console.error('AI call failed:', err)
-    return new Response(
-      JSON.stringify({ error: 'AI request failed. Please try again.' }),
-      { status: 500 }
-    )
-  }
+// 2. Define the agent
+export const assistantAgent = defineAgent({
+  model: 'claude-sonnet-4-5-20250929',    // any provider model string
+  fallback: ['gpt-4o'],                    // optional fallback chain
+  systemPrompt: 'You are a helpful documentation assistant. Use search_docs to find accurate answers.',
+  tools: ['search_docs'],                  // tool names registered at startup
+  stream: true,                            // emit text-delta events
+  auth: 'optional',                        // 'required' | 'optional' | 'none'
+  budget: {
+    daily: 10,          // $10/day for this agent
+    perSession: 0.50,   // $0.50 per conversation
+    alertThreshold: 0.8,
+  },
+  memory: true,         // enable InMemoryMemoryStore
+  generationOptions: {
+    maxTokens: 4096,
+    temperature: 0.3,
+  },
 })`}</CodeBlock>
 
+        <InfoCard title="ALL defineAgent FIELDS">
+          <code className="text-xs">model</code> — required LLM model string.{' '}
+          <code className="text-xs">fallback</code> — ordered list of backup models.{' '}
+          <code className="text-xs">systemPrompt</code> — prepended to every request as a system message.{' '}
+          <code className="text-xs">tools</code> — tool names from the registry.{' '}
+          <code className="text-xs">stream</code> — default <code>true</code>, set <code>false</code> for batch response.{' '}
+          <code className="text-xs">auth</code> — default <code>&apos;none&apos;</code>.{' '}
+          <code className="text-xs">budget</code> — daily/perSession/perUser/perTenant caps in USD.{' '}
+          <code className="text-xs">memory</code> — <code>true</code> or an <code>AgentMemoryConfig</code> object.{' '}
+          <code className="text-xs">inputGuardrails</code> / <code className="text-xs">outputGuardrails</code> — validation pipelines.{' '}
+          <code className="text-xs">handoffs</code> — agent names this agent can hand off to.{' '}
+          <code className="text-xs">outputSchema</code> — JSON Schema for structured output.
+        </InfoCard>
+
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          3. STREAMING RESPONSES
+          2. WIRE THE SSE ROUTE
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          For chat UIs, streaming provides a much better user experience. The{' '}
-          <code>@fabrk/ai</code> streaming utilities convert async iterables to
-          ReadableStreams for use in Response objects, and provide callback-based parsing for
-          chunk-by-chunk processing.
+          Create a route that imports your agent definition and hands the request off to the
+          framework&apos;s agent handler. The handler resolves tools, runs the agent loop,
+          and streams SSE events back to the client. In a FABRK file-system routed project,
+          this lives at <code>app/api/assistant/route.ts</code>.
         </p>
-        <CodeBlock title="src/app/api/chat/stream/route.ts">{`import { toReadableStream, transformStream } from '@fabrk/ai'
-import { withAuth } from '@fabrk/auth'
+        <CodeBlock title="app/api/assistant/route.ts">{`import { handleAgentRequest } from 'fabrk'
+import { assistantAgent, searchDocs } from '@/agents/assistant'
 
-export const POST = withAuth(auth, async (req, session) => {
-  const { messages } = await req.json()
+// Register tools once at module load
+import { registerTool } from 'fabrk'
+registerTool(searchDocs)
 
-  // Create the Anthropic streaming response
-  const anthropic = new Anthropic()
-  const stream = anthropic.messages.stream({
-    model: 'claude-sonnet-4-5-20250929',
-    max_tokens: 4096,
-    messages,
-  })
-
-  // Convert the Anthropic stream to an async iterable of text chunks
-  async function* extractText() {
-    for await (const event of stream) {
-      if (
-        event.type === 'content_block_delta' &&
-        event.delta.type === 'text_delta'
-      ) {
-        yield event.delta.text
-      }
-    }
-  }
-
-  // Transform to SSE format for the client
-  const sseStream = transformStream(extractText(), (chunk) =>
-    \`data: \${JSON.stringify({ text: chunk })}\\n\\n\`
-  )
-
-  // Convert async iterable to ReadableStream for the Response
-  return new Response(toReadableStream(sseStream), {
-    headers: {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-    },
-  })
-})`}</CodeBlock>
-
-        <CodeBlock title="client-side: consuming the stream">{`// In your React component
-async function handleSendStreaming(content: string) {
-  setMessages((prev) => [...prev, { role: 'user', content }])
-  setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
-  setLoading(true)
-
-  const res = await fetch('/api/chat/stream', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: [...messages, { role: 'user', content }] }),
-  })
-
-  if (!res.ok || !res.body) {
-    setLoading(false)
-    return
-  }
-
-  const reader = res.body.getReader()
-  const decoder = new TextDecoder()
-
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-
-    const text = decoder.decode(value, { stream: true })
-    // Parse SSE events
-    const lines = text.split('\\n')
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        try {
-          const { text: chunk } = JSON.parse(line.slice(6))
-          setMessages((prev) => {
-            const updated = [...prev]
-            const last = updated[updated.length - 1]
-            updated[updated.length - 1] = { ...last, content: last.content + chunk }
-            return updated
-          })
-        } catch { /* skip malformed lines */ }
-      }
-    }
-  }
-
-  setLoading(false)
-}`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          4. AI MIDDLEWARE: BUDGET + PROVIDER FALLBACK
-        </h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          The AI middleware pipeline runs before your LLM call and can block requests
-          (budget exceeded) or modify them (switch to a fallback provider). Middleware
-          functions follow the <code>(context, next) =&gt; Promise&lt;void&gt;</code> pattern
-          and compose like Express middleware.
-        </p>
-        <CodeBlock title="src/lib/ai-middleware.ts">{`import {
-  createAIMiddleware,
-  budgetEnforcement,
-  providerFallback,
-} from '@fabrk/ai'
-
-// Compose middleware into a pipeline
-export const aiPipeline = createAIMiddleware()
-  // Budget enforcement runs first — blocks requests if over budget
-  .use(budgetEnforcement({
-    daily: 50,                // $50/day
-    monthly: 1000,            // $1000/month
-    alertThreshold: 0.8,      // Log warning at 80% usage
-    onBudgetExceeded: (ctx, spent, budget) => {
-      console.warn(
-        \`[AI BUDGET] Blocked request from \${ctx.userId}: \` +
-        \`$\${spent.toFixed(2)} / $\${budget}\`
-      )
-    },
-    onBudgetAlert: (ctx, spent, budget, percent) => {
-      console.warn(
-        \`[AI BUDGET] Alert: \${(percent * 100).toFixed(0)}% used \` +
-        \`($\${spent.toFixed(2)} / $\${budget})\`
-      )
-    },
-  }))
-  // Provider fallback: try Claude first, fall back to OpenAI, then local Ollama
-  .use(providerFallback({
-    providers: ['claude', 'openai', 'ollama'],
-    models: {
-      claude: 'claude-sonnet-4-5-20250929',
-      openai: 'gpt-4o',
-      ollama: 'llama3.1:8b-instruct',
-    },
-    maxRetries: 1,
-    onFallback: (from, to, err) => {
-      console.warn(\`[AI FALLBACK] \${from} -> \${to}: \${err.message}\`)
-    },
-  }))
-
-// Usage in an API route:
-export async function runWithMiddleware(prompt: string, userId: string) {
-  const result = await aiPipeline.run({
-    prompt,
-    model: 'claude-sonnet-4-5-20250929',
-    feature: 'chat',
-    userId,
-  })
-
-  if (result.blocked) {
-    throw new Error(result.blockReason ?? 'Request blocked by AI middleware')
-  }
-
-  return result.response
-}`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          5. PROMPT TEMPLATES AND COMPOSITION
-        </h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          The prompt system has two APIs: <code>createPromptTemplate</code> for simple
-          variable interpolation (with <code>{`{{variable}}`}</code> syntax), and{' '}
-          <code>PromptBuilder</code> for building structured multi-section prompts with
-          system context, instructions, constraints, examples, and output formatting.
-        </p>
-        <CodeBlock title="prompt templates and builder">{`import {
-  createPromptTemplate,
-  composePrompts,
-  createMessagePair,
-  PromptBuilder,
-} from '@fabrk/ai'
-
-// --- Simple Templates ---
-// createPromptTemplate returns an object with render() and variables()
-
-const summarize = createPromptTemplate(
-  'Summarize the following {{contentType}} in {{style}} style:\\n\\n{{content}}',
-  { contentType: 'text', style: 'concise', content: '' }
-)
-
-// Render with defaults
-summarize.render({ content: articleText })
-// "Summarize the following text in concise style:\\n\\nHello world..."
-
-// Override any variable
-summarize.render({ content: articleText, style: 'bullet points', contentType: 'article' })
-
-// List template variables
-summarize.variables() // ['contentType', 'style', 'content']
-
-// --- Compose Multiple Sections ---
-// composePrompts joins non-empty strings with double newlines
-
-const systemPrompt = composePrompts(
-  'You are a helpful coding assistant.',
-  userPreferences ? \`User preferences: \${userPreferences}\` : null,
-  'Always respond in TypeScript.',
-)
-// null and empty strings are filtered out
-
-// --- Message Pairs ---
-// createMessagePair builds a [system, user] message array
-// Useful with chat APIs that expect message arrays
-
-const codeReviewTemplate = createPromptTemplate(
-  'You are a {{language}} code reviewer. Focus on {{focus}}.',
-  { language: 'TypeScript', focus: 'bugs, performance, and security' }
-)
-
-const messages = createMessagePair(
-  codeReviewTemplate,
-  \`Review this code:\\n\\\`\\\`\\\`typescript\\n\${userCode}\\n\\\`\\\`\\\`\`,
-  { focus: 'security vulnerabilities only' }
-)
-// [
-//   { role: 'system', content: 'You are a TypeScript code reviewer...' },
-//   { role: 'user', content: 'Review this code:\\n\`\`\`typescript\\n...' }
-// ]
-
-// --- PromptBuilder (structured multi-section prompts) ---
-
-const prompt = new PromptBuilder()
-  .system('You are an expert data analyst.')
-  .context('The user has a PostgreSQL database with sales data.')
-  .context('Tables: orders, products, customers, regions.')
-  .instruction('Write a SQL query to find the top 10 products by revenue.')
-  .instruction('Include the product name, total revenue, and order count.')
-  .constraint('Use CTEs for readability')
-  .constraint('Add comments explaining each section')
-  .constraint('Handle NULL values gracefully')
-  .example(
-    'Find total revenue',
-    'SELECT SUM(amount) as total_revenue FROM orders WHERE status = \\'completed\\''
-  )
-  .outputFormat('Return only the SQL query in a code block. No explanations.')
-  .build()
-
-// prompt.system  — the full system message (all sections combined)
-// prompt.user    — the user message (first instruction by default)
-// prompt.messages — array of { role, content } ready for chat APIs`}</CodeBlock>
-
-        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
-          6. CHAT UI
-        </h3>
-        <CodeBlock title="src/app/chat/page.tsx">{`'use client'
-
-import { ChatInput, ChatMessageList, TokenCounter, UsageBar } from '@fabrk/components'
-import { useState, useCallback } from 'react'
-
-interface Message {
-  role: 'user' | 'assistant'
-  content: string
+export async function POST(req: Request) {
+  return handleAgentRequest(req, 'assistant', assistantAgent)
 }
+
+// handleAgentRequest does the following:
+// 1. Parses { messages } from the request body
+// 2. Validates message count (max 200) and content length (max 100K chars/message)
+// 3. Resolves registered tools for this agent
+// 4. Runs the agent loop as an async generator
+// 5. Streams each AgentLoopEvent as SSE: data: {...}\\n\\n
+// 6. Adds all required security headers to the response`}</CodeBlock>
+
+        <InfoCard title="SSE EVENT TYPES">
+          The stream emits these events in order:{' '}
+          <code className="text-xs">text-delta</code> (token chunks while streaming),{' '}
+          <code className="text-xs">tool-call</code> (name + input before execution),{' '}
+          <code className="text-xs">tool-result</code> (name + output + durationMs),{' '}
+          <code className="text-xs">usage</code> (promptTokens + completionTokens + cost),{' '}
+          <code className="text-xs">done</code> (end of turn, optionally with structuredOutput).
+          On error: <code className="text-xs">error</code> with a message string.
+        </InfoCard>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          3. CONNECT THE FRONTEND WITH useAgent
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          The <code>useAgent</code> hook manages the full lifecycle: sending a message,
+          reading the SSE stream, updating messages as tokens arrive, and tracking tool
+          call state. Pass the agent name (must match the route segment).
+        </p>
+        <CodeBlock title="app/chat/page.tsx">{`'use client'
+
+import { useAgent } from 'fabrk/client'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/design-system'
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [loading, setLoading] = useState(false)
-  const [dailyUsage, setDailyUsage] = useState({ used: 0, limit: 50 })
-
-  const handleSend = useCallback(async (content: string) => {
-    const userMsg: Message = { role: 'user', content }
-    const newMessages = [...messages, userMsg]
-    setMessages(newMessages)
-    setLoading(true)
-
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newMessages }),
-      })
-
-      if (!res.ok) {
-        const error = await res.json()
-        if (res.status === 429) {
-          // Budget exceeded — show the error inline
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: \`[BUDGET EXCEEDED] \${error.error}\` },
-          ])
-          return
-        }
-        throw new Error(error.error ?? 'Request failed')
-      }
-
-      const data = await res.json()
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.content }])
-
-      // Update usage display
-      if (data.usage) {
-        setDailyUsage((prev) => ({
-          ...prev,
-          used: data.usage.dailyCost,
-        }))
-      }
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: '[ERROR] Failed to get response. Please try again.' },
-      ])
-    } finally {
-      setLoading(false)
-    }
-  }, [messages])
+  const {
+    send,          // (content: string | AgentContentPart[]) => Promise<void>
+    stop,          // () => void — aborts in-progress stream
+    messages,      // AgentMessage[] — grows with each user+assistant turn
+    isStreaming,   // boolean
+    cost,          // number — cumulative USD cost this session
+    usage,         // { promptTokens: number, completionTokens: number }
+    error,         // string | null
+    toolCalls,     // AgentToolCall[] — calls with optional output+durationMs
+  } = useAgent('assistant')  // matches the route at /api/agents/assistant
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-sm font-bold uppercase">[AI CHAT]</h1>
-        <TokenCounter used={messages.length * 150} limit={4096} />
+    <div className="flex flex-col h-screen max-w-2xl mx-auto">
+      <div className="border-b border-border p-3 flex items-center justify-between">
+        <span className={cn('text-xs font-bold', mode.font)}>[ASSISTANT]</span>
+        <span className="text-xs text-muted-foreground">
+          \${cost.toFixed(4)} · {usage.promptTokens + usage.completionTokens} tokens
+        </span>
       </div>
 
-      <ChatMessageList messages={messages} loading={loading} className="flex-1" />
+      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        {messages.map((msg, i) => (
+          <div key={i} className={cn(
+            'text-sm p-3 border',
+            mode.radius,
+            msg.role === 'user'
+              ? 'border-primary text-foreground ml-8'
+              : 'border-border bg-card text-foreground mr-8'
+          )}>
+            <div className="text-xs text-muted-foreground mb-1 uppercase">
+              [{msg.role}]
+            </div>
+            {typeof msg.content === 'string'
+              ? msg.content
+              : msg.content.map((p, j) =>
+                  p.type === 'text' ? <span key={j}>{p.text}</span> : null
+                )}
+          </div>
+        ))}
 
-      <div className="p-4 border-t border-border space-y-2">
-        <UsageBar
-          used={dailyUsage.used}
-          limit={dailyUsage.limit}
-          label="DAILY BUDGET"
-        />
-        <ChatInput
-          onSend={handleSend}
+        {isStreaming && (
+          <div className="text-xs text-muted-foreground animate-pulse">[THINKING...]</div>
+        )}
+
+        {toolCalls.map((tc, i) => (
+          <div key={i} className="text-xs border border-border p-2 font-mono">
+            <span className="text-primary">[TOOL] {tc.name}</span>
+            {tc.output && (
+              <span className="text-muted-foreground"> → {tc.durationMs}ms</span>
+            )}
+          </div>
+        ))}
+
+        {error && (
+          <div className="text-xs text-destructive border border-destructive p-2">
+            [ERROR] {error}
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-border p-3 flex gap-2">
+        <input
+          className={cn('flex-1 bg-background border border-border text-sm px-3 py-2', mode.radius)}
           placeholder="Ask anything..."
-          disabled={loading}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !isStreaming) {
+              send(e.currentTarget.value)
+              e.currentTarget.value = ''
+            }
+          }}
+          disabled={isStreaming}
         />
+        {isStreaming
+          ? <button onClick={stop} className={cn('text-xs border border-border px-3 py-2', mode.radius)}>{'> STOP'}</button>
+          : null
+        }
       </div>
     </div>
   )
 }`}</CodeBlock>
 
-        <InfoCard title="PRODUCTION CHECKLIST: AI">
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          4. ADDING MEMORY
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          FABRK ships two memory stores. <code>InMemoryMemoryStore</code> maintains
+          per-thread message history (up to 1,000 threads, 500 messages each). For
+          cross-session recall, <code>SemanticMemoryStore</code> wraps any base store
+          and adds vector search via your embedding provider.
+        </p>
+        <CodeBlock title="per-session memory">{`// memory: true on defineAgent enables InMemoryMemoryStore automatically.
+// For explicit control, pass an AgentMemoryConfig:
+
+import { defineAgent } from 'fabrk'
+
+export const agent = defineAgent({
+  model: 'claude-sonnet-4-5-20250929',
+  tools: [],
+  memory: {
+    maxMessages: 50,           // keep last 50 messages per thread
+    compression: {             // auto-compress when thread grows large
+      enabled: true,
+      triggerAt: 40,           // compress when thread hits 40 messages
+      keepRecent: 10,          // always preserve the last 10 messages
+      summarize: async (messages) => {
+        // Your LLM call to summarize old messages into a single string
+        return summarizeWithLLM(messages)
+      },
+    },
+  },
+})`}</CodeBlock>
+
+        <CodeBlock title="semantic memory — cross-session search">{`import { SemanticMemoryStore, InMemoryMemoryStore } from 'fabrk'
+import { OpenAIEmbeddingProvider } from '@fabrk/ai'
+
+// Build a SemanticMemoryStore on top of any base store
+const baseStore = new InMemoryMemoryStore()
+const embeddingProvider = new OpenAIEmbeddingProvider({
+  model: 'text-embedding-3-small',
+})
+const memoryStore = new SemanticMemoryStore(baseStore, {
+  embeddingProvider,
+  topK: 5,         // return up to 5 similar messages
+  threshold: 0.7,  // cosine similarity threshold
+})
+
+// Search across all threads:
+const results = await memoryStore.search('user preference for dark mode', {
+  agentName: 'assistant',   // optional: scope to one agent
+  limit: 5,
+  // Expand each match with surrounding context:
+  messageRange: { before: 2, after: 2 },
+})
+
+// Inject results into the system prompt:
+const contextBlock = results
+  .map((m) => \`[\${m.role}] \${m.content}\`)
+  .join('\\n')
+
+// Pass to agent via systemPrompt or as an extra user message`}</CodeBlock>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          5. GUARDRAILS
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          Guardrails are synchronous functions with the signature{' '}
+          <code>(content: string, ctx) =&gt; GuardrailResult</code>. They run in series
+          on every input message before the LLM sees it, and on every output message before
+          it is sent to the client. Use the async variant (<code>AsyncGuardrail</code>) for
+          external validation calls.
+        </p>
+        <CodeBlock title="production guardrail setup">{`import {
+  defineAgent,
+  maxLength,
+  denyList,
+  piiRedactor,
+  requireJsonSchema,
+} from 'fabrk'
+import type { Guardrail, AsyncGuardrail } from 'fabrk'
+
+// Custom guardrail — block requests asking for competitor info
+const noCompetitorMentions: Guardrail = (content, ctx) => {
+  const competitors = ['acme-corp', 'rival-saas']
+  const lower = content.toLowerCase()
+  for (const c of competitors) {
+    if (lower.includes(c)) {
+      return { pass: false, reason: \`Competitor mention blocked: \${c}\` }
+    }
+  }
+  return { pass: true }
+}
+
+// Async guardrail — call an external moderation API
+const moderationCheck: AsyncGuardrail = async (content, ctx) => {
+  const result = await callModerationAPI(content)
+  if (result.flagged) {
+    return { pass: false, reason: \`Moderation: \${result.categories.join(', ')}\` }
+  }
+  return { pass: true }
+}
+
+export const agent = defineAgent({
+  model: 'claude-sonnet-4-5-20250929',
+  tools: [],
+  inputGuardrails: [
+    maxLength(10_000),          // block inputs over 10K chars
+    denyList([/\\bpassword\\b/i, /\\bsecret\\b/i]), // block forbidden patterns
+    piiRedactor(),              // redact emails, phone numbers, SSNs in place
+    noCompetitorMentions,       // custom sync guardrail
+  ],
+  outputGuardrails: [
+    maxLength(50_000),          // cap output size
+    // async guardrails attach the same way — the loop awaits them
+  ],
+})`}</CodeBlock>
+
+        <InfoCard title="GUARDRAIL BEHAVIOR">
+          Guardrails run in array order. If a guardrail returns{' '}
+          <code>{`{ pass: false }`}</code> with no <code>replacement</code>, the loop
+          emits an <code>error</code> event and halts immediately. If it returns a{' '}
+          <code>replacement</code> string, that string replaces the content and the next
+          guardrail runs on the replacement. <code>piiRedactor()</code> uses this to
+          redact PII without blocking the request.
+        </InfoCard>
+
+        <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
+          6. TESTING AN AGENT
+        </h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          <code>MockLLM</code> intercepts all LLM calls with pattern-matched responses.
+          <code>createTestAgent</code> wires a real agent loop around a MockLLM so you
+          can assert on tool calls, output text, and event sequences — no API keys, no
+          network, deterministic.
+        </p>
+        <CodeBlock title="agent.test.ts">{`import { describe, it, expect } from 'vitest'
+import { mockLLM, createTestAgent, defineTool, textResult } from 'fabrk'
+
+const weatherTool = defineTool({
+  name: 'get_weather',
+  description: 'Get current weather for a city',
+  schema: {
+    type: 'object',
+    properties: { city: { type: 'string' } },
+    required: ['city'],
+  },
+  handler: async ({ city }) => textResult(\`Weather in \${city}: 72°F, sunny\`),
+})
+
+describe('assistant agent', () => {
+  it('calls get_weather when asked about weather', async () => {
+    const mock = mockLLM()
+      // When the user message contains "weather", call the tool
+      .onMessage(/weather/)
+      .callTool('get_weather', { city: 'San Francisco' })
+      // After tool result, respond with a final text message
+      .setDefault('The weather in San Francisco is 72°F and sunny.')
+
+    const agent = createTestAgent({
+      tools: [weatherTool],
+      mock,
+      stream: false,
+    })
+
+    const result = await agent.send('What is the weather in San Francisco?')
+
+    // Assert the tool was called with the right input
+    expect(result.toolCalls).toHaveLength(1)
+    expect(result.toolCalls[0].name).toBe('get_weather')
+    expect(result.toolCalls[0].input).toEqual({ city: 'San Francisco' })
+
+    // Assert the final text response
+    expect(result.content).toContain('72°F')
+
+    // Assert total LLM call count (1 for tool decision + 1 for final answer)
+    expect(mock.callCount).toBe(2)
+  })
+
+  it('returns error event when input guardrail blocks content', async () => {
+    const mock = mockLLM().setDefault('ok')
+    const agent = createTestAgent({ tools: [], mock })
+
+    // The denyList guardrail blocks "password" — assert the error event is emitted
+    const result = await agent.send('Tell me the password')
+    const errorEvent = result.events.find((e) => e.type === 'error')
+    expect(errorEvent).toBeDefined()
+  })
+})`}</CodeBlock>
+
+        <InfoCard title="PRODUCTION CHECKLIST: AGENTS">
           <ul className="space-y-1 mt-1">
-            <li>Use <code>PrismaCostStore</code> in production (in-memory caps at 10,000 events)</li>
-            <li>Set <code>AI_DAILY_BUDGET</code> env var for server-level budget enforcement (0 blocks all calls)</li>
-            <li>Configure provider fallback so a single provider outage does not take down your app</li>
-            <li>Budget checks have TOCTOU race conditions under high concurrency. For strict budgets, implement atomic reserve-and-deduct at the store level</li>
-            <li>Prompt templates escape regex special characters in variable names to prevent injection</li>
-            <li>The <code>maxTokens</code> parameter is capped at 100,000 to prevent runaway cost from untrusted input</li>
+            <li>Always set a <code>budget.daily</code> and <code>budget.perSession</code> to prevent runaway spend</li>
+            <li>Cap input with <code>maxLength()</code> guardrail to prevent prompt injection via oversized input</li>
+            <li>Use <code>auth: &apos;required&apos;</code> on any agent that accesses user data</li>
+            <li>Tool handlers must never trust <code>input</code> without validation — the JSON schema check only covers required fields and types</li>
+            <li>The agent loop hard-caps at 25 iterations; set <code>maxIterations</code> lower for simple agents</li>
+            <li>Tool output is truncated to 50,000 chars before being sent back to the LLM — keep tool responses concise</li>
           </ul>
         </InfoCard>
       </Section>

@@ -12,6 +12,22 @@ export const navigation: NavItem[] = [
   { label: 'CONFIGURATION', href: '/configuration' },
   { label: 'DESIGN SYSTEM', href: '/design-system' },
   {
+    label: 'AGENTS',
+    href: '/agents',
+    children: [
+      { label: 'Define an Agent', href: '/agents#define' },
+      { label: 'Tools', href: '/agents#tools' },
+      { label: 'Memory', href: '/agents#memory' },
+      { label: 'Guardrails', href: '/agents#guardrails' },
+      { label: 'Workflows', href: '/agents#workflows' },
+      { label: 'StateGraph', href: '/agents#stategraph' },
+      { label: 'Orchestration', href: '/agents#orchestration' },
+      { label: 'MCP', href: '/agents#mcp' },
+      { label: 'Durable Agents', href: '/agents#durable' },
+      { label: 'Testing & Evals', href: '/agents#evals' },
+    ],
+  },
+  {
     label: 'PACKAGES',
     href: '/packages',
     children: [
@@ -53,6 +69,7 @@ export const navigation: NavItem[] = [
       { label: 'Build a Dashboard', href: '/tutorials/dashboard' },
       { label: 'Authentication & MFA', href: '/tutorials/auth' },
       { label: 'Stripe Payments', href: '/tutorials/payments' },
+      { label: 'Build an AI Agent', href: '/tutorials/agents' },
     ],
   },
   {

@@ -351,18 +351,34 @@ const fabrk = autoWire(config, undefined, {
   {
     id: 'framework',
     name: '@fabrk/framework',
-    description: 'Full-stack framework — own Vite 7 runtime with file-system routing, SSR (streaming + renderToString), middleware, metadata injection, AI agents, tools, MCP, and dev dashboard.',
+    description: 'Full-stack framework — own Vite 7 runtime with file-system routing, SSR (streaming + renderToString), middleware, metadata injection, AI agents, tools, MCP, durable agents, workflows, evals, guardrails, voice, and dev dashboard.',
     exports: [
-      'default export: fabrk() — Vite plugin array (router, virtual entries, agents, dashboard)',
-      'defineAgent() — Define an AI agent with model, tools, budget, system prompt',
-      'defineTool() / textResult() — Define MCP-compatible tools',
-      'scanRoutes() / matchRoute() / handleRequest() — File-system router + SSR handler',
-      'nodeToWebRequest() / writeWebResponse() — Node↔Web request bridge',
-      'createAgentHandler() — Create an SSE-streaming agent HTTP handler',
-      'createSSEResponse() / formatSSEEvent() — SSE streaming utilities',
-      'createFetchHandler() — Edge runtime fetch handler (from @fabrk/framework/worker)',
-      'useAgent() — React hook for agent chat (from @fabrk/framework/client/use-agent)',
-      'Re-exports: @fabrk/components (via /components), @fabrk/design-system (via /themes)',
+      'Runtime: fabrk() — Vite plugin array (router, agents, dashboard, voice, server actions)',
+      'Runtime: fabrkPlugin(), scanRoutes(), matchRoute(), handleRequest(), createFetchHandler()',
+      'Routing/SSR: nodeToWebRequest(), writeWebResponse(), buildPageTree(), notFound(), redirect(), permanentRedirect()',
+      'Routing/SSR: ErrorBoundary, NotFoundBoundary, GlobalErrorBoundary, cookies(), headers(), runWithContext()',
+      'Agents: defineAgent(), runAgentLoop(), createToolExecutor(), defineTool(), textResult(), toolDefinition(), clientTools()',
+      'Memory: setMemoryStore(), getMemoryStore(), InMemoryMemoryStore, SemanticMemoryStore, buildWorkingMemory(), InMemoryLongTermStore',
+      'Orchestration: agentAsTool(), defineSupervisor(), defineAgentNetwork(), detectCircularDeps()',
+      'Workflows: defineWorkflow(), agentStep(), toolStep(), conditionStep(), parallelStep(), runWorkflow(), createWorkflowStream()',
+      'Workflows: defineStateGraph(), createStateGraph(), MessagesAnnotation, interrupt(), GraphInterrupt, subgraphNode()',
+      'MCP: createMCPServer(), connectMCPServer(), startStdioServer(), createStdioClient()',
+      'Skills: defineSkill(), applySkill(), composeSkills(), scanSkills(), docsSearch()',
+      'Evals: defineEval(), runEvals(), exactMatch(), includes(), llmAsJudge(), toolCallSequence(), jsonSchema()',
+      'Evals: mockLLM, MockLLM, createTestAgent(), calledTool(), calledToolWith(), respondedWith(), defineDataset(), FileEvalRunStore',
+      'Guardrails: runGuardrails(), maxLength(), denyList(), requireJsonSchema(), piiRedactor(), runGuardrailsParallel()',
+      'Stop conditions: stepCountIs(), hasToolCall()',
+      'Durable agents: handleStartAgent(), handleResumeAgent(), handleAgentStatus(), handleAgentHistory(), handleAgentRollback(), InMemoryCheckpointStore, generateCheckpointId()',
+      'A2A: createA2AServer(), A2AClient',
+      'Voice: handleTTSRequest(), handleSTTRequest(), handleRealtimeUpgrade()',
+      'Client hooks: useAgent(), useObject(), useParams(), buildHref(), useViewTransition(), ViewTransitionLink',
+      'Built-in tools: sqlQueryTool, ragTool(), ragToolFromPipeline(), defineBashTool(), defineTextEditorTool(), defineComputerTool()',
+      'Observability: initTracer(), startSpan(), setSpanAttributes(), getActiveSpan()',
+      'Caching: createCachedFetch(), patchFetch(), revalidateTag(), revalidatePath(), clearFetchCache(), serveFromISR(), isrRevalidateTag(), isrRevalidatePath()',
+      'Build: generateSitemap(), handleImageRequest(), handleOGRequest(), defineOGTemplate(), buildJsonLdScript(), JsonLdScript',
+      'i18n: extractLocale(), detectLocale(), localePath(), createI18nMiddleware()',
+      'Server actions: createActionRegistry(), validateCsrf(), handleServerAction()',
+      'Prompt registry: definePromptVersion(), resolvePrompt(), abTestPrompt()',
     ],
     install: 'pnpm add @fabrk/framework',
     example: `// vite.config.ts
@@ -373,14 +389,25 @@ export default defineConfig({
   plugins: [...fabrk()]
 })
 
-// agents/assistant/agent.ts
-import { defineAgent } from '@fabrk/framework'
+// app/agents/assistant/agent.ts
+import { defineAgent, defineTool, textResult } from '@fabrk/framework'
+import { InMemoryMemoryStore, maxLength, piiRedactor } from '@fabrk/framework'
+import { z } from 'zod'
+
+const searchTool = defineTool({
+  name: 'search',
+  description: 'Search the knowledge base',
+  schema: z.object({ query: z.string() }),
+  execute: async ({ query }) => textResult(\`Results for: \${query}\`),
+})
 
 export default defineAgent({
-  model: 'claude-sonnet-4-5-20250514',
-  tools: ['search-docs'],
+  model: 'claude-sonnet-4-6',
+  tools: [searchTool],
   budget: { daily: 10.0, perSession: 0.50 },
   systemPrompt: 'You are a helpful assistant.',
+  memory: { store: new InMemoryMemoryStore() },
+  guardrails: { input: [maxLength(10000)], output: [piiRedactor()] },
 })`,
   },
 ]

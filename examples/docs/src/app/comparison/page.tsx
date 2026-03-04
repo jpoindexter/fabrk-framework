@@ -800,6 +800,222 @@ shadcn/ui            — UI components (separate install, copy-paste)
 @fabrk/security       — CSRF, CSP, rate limiting, audit logging, GDPR
 @fabrk/store-prisma   — 7 Prisma store adapters for production persistence`}</CodeBlock>
       </Section>
+
+      {/* AI Agent Layer comparison */}
+      <Section title="AI AGENT LAYER">
+        <p className="text-sm text-muted-foreground mb-4">
+          How FABRK&apos;s agent primitives compare against the dedicated agent frameworks —
+          LangChain JS, Mastra, and Vercel AI SDK — on a feature-by-feature basis.
+        </p>
+
+        <div className={cn('border border-border overflow-x-auto', mode.radius)}>
+          <table className="w-full text-xs min-w-[800px]">
+            <thead>
+              <tr className="border-b border-border bg-muted">
+                <th
+                  className={cn(
+                    'text-left px-3 py-2.5 text-muted-foreground uppercase w-[200px]',
+                    mode.font
+                  )}
+                >
+                  FEATURE
+                </th>
+                <th
+                  className={cn(
+                    'text-left px-3 py-2.5 text-foreground uppercase w-[190px]',
+                    mode.font
+                  )}
+                >
+                  FABRK
+                </th>
+                <th
+                  className={cn(
+                    'text-left px-3 py-2.5 text-muted-foreground uppercase w-[190px]',
+                    mode.font
+                  )}
+                >
+                  LANGCHAIN JS
+                </th>
+                <th
+                  className={cn(
+                    'text-left px-3 py-2.5 text-muted-foreground uppercase w-[190px]',
+                    mode.font
+                  )}
+                >
+                  MASTRA
+                </th>
+                <th
+                  className={cn(
+                    'text-left px-3 py-2.5 text-muted-foreground uppercase w-[190px]',
+                    mode.font
+                  )}
+                >
+                  VERCEL AI SDK
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                {
+                  feature: 'File-system routing + SSR',
+                  fabrk: { status: 'yes' as const, text: 'Built-in Vite 7 router' },
+                  langchain: { status: 'no' as const, text: 'No web layer' },
+                  mastra: { status: 'no' as const, text: 'No web layer' },
+                  vercel: { status: 'partial' as const, text: 'Next.js only' },
+                },
+                {
+                  feature: 'Agent definition',
+                  fabrk: { status: 'yes' as const, text: 'defineAgent()' },
+                  langchain: { status: 'yes' as const, text: 'AgentExecutor' },
+                  mastra: { status: 'yes' as const, text: 'Agent class' },
+                  vercel: { status: 'no' as const, text: 'No agent primitive' },
+                },
+                {
+                  feature: 'Built-in memory',
+                  fabrk: { status: 'yes' as const, text: 'Thread + semantic + long-term' },
+                  langchain: { status: 'yes' as const, text: 'Via LangChain memory' },
+                  mastra: { status: 'yes' as const, text: 'Built-in memory layer' },
+                  vercel: { status: 'no' as const, text: 'Build your own' },
+                },
+                {
+                  feature: 'Workflows (linear)',
+                  fabrk: { status: 'yes' as const, text: 'defineWorkflow()' },
+                  langchain: { status: 'yes' as const, text: 'LCEL chains' },
+                  mastra: { status: 'yes' as const, text: 'Workflow DSL' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'Cyclic workflows',
+                  fabrk: { status: 'yes' as const, text: 'defineStateGraph()' },
+                  langchain: { status: 'yes' as const, text: 'LangGraph state machines' },
+                  mastra: { status: 'no' as const, text: 'Linear only' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'Multi-agent orchestration',
+                  fabrk: { status: 'yes' as const, text: 'agentAsTool + supervisor + network' },
+                  langchain: { status: 'yes' as const, text: 'Multi-agent graph' },
+                  mastra: { status: 'yes' as const, text: 'Agent networks' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'MCP client/server',
+                  fabrk: { status: 'yes' as const, text: 'Both — HTTP + stdio' },
+                  langchain: { status: 'partial' as const, text: 'Client only' },
+                  mastra: { status: 'yes' as const, text: 'Both' },
+                  vercel: { status: 'partial' as const, text: 'Client only' },
+                },
+                {
+                  feature: 'Built-in evals',
+                  fabrk: { status: 'yes' as const, text: 'defineEval + scorers + MockLLM' },
+                  langchain: { status: 'no' as const, text: 'LangSmith (separate product)' },
+                  mastra: { status: 'yes' as const, text: 'Built-in eval framework' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'Guardrails',
+                  fabrk: { status: 'yes' as const, text: 'Input + output + parallel async' },
+                  langchain: { status: 'no' as const, text: 'Manual implementation' },
+                  mastra: { status: 'yes' as const, text: 'Built-in guardrails' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'Durable agents (checkpoint)',
+                  fabrk: { status: 'yes' as const, text: 'Checkpoint/resume/rollback' },
+                  langchain: { status: 'no' as const, text: 'Not built in' },
+                  mastra: { status: 'yes' as const, text: 'Durable execution' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'OTel tracing',
+                  fabrk: { status: 'yes' as const, text: 'Auto-instrumented' },
+                  langchain: { status: 'no' as const, text: 'LangSmith only' },
+                  mastra: { status: 'yes' as const, text: 'Built-in OTel' },
+                  vercel: { status: 'yes' as const, text: 'AI SDK telemetry' },
+                },
+                {
+                  feature: 'UI components',
+                  fabrk: { status: 'yes' as const, text: '109+ components, 18 themes' },
+                  langchain: { status: 'no' as const, text: 'No UI layer' },
+                  mastra: { status: 'no' as const, text: 'No UI layer' },
+                  vercel: { status: 'no' as const, text: 'No UI layer' },
+                },
+                {
+                  feature: 'Voice (TTS/STT/realtime)',
+                  fabrk: { status: 'yes' as const, text: 'Built-in /__ai/tts, /__ai/stt, /__ai/realtime' },
+                  langchain: { status: 'no' as const, text: 'Not supported' },
+                  mastra: { status: 'no' as const, text: 'Not supported' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+                {
+                  feature: 'A2A protocol',
+                  fabrk: { status: 'yes' as const, text: 'Agent-to-agent via agentAsTool' },
+                  langchain: { status: 'no' as const, text: 'Not supported' },
+                  mastra: { status: 'yes' as const, text: 'Supported' },
+                  vercel: { status: 'no' as const, text: 'Not supported' },
+                },
+              ].map((row) => (
+                <tr key={row.feature} className="hover:bg-secondary/10 transition-colors">
+                  <td className="px-3 py-2.5 text-xs text-foreground align-top border-b border-border font-medium">
+                    {row.feature}
+                  </td>
+                  {(
+                    [
+                      { key: 'fabrk', data: row.fabrk },
+                      { key: 'langchain', data: row.langchain },
+                      { key: 'mastra', data: row.mastra },
+                      { key: 'vercel', data: row.vercel },
+                    ] as const
+                  ).map(({ key, data }) => {
+                    const color =
+                      data.status === 'yes'
+                        ? 'text-success'
+                        : data.status === 'partial'
+                          ? 'text-primary'
+                          : 'text-muted-foreground'
+                    const label =
+                      data.status === 'yes' ? 'YES' : data.status === 'partial' ? 'PARTIAL' : 'NO'
+                    return (
+                      <td
+                        key={key}
+                        className="px-3 py-2.5 text-xs align-top border-b border-border"
+                      >
+                        <span className={cn('font-bold block mb-0.5', color)}>{label}</span>
+                        <span className="text-muted-foreground leading-relaxed">{data.text}</span>
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className={cn('flex gap-4 mt-3 text-xs', mode.font)}>
+          <span className="text-success font-bold">YES</span>
+          <span className="text-muted-foreground">Built in</span>
+          <span className="text-primary font-bold ml-4">PARTIAL</span>
+          <span className="text-muted-foreground">Possible with extra work</span>
+          <span className="text-muted-foreground font-bold ml-4">NO</span>
+          <span className="text-muted-foreground">Not available</span>
+        </div>
+
+        <div className={cn('border border-primary/30 bg-primary/5 p-4 mt-6', mode.radius)}>
+          <div className={cn('text-xs font-bold text-primary uppercase mb-2', mode.font)}>
+            [THE KEY DIFFERENTIATOR]
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            FABRK is the only framework that combines a full-stack Vite 7 runtime — routing, SSR,
+            file-system conventions — with a complete AI agent layer. LangChain JS and Mastra are
+            powerful orchestration libraries, but they have no web layer: you still need to reach
+            for Next.js or Express, wire up a UI library, and stitch cost tracking together
+            yourself. Vercel AI SDK gives you great streaming primitives on top of Next.js, but
+            has no agent primitive, no memory, no workflows, and no evals. With FABRK you do not
+            glue three separate tools together — the runtime, the agent layer, and the UI
+            components ship as one coherent stack.
+          </p>
+        </div>
+      </Section>
     </DocLayout>
   )
 }

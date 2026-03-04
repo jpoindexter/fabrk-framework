@@ -114,7 +114,7 @@ async function connectHTTP(
         method: "POST",
         headers: { "Content-Type": "application/json", ...(authHeader ? { Authorization: authHeader } : {}) },
         body: JSON.stringify({ jsonrpc: "2.0", method: "elicitation/respond", params: { result } }),
-      }).catch(() => {});
+      }).catch((err) => console.error("[fabrk] MCP elicitation respond failed:", err));
       return {};
     }
 

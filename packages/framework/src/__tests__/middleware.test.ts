@@ -126,7 +126,7 @@ describe("Middleware", () => {
     expect(res.status).toBe(200);
   });
 
-  it("middleware errors are silently handled — request continues", async () => {
+  it("middleware errors return 500 — request does not continue unauthenticated", async () => {
     const middlewarePath = path.join(tmpDir, "app", "middleware.ts");
     const pageFilePath = path.join(tmpDir, "app", "page.tsx");
     const routes = scanRoutes(path.join(tmpDir, "app"));
@@ -147,7 +147,7 @@ describe("Middleware", () => {
       _reactLoader: mockReactLoader(),
     });
 
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(500);
   });
 
   it("async middleware is awaited", async () => {

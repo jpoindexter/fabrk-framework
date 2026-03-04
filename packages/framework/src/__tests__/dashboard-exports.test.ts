@@ -120,7 +120,6 @@ describe("Public exports", () => {
     const mod = await import("../index");
     expect(mod.agentAsTool).toBeTypeOf("function");
     expect(mod.defineSupervisor).toBeTypeOf("function");
-    expect(mod.detectCircularDeps).toBeTypeOf("function");
   });
 
   it("exports MCP APIs", async () => {

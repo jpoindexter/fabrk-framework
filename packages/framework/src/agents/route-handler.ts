@@ -271,11 +271,11 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       ? body.sessionId.slice(0, 128)
       : "default";
 
-    // Per-user and per-tenant budgets are scoped by request headers (set by auth middleware)
-    const budgetContext: BudgetContext = {
-      userId: req.headers.get("x-user-id")?.slice(0, 128) || undefined,
-      tenantId: req.headers.get("x-tenant-id")?.slice(0, 128) || undefined,
-    };
+    // Per-user and per-tenant budgets must only come from authenticated middleware
+    // context, never from raw client-supplied request headers. Reading x-user-id /
+    // x-tenant-id directly would allow any caller to spoof another user's budget
+    // bucket. Pass these values via AgentHandlerOptions instead.
+    const budgetContext: BudgetContext = {};
 
     const budgetError = checkBudget(agentName, sessionId, options.budget, budgetContext);
     if (budgetError) {

@@ -179,6 +179,21 @@ describe("multi-statement injection prevention", () => {
     const text = await run(tool, { sql: "SELECT 1;" });
     expect(text).toMatch(/ERROR.*multi-statement/i);
   });
+
+  it("blocks semicolons inside PostgreSQL dollar-quoted strings", async () => {
+    // $tag$; DROP TABLE users;$tag$ — the semicolons are inside a dollar-quoted
+    // literal and must not be used to bypass the multi-statement check
+    const tool = sqlQueryTool({ query: makeQuery([]) });
+    const text = await run(tool, { sql: "SELECT $tag$; DROP TABLE users;$tag$" });
+    // After stripping dollar-quotes the query becomes SELECT '' which has no
+    // semicolon — this should pass. But the raw dollar-quoted form with an
+    // injected statement after the closing tag should be caught:
+    const text2 = await run(tool, { sql: "SELECT 1; $tag$; DROP TABLE users;$tag$" });
+    expect(text2).toMatch(/ERROR.*multi-statement/i);
+    // A safe dollar-quote with no semicolon outside it must pass
+    const text3 = await run(tool, { sql: "SELECT $body$hello$body$" });
+    expect(text3).not.toMatch(/^ERROR/);
+  });
 });
 
 // ---------------------------------------------------------------------------

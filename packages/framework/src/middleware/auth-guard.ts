@@ -49,6 +49,10 @@ export function createAuthGuard(
       if (!valid) {
         return errorResponse({ error: "Invalid token" }, 403);
       }
+    } else if (mode === "required") {
+      console.warn(
+        "[fabrk] auth-guard: validateToken not configured — all Bearer tokens accepted"
+      );
     }
 
     return null;

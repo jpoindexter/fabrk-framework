@@ -74,7 +74,16 @@ export async function handleRequest(
           }
         }
       }
-    } catch { /* ignore */ }
+    } catch (err) {
+      console.error("[fabrk] Middleware error:", err);
+      return new Response("Internal server error", {
+        status: 500,
+        headers: {
+          "Content-Type": "text/plain",
+          ...buildSecurityHeaders(),
+        },
+      });
+    }
   }
 
   const url = new URL(request.url);

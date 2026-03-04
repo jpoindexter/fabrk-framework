@@ -33,6 +33,14 @@ function jsonResponse(data: unknown, status: number): Response {
   });
 }
 
+const LOCAL_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
+/** Returns true when remoteAddress is absent (not enforced) or is a loopback address. */
+function isLocalRequest(remoteAddress?: string): boolean {
+  if (remoteAddress === undefined) return true;
+  return LOCAL_ADDRS.has(remoteAddress);
+}
+
 export async function handleStartAgent(
   messages: LLMMessage[],
   options: DurableAgentOptions,
@@ -211,11 +219,20 @@ export async function handleResumeAgent(
 }
 
 export async function handleAgentStatus(
+  agentName: string,
   checkpointId: string,
   store: CheckpointStore,
+  remoteAddress?: string,
 ): Promise<Response> {
+  if (!isLocalRequest(remoteAddress)) {
+    return jsonResponse({ error: "Not available outside localhost" }, 403);
+  }
   const state = await store.load(checkpointId);
   if (!state) {
+    return jsonResponse({ error: "Checkpoint not found" }, 404);
+  }
+  if (state.agentName !== agentName) {
+    // Do not reveal whether the checkpoint exists for a different agent
     return jsonResponse({ error: "Checkpoint not found" }, 404);
   }
 
@@ -244,7 +261,11 @@ export async function handleAgentRollback(
   agentName: string,
   req: Request,
   store: CheckpointStore,
+  remoteAddress?: string,
 ): Promise<Response> {
+  if (!isLocalRequest(remoteAddress)) {
+    return jsonResponse({ error: "Not available outside localhost" }, 403);
+  }
   let body: unknown;
   try {
     body = await req.json();
@@ -259,12 +280,23 @@ export async function handleAgentRollback(
       400
     );
   }
+  if (
+    !Number.isInteger(targetIteration) ||
+    targetIteration < 0 ||
+    targetIteration >= 10_000
+  ) {
+    return jsonResponse(
+      { error: "targetIteration must be a non-negative integer less than 10000" },
+      400
+    );
+  }
 
   try {
     const restored = await store.rollback(agentName, sessionId, targetIteration);
     return jsonResponse(restored, 200);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Rollback failed";
-    return jsonResponse({ error: message }, 404);
+    // Log details server-side; return a generic message to the caller
+    console.error("[fabrk] Rollback failed:", err instanceof Error ? err.message : err);
+    return jsonResponse({ error: "Rollback failed" }, 404);
   }
 }

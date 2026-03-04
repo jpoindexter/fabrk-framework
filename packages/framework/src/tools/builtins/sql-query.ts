@@ -80,7 +80,12 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
         safeParams = params;
       }
 
-      const stripped = sql.replace(/'(?:[^'\\]|\\.)*'/g, "''");
+      // Strip single-quoted string literals first, then dollar-quoted string
+      // literals (PostgreSQL extension). Dollar-quoted strings of the form
+      // $tag$...$tag$ can embed semicolons that would bypass the multi-statement
+      // check if left in place.
+      const noDollarQuotes = sql.replace(/\$[^$]*\$[\s\S]*?\$[^$]*\$/g, "''");
+      const stripped = noDollarQuotes.replace(/'(?:[^'\\]|\\.)*'/g, "''");
       if (/;/.test(stripped)) {
         return textResult("ERROR: Multi-statement queries are not allowed.");
       }

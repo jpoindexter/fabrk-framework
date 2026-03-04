@@ -63,11 +63,10 @@ export async function* runAgentLoop(
   const messages = [...options.messages];
   const guardCtx = { agentName: options.agentName, sessionId: options.sessionId };
 
-  // Input guardrails — validate last user message before first LLM call
   if (options.inputGuardrails && options.inputGuardrails.length > 0) {
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (lastUser) {
-      // Extract text for guardrail checking — multimodal messages use concatenated text parts
+      // Multimodal messages: concatenate text parts for guardrail checking
       const rawContent = lastUser.content;
       const textContent = typeof rawContent === "string"
         ? rawContent
@@ -88,7 +87,6 @@ export async function* runAgentLoop(
         if (typeof rawContent === "string") {
           lastUser.content = result.content;
         } else {
-          // Replace text parts with the guardrail-modified string
           lastUser.content = [{ type: "text", text: result.content } satisfies LLMContentPart];
         }
       }
@@ -103,7 +101,6 @@ export async function* runAgentLoop(
     }
 
     if (options.stream && options.streamWithTools) {
-      // Streaming path — token-by-token
       let fullText = "";
       const collectedToolCalls: Array<{ id: string; name: string; arguments: Record<string, unknown> }> = [];
       let totalPromptTokens = 0;
@@ -143,14 +140,12 @@ export async function* runAgentLoop(
       };
 
       if (collectedToolCalls.length > 0) {
-        // Append assistant message with tool calls
         messages.push({
           role: "assistant",
           content: fullText || "",
           toolCalls: collectedToolCalls,
         });
 
-        // Announce all tool calls first, then execute in parallel
         for (const tc of collectedToolCalls) {
           yield { type: "tool-call", name: tc.name, input: tc.arguments, iteration };
         }
@@ -192,10 +187,9 @@ export async function* runAgentLoop(
           }
         }
 
-        continue; // Loop again for next LLM turn
+        continue;
       }
 
-      // No tool calls — run output guardrails then done
       if (options.outputGuardrails && options.outputGuardrails.length > 0) {
         const result = runGuardrails(
           options.outputGuardrails,

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { createAuthGuard } from "../middleware/auth-guard";
 
 describe("createAuthGuard", () => {
@@ -162,6 +162,47 @@ describe("createAuthGuard", () => {
     expect(result!.headers.get("X-Content-Type-Options")).toBe("nosniff");
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     expect(result!.headers.get("X-Frame-Options")).toBe("DENY");
+  });
+
+  it("warns when mode is 'required' and no validateToken configured", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const guard = createAuthGuard("required");
+    const req = new Request("http://localhost/api/agents/chat", {
+      method: "POST",
+      headers: { Authorization: "Bearer any-token" },
+    });
+    const result = await guard(req);
+    expect(result).toBeNull();
+    expect(warn).toHaveBeenCalledOnce();
+    expect(warn.mock.calls[0][0]).toContain("validateToken not configured");
+    warn.mockRestore();
+  });
+
+  it("does not warn in 'optional' mode without validateToken", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const guard = createAuthGuard("optional");
+    const req = new Request("http://localhost/api/agents/chat", {
+      method: "POST",
+      headers: { Authorization: "Bearer any-token" },
+    });
+    await guard(req);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("does not warn when validateToken is provided in 'required' mode", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const guard = createAuthGuard({
+      mode: "required",
+      validateToken: () => true,
+    });
+    const req = new Request("http://localhost/api/agents/chat", {
+      method: "POST",
+      headers: { Authorization: "Bearer valid" },
+    });
+    await guard(req);
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("validates token in 'optional' mode when token is provided", async () => {

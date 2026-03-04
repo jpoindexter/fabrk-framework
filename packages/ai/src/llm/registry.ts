@@ -1,4 +1,5 @@
 import type { LLMConfig } from "./types";
+import { resolveEnv } from "../utils/env";
 import type {
   LLMMessage,
   LLMToolSchema,
@@ -170,8 +171,3 @@ function extractModel(config: Partial<LLMConfig>): string {
   return (config as Record<string, unknown>)._model as string || "";
 }
 
-function resolveEnv(key: string): string {
-  const g = globalThis as Record<string, unknown>;
-  const proc = g.process as { env?: Record<string, string> } | undefined;
-  return proc?.env?.[key] || "";
-}

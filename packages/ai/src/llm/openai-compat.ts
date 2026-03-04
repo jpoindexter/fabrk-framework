@@ -1,6 +1,7 @@
 import type { ProviderAdapter } from "./registry";
 import { registerProvider } from "./registry";
 import type { LLMConfig } from "./types";
+import { resolveEnv } from "../utils/env";
 
 export interface OpenAICompatOptions {
   key: string;
@@ -9,12 +10,6 @@ export interface OpenAICompatOptions {
   prefixes: string[];
   defaults?: { model?: string };
   stripPrefix?: string;
-}
-
-function resolveEnv(key: string): string {
-  const g = globalThis as Record<string, unknown>;
-  const proc = g.process as { env?: Record<string, string> } | undefined;
-  return proc?.env?.[key] || "";
 }
 
 export function makeOpenAICompatAdapter(opts: OpenAICompatOptions): ProviderAdapter {

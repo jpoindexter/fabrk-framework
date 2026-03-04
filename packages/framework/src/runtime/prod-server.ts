@@ -51,6 +51,8 @@ import { runWithContext } from "./server-context";
 
 const approvalHandler = createApprovalHandler();
 
+const MAX_BODY = 1024 * 1024;
+
 // Populated by startProdServer once manifest is loaded
 let _cssTags = "";
 let _scriptTags = "";
@@ -254,7 +256,6 @@ async function handleApiRoute(
     const url = `http://localhost${req.url || "/"}`;
     const bodyChunks: Buffer[] = [];
     let totalSize = 0;
-    const MAX_BODY = 1024 * 1024;
 
     for await (const chunk of req) {
       totalSize += chunk.length;
@@ -593,7 +594,6 @@ async function handleEdgeRoute(
 
   const bodyChunks: Buffer[] = [];
   let totalSize = 0;
-  const MAX_BODY = 1024 * 1024;
 
   for await (const chunk of req) {
     totalSize += chunk.length;

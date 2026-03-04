@@ -1,16 +1,69 @@
 import { buildSecurityHeaders } from '../middleware/security.js';
 
+const APPROVAL_TTL_MS = 300_000; // 5 minutes
+const MAX_PENDING_APPROVALS = 1_000;
+
 interface ApprovalEntry {
   resolve: (result: { approved: boolean; modifiedInput?: Record<string, unknown> }) => void;
+  reject?: (err: Error) => void;
   toolName: string;
+  expiresAt?: number;
 }
 
 // Module-level map: agentName -> Map<approvalId, ApprovalEntry>
 export const pendingApprovals = new Map<string, Map<string, ApprovalEntry>>();
 
+/** Remove all entries whose TTL has elapsed across all agents. */
+function evictExpired(): void {
+  const now = Date.now();
+  for (const [agentName, agentMap] of pendingApprovals.entries()) {
+    for (const [approvalId, entry] of agentMap.entries()) {
+      if (entry.expiresAt !== undefined && now >= entry.expiresAt) {
+        agentMap.delete(approvalId);
+        try {
+          entry.reject?.(new Error('Approval request timed out'));
+        } catch {
+          // resolver already settled — ignore
+        }
+      }
+    }
+    if (agentMap.size === 0) pendingApprovals.delete(agentName);
+  }
+}
+
+/** Count total pending approvals across all agents. */
+function totalPending(): number {
+  let n = 0;
+  for (const m of pendingApprovals.values()) n += m.size;
+  return n;
+}
+
 export function getAgentApprovals(agentName: string): Map<string, ApprovalEntry> {
   if (!pendingApprovals.has(agentName)) pendingApprovals.set(agentName, new Map());
   return pendingApprovals.get(agentName)!;
+}
+
+/**
+ * Register a pending approval and return a Promise that resolves or rejects
+ * when the approval is submitted or times out.
+ */
+export function waitForApproval(
+  agentName: string,
+  approvalId: string,
+  toolName: string,
+): Promise<{ approved: boolean; modifiedInput?: Record<string, unknown> }> {
+  evictExpired();
+  if (totalPending() >= MAX_PENDING_APPROVALS) {
+    return Promise.reject(new Error('Approval queue full — try again later'));
+  }
+  return new Promise((resolve, reject) => {
+    getAgentApprovals(agentName).set(approvalId, {
+      resolve,
+      reject,
+      toolName,
+      expiresAt: Date.now() + APPROVAL_TTL_MS,
+    });
+  });
 }
 
 export function createApprovalHandler() {
@@ -32,6 +85,7 @@ export function createApprovalHandler() {
         { status: 400, headers }
       );
     }
+    evictExpired();
     const entry = getAgentApprovals(agentName).get(approvalId);
     if (!entry) {
       return new Response(
@@ -50,6 +104,7 @@ export function createApprovalHandler() {
 
 /** Lists pending approval IDs and tool names for a given agent. */
 export function handleListApprovals(agentName: string): Response {
+  evictExpired();
   const headers = { 'Content-Type': 'application/json', ...buildSecurityHeaders() };
   const agentMap = pendingApprovals.get(agentName);
   const approvals: Array<{ approvalId: string; toolName: string }> = [];

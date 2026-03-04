@@ -37,7 +37,6 @@ export async function callLLM(
 }
 
 async function resolveGenerateWithTools(bridge: LLMBridge) {
-  // Try registry first
   try {
     const { getProviderByKey } = await import("@fabrk/ai");
     const adapter = getProviderByKey(bridge.provider);
@@ -53,7 +52,6 @@ async function resolveGenerateWithTools(bridge: LLMBridge) {
     // Fall through to hardcoded providers
   }
 
-  // Fallback for core providers
   if (bridge.provider === "anthropic") {
     const { anthropicGenerateWithTools } = await import("@fabrk/ai");
     return (msgs: LLMMessage[], tools: never[]) =>
@@ -85,12 +83,10 @@ function extractStatusCode(err: unknown): number | undefined {
 }
 
 async function callWithRetry(bridge: LLMBridge, messages: Message[]): Promise<LLMCallResult> {
-  let lastError: unknown;
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
       return await callLLM(bridge, messages);
     } catch (err) {
-      lastError = err;
       const status = extractStatusCode(err);
       const retryable = status === 429 || (status !== undefined && status >= 500);
       if (attempt < MAX_RETRIES - 1 && retryable) {
@@ -103,7 +99,7 @@ async function callWithRetry(bridge: LLMBridge, messages: Message[]): Promise<LL
       }
     }
   }
-  throw lastError;
+  throw new Error("[fabrk] callWithRetry: no attempts configured");
 }
 
 export async function callWithFallback(

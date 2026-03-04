@@ -57,12 +57,12 @@ export function checkBudget(
 
   if (budget.daily !== undefined) {
     validateBudgetValue("daily", budget.daily);
-    const err = checkDailyMap(dailyCosts, agentName, budget.daily, "Agent");
-    if (err) return err;
-
-    const entry = dailyCosts.get(agentName);
     const currentDay = today();
+    const entry = dailyCosts.get(agentName);
     const spent = entry?.date === currentDay ? entry.total : 0;
+    if (spent >= budget.daily) {
+      return `Agent daily budget exceeded: $${spent.toFixed(4)} / $${budget.daily}`;
+    }
     const threshold = budget.alertThreshold ?? 0.8;
     if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
       throw new Error(`[fabrk] Invalid alertThreshold: ${threshold}`);
@@ -108,7 +108,6 @@ export function recordCost(
   }
   const currentDay = today();
 
-  // Agent daily
   const entry = dailyCosts.get(agentName);
   if (entry?.date === currentDay) {
     entry.total += cost;
@@ -117,11 +116,9 @@ export function recordCost(
     dailyCosts.set(agentName, { total: cost, date: currentDay });
   }
 
-  // Session
   evictOldest(sessionCosts, MAX_SESSIONS, sessionId);
   sessionCosts.set(sessionId, (sessionCosts.get(sessionId) ?? 0) + cost);
 
-  // User daily
   if (ctx?.userId) {
     const userEntry = userDailyCosts.get(ctx.userId);
     if (userEntry?.date === currentDay) {
@@ -132,7 +129,6 @@ export function recordCost(
     }
   }
 
-  // Tenant daily
   if (ctx?.tenantId) {
     const tenantEntry = tenantDailyCosts.get(ctx.tenantId);
     if (tenantEntry?.date === currentDay) {

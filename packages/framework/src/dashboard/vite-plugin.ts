@@ -2,9 +2,6 @@ import type { Plugin, ViteDevServer, Connect } from "vite";
 import type { ServerResponse } from "node:http";
 import { applySecurityHeaders } from "../middleware/security";
 
-// ---------------------------------------------------------------------------
-// SSE sink registry — module-level so all middleware instances share it
-// ---------------------------------------------------------------------------
 const sinks = new Set<ServerResponse>();
 const MAX_SSE_CONNECTIONS = 5;
 
@@ -134,7 +131,6 @@ export function recordCall(record: Omit<CallRecord, 'id' | 'inputMessages'> & { 
   if (Number.isFinite(record.cost)) {
     totalCost += record.cost;
   }
-  // Broadcast to SSE subscribers
   const sseData = `data: ${JSON.stringify({ type: 'call-recorded', call: entry })}\n\n`;
   for (const sink of sinks) {
     try {
@@ -152,10 +148,6 @@ export function recordToolCall(record: ToolCallRecord) {
 export function recordError(record: ErrorRecord) {
   errors.push(record);
 }
-
-// ---------------------------------------------------------------------------
-// Aggregation helpers
-// ---------------------------------------------------------------------------
 
 function getCostTrends(): Array<{ hour: string; cost: number; calls: number; byAgent: Record<string, number> }> {
   const buckets = new Map<string, { cost: number; calls: number; byAgent: Record<string, number> }>();
@@ -607,7 +599,6 @@ export function dashboardPlugin(): Plugin {
             const cleanup = () => { sinks.delete(res); };
             res.on("close", cleanup);
             res.on("error", cleanup);
-            // Keep the connection open — do not call res.end()
             return;
           }
 
@@ -642,7 +633,8 @@ export function dashboardPlugin(): Plugin {
           }
 
           if (pathname.startsWith("/__ai/api/calls/") && req.method === "GET") {
-            const callId = pathname.slice("/__ai/api/calls/".length);
+            const rawCallId = pathname.slice("/__ai/api/calls/".length);
+            const callId = rawCallId.slice(0, 100);
             const call = calls.toArray().find((c) => c.id === callId);
             if (!call) {
               res.statusCode = 404;
@@ -659,6 +651,14 @@ export function dashboardPlugin(): Plugin {
           }
 
           if (pathname === "/__ai/api/export") {
+            if (req.method !== "GET") {
+              res.statusCode = 405;
+              res.setHeader("Content-Type", "application/json");
+              res.setHeader("Allow", "GET");
+              applySecurityHeaders(res);
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
             res.statusCode = 200;
             res.setHeader("Content-Type", "application/json");
             res.setHeader("Content-Disposition", "attachment; filename=fabrk-dashboard-export.json");

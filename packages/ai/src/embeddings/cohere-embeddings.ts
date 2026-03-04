@@ -3,9 +3,8 @@
  */
 
 import type { EmbeddingProvider, EmbeddingConfig } from './types'
-import { EMBEDDING_DEFAULTS } from './types'
-
-const MAX_TEXT_LENGTH = 8192
+import { EMBEDDING_DEFAULTS, MAX_TEXT_LENGTH } from './types'
+import { resolveEnv } from '../utils/env'
 
 export class CohereEmbeddingProvider implements EmbeddingProvider {
   private config: EmbeddingConfig
@@ -48,8 +47,3 @@ export class CohereEmbeddingProvider implements EmbeddingProvider {
   }
 }
 
-function resolveEnv(key: string): string {
-  const g = globalThis as Record<string, unknown>
-  const proc = g.process as { env?: Record<string, string> } | undefined
-  return proc?.env?.[key] ?? ''
-}

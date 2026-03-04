@@ -94,6 +94,21 @@ describe("Agent Orchestration", () => {
       const req = new Request("http://localhost/api/agents/test");
       expect(checkDelegationDepth(req)).toBeNull();
     });
+
+    it("ignores depth header from external origins (non-localhost)", () => {
+      // An external caller sending depth=5 should be treated as depth 0 (not blocked)
+      const req = new Request("http://external.example.com/api/agents/test", {
+        headers: { "X-Fabrk-Delegation-Depth": "5" },
+      });
+      expect(checkDelegationDepth(req)).toBeNull();
+    });
+
+    it("trusts depth header from 127.0.0.1", () => {
+      const req = new Request("http://127.0.0.1/api/agents/test", {
+        headers: { "X-Fabrk-Delegation-Depth": "5" },
+      });
+      expect(checkDelegationDepth(req)).toContain("Maximum delegation depth");
+    });
   });
 
   describe("defineSupervisor", () => {

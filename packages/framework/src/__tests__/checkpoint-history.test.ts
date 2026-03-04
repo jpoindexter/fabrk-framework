@@ -220,4 +220,48 @@ describe("handleAgentHistory and handleAgentRollback", () => {
     const resp = await handleAgentRollback("agent", req, store);
     expect(resp.headers.get("x-content-type-options")).toBe("nosniff");
   });
+
+  it("handleAgentRollback returns 400 for negative targetIteration", async () => {
+    const { handleAgentRollback } = await import("../agents/durable-handler");
+    const store = new InMemoryCheckpointStore();
+    const req = new Request("http://localhost/__ai/agents/myAgent/rollback", {
+      method: "POST",
+      body: JSON.stringify({ sessionId: "sess-1", targetIteration: -1 }),
+    });
+    const resp = await handleAgentRollback("myAgent", req, store);
+    expect(resp.status).toBe(400);
+  });
+
+  it("handleAgentRollback returns 400 for targetIteration >= 10000", async () => {
+    const { handleAgentRollback } = await import("../agents/durable-handler");
+    const store = new InMemoryCheckpointStore();
+    const req = new Request("http://localhost/__ai/agents/myAgent/rollback", {
+      method: "POST",
+      body: JSON.stringify({ sessionId: "sess-1", targetIteration: 10000 }),
+    });
+    const resp = await handleAgentRollback("myAgent", req, store);
+    expect(resp.status).toBe(400);
+  });
+
+  it("handleAgentRollback returns 400 for non-integer targetIteration", async () => {
+    const { handleAgentRollback } = await import("../agents/durable-handler");
+    const store = new InMemoryCheckpointStore();
+    const req = new Request("http://localhost/__ai/agents/myAgent/rollback", {
+      method: "POST",
+      body: JSON.stringify({ sessionId: "sess-1", targetIteration: 1.5 }),
+    });
+    const resp = await handleAgentRollback("myAgent", req, store);
+    expect(resp.status).toBe(400);
+  });
+
+  it("handleAgentRollback returns 403 for non-localhost remoteAddress", async () => {
+    const { handleAgentRollback } = await import("../agents/durable-handler");
+    const store = new InMemoryCheckpointStore();
+    const req = new Request("http://localhost/__ai/agents/myAgent/rollback", {
+      method: "POST",
+      body: JSON.stringify({ sessionId: "sess-1", targetIteration: 0 }),
+    });
+    const resp = await handleAgentRollback("myAgent", req, store, "192.168.1.10");
+    expect(resp.status).toBe(403);
+  });
 });

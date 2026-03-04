@@ -33,7 +33,7 @@ export function agentAsTool(
       );
       const childDepth = String(parentDepth + 1);
 
-      const req = new Request(`http://internal/api/agents/${encodeURIComponent(options.name)}`, {
+      const req = new Request(`http://localhost/api/agents/${encodeURIComponent(options.name)}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -73,19 +73,29 @@ export function agentAsTool(
   };
 }
 
+/**
+ * Returns true when the request originates from the same server (localhost).
+ * Only internal same-server calls are allowed to set the delegation depth header;
+ * external callers could otherwise forge it to bypass depth limits.
+ */
+function isLocalhostRequest(req: Request): boolean {
+  try {
+    const host = new URL(req.url).hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
 export function checkDelegationDepth(req: Request): string | null {
-  const depth = parseInt(req.headers.get(DEPTH_HEADER) ?? "0", 10);
+  // Only trust the header from internal same-server calls. External callers
+  // start at depth 0 regardless of what header they send.
+  const rawHeader = isLocalhostRequest(req) ? req.headers.get(DEPTH_HEADER) : null;
+  const depth = parseInt(rawHeader ?? "0", 10);
   if (depth >= MAX_DELEGATION_DEPTH) {
     return `Maximum delegation depth (${MAX_DELEGATION_DEPTH}) exceeded`;
   }
   return null;
-}
-
-export function incrementDelegationDepth(req: Request): Headers {
-  const depth = parseInt(req.headers.get(DEPTH_HEADER) ?? "0", 10);
-  const headers = new Headers(req.headers);
-  headers.set(DEPTH_HEADER, String(depth + 1));
-  return headers;
 }
 
 export function detectCircularDeps(

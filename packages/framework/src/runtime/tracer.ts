@@ -18,7 +18,6 @@ type OtelSpan = { end: () => void; setStatus: (s: { code: number }) => void; rec
  * is a no-op so callers don't need to guard it themselves.
  */
 export async function initTracer(nameOrConfig?: string | TracingConfig): Promise<void> {
-  // Handle TracingConfig object path
   if (nameOrConfig !== undefined && typeof nameOrConfig !== 'string') {
     const config = nameOrConfig;
     if (!config.enabled) return;
@@ -54,7 +53,6 @@ export async function initTracer(nameOrConfig?: string | TracingConfig): Promise
     return;
   }
 
-  // Legacy string-name path
   if (_initialized) return;
   _initialized = true;
   const name = (nameOrConfig as string | undefined) ?? 'fabrk';

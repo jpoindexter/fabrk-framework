@@ -3,9 +3,8 @@
  */
 
 import type { EmbeddingProvider, EmbeddingConfig } from './types'
-import { EMBEDDING_DEFAULTS } from './types'
-
-const MAX_TEXT_LENGTH = 8192
+import { EMBEDDING_DEFAULTS, MAX_TEXT_LENGTH } from './types'
+import { resolveEnv } from '../utils/env'
 const AZURE_API_VERSION = '2024-02-01'
 
 export class AzureEmbeddingProvider implements EmbeddingProvider {
@@ -55,8 +54,3 @@ export class AzureEmbeddingProvider implements EmbeddingProvider {
   }
 }
 
-function resolveEnv(key: string): string {
-  const g = globalThis as Record<string, unknown>
-  const proc = g.process as { env?: Record<string, string> } | undefined
-  return proc?.env?.[key] ?? ''
-}

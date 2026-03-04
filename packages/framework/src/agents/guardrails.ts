@@ -71,7 +71,7 @@ export function requireJsonSchema(schema: Record<string, unknown>): Guardrail {
     const required = schema.required as string[] | undefined;
     if (required) {
       for (const key of required) {
-        if (!(key in obj)) {
+        if (!Object.hasOwn(obj, key)) {
           return { pass: false, reason: `Missing required field: ${key}` };
         }
       }
@@ -80,7 +80,7 @@ export function requireJsonSchema(schema: Record<string, unknown>): Guardrail {
     const properties = schema.properties as Record<string, { type?: string }> | undefined;
     if (properties) {
       for (const [key, spec] of Object.entries(properties)) {
-        if (key in obj && spec.type) {
+        if (Object.hasOwn(obj, key) && spec.type) {
           const actual = Array.isArray(obj[key]) ? "array" : typeof obj[key];
           if (actual !== spec.type) {
             return { pass: false, reason: `Field "${key}" expected type "${spec.type}", got "${actual}"` };

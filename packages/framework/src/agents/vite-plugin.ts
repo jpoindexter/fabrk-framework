@@ -63,6 +63,19 @@ export function agentPlugin(): Plugin {
 
           // Handle approvals listing: GET /__ai/agents/:name/approvals
           if (pathname.startsWith("/__ai/agents/") && pathname.endsWith("/approvals") && req.method === "GET") {
+            const remoteAddr = req.socket?.remoteAddress;
+            if (
+              remoteAddr &&
+              remoteAddr !== "127.0.0.1" &&
+              remoteAddr !== "::1" &&
+              remoteAddr !== "::ffff:127.0.0.1"
+            ) {
+              res.statusCode = 403;
+              res.setHeader("Content-Type", "application/json");
+              applySecurityHeaders(res);
+              res.end(JSON.stringify({ error: "Approval routes only available on localhost" }));
+              return;
+            }
             const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approvals".length));
             const webRes = handleListApprovals(agentName);
             await writeWebResponse(res, webRes);
@@ -71,6 +84,19 @@ export function agentPlugin(): Plugin {
 
           // Handle approval endpoint: POST /__ai/agents/:name/approve
           if (pathname.startsWith("/__ai/agents/") && pathname.endsWith("/approve") && req.method === "POST") {
+            const remoteAddr = req.socket?.remoteAddress;
+            if (
+              remoteAddr &&
+              remoteAddr !== "127.0.0.1" &&
+              remoteAddr !== "::1" &&
+              remoteAddr !== "::ffff:127.0.0.1"
+            ) {
+              res.statusCode = 403;
+              res.setHeader("Content-Type", "application/json");
+              applySecurityHeaders(res);
+              res.end(JSON.stringify({ error: "Approval routes only available on localhost" }));
+              return;
+            }
             const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approve".length));
             const webReq = await nodeToWebRequest(req, url);
             const webRes = await approvalHandler(webReq, agentName);

@@ -154,7 +154,7 @@ export { InMemoryLongTermStore } from "./agents/memory/long-term-store.js";
 export type { LongTermStore, LongTermEntry } from "./agents/memory/long-term-store.js";
 
 // Orchestration
-export { agentAsTool, defineSupervisor, detectCircularDeps } from "./agents/orchestration/index";
+export { agentAsTool, defineSupervisor } from "./agents/orchestration/index";
 export type { SupervisorConfig } from "./agents/orchestration/supervisor";
 
 // Agent network
@@ -184,7 +184,7 @@ export type { ScannedSkill } from "./skills/scanner";
 export { runAgentLoop } from "./agents/agent-loop";
 
 // Prompt versioning + A/B testing
-export { definePromptVersion, resolvePrompt, abTestPrompt, clearPromptRegistry } from "./agents/prompt-registry";
+export { definePromptVersion, resolvePrompt, abTestPrompt } from "./agents/prompt-registry";
 export type { PromptVersion } from "./agents/prompt-registry";
 export type { AgentLoopEvent, AgentLoopOptions } from "./agents/agent-loop";
 export { createToolExecutor } from "./agents/tool-executor";

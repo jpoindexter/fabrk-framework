@@ -37,7 +37,6 @@ export class SemanticMemoryStore implements MemoryStore {
   ): Promise<ThreadMessage> {
     const message = await this.baseStore.appendMessage(threadId, msg);
 
-    // Auto-embed in background (non-blocking)
     if (msg.role === "user" || msg.role === "assistant") {
       const thread = await this.baseStore.getThread(threadId);
       this.embedAsync(
@@ -59,7 +58,6 @@ export class SemanticMemoryStore implements MemoryStore {
   }
 
   async deleteThread(threadId: string): Promise<void> {
-    // Clean up embeddings for this thread's messages
     const msgs = await this.baseStore.getMessages(threadId);
     for (const msg of msgs) {
       this.embeddings.delete(msg.id);
@@ -87,7 +85,6 @@ export class SemanticMemoryStore implements MemoryStore {
     const { findNearest } = await import("@fabrk/ai");
     const queryEmbedding = await this.provider.embed(query);
 
-    // Build vectors array filtered by agent name if specified
     const vectors: Array<{ id: string; vector: number[] }> = [];
     for (const [id, vec] of this.embeddings) {
       if (opts?.agentName && this.messageAgentMap.get(id) !== opts.agentName) {
@@ -106,10 +103,8 @@ export class SemanticMemoryStore implements MemoryStore {
       this.threshold
     );
 
-    // Map results back to messages by index
     const messageIds = results.map((r) => vectors[r.index].id);
 
-    // Hydrate messages from stored content
     const found: ThreadMessage[] = [];
     for (const msgId of messageIds) {
       const stored = this.messageContent.get(msgId);

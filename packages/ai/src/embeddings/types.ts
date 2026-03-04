@@ -28,6 +28,9 @@ export interface EmbeddingConfig {
   timeoutMs?: number
 }
 
+/** Default max text length (chars) before truncation for embedding providers */
+export const MAX_TEXT_LENGTH = 8192
+
 /** Default embedding config */
 export const EMBEDDING_DEFAULTS = {
   provider: 'openai' as const,

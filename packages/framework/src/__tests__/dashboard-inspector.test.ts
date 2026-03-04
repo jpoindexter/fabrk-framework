@@ -134,6 +134,64 @@ describe('dashboard call inspector', () => {
     });
   });
 
+  describe('dashboardPlugin — /__ai/api/export method guard', () => {
+    /** Capture the Connect middleware from a freshly-built plugin. */
+    async function getMiddleware() {
+      const mod = await freshModule();
+      const plugin = mod.dashboardPlugin();
+      let middleware: ((...args: unknown[]) => void) | null = null;
+      const fakeServer = {
+        middlewares: { use(fn: (...args: unknown[]) => void) { middleware = fn; } },
+      };
+      // configureServer returns a function that registers the middleware
+      (plugin.configureServer as (s: typeof fakeServer) => (() => void) | void)(fakeServer)?.();
+      return middleware;
+    }
+
+    function makeRes() {
+      const headers: Record<string, string> = {};
+      return {
+        statusCode: 0,
+        _body: '',
+        setHeader(k: string, v: string) { headers[k] = v; },
+        end(body?: string) { this._body = body ?? ''; },
+        write() {},
+        on() {},
+        socket: { remoteAddress: '127.0.0.1' },
+      };
+    }
+
+    function makeReq(method: string, url: string) {
+      return { url, method, socket: { remoteAddress: '127.0.0.1' } };
+    }
+
+    it('rejects non-GET methods on /__ai/api/export with 405', async () => {
+      const middleware = await getMiddleware();
+      if (!middleware) return;
+
+      const postRes = makeRes();
+      middleware(makeReq('POST', '/__ai/api/export'), postRes, () => {});
+      expect(postRes.statusCode).toBe(405);
+
+      const getRes = makeRes();
+      middleware(makeReq('GET', '/__ai/api/export'), getRes, () => {});
+      expect(getRes.statusCode).toBe(200);
+    });
+
+    it('caps callId at 100 chars to prevent DoS', async () => {
+      const middleware = await getMiddleware();
+      if (!middleware) return;
+
+      const longId = 'x'.repeat(500);
+      const res = makeRes();
+      const req = makeReq('GET', `/__ai/api/calls/${longId}`);
+
+      expect(() => middleware(req, res, () => {})).not.toThrow();
+      // Unknown id (after slicing to 100 chars) → 404
+      expect(res.statusCode).toBe(404);
+    });
+  });
+
   describe('capMessages logic (via recordCall)', () => {
     it('messages array with exactly 20 entries passes through unchanged count', async () => {
       const mod = await freshModule();

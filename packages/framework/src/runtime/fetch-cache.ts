@@ -26,13 +26,11 @@ const cache = new Map<string, CachedResponse>();
 let maxEntries = 200;
 let defaultRevalidate = Infinity;
 
-/** Tags → set of cache keys that have that tag. */
 const tagIndex = new Map<string, Set<string>>();
 
-/** Paths → set of cache keys associated with that path. */
 const pathIndex = new Map<string, Set<string>>();
 
-// Headers that bypass caching (contain auth credentials)
+/** Requests with these headers bypass caching — they carry auth credentials. */
 const AUTH_HEADERS = new Set([
   "authorization",
   "cookie",
@@ -48,7 +46,6 @@ function generateCacheKey(
 ): string {
   const parts = [method.toUpperCase(), url];
 
-  // Sort headers for deterministic keys
   if (headers) {
     const h =
       headers instanceof Headers
@@ -64,7 +61,6 @@ function generateCacheKey(
     parts.push(sorted.join("|"));
   }
 
-  // Include body hash for non-GET requests
   if (body && typeof body === "string") {
     parts.push(simpleHash(body));
   }

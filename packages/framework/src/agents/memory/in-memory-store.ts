@@ -42,7 +42,6 @@ export class InMemoryMemoryStore implements MemoryStore {
 
     const msgs = this.messages.get(threadId) ?? [];
 
-    // Evict oldest messages if at capacity
     while (msgs.length >= MAX_MESSAGES_PER_THREAD) {
       msgs.shift();
     }

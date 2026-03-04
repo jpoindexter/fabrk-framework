@@ -14,6 +14,7 @@ import { extractLocale, type I18nConfig } from "./i18n";
 import fs from "node:fs";
 import path from "node:path";
 import { startSpan } from "./tracer";
+import { runWithContext } from "./server-context";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReactModuleLoader = () => Promise<[any, any]>;
@@ -114,8 +115,10 @@ export async function handleRequest(
     return handleRscPayload(matched, viteServer, appDir);
   }
 
-  const response = await startSpan("fabrk.ssr.request", () =>
-    handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale)
+  const response = await runWithContext(request, () =>
+    startSpan("fabrk.ssr.request", () =>
+      handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale)
+    )
   );
 
   if (mwResponseHeaders) {

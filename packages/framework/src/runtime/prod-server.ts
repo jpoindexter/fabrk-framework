@@ -47,6 +47,7 @@ import type { VoiceConfig } from "@fabrk/ai";
 import { createApprovalHandler } from "../agents/approval-handler";
 import { readManifest, getEntryAssets } from "./asset-manifest";
 import type { Manifest } from "./asset-manifest";
+import { runWithContext } from "./server-context";
 
 const approvalHandler = createApprovalHandler();
 
@@ -898,12 +899,17 @@ export async function startProdServer(
         res.writeHead(result.status, { ...mwHeaders, ...result.headers });
         res.end(result.body);
       } else {
-        const result = await handlePageRoute(
-          matched.route,
-          matched.params,
-          serverEntry,
-          req.url || "/",
-          isrCache,
+        const webReqForCtx = new Request(`http://localhost${req.url || "/"}`, {
+          headers: nodeHeadersToRecord(req.headers),
+        });
+        const result = await runWithContext(webReqForCtx, () =>
+          handlePageRoute(
+            matched.route,
+            matched.params,
+            serverEntry,
+            req.url || "/",
+            isrCache,
+          )
         );
         res.writeHead(result.status, { ...mwHeaders, ...result.headers });
 

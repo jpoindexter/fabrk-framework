@@ -252,3 +252,4 @@ export { handleStreamObject } from "./runtime/stream-object-handler";
 // View Transitions API
 export { useViewTransition, ViewTransitionLink } from "./client/view-transition";
 export { readManifest, getEntryAssets, buildAssetTags } from "./runtime/asset-manifest";
+export { cookies, headers, runWithContext } from "./runtime/server-context";

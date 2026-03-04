@@ -187,6 +187,17 @@ function transformServer(
   return code + "\n" + registrations + "\n";
 }
 
+/**
+ * Returns all exported names from a "use server" module.
+ * Handles: export [async] function name, export const name = [async] (...) =>
+ */
+export function extractServerExports(code: string): string[] {
+  if (!/["']use server["']/.test(code)) return [];
+  return extractExports(code)
+    .filter((e) => !e.isDefault)
+    .map((e) => e.name);
+}
+
 export {
   hasFileLevelDirective as _hasFileLevelDirective,
   findInlineServerFunctions as _findInlineServerFunctions,

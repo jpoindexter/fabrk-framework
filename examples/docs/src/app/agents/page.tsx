@@ -4,7 +4,7 @@ export default function AgentsPage() {
   return (
     <DocLayout
       title="AGENTS"
-      description="Full reference for the fabrk agent layer — defining agents, tools, memory, guardrails, workflows, orchestration, MCP, durable execution, and testing."
+      description="Everything you need to build agents that think, remember, and know when to stop."
     >
 
       {/* SECTION INDEX */}
@@ -38,9 +38,8 @@ export default function AgentsPage() {
       {/* 1. DEFINING AN AGENT */}
       <Section id="define" title="DEFINING AN AGENT">
         <p className="text-sm text-muted-foreground mb-4">
-          An agent is a file at <code>src/agents/my-agent.ts</code> that exports a default{' '}
-          <code>AgentDefinition</code>. The framework file-scans this directory at startup and
-          mounts a POST endpoint at <code>/api/agents/my-agent</code>.
+          An agent is a TypeScript file with a brain. You define what it knows, what it can do, and how much it can spend.
+          Drop it in <code>src/agents/my-agent.ts</code> and the framework wires up the HTTP endpoint automatically.
         </p>
 
         <CodeBlock title="src/agents/researcher.ts">{`import { defineAgent } from 'fabrk'
@@ -88,25 +87,22 @@ export default defineAgent({
 })`}</CodeBlock>
 
         <InfoCard title="HARD CAPS">
-          The agent loop enforces a hard cap of 25 iterations regardless of{' '}
-          <code>maxIterations</code>. Tool output is truncated at 50K characters.
-          Both limits prevent runaway cost from malformed tool responses.
+          The loop stops at 25 iterations no matter what <code>maxIterations</code> says. Tool output cuts off at 50K characters. Both limits guard against runaway cost from bad tool responses.
         </InfoCard>
 
         <p className="text-sm text-muted-foreground mt-4">
-          <strong className="text-foreground">auth modes:</strong> <code>none</code> — open endpoint.{' '}
-          <code>optional</code> — JWT decoded if present, userId/tenantId populated.{' '}
-          <code>required</code> — 401 if no valid JWT. The decoded claims are passed as{' '}
-          <code>BudgetContext</code> so per-user and per-tenant budgets work automatically.
+          <strong className="text-foreground">auth modes:</strong> <code>none</code> — open to anyone.{' '}
+          <code>optional</code> — decodes the JWT when present and populates userId and tenantId.{' '}
+          <code>required</code> — returns 401 without a valid JWT. Decoded claims flow into{' '}
+          <code>BudgetContext</code>, so per-user and per-tenant budget caps work automatically.
         </p>
       </Section>
 
       {/* 2. TOOLS */}
       <Section id="tools" title="TOOLS">
         <p className="text-sm text-muted-foreground mb-4">
-          Tools are defined in <code>src/tools/</code> and registered by name. The LLM decides
-          when to call them; the framework executes the handler, serialises the result, and feeds
-          it back in the next iteration.
+          A tool is like giving your agent hands — it can DO things, not just say things. You define a tool in <code>src/tools/</code> and register it by name.
+          The LLM decides when to call it. Your handler runs, and the result comes back in the next iteration.
         </p>
 
         <CodeBlock title="src/tools/web-search.ts">{`import { defineTool, textResult } from 'fabrk'
@@ -130,8 +126,7 @@ export const webSearchTool = defineTool({
 })`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4 mb-2">
-          <strong className="text-foreground">Multi-part results</strong> — tools can return text,
-          images, or files in the same response. The LLM receives all parts.
+          <strong className="text-foreground">Multi-part results</strong> — a tool can return text, images, or files together. The LLM sees all parts.
         </p>
 
         <CodeBlock title="image + text result">{`import type { ToolResult } from 'fabrk'
@@ -151,9 +146,7 @@ async function screenshotHandler({ url }): Promise<ToolResult> {
 }`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4 mb-2">
-          <strong className="text-foreground">Isomorphic tool split</strong> — strip server-side
-          handlers before sending tool schemas to the browser. Use this when you expose tool
-          metadata to a client component for display.
+          <strong className="text-foreground">Isomorphic tool split</strong> — your handler code must never reach the browser. <code>clientTools()</code> strips the server handler and returns only the name, description, and schema. Use this when a client component needs to display tool metadata.
         </p>
 
         <CodeBlock title="client-safe descriptor">{`import { clientTools } from 'fabrk'
@@ -164,17 +157,14 @@ const descriptors = clientTools([webSearchTool])
 // safe to serialise and send to the browser`}</CodeBlock>
 
         <InfoCard title="BUILT-IN TOOLS">
-          <code>sqlQueryTool</code> — read-only SQL execution against a database adapter.{' '}
-          <code>ragToolFromPipeline</code> — wraps a RAG pipeline as a tool the LLM can call.
-          Both are imported from <code>fabrk</code> and passed into <code>tools:</code> like any
-          custom tool.
+          <code>sqlQueryTool</code> runs read-only SQL against a database adapter.{' '}
+          <code>ragToolFromPipeline</code> wraps a RAG pipeline so the LLM can query it directly.
+          Import both from <code>fabrk</code> and pass them into <code>tools:</code> like any custom tool.
         </InfoCard>
 
         <p className="text-sm text-muted-foreground mt-4 mb-2">
-          <strong className="text-foreground">Human-in-the-loop approval</strong> — set{' '}
-          <code>requiresApproval: true</code> on any tool. The loop pauses, emits an{' '}
-          <code>approval-required</code> SSE event with an <code>approvalId</code>, and waits.
-          Resume by posting to <code>POST /__ai/agents/:name/approve</code>.
+          <strong className="text-foreground">Human-in-the-loop approval</strong> — some tool calls are too risky to run automatically. Set <code>requiresApproval: true</code> and the loop pauses.
+          It emits an <code>approval-required</code> SSE event with an <code>approvalId</code>. You approve or reject by posting to <code>POST /__ai/agents/:name/approve</code>.
         </p>
 
         <CodeBlock title="tool hooks (per-tool or per-executor)">{`import { defineTool } from 'fabrk'
@@ -202,21 +192,18 @@ export const deleteTool = defineTool({
       {/* 3. MEMORY */}
       <Section id="memory" title="MEMORY">
         <p className="text-sm text-muted-foreground mb-4">
-          Memory in fabrk has three distinct layers with different purposes.
+          Agents forget everything between requests by default. Memory fixes that. There are three layers — pick the one that matches how long you need data to live.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
           <InfoCard title="IN-MEMORY STORE">
-            Per-thread conversation history. The default. Fast, zero setup, bounded at 500
-            messages/thread and 1,000 threads with LRU eviction.
+            Keeps conversation history for the current thread. Zero setup, zero config. Capped at 500 messages per thread and 1,000 threads with LRU eviction.
           </InfoCard>
           <InfoCard title="SEMANTIC STORE">
-            Vector search across all threads. Use when the LLM needs to recall what a user
-            said weeks ago, not just in this session. Requires an embedding provider.
+            Searches across all threads by meaning, not just the current session. Use this when a user expects the agent to remember something from weeks ago. Requires an embedding provider.
           </InfoCard>
           <InfoCard title="LONG-TERM STORE">
-            Key-value facts that persist across sessions. The LLM writes and reads via auto-injected
-            <code>memory_store</code> and <code>memory_recall</code> tools.
+            Persists key-value facts across sessions. The LLM reads and writes via auto-injected <code>memory_store</code> and <code>memory_recall</code> tools.
           </InfoCard>
         </div>
 
@@ -247,8 +234,7 @@ const relevant = await semanticStore.search('billing question', {
 })`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-2 mb-4">
-          Embeddings are computed asynchronously and non-blocking. If embedding fails (network
-          issue, rate limit), the message is still stored — search just won't surface it.
+          Embeddings compute in the background and never block writes. If embedding fails — network error, rate limit — the message still saves. It just won't appear in search results.
         </p>
 
         <CodeBlock title="InMemoryLongTermStore — cross-session facts">{`import { InMemoryLongTermStore } from 'fabrk'
@@ -297,10 +283,8 @@ defineAgent({
       {/* 4. GUARDRAILS */}
       <Section id="guardrails" title="GUARDRAILS">
         <p className="text-sm text-muted-foreground mb-4">
-          Guardrails run on the last user message (input) or on the final LLM response (output).
-          A guardrail returns <code>pass: true</code> to allow, or <code>pass: false</code> to
-          block (which emits an <code>error</code> SSE event). Returning a <code>replacement</code>{' '}
-          silently rewrites the content instead of blocking.
+          Guardrails are filters you put between the world and your agent. Input guardrails screen the user message before it reaches the LLM. Output guardrails screen the LLM response before it reaches the user.
+          Return <code>pass: false</code> to block and emit an <code>error</code> event. Return a <code>replacement</code> to silently rewrite the content instead.
         </p>
 
         <CodeBlock title="built-in guardrails">{`import {
@@ -363,8 +347,7 @@ const { blocked, reason, content } = await runGuardrailsParallel(
       {/* 5. STOP CONDITIONS */}
       <Section id="stop-conditions" title="STOP CONDITIONS">
         <p className="text-sm text-muted-foreground mb-4">
-          Stop conditions let you halt the agent loop early without waiting for the hard cap.
-          They fire after each tool-using iteration.
+          Sometimes an agent's job is done before it hits the hard cap. Stop conditions let you declare that moment. They evaluate after each tool-using iteration.
         </p>
 
         <CodeBlock title="composing stop conditions">{`import { stepCountIs, hasToolCall } from 'fabrk'
@@ -383,18 +366,14 @@ const noMoreTools = ({ lastToolCallNames }) => lastToolCallNames.length === 0
 defineAgent({ stopWhen: noMoreTools })`}</CodeBlock>
 
         <InfoCard title="WHEN TO USE STOP CONDITIONS">
-          Stop conditions are useful when an agent has a finite task (e.g., gather 3 sources
-          then stop) or when you want a safety valve that's tighter than the 25-iteration hard
-          cap. For open-ended chat, leave <code>stopWhen</code> unset.
+          Use them for finite tasks — "gather 3 sources then stop", "stop once the email is sent". They also work as a tighter safety valve than the 25-iteration hard cap. Leave <code>stopWhen</code> unset for open-ended chat.
         </InfoCard>
       </Section>
 
       {/* 6. STREAMING */}
       <Section id="streaming" title="STREAMING">
         <p className="text-sm text-muted-foreground mb-4">
-          When <code>stream: true</code> (the default), the agent endpoint returns a{' '}
-          <code>text/event-stream</code> response. Each event is a JSON object on a{' '}
-          <code>data:</code> line.
+          Streaming lets your UI respond the moment the agent starts thinking, not after it finishes. With <code>stream: true</code> (the default), the endpoint returns a <code>text/event-stream</code> response. Each event is a JSON object on a <code>data:</code> line.
         </p>
 
         <CodeBlock title="SSE event types">{`// Text token streaming
@@ -458,9 +437,7 @@ export function Chat() {
       {/* 7. WORKFLOWS */}
       <Section id="workflows" title="WORKFLOWS">
         <p className="text-sm text-muted-foreground mb-4">
-          Workflows chain agent calls and tool executions into a linear or branching pipeline.
-          Use them when the task has clearly defined steps with defined inputs and outputs —
-          instead of letting a single agent loop figure out the sequence.
+          A workflow is for tasks where you already know the steps. Instead of letting one agent loop figure out the sequence, you declare it. Each step gets the previous step's output as its input.
         </p>
 
         <CodeBlock title="defineWorkflow — linear pipeline">{`import { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep } from 'fabrk'
@@ -492,9 +469,7 @@ if (result.status === 'completed') {
 }`}</CodeBlock>
 
         <InfoCard title="WORKFLOW LIMITS">
-          Max 50 steps (hard cap, matches <code>MAX_STEPS_HARD_CAP</code>). Parallel steps
-          run with <code>Promise.allSettled</code> — one failing branch doesn't abort the others;
-          its output becomes <code>[error: ...]</code> in the joined string.
+          Max 50 steps, hard cap. Parallel steps run with <code>Promise.allSettled</code> — a failing branch doesn't kill the others. Its output becomes <code>[error: ...]</code> in the joined result.
         </InfoCard>
 
         <CodeBlock title="streaming workflow progress">{`import { createWorkflowStream, runWorkflow } from 'fabrk'
@@ -541,10 +516,7 @@ const final = await resumeWorkflow(approval, partial, { approved: true, notes: '
       {/* 8. CYCLIC WORKFLOWS (STATEGRAPH) */}
       <Section id="stategraph" title="CYCLIC WORKFLOWS (STATEGRAPH)">
         <p className="text-sm text-muted-foreground mb-4">
-          <code>defineStateGraph</code> is for workflows that loop back on themselves — think
-          a self-correcting code generator that retries on test failure, or a multi-step
-          reasoning loop. Unlike linear workflows, graphs can cycle. The default cap is 50
-          node executions.
+          Some tasks need to loop — a code generator that retries on test failure, a reasoner that checks its own work. <code>defineStateGraph</code> handles that. Unlike a linear workflow, a graph can cycle back to any earlier node. The default cap is 50 node executions.
         </p>
 
         <CodeBlock title="createStateGraph builder API">{`import { createStateGraph, interrupt } from 'fabrk'
@@ -596,16 +568,14 @@ for await (const event of graph.run(input, {
 })) { /* ... */ }`}</CodeBlock>
 
         <InfoCard title="INTERRUPTBEFORE / INTERRUPTAFTER">
-          Pass <code>interruptBefore: ['deploy']</code> to <code>compile()</code> to pause before
-          a node runs (useful for approval gates). <code>interruptAfter</code> pauses after it
-          exits, giving you the output before the graph continues.
+          Pass <code>interruptBefore: ['deploy']</code> to <code>compile()</code> to pause before a node runs — useful for approval gates. <code>interruptAfter</code> pauses after the node exits, so you can inspect its output before the graph moves on.
         </InfoCard>
       </Section>
 
       {/* 9. ORCHESTRATION */}
       <Section id="orchestration" title="ORCHESTRATION">
         <p className="text-sm text-muted-foreground mb-4">
-          Orchestration coordinates multiple agents. Three primitives cover most patterns.
+          One agent can only do so much. Orchestration lets agents delegate to other agents. Three primitives cover almost every pattern.
         </p>
 
         <CodeBlock title="agentAsTool — delegate without HTTP round-trip">{`import { agentAsTool } from 'fabrk'
@@ -663,17 +633,14 @@ const network = defineAgentNetwork({
 await network.run('I was charged twice for my subscription')`}</CodeBlock>
 
         <InfoCard title="CIRCULAR DEPENDENCY DETECTION">
-          At startup, fabrk calls <code>detectCircularDeps()</code> across all registered agents
-          and logs warnings for any cycles. Delegation still works but cycles can burn your budget
-          fast — add <code>budget.perSession</code> as a safety net.
+          At startup, fabrk calls <code>detectCircularDeps()</code> and logs warnings for any cycles. Delegation still works, but cycles burn budget fast. Set <code>budget.perSession</code> as a safety net.
         </InfoCard>
       </Section>
 
       {/* 10. MCP INTEGRATION */}
       <Section id="mcp" title="MCP INTEGRATION">
         <p className="text-sm text-muted-foreground mb-4">
-          MCP (Model Context Protocol) lets agents expose their tools to any MCP-compatible client,
-          and consume tools from external MCP servers. Both sides use JSON-RPC 2.0.
+          MCP (Model Context Protocol) is a standard way for agents to share tools. Your agent can publish its tools to any MCP-compatible client, and consume tools from external MCP servers. Both sides speak JSON-RPC 2.0.
         </p>
 
         <CodeBlock title="createMCPServer — expose tools as an MCP server">{`import { createMCPServer } from 'fabrk'
@@ -738,9 +705,7 @@ defineAgent({ tools: tools.map(t => t.name) })
       {/* 11. DURABLE AGENTS */}
       <Section id="durable" title="DURABLE AGENTS">
         <p className="text-sm text-muted-foreground mb-4">
-          Durable agents checkpoint their state after every tool result. If the process restarts
-          or a request times out, execution can resume from the last checkpoint rather than
-          starting over. Essential for long-running agents in serverless environments.
+          Long-running agents die when the server does. Durable agents save their state after every tool result. When the process restarts or a request times out, you resume from the last checkpoint instead of starting over.
         </p>
 
         <CodeBlock title="handleStartAgent + handleResumeAgent">{`import {
@@ -784,17 +749,14 @@ const restored = await checkpointStore.rollback('analyzer', sessionId, 3)
 // Restores iteration 3 as the current state; resume from there`}</CodeBlock>
 
         <InfoCard title="CHECKPOINT LIMITS">
-          <code>InMemoryCheckpointStore</code> caps at 1,000 checkpoints and 100 history
-          entries per session with LRU eviction. Rollback and status endpoints are
-          localhost-only — <code>403</code> if called from an external IP.
+          <code>InMemoryCheckpointStore</code> caps at 1,000 checkpoints and 100 history entries per session, with LRU eviction. Rollback and status endpoints only respond to localhost — external IPs get a <code>403</code>.
         </InfoCard>
       </Section>
 
       {/* 12. TESTING & EVALS */}
       <Section id="testing" title="TESTING & EVALS">
         <p className="text-sm text-muted-foreground mb-4">
-          The testing module gives you a fluent mock LLM, a test agent harness, assertion helpers,
-          and a structured eval framework. No API keys, no network calls in tests.
+          Agent tests that call real LLMs are slow, flaky, and expensive. The testing module gives you a mock LLM, a test harness, assertion helpers, and an eval framework. No API keys, no network calls.
         </p>
 
         <CodeBlock title="MockLLM — define deterministic responses">{`import { mockLLM } from 'fabrk/testing'
@@ -890,10 +852,10 @@ const result = await runEvals(suite, {
 
         <InfoCard title="BUILT-IN SCORERS">
           <code>exactMatch()</code> — strict equality.{' '}
-          <code>includes(substring)</code> — output contains string.{' '}
-          <code>toolCallSequence(names)</code> — exact ordered sequence of tool calls.{' '}
-          <code>jsonSchema(schema)</code> — output is valid JSON matching schema.{' '}
-          <code>llmAsJudge(opts)</code> — LLM rates output on 0-1 scale, pass threshold 0.5.
+          <code>includes(str)</code> — output contains a substring.{' '}
+          <code>toolCallSequence(names)</code> — exact ordered tool call sequence.{' '}
+          <code>jsonSchema(schema)</code> — output is valid JSON matching the schema.{' '}
+          <code>llmAsJudge(opts)</code> — an LLM rates output on a 0–1 scale, passing at 0.5.
         </InfoCard>
       </Section>
 

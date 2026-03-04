@@ -1,6 +1,6 @@
 # @fabrk/ai — AI Integration Toolkit
 
-This package is the low-level layer that `fabrk` (the runtime) builds on. You can use it directly in any TypeScript project — it has no dependency on React or Vite.
+`@fabrk/ai` is the low-level AI layer that the `fabrk` runtime builds on. You can use it directly in any TypeScript project — it has no dependency on React or Vite.
 
 ```bash
 pnpm add @fabrk/ai
@@ -12,7 +12,7 @@ pnpm add @fabrk/ai
 
 ### Provider registry
 
-Providers are registered by a unique key and matched to model strings via prefix rules. The registry ships with 6 native providers and 61 OpenAI-compatible adapters.
+Think of the registry as a phone book: you look up a provider by model name and get back a function that can call that LLM. The registry ships with 6 native providers and 61 OpenAI-compatible adapters.
 
 Built-in native providers:
 
@@ -66,7 +66,7 @@ registerProvider('my-llm', {
 
 ### OpenAI-compatible providers
 
-61 providers are available via `makeOpenAICompatAdapter`. They all speak the OpenAI REST API format. Examples: OpenRouter (which itself covers 200+ models), Groq, Fireworks, Together AI, Mistral, Perplexity, Anyscale, DeepInfra, vllm, LM Studio, LocalAI.
+61 providers speak the OpenAI REST API format, so one adapter covers them all. Examples: OpenRouter (which itself routes to 200+ models), Groq, Fireworks, Together AI, Mistral, Perplexity, Anyscale, DeepInfra, vllm, LM Studio, LocalAI.
 
 ```ts
 import { makeOpenAICompatAdapter, registerProvider } from '@fabrk/ai'
@@ -159,7 +159,7 @@ Event types: `text-delta`, `tool-call`, `usage`.
 
 ### generateObject (structured output)
 
-When you need the LLM to return JSON that conforms to a schema — without fighting string parsing:
+When you need the LLM to return JSON that matches a schema — instead of parsing free-form text — use `generateObject`:
 
 ```ts
 import { generateObject } from '@fabrk/ai'
@@ -194,6 +194,8 @@ for await (const event of streamObjectPartial(messages, schema, config)) {
 ---
 
 ## Embeddings
+
+Embeddings turn text into a vector of numbers. Similar text produces similar vectors, which lets you find related content by measuring the distance between vectors.
 
 ### Getting a provider
 
@@ -251,6 +253,8 @@ const overlap = jaccardSimilarity(setA, setB)
 
 ## RAG (Retrieval-Augmented Generation)
 
+RAG lets an LLM answer questions about documents it was never trained on. You embed the documents, store the vectors, and at query time you find the most relevant chunks and pass them to the LLM as context.
+
 ### Basic pipeline
 
 ```ts
@@ -279,7 +283,7 @@ const results = await pipeline.search('How do I reset my password?')
 
 ### Vector store adapters
 
-The default store is in-memory (`InMemoryVectorStoreAdapter`), useful for development and testing. For production:
+The default store is in-memory (`InMemoryVectorStoreAdapter`), which works for development and testing. For production:
 
 ```ts
 import { PineconeVectorStore } from '@fabrk/ai'
@@ -293,7 +297,7 @@ const store = new PineconeVectorStore({
 const pipeline = createRagPipeline({ embedder, store })
 ```
 
-You can also implement `VectorStoreAdapter` to plug in pgvector, Weaviate, Qdrant, etc:
+You can implement `VectorStoreAdapter` to plug in pgvector, Weaviate, Qdrant, or any other store:
 
 ```ts
 import type { VectorStoreAdapter, VectorSearchResult } from '@fabrk/ai'
@@ -307,7 +311,7 @@ class MyStore implements VectorStoreAdapter {
 
 ### Reranking
 
-Reranking runs a second pass over the initial vector results to improve relevance. The pipeline fetches `topK * 3` candidates, then reranks down to `topK`:
+Reranking is a second pass over the initial vector results that scores candidates more carefully. The pipeline fetches `topK * 3` candidates from the vector store, then reranks them down to `topK`:
 
 ```ts
 import { createRagPipeline, CrossEncoderReranker, cohereReranking, embeddingReranking } from '@fabrk/ai'
@@ -331,7 +335,7 @@ const pipeline = createRagPipeline({
 
 ## Semantic cache
 
-Caches LLM responses by semantic similarity — if a new query is close enough to a cached query, return the cached response:
+The semantic cache skips the LLM entirely when a new query is close enough to one you already answered. Instead of checking for exact string matches, it compares the query vectors.
 
 ```ts
 import { SemanticCache } from '@fabrk/ai'
@@ -405,7 +409,7 @@ const store = new PrismaCostStore(prismaClient)
 
 ## AI middleware
 
-Composable middleware that wraps any LLM call with budget enforcement and provider fallback:
+Middleware wraps any LLM call with budget enforcement and automatic provider fallback. If the primary provider fails or exceeds the budget, it tries the next one in line.
 
 ```ts
 import { createAIMiddleware, budgetEnforcement, providerFallback } from '@fabrk/ai'

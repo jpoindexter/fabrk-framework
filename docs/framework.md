@@ -1,6 +1,6 @@
 # fabrk — Runtime Package
 
-The `fabrk` package is a Vite plugin suite that turns a standard Vite project into a full-stack framework. It adds file-system routing, SSR, a development AI dashboard, and the agent infrastructure described below. The package has no dependency on `@fabrk/components` or `@fabrk/design-system` — it is intentionally decoupled.
+The `fabrk` package turns a standard Vite project into a full-stack framework. Install it, point it at an `app/` directory, and you get file-system routing, SSR, AI agents, and a dev dashboard. It has no dependency on `@fabrk/components` or `@fabrk/design-system` — it is intentionally decoupled.
 
 ---
 
@@ -28,7 +28,7 @@ export default defineConfig({
 })
 ```
 
-The default is `true` for every sub-plugin. You can disable individual features:
+Every sub-plugin defaults to `true`. You can disable individual features:
 
 ```ts
 fabrk({ dashboard: false, voice: false })
@@ -38,7 +38,7 @@ fabrk({ dashboard: false, voice: false })
 
 ## File-system routing
 
-Routes are discovered from the `app/` directory at project root. The scanner runs at startup and watches for file additions/deletions in dev.
+Put files in `app/` and they become routes. The scanner runs at startup and watches for file additions and deletions in dev.
 
 ### File naming
 
@@ -156,7 +156,7 @@ export default createFetchHandler({ /* options */ })
 
 ## Agents
 
-Agents are defined in `app/agents/<name>.ts` (or anywhere you import them from). They expose themselves via the agent route handler mounted at `/api/agents/:name`.
+Agents live in `app/agents/<name>.ts` and are accessible via the agent route handler at `/api/agents/:name`.
 
 ### Defining an agent
 
@@ -201,7 +201,7 @@ export default defineAgent({
 
 ### The agent loop
 
-The loop is a `ReAct`-style async generator: observe (receive messages) → think (call LLM) → act (execute tools) → repeat until no tool calls, then yield `done`.
+The loop follows the ReAct pattern: observe (receive messages) → think (call LLM) → act (execute tools) → repeat until no tool calls remain, then yield `done`.
 
 Key properties:
 - Hard cap of **25 iterations** regardless of `maxIterations` setting
@@ -251,7 +251,7 @@ function Chat() {
 
 ## Tools
 
-Tools are the mechanism through which agents take actions. The tool registry maps string names to handler functions.
+Tools are how agents take actions in the world. You define a tool with a name, JSON schema, and handler function. The agent loop calls the handler when the LLM requests that tool.
 
 ### Defining a tool
 
@@ -332,7 +332,7 @@ const computer = defineComputerTool({ onAction: async (action) => performAction(
 
 ### Isomorphic tool split
 
-When you need to expose tool descriptions to the client (e.g. to render a UI showing available tools) without leaking server-side handler code:
+Sometimes you need to send tool descriptions to the client — for example, to render a UI showing available tools — without leaking server-side handler code. `toolDefinition` lets you define the tool once and strip the handler at the boundary:
 
 ```ts
 import { toolDefinition, clientTools } from 'fabrk'
@@ -356,6 +356,8 @@ export const clientDescriptors = clientTools([myTool])
 ---
 
 ## MCP (Model Context Protocol)
+
+MCP is an open protocol for sharing tools, resources, and prompts between AI systems. You can expose your app's tools as an MCP server, or connect to external MCP servers and use their tools in your agents.
 
 ### Exposing tools as an MCP server
 
@@ -424,7 +426,7 @@ OAuth2 is supported for MCP HTTP connections. The token cache refreshes before e
 
 ## Workflows
 
-Workflows are linear sequences of steps. Use them when you want explicit control over step execution order and branching, rather than relying on the LLM to decide what to do.
+Workflows are linear sequences of steps. Use them when you want explicit control over step order and branching, rather than letting the LLM decide what to do next.
 
 ```ts
 import { defineWorkflow, agentStep, toolStep, conditionStep, parallelStep, runWorkflow } from 'fabrk'
@@ -479,7 +481,7 @@ const result2 = await resumeWorkflow(approvalWorkflow, result1.checkpointId, { a
 
 ## StateGraph (cyclic workflows)
 
-`defineStateGraph` is for workflows that need cycles — where a node can route back to a previous node based on output. This is the pattern for agent networks that need retry loops, reflection, or multi-stage pipelines.
+`defineStateGraph` handles workflows that need cycles — where a node routes back to a previous node based on its output. Use this for retry loops, reflection passes, or multi-stage pipelines where the number of iterations is not known upfront.
 
 ```ts
 import { defineStateGraph } from 'fabrk'
@@ -548,7 +550,7 @@ const graph = defineStateGraph<MyState>({
 
 ### Agent as tool
 
-An agent can call another agent as a tool without HTTP round-trips. The inner agent runs in-process:
+One agent can call another agent directly in-process — no HTTP round-trip needed:
 
 ```ts
 import { agentAsTool } from 'fabrk'
@@ -593,7 +595,7 @@ const network = defineAgentNetwork({
 
 ## Guardrails
 
-Guardrails run synchronously in the agent loop. They block, pass, or transform content:
+Guardrails check content before it reaches the LLM (input) and before it reaches the user (output). Each guardrail can block, pass, or rewrite the content.
 
 ```ts
 import { maxLength, denyList, piiRedactor, requireJsonSchema } from 'fabrk'
@@ -628,7 +630,7 @@ const sanitizer: Guardrail = (content) => ({
 })
 ```
 
-For slow guardrails (API calls), use `runGuardrailsParallel`:
+For guardrails that make API calls, run them in parallel to avoid stacking latency:
 
 ```ts
 import { runGuardrailsParallel } from 'fabrk'
@@ -640,7 +642,7 @@ const result = await runGuardrailsParallel([guard1, guard2, guard3], content, ct
 
 ## Stop conditions
 
-Composable predicates that terminate the agent loop early:
+Stop conditions let you terminate the agent loop early based on what has happened so far. You compose them from predicates:
 
 ```ts
 import { stepCountIs, hasToolCall } from 'fabrk'
@@ -706,7 +708,7 @@ costUnder(result, 0.01)                  // Asserts cost stayed under budget
 
 ### defineEval / runEvals
 
-Evals are structured test suites with scorers. They are meant to be run in CI to prevent regressions in agent behavior:
+Evals are structured test suites with scorers. Run them in CI to catch regressions in agent behavior before they reach users.
 
 ```ts
 import { defineEval, runEvals, exactMatch, includes, toolCallSequence, llmAsJudge } from 'fabrk'
@@ -797,13 +799,13 @@ export default defineFabrkConfig({
 })
 ```
 
-The config file is loaded by the Vite plugin at startup. Both `.ts` and `.js` extensions are supported. An absent config file is valid — all options are optional.
+The Vite plugin loads the config file at startup. Both `.ts` and `.js` extensions are supported. A missing config file is valid — every option is optional.
 
 ---
 
 ## Durable agents (checkpoint/resume)
 
-Durable agents persist state to a checkpoint store so they can survive process restarts or be paused for days:
+Durable agents save their state to a checkpoint store after each step. That means they survive process restarts and can be paused for hours or days before resuming.
 
 ```ts
 import { handleStartAgent, handleResumeAgent, handleAgentStatus, InMemoryCheckpointStore } from 'fabrk'
@@ -822,7 +824,7 @@ In production, replace `InMemoryCheckpointStore` with a Prisma or Redis implemen
 
 ## OpenTelemetry
 
-The tracer is zero-cost when `@opentelemetry/api` is not installed. When it is, spans are created automatically for agent loop iterations, LLM calls, tool calls, guardrail runs, and SSR requests.
+When `@opentelemetry/api` is not installed, the tracer does nothing and costs nothing. When it is installed, spans are created automatically for agent loop iterations, LLM calls, tool calls, guardrail runs, and SSR requests.
 
 ```ts
 import { initTracer, startSpan } from 'fabrk'

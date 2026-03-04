@@ -1141,22 +1141,22 @@ export default function PricingPage() {
       {/* ──────────────────────────────────────────────────────────────── */}
       <Section id="ai" title="AI INTEGRATION">
         <p className="text-sm text-muted-foreground mb-4">
-          FABRK ships a full agent runtime built into the framework package. Agents are
-          defined in plain TypeScript, served via SSE, consumed from React with a single
-          hook, and tested without any real LLM. This guide walks every layer from agent
-          definition through testing.
+          An agent is a loop. It reads your message, decides whether to call a tool,
+          runs the tool, and repeats — up to 25 times — before sending a final reply.
+          You define the agent in TypeScript, expose it over HTTP, and the browser
+          receives tokens as they arrive, like a chat message coming in letter by letter.
         </p>
 
         <InfoCard title="ARCHITECTURE OVERVIEW">
-          The agent system is built in layers inside <code>fabrk</code> (the framework package):
+          The agent system lives inside the <code>fabrk</code> package, in layers:
           <ul className="space-y-1 mt-2">
-            <li><strong>defineAgent</strong> — declares model, tools, systemPrompt, budget, guardrails, memory</li>
-            <li><strong>runAgentLoop</strong> — ReAct async generator: observe → think → act, up to 25 iterations</li>
-            <li><strong>SSE route handler</strong> — serves the loop as a Server-Sent Events stream at <code>/api/agents/:name</code></li>
-            <li><strong>useAgent hook</strong> — client-side React hook that POSTs a message and subscribes to the SSE stream</li>
-            <li><strong>Memory stores</strong> — InMemoryMemoryStore (per-session), SemanticMemoryStore (vector search)</li>
-            <li><strong>Guardrails</strong> — synchronous or async input/output validation gates</li>
-            <li><strong>Testing</strong> — MockLLM + createTestAgent for deterministic unit tests, no API keys</li>
+            <li><strong>defineAgent</strong> — sets the model, tools, system prompt, budget, guardrails, and memory</li>
+            <li><strong>runAgentLoop</strong> — the observe → think → act loop, up to 25 iterations</li>
+            <li><strong>SSE route handler</strong> — sends the loop output to the browser one event at a time, via <code>/api/agents/:name</code></li>
+            <li><strong>useAgent hook</strong> — React hook that sends a message and reads the stream back</li>
+            <li><strong>Memory stores</strong> — InMemoryMemoryStore for per-session history, SemanticMemoryStore for vector search</li>
+            <li><strong>Guardrails</strong> — functions that inspect or block content before the LLM sees it, and after</li>
+            <li><strong>Testing</strong> — MockLLM + createTestAgent let you test agents with no API keys</li>
           </ul>
         </InfoCard>
 
@@ -1164,10 +1164,9 @@ export default function PricingPage() {
           1. DEFINE AN AGENT
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          <code>defineAgent</code> is the entry point. Place this file anywhere in your
-          project — the route handler imports it directly. The <code>tools</code> field
-          takes an array of tool names that must be registered in the tool registry before
-          the agent handles its first request.
+          Start with <code>defineAgent</code>. Put this file anywhere in your project —
+          the route handler imports it directly. List tool names in <code>tools</code>.
+          Those tools must be registered in the tool registry before the first request arrives.
         </p>
         <CodeBlock title="src/agents/assistant.ts">{`import { defineAgent } from 'fabrk'
 import { defineTool, textResult } from 'fabrk'
@@ -1228,10 +1227,10 @@ export const assistantAgent = defineAgent({
           2. WIRE THE SSE ROUTE
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Create a route that imports your agent definition and hands the request off to the
-          framework&apos;s agent handler. The handler resolves tools, runs the agent loop,
-          and streams SSE events back to the client. In a FABRK file-system routed project,
-          this lives at <code>app/api/assistant/route.ts</code>.
+          Create a route file and pass your agent definition to <code>handleAgentRequest</code>.
+          It validates the incoming messages, runs the agent loop, and sends each event back to
+          the browser over a persistent HTTP connection. In a FABRK project, this file lives at{' '}
+          <code>app/api/assistant/route.ts</code>.
         </p>
         <CodeBlock title="app/api/assistant/route.ts">{`import { handleAgentRequest } from 'fabrk'
 import { assistantAgent, searchDocs } from '@/agents/assistant'
@@ -1253,22 +1252,22 @@ export async function POST(req: Request) {
 // 6. Adds all required security headers to the response`}</CodeBlock>
 
         <InfoCard title="SSE EVENT TYPES">
-          The stream emits these events in order:{' '}
-          <code className="text-xs">text-delta</code> (token chunks while streaming),{' '}
-          <code className="text-xs">tool-call</code> (name + input before execution),{' '}
-          <code className="text-xs">tool-result</code> (name + output + durationMs),{' '}
-          <code className="text-xs">usage</code> (promptTokens + completionTokens + cost),{' '}
-          <code className="text-xs">done</code> (end of turn, optionally with structuredOutput).
-          On error: <code className="text-xs">error</code> with a message string.
+          Your browser receives these events, in this order:{' '}
+          <code className="text-xs">text-delta</code> — one chunk of text as the model writes it.{' '}
+          <code className="text-xs">tool-call</code> — the tool name and input, before the tool runs.{' '}
+          <code className="text-xs">tool-result</code> — the tool output and how long it took.{' '}
+          <code className="text-xs">usage</code> — token counts and dollar cost for this turn.{' '}
+          <code className="text-xs">done</code> — end of turn, with optional structured output.
+          If something goes wrong: <code className="text-xs">error</code> with a message string.
         </InfoCard>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           3. CONNECT THE FRONTEND WITH useAgent
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          The <code>useAgent</code> hook manages the full lifecycle: sending a message,
-          reading the SSE stream, updating messages as tokens arrive, and tracking tool
-          call state. Pass the agent name (must match the route segment).
+          <code>useAgent</code> handles the connection for you. Call <code>send()</code> with a message.
+          The hook opens a stream, appends tokens to <code>messages</code> as they arrive, and tracks
+          tool calls in real time. Pass the agent name — it must match the route segment.
         </p>
         <CodeBlock title="app/chat/page.tsx">{`'use client'
 
@@ -1362,10 +1361,11 @@ export default function ChatPage() {
           4. ADDING MEMORY
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          FABRK ships two memory stores. <code>InMemoryMemoryStore</code> maintains
-          per-thread message history (up to 1,000 threads, 500 messages each). For
-          cross-session recall, <code>SemanticMemoryStore</code> wraps any base store
-          and adds vector search via your embedding provider.
+          By default your agent forgets everything between requests. Add memory so it
+          can refer back to earlier messages. <code>InMemoryMemoryStore</code> keeps
+          per-thread history — up to 1,000 threads, 500 messages each. When you need
+          to search across past conversations, <code>SemanticMemoryStore</code> wraps
+          any base store and adds vector similarity search.
         </p>
         <CodeBlock title="per-session memory">{`// memory: true on defineAgent enables InMemoryMemoryStore automatically.
 // For explicit control, pass an AgentMemoryConfig:
@@ -1422,11 +1422,11 @@ const contextBlock = results
           5. GUARDRAILS
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Guardrails are synchronous functions with the signature{' '}
-          <code>(content: string, ctx) =&gt; GuardrailResult</code>. They run in series
-          on every input message before the LLM sees it, and on every output message before
-          it is sent to the client. Use the async variant (<code>AsyncGuardrail</code>) for
-          external validation calls.
+          A guardrail is a function that inspects content and decides whether to let it through.
+          Write one with the signature{' '}
+          <code>(content: string, ctx) =&gt; GuardrailResult</code>. Your guardrails run on every
+          input before the LLM sees it, and on every output before the client sees it.
+          Use <code>AsyncGuardrail</code> when you need to call an external moderation API.
         </p>
         <CodeBlock title="production guardrail setup">{`import {
   defineAgent,
@@ -1474,22 +1474,22 @@ export const agent = defineAgent({
 })`}</CodeBlock>
 
         <InfoCard title="GUARDRAIL BEHAVIOR">
-          Guardrails run in array order. If a guardrail returns{' '}
-          <code>{`{ pass: false }`}</code> with no <code>replacement</code>, the loop
-          emits an <code>error</code> event and halts immediately. If it returns a{' '}
-          <code>replacement</code> string, that string replaces the content and the next
-          guardrail runs on the replacement. <code>piiRedactor()</code> uses this to
-          redact PII without blocking the request.
+          Guardrails run in array order. Return{' '}
+          <code>{`{ pass: false }`}</code> with no <code>replacement</code> and the loop
+          stops immediately with an <code>error</code> event. Return a{' '}
+          <code>replacement</code> string and the next guardrail runs on that string instead.{' '}
+          <code>piiRedactor()</code> works this way — it rewrites content in place and lets
+          the request continue.
         </InfoCard>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           6. TESTING AN AGENT
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          <code>MockLLM</code> intercepts all LLM calls with pattern-matched responses.
-          <code>createTestAgent</code> wires a real agent loop around a MockLLM so you
-          can assert on tool calls, output text, and event sequences — no API keys, no
-          network, deterministic.
+          You don&apos;t need an API key to test an agent. <code>MockLLM</code> intercepts LLM calls
+          and returns whatever you configure, matched by message pattern.{' '}
+          <code>createTestAgent</code> runs a real agent loop around the mock — your tool handlers,
+          guardrails, and stop conditions all execute exactly as they would in production.
         </p>
         <CodeBlock title="agent.test.ts">{`import { describe, it, expect } from 'vitest'
 import { mockLLM, createTestAgent, defineTool, textResult } from 'fabrk'
@@ -1547,12 +1547,12 @@ describe('assistant agent', () => {
 
         <InfoCard title="PRODUCTION CHECKLIST: AGENTS">
           <ul className="space-y-1 mt-1">
-            <li>Always set a <code>budget.daily</code> and <code>budget.perSession</code> to prevent runaway spend</li>
-            <li>Cap input with <code>maxLength()</code> guardrail to prevent prompt injection via oversized input</li>
-            <li>Use <code>auth: &apos;required&apos;</code> on any agent that accesses user data</li>
-            <li>Tool handlers must never trust <code>input</code> without validation — the JSON schema check only covers required fields and types</li>
-            <li>The agent loop hard-caps at 25 iterations; set <code>maxIterations</code> lower for simple agents</li>
-            <li>Tool output is truncated to 50,000 chars before being sent back to the LLM — keep tool responses concise</li>
+            <li>Set <code>budget.daily</code> and <code>budget.perSession</code> — without these, a runaway agent has no spending limit</li>
+            <li>Add a <code>maxLength()</code> input guardrail — oversized inputs are one of the most common prompt injection vectors</li>
+            <li>Use <code>auth: &apos;required&apos;</code> on any agent that touches user data</li>
+            <li>Validate tool <code>input</code> inside your handler — the JSON schema check covers required fields and types, not your business rules</li>
+            <li>The loop hard-caps at 25 iterations; set <code>maxIterations</code> lower for simple agents that shouldn&apos;t need many steps</li>
+            <li>Tool output truncates at 50,000 chars before going back to the LLM — keep responses concise</li>
           </ul>
         </InfoCard>
       </Section>

@@ -1,12 +1,12 @@
 # Supporting Packages
 
-These packages provide the infrastructure layer that the rest of the framework builds on. Each follows the same pattern: a service interface, an in-memory default implementation for dev/testing, and pluggable adapters for production.
+These packages are the infrastructure layer the rest of the framework builds on. Each one follows the same pattern: a service interface, an in-memory default for dev and testing, and swappable adapters for production.
 
 ---
 
 ## @fabrk/config
 
-Zod-validated configuration schemas for the full stack. Its purpose is to give you type errors at startup if you misconfigure something, rather than at runtime.
+You use this package to validate your app config at startup. If you misconfigure something — wrong type, missing required field — you get a clear error immediately rather than a silent failure at runtime.
 
 ```bash
 pnpm add @fabrk/config
@@ -58,7 +58,7 @@ The config is separate from `fabrk.config.ts` (the Vite plugin config). This sch
 
 ## @fabrk/design-system
 
-The visual foundation. 18 themes, design tokens, the `mode` object, and `ThemeProvider`.
+The visual foundation for all components. It ships 18 themes, design tokens, the `mode` object, and `ThemeProvider`. Without it, none of the components can apply theme-aware styles.
 
 ```bash
 pnpm add @fabrk/design-system
@@ -91,7 +91,7 @@ export default function RootLayout({ children }) {
 
 ### Available themes
 
-18 themes are available. The default terminal theme has a monospace, command-line aesthetic.
+18 themes ship out of the box. The default terminal theme has a monospace, command-line aesthetic.
 
 ```ts
 import { THEME_NAMES } from '@fabrk/design-system'
@@ -120,7 +120,7 @@ function ThemeSwitcher() {
 
 ### The mode object
 
-`mode` is a pre-populated `ModeConfig` that maps semantic names to Tailwind class strings for the terminal theme. 100+ components use it. This is what makes components theme-aware without hardcoding colors.
+`mode` is a pre-populated object that maps semantic names to Tailwind class strings for the terminal theme. Over 100 components use it. It is what makes components respond to theme changes without hardcoded colors.
 
 ```ts
 import { mode } from '@fabrk/design-system'
@@ -176,7 +176,7 @@ formatCardHeader('User Info')  // '[USER INFO]'
 
 ## @fabrk/core
 
-Framework runtime utilities: plugin system, middleware, notifications, teams, feature flags, webhooks, background jobs, and the `cn()` function.
+Runtime utilities shared across all packages: plugin system, middleware, notifications, teams, feature flags, webhooks, background jobs, and the `cn()` utility.
 
 ```bash
 pnpm add @fabrk/core
@@ -194,7 +194,7 @@ cn('px-4 py-2', isActive && 'bg-primary', className)
 
 ### autoWire
 
-Creates all service adapters from a config object in one call. Useful for `src/lib/fabrk.ts` style setup files:
+`autoWire` reads your config and creates all service adapters in one call. It replaces a dozen individual setup files with a single import.
 
 ```ts
 import { autoWire, applyDevDefaults } from '@fabrk/core'
@@ -209,7 +209,7 @@ export const {
 } = await autoWire(applyDevDefaults(config))
 ```
 
-`applyDevDefaults` substitutes in-memory stores and console adapters for any service not explicitly configured. This means you get a working app locally with zero external dependencies.
+`applyDevDefaults` substitutes in-memory stores and console adapters for any service not explicitly configured. You get a working app locally with zero external dependencies.
 
 ### Teams / organizations
 
@@ -264,7 +264,7 @@ await webhooks.register({ url: 'https://partner.com/webhook', events: ['payment.
 await webhooks.deliver('payment.completed', { orderId: '123', amount: 99.99 })
 ```
 
-Delivery is retried up to the configured `retryAttempts` with exponential backoff.
+Delivery retries up to the configured `retryAttempts` with exponential backoff.
 
 ### Web Crypto utilities
 
@@ -290,7 +290,7 @@ Never inline `Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('
 
 ## @fabrk/auth
 
-Authentication adapters covering session auth (NextAuth), programmatic API keys, and TOTP MFA.
+Authentication for session-based logins (NextAuth), machine-to-machine API keys, and TOTP MFA. Each piece is independent — use what you need.
 
 ```bash
 pnpm add @fabrk/auth
@@ -382,7 +382,7 @@ if (valid) {
 
 ## @fabrk/payments
 
-Three payment providers behind a unified interface. Switching providers is a one-line config change.
+Three payment providers behind one interface. You write checkout, subscription, and webhook handling once — then switch providers by changing a single line in your config.
 
 ```bash
 pnpm add @fabrk/payments
@@ -440,13 +440,13 @@ const sub = await payments.getSubscription(userId)
 console.log(sub?.status)  // 'active' | 'cancelled' | 'past_due'
 ```
 
-The `InMemoryPaymentStore` stores subscription state in memory for tests. In production, implement `PaymentStore` against your database or use `@fabrk/store-prisma`.
+`InMemoryPaymentStore` holds subscription state in memory for tests. In production, implement `PaymentStore` against your database or use `@fabrk/store-prisma`.
 
 ---
 
 ## @fabrk/email
 
-Email sending with templating. The console adapter prints to stdout in development — no SMTP or API key needed locally.
+Send emails via Resend in production. In development, the console adapter prints emails to stdout — no API key or SMTP server needed.
 
 ```bash
 pnpm add @fabrk/email
@@ -475,7 +475,7 @@ await email.send({
 
 ### Built-in templates
 
-Four templates are provided. They all accept plain data objects and return `{ subject, html, text }`:
+Four templates ship ready to use. Each takes a plain data object and returns `{ subject, html, text }`:
 
 ```ts
 import {
@@ -512,7 +512,7 @@ const { subject, html, text } = renderTemplate('custom-welcome', { name: 'Bob' }
 
 ## @fabrk/storage
 
-File upload and retrieval for S3, Cloudflare R2, and local filesystem. The interface is identical across all three — swap adapters via config with no code changes.
+File upload and retrieval for S3, Cloudflare R2, and local filesystem. The interface is identical across all three — swap adapters without changing any upload or download code.
 
 ```bash
 pnpm add @fabrk/storage
@@ -570,7 +570,7 @@ await storage.delete(key)
 const uploadUrl = await storage.presignedUpload(key, { expiresIn: 300 })
 ```
 
-`validateFile` checks magic bytes (not just file extension) to prevent content-type spoofing. Use this on every upload endpoint.
+`validateFile` checks magic bytes, not just the file extension. Use this on every upload endpoint to prevent content-type spoofing.
 
 ---
 
@@ -716,7 +716,7 @@ res.set(headers)
 
 ## @fabrk/store-prisma
 
-Prisma implementations of the store interfaces defined by `@fabrk/core` and `@fabrk/security`. Swap an in-memory default for a Prisma implementation with a one-line change.
+Prisma implementations of the store interfaces from `@fabrk/core` and `@fabrk/security`. Each one drops in where an `InMemory*` store would go — no other code changes needed.
 
 ```bash
 pnpm add @fabrk/store-prisma
@@ -738,6 +738,6 @@ const webhookStore = new PrismaWebhookStore(prisma)
 const featureFlagStore = new PrismaFeatureFlagStore(prisma)
 ```
 
-Each store requires its corresponding Prisma model to exist in your schema. An example `schema.prisma` with all models is included in the package at `node_modules/@fabrk/store-prisma/prisma/schema.prisma`. Copy the relevant models into your own schema.
+Each store requires its corresponding Prisma model in your schema. An example `schema.prisma` with all models is included in the package at `node_modules/@fabrk/store-prisma/prisma/schema.prisma`. Copy the relevant models into your own schema.
 
-The stores only depend on the Prisma client interface — they work with any Prisma-supported database (PostgreSQL, MySQL, SQLite, etc.).
+The stores depend only on the Prisma client interface — they work with any Prisma-supported database (PostgreSQL, MySQL, SQLite, etc.).

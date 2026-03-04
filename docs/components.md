@@ -1,6 +1,6 @@
 # @fabrk/components — UI Component Library
 
-109+ production-ready React components, 10 chart types, AI chat UI, admin panels, security flows, organization management, and 15 utility hooks.
+109+ React components, 10 chart types, AI chat UI, admin panels, security flows, organization management, and 15 utility hooks.
 
 ```bash
 pnpm add @fabrk/components @fabrk/design-system @fabrk/core
@@ -67,7 +67,7 @@ All UI text follows terminal aesthetic conventions. Don't deviate from this in c
 
 ## Next.js setup
 
-Components are pre-bundled with `"use client"` at the top of every output file (via tsup banner). This means you can import them directly in Server Components without adding `"use client"` to a wrapper — they handle it themselves.
+Components ship with `"use client"` at the top of every output file (via tsup banner). You can import them directly in Server Components without adding `"use client"` to a wrapper — they handle it themselves.
 
 ```tsx
 // app/dashboard/page.tsx — Server Component
@@ -103,7 +103,7 @@ export default {
 
 ## Dashboard layout
 
-The most commonly needed pattern: full-page layout with a collapsible sidebar, responsive on mobile.
+A full-page layout with a collapsible sidebar that goes responsive on mobile. This is the most common starting point for app pages.
 
 ```tsx
 import { DashboardShell, DashboardHeader, TierBadge } from '@fabrk/components'
@@ -259,7 +259,7 @@ import {
 <Gauge value={72} label="UPTIME" max={100} />
 ```
 
-Chart colors are pulled from `getChartColors(n)` in `@fabrk/design-system` — they follow the active theme so they change automatically when the user switches themes.
+Chart colors come from `getChartColors(n)` in `@fabrk/design-system`. They follow the active theme, so they update automatically when the user switches themes.
 
 ---
 
@@ -283,7 +283,7 @@ import { TrendingUp } from 'lucide-react'
 
 ## AI chat components
 
-The AI chat package (`AiChat`, `AiChatInput`, `AiChatMessageList`, `AiChatSidebar`) is a full chat interface. It is a display layer only — it does not call any LLM directly. Wire it up to `useAgent` from the `fabrk` runtime:
+`AiChat`, `AiChatInput`, `AiChatMessageList`, and `AiChatSidebar` form a complete chat interface. They handle rendering only — they do not call any LLM directly. Wire them up to `useAgent` from the `fabrk` runtime:
 
 ```tsx
 import { AiChat } from '@fabrk/components'
@@ -321,7 +321,7 @@ For a sidebar chat (collapsed/expanded panel):
 
 ## Tier badge
 
-Shows a user's subscription tier. Used in sidebar footers, profile cards, etc.
+Shows a user's subscription tier. Used in sidebar footers, profile cards, and anywhere you need to communicate plan level.
 
 ```tsx
 import { TierBadge } from '@fabrk/components'
@@ -444,7 +444,7 @@ import { NotificationCenter } from '@fabrk/components'
 
 ## Utility hooks
 
-All hooks are SSR-safe (check `typeof window !== 'undefined'` internally).
+All hooks are SSR-safe (they check `typeof window !== 'undefined'` internally).
 
 ```tsx
 import {
@@ -456,30 +456,30 @@ import {
   useListKeyboardNav, useViewHistory,
 } from '@fabrk/components'
 
-// Responsive breakpoints
+// Responsive breakpoints — returns true/false
 const isMobile = useIsMobile()          // < 768px
 const isDesktop = useIsDesktop()        // >= 1024px
 const isWide = useMediaQuery('(min-width: 1440px)')
 
-// Debounce search input
+// Debounce — returns the value after 300ms of quiet
 const [query, setQuery] = useState('')
 const debouncedQuery = useDebounce(query, 300)
 
-// localStorage with SSR guard + type safety
+// localStorage with SSR guard — returns [value, setter]
 const [theme, setTheme] = useLocalStorage<'dark' | 'light'>('theme', 'dark')
 
-// Close a dropdown on outside click
+// Close a dropdown on outside click — attach ref to the element
 const ref = useRef<HTMLDivElement>(null)
 useClickOutside(ref, () => setOpen(false))
 
-// Clipboard with timed success state
+// Clipboard — returns { copy, copied } where copied resets after 2s
 const { copy, copied } = useCopyToClipboard()
 <button onClick={() => copy(codeBlock)}>{copied ? 'COPIED' : '> COPY'}</button>
 
 // Lock body scroll when modal is open
 useBodyScrollLock(isModalOpen)
 
-// Intersection observer (lazy loading, infinite scroll)
+// Intersection observer — returns { ref, isIntersecting }
 const { ref, isIntersecting } = useIntersectionObserver({ threshold: 0.5 })
 <div ref={ref}>{isIntersecting ? <HeavyComponent /> : null}</div>
 
@@ -493,7 +493,7 @@ useListKeyboardNav({
   vimKeys: true,
 })
 
-// Track recently viewed items
+// Track recently viewed items — returns { items, add, clear }
 const { items, add, clear } = useViewHistory()
 add({ id: 'doc-1', label: 'Getting Started', href: '/docs/getting-started' })
 ```
@@ -518,7 +518,7 @@ add({ id: 'doc-1', label: 'Getting Started', href: '/docs/getting-started' })
 | `NpsSurvey` | Net Promoter Score widget |
 | `StarRating` | 1-5 star rating input |
 | `CookieConsent` | GDPR cookie banner with accept/reject |
-| `UpgradeCta` | Locked-feature CTA with upgrade prompt |
+| `UpgradeCta` | Locked-feature call-to-action with upgrade prompt |
 | `InputOtp` | 6-digit OTP input with auto-advance |
 | `DatePicker` | Full date/time picker with presets and month-only mode |
 | `Heatmap` | Activity heatmap (like GitHub contributions) |

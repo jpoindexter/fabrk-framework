@@ -8,30 +8,30 @@ export default function AgentsTutorialPage() {
   return (
     <DocLayout
       title="BUILD YOUR FIRST AI AGENT"
-      description="Go from zero to a production-ready document Q&amp;A agent with tools, memory, guardrails, and tests. Every code block is copy-paste ready."
+      description="Build a document Q&amp;A agent from scratch. You'll add a search tool, conversation memory, safety guardrails, a chat UI, and a test — all in about 15 minutes."
     >
       <InfoCard title="WHAT YOU WILL BUILD">
-        A document Q&amp;A agent that searches a knowledge base, answers questions with cited
-        sources, and remembers the conversation across turns. By the end you will have a
-        working agent with a custom tool, memory, input/output guardrails, a React chat
-        UI, and a test that verifies the agent calls the right tool.
-        Estimated time: 15 minutes.
+        By the end, you'll have a chat page where you can ask questions and watch the agent
+        search your docs in real time. Type a question, see "[RUNNING] search_docs" flash
+        on screen, then get an answer with a cited source URL. Ask a follow-up — the agent
+        remembers what you said. Try something sketchy — the guardrail blocks it.
+        And a test file proves it all works without spending a cent on API calls.
+        15 minutes.
       </InfoCard>
 
       {/* STEP 1 — SETUP */}
       <Section id="setup" title="STEP 1 — SETUP">
         <p className="text-sm text-muted-foreground mb-4">
-          Scaffold a new project with the <code className="text-primary">ai-saas</code> template.
-          This wires up the <code className="text-primary">fabrk</code> runtime with the agent
-          plugin already enabled.
+          Create a new project. The <code className="text-primary">ai-saas</code> template
+          includes everything you need — the agent plugin is already on.
         </p>
         <CodeBlock title="terminal">{`npx create-fabrk-app my-agent --template ai-saas
 cd my-agent
 pnpm install`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4 mb-4">
-          The Vite plugin is what activates agent routing, the dev dashboard, and the SSE
-          streaming infrastructure. Verify it is present in your config:
+          Check that agents are enabled in your Vite config. Without this, the agent
+          endpoints don't exist:
         </p>
         <CodeBlock title="vite.config.ts">{`import { defineConfig } from 'vite'
 import fabrk from 'fabrk'
@@ -46,7 +46,7 @@ export default defineConfig({
 })`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4 mb-2">
-          Your project structure for this tutorial:
+          Here's the layout you're building toward:
         </p>
         <CodeBlock title="project structure">{`my-agent/
 ├── agents/
@@ -60,23 +60,23 @@ export default defineConfig({
 └── vite.config.ts`}</CodeBlock>
 
         <InfoCard title="HOW AGENT ROUTING WORKS">
-          The <code className="text-primary">fabrk</code> Vite plugin scans the{' '}
-          <code className="text-primary">agents/</code> directory at startup. Each subfolder
-          containing an <code className="text-primary">agent.ts</code> becomes a route at{' '}
-          <code className="text-primary">/api/agents/[name]</code>. The{' '}
-          <code className="text-primary">agents/qa/agent.ts</code> file you create in Step 3
-          will be available at <code className="text-primary">POST /api/agents/qa</code>.
+          When the dev server starts, fabrk reads the{' '}
+          <code className="text-primary">agents/</code> folder. Every subfolder with an{' '}
+          <code className="text-primary">agent.ts</code> becomes a live endpoint at{' '}
+          <code className="text-primary">/api/agents/[name]</code>. The file you're
+          creating in Step 3 — <code className="text-primary">agents/qa/agent.ts</code> —
+          becomes <code className="text-primary">POST /api/agents/qa</code> automatically.
         </InfoCard>
       </Section>
 
       {/* STEP 2 — DEFINE A TOOL */}
       <Section id="tool" title="STEP 2 — DEFINE A TOOL">
         <p className="text-sm text-muted-foreground mb-4">
-          Tools are the actions your agent can take. The{' '}
-          <code className="text-primary">defineTool</code> function takes a name, description,
-          JSON schema for the input, and an async handler that runs when the LLM decides to
-          call it. The handler returns a <code className="text-primary">ToolResult</code> via
-          the <code className="text-primary">textResult</code> helper.
+          You're building the search tool your agent will call when it needs information.
+          Give <code className="text-primary">defineTool</code> a name, a description the
+          LLM uses to decide when to call it, a JSON schema for the input, and a handler
+          that runs when it does. The handler returns a result using{' '}
+          <code className="text-primary">textResult</code>.
         </p>
         <CodeBlock title="tools/search-docs.ts">{`import { defineTool, textResult } from 'fabrk'
 
@@ -139,20 +139,20 @@ export default defineTool({
 })`}</CodeBlock>
 
         <InfoCard title="TOOL DISCOVERY">
-          The fabrk Vite plugin scans the <code className="text-primary">tools/</code>{' '}
-          directory automatically. The filename (without extension) becomes the tool name
-          you reference in <code className="text-primary">defineAgent</code>. No import
-          needed — just drop the file in <code className="text-primary">tools/</code> and
-          reference it by name in your agent definition.
+          fabrk scans the <code className="text-primary">tools/</code> folder for you. The
+          filename — without the extension — is the name you use in{' '}
+          <code className="text-primary">defineAgent</code>. No imports needed. Drop a file
+          in <code className="text-primary">tools/</code>, reference it by name, done.
         </InfoCard>
       </Section>
 
       {/* STEP 3 — DEFINE THE AGENT */}
       <Section id="agent" title="STEP 3 — DEFINE THE AGENT">
         <p className="text-sm text-muted-foreground mb-4">
-          The agent definition wires together the model, tools, system prompt, and budget.
-          The <code className="text-primary">tools</code> array references the tool file
-          names from <code className="text-primary">tools/</code> — no import paths needed.
+          Now you're defining the agent itself — choosing a model, writing the system
+          prompt, pointing at your tool, and setting a spend limit. The{' '}
+          <code className="text-primary">tools</code> array uses the same filename you
+          created in Step 2. No import paths needed.
         </p>
         <CodeBlock title="agents/qa/agent.ts">{`import { defineAgent } from 'fabrk'
 
@@ -172,7 +172,7 @@ Be concise — 2-3 sentences maximum per answer.\`,
 })`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4">
-          At this point you already have a working agent. Start the dev server and test it:
+          Your agent is working right now. Start the dev server and try it:
         </p>
         <CodeBlock title="terminal">{`pnpm dev
 # Agent is now live at POST /api/agents/qa
@@ -186,12 +186,13 @@ Be concise — 2-3 sentences maximum per answer.\`,
       {/* STEP 4 — WIRE THE ROUTE */}
       <Section id="route" title="STEP 4 — WIRE THE ROUTE">
         <p className="text-sm text-muted-foreground mb-4">
-          You do not write a route handler manually — the Vite plugin generates it from
-          your agent definition. Understanding the contract helps when debugging.
+          You don't write a route handler — fabrk generates it from your agent definition.
+          This step shows you exactly what the endpoint expects and what it sends back.
+          That context is helpful when something isn't behaving the way you expect.
         </p>
 
         <p className="text-sm text-muted-foreground mb-2">
-          Every agent route accepts:
+          Your agent endpoint accepts a JSON body like this:
         </p>
         <CodeBlock title="request contract">{`POST /api/agents/qa
 Content-Type: application/json
@@ -204,8 +205,7 @@ Content-Type: application/json
 
         <p className="text-sm text-muted-foreground mt-4 mb-2">
           With <code className="text-primary">stream: true</code> (the default), the response
-          is a <code className="text-primary">text/event-stream</code> SSE feed. Each line is
-          a JSON event:
+          streams back to the browser as a series of JSON events — one per line:
         </p>
         <CodeBlock title="SSE response stream">{`data: {"type":"text-delta","content":"Based on "}
 data: {"type":"text-delta","content":"the docs..."}
@@ -217,22 +217,21 @@ data: {"type":"done"}`}</CodeBlock>
 
         <InfoCard title="NON-STREAMING MODE">
           Set <code className="text-primary">stream: false</code> on the agent definition to
-          get a plain JSON response instead. Useful for server-to-server calls or background
-          tasks that process the full response at once.
+          get a plain JSON response instead. Good for server-to-server calls or background
+          jobs where you want the full answer at once before doing anything with it.
         </InfoCard>
       </Section>
 
       {/* STEP 5 — ADD MEMORY */}
       <Section id="memory" title="STEP 5 — ADD MEMORY">
         <p className="text-sm text-muted-foreground mb-4">
-          Without memory, every request starts from scratch — the agent has no idea what
-          you asked a moment ago. Adding memory lets users ask follow-up questions like
-          "Can you expand on that?" without repeating context.
+          Right now, every message you send starts fresh. The agent forgets everything the
+          moment the response finishes. This step fixes that — so users can ask "what about
+          routing?" after asking about installation, without repeating themselves.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          Wire <code className="text-primary">InMemoryMemoryStore</code> once at startup
-          and pass it to <code className="text-primary">setMemoryStore</code>. Enable memory
-          on the agent with <code className="text-primary">memory: true</code>.
+          You're adding two things: <code className="text-primary">memory: true</code> on
+          the agent, and one line in your app entry point that sets up the store.
         </p>
         <CodeBlock title="agents/qa/agent.ts (updated)">{`import { defineAgent } from 'fabrk'
 
@@ -258,9 +257,9 @@ Be concise — 2-3 sentences maximum per answer.\`,
 setMemoryStore(new InMemoryMemoryStore())`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4">
-          Once memory is enabled, the agent route handler automatically creates a thread per
-          session, persists messages, and injects history into each new request. The client
-          passes a <code className="text-primary">threadId</code> to resume an existing thread:
+          With memory on, fabrk creates a thread for each session and loads the history
+          into every new request automatically. Your client passes back a{' '}
+          <code className="text-primary">threadId</code> to pick up where it left off:
         </p>
         <CodeBlock title="request with threadId">{`POST /api/agents/qa
 {
@@ -269,29 +268,30 @@ setMemoryStore(new InMemoryMemoryStore())`}</CodeBlock>
 }`}</CodeBlock>
 
         <InfoCard title="PRODUCTION MEMORY">
-          <code className="text-primary">InMemoryMemoryStore</code> resets when the server
-          restarts — fine for development. In production, swap it for a database-backed
-          store. The <code className="text-primary">MemoryStore</code> interface has four
-          methods: <code className="text-primary">createThread</code>,{' '}
+          <code className="text-primary">InMemoryMemoryStore</code> clears when the server
+          restarts — that's fine for development. When you deploy, swap it for a database-
+          backed store. The <code className="text-primary">MemoryStore</code> interface
+          needs four methods: <code className="text-primary">createThread</code>,{' '}
           <code className="text-primary">getThread</code>,{' '}
           <code className="text-primary">appendMessage</code>, and{' '}
-          <code className="text-primary">getMessages</code>. Implement those four and
-          pass your instance to <code className="text-primary">setMemoryStore</code>.
+          <code className="text-primary">getMessages</code>. Implement those four and pass
+          your instance to <code className="text-primary">setMemoryStore</code>.
         </InfoCard>
       </Section>
 
       {/* STEP 6 — ADD GUARDRAILS */}
       <Section id="guardrails" title="STEP 6 — ADD GUARDRAILS">
         <p className="text-sm text-muted-foreground mb-4">
-          Guardrails are validation functions that run before input reaches the LLM
-          (input guardrails) or before the response reaches the client (output guardrails).
-          They are the last line of defense against runaway inputs and sensitive data leaks.
+          Guardrails are functions that inspect content before it goes in or comes out.
+          Input guardrails run before the LLM sees the message. Output guardrails run
+          before the response reaches the browser. This step adds two: one that blocks
+          enormous inputs, and one that scrubs personal data from responses.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          Add <code className="text-primary">maxLength</code> on the input to prevent
-          compute amplification from enormous prompts, and{' '}
-          <code className="text-primary">piiRedactor</code> on the output to strip email
-          addresses, phone numbers, and SSNs before they reach the client.
+          <code className="text-primary">maxLength</code> rejects inputs over 2,000
+          characters before the LLM even sees them.{' '}
+          <code className="text-primary">piiRedactor</code> strips emails, phone numbers,
+          and SSNs from every response before it leaves the server.
         </p>
         <CodeBlock title="agents/qa/agent.ts (with guardrails)">{`import { defineAgent, maxLength, piiRedactor } from 'fabrk'
 
@@ -318,12 +318,10 @@ Be concise — 2-3 sentences maximum per answer.\`,
 })`}</CodeBlock>
 
         <p className="text-sm text-muted-foreground mt-4 mb-2">
-          A guardrail that returns <code className="text-primary">pass: false</code> without
-          a <code className="text-primary">replacement</code> blocks the request entirely and
-          returns a 400. A guardrail that returns a{' '}
-          <code className="text-primary">replacement</code> mutates the content and lets
-          processing continue — that is how <code className="text-primary">piiRedactor</code>{' '}
-          works. You can write custom guardrails as plain functions:
+          Return <code className="text-primary">pass: false</code> to block the request and
+          send a 400. Return a <code className="text-primary">replacement</code> to swap the
+          content and keep going — that's how <code className="text-primary">piiRedactor</code>{' '}
+          works. You can write your own guardrail as a plain function:
         </p>
         <CodeBlock title="custom guardrail example">{`import type { Guardrail } from 'fabrk'
 
@@ -343,9 +341,10 @@ const noCompetitorMentions: Guardrail = (content) => {
       {/* STEP 7 — CONNECT THE FRONTEND */}
       <Section id="frontend" title="STEP 7 — CONNECT THE FRONTEND">
         <p className="text-sm text-muted-foreground mb-4">
-          The <code className="text-primary">useAgent</code> hook manages the SSE stream,
-          message state, and tool call tracking. It handles text-delta accumulation, tool
-          visibility, and error states out of the box.
+          Now you're building the chat page. The{' '}
+          <code className="text-primary">useAgent</code> hook connects to your agent,
+          reads the stream, and gives you messages, tool calls, and loading state — ready
+          to render. You don't handle the streaming logic yourself.
         </p>
         <CodeBlock title="src/app/page.tsx">{`'use client'
 
@@ -452,13 +451,13 @@ export default function ChatPage() {
   )
 }`}</CodeBlock>
 
-        <InfoCard title="SSE EVENTS HANDLED BY useAgent">
+        <InfoCard title="EVENTS useAgent HANDLES FOR YOU">
           <ul className="space-y-1 mt-1">
-            <li><code className="text-primary">text-delta</code> — appends a token chunk to the current assistant message</li>
-            <li><code className="text-primary">tool-call</code> — adds an entry to <code className="text-primary">toolCalls</code> state</li>
-            <li><code className="text-primary">tool-result</code> — updates the matching tool call with its output and duration</li>
-            <li><code className="text-primary">usage</code> — accumulates token counts and USD cost</li>
-            <li><code className="text-primary">error</code> — sets the error string</li>
+            <li><code className="text-primary">text-delta</code> — adds a token chunk to the current assistant message as it arrives</li>
+            <li><code className="text-primary">tool-call</code> — adds an entry to <code className="text-primary">toolCalls</code> so you can show "[RUNNING] search_docs"</li>
+            <li><code className="text-primary">tool-result</code> — updates that entry with the output and how long it took</li>
+            <li><code className="text-primary">usage</code> — tracks token counts and cost so far</li>
+            <li><code className="text-primary">error</code> — sets the error string so you can display it</li>
           </ul>
         </InfoCard>
       </Section>
@@ -466,15 +465,16 @@ export default function ChatPage() {
       {/* STEP 8 — TEST IT */}
       <Section id="testing" title="STEP 8 — TEST IT">
         <p className="text-sm text-muted-foreground mb-4">
-          Testing agents means verifying behavior, not mocking HTTP. The{' '}
-          <code className="text-primary">createTestAgent</code> function runs the real agent
-          loop with a <code className="text-primary">MockLLM</code> standing in for the
-          provider — no API calls, no cost, deterministic.
+          You're writing a test that proves your agent actually searches before it answers.
+          <code className="text-primary">createTestAgent</code> runs the real agent loop
+          with a fake LLM standing in for the provider — no API calls, no cost, same result
+          every time.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          The test below asserts that when a user asks a question, the agent calls the{' '}
-          <code className="text-primary">search_docs</code> tool before responding. This
-          verifies the system prompt instruction ("always call search_docs first") is working.
+          The test checks that when you ask "How do I install FABRK?", the agent calls{' '}
+          <code className="text-primary">search_docs</code> first. That's how you verify
+          your system prompt instruction ("always call search_docs first") is actually
+          working.
         </p>
         <CodeBlock title="agents/qa/agent.test.ts">{`import { describe, it, expect } from 'vitest'
 import {
@@ -536,12 +536,12 @@ describe('qa agent', () => {
 
         <InfoCard title="TESTING UTILITIES">
           <ul className="space-y-1 mt-1">
-            <li><code className="text-primary">mockLLM()</code> — creates a mock LLM with chainable matchers</li>
-            <li><code className="text-primary">mock.onMessage(pattern).callTool(name, input)</code> — when input matches, emit a tool call</li>
-            <li><code className="text-primary">mock.onToolCall(name).returnResult(text)</code> — tool handler return value</li>
-            <li><code className="text-primary">createTestAgent(opts)</code> — runs the full agent loop with the mock</li>
-            <li><code className="text-primary">calledTool(result, name)</code> — asserts a tool was invoked</li>
-            <li><code className="text-primary">respondedWith(result, text)</code> — asserts final content contains text</li>
+            <li><code className="text-primary">mockLLM()</code> — fake LLM you control with chainable matchers</li>
+            <li><code className="text-primary">mock.onMessage(pattern).callTool(name, input)</code> — when the message matches, the mock emits a tool call</li>
+            <li><code className="text-primary">mock.onToolCall(name).returnResult(text)</code> — what the tool gives back to the agent</li>
+            <li><code className="text-primary">createTestAgent(opts)</code> — runs your real agent loop against the mock</li>
+            <li><code className="text-primary">calledTool(result, name)</code> — true if the named tool ran during this conversation</li>
+            <li><code className="text-primary">respondedWith(result, text)</code> — true if the final response contains the given text</li>
           </ul>
         </InfoCard>
       </Section>
@@ -549,8 +549,8 @@ describe('qa agent', () => {
       {/* WHAT'S NEXT */}
       <Section id="next" title="WHAT'S NEXT">
         <p className="text-sm text-muted-foreground mb-4">
-          You now have a production-ready agent with a tool, memory, guardrails, a chat
-          UI, and passing tests. Here is what to explore next.
+          Your agent searches docs, remembers conversations, guards against bad input,
+          renders in a chat UI, and has tests to back it up. Here's where to go next.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -559,9 +559,9 @@ describe('qa agent', () => {
               [WORKFLOWS]
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Chain agents into multi-step pipelines with{' '}
-              <code className="text-primary">defineWorkflow</code>. Add conditional branches,
-              parallel steps, and suspend/resume for human-in-the-loop approval.
+              Connect agents into multi-step sequences using{' '}
+              <code className="text-primary">defineWorkflow</code>. Add branches, parallel
+              steps, and pause-for-approval before continuing.
             </p>
             <a href="/agents#workflows" className={cn('text-xs text-primary', mode.font)}>
               {'>'} READ DOCS
@@ -573,10 +573,9 @@ describe('qa agent', () => {
               [MULTI-AGENT]
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Build supervisor/worker patterns with{' '}
-              <code className="text-primary">defineSupervisor</code> and{' '}
-              <code className="text-primary">agentAsTool</code>. Delegate subtasks to
-              specialized agents without HTTP round-trips.
+              Use <code className="text-primary">defineSupervisor</code> and{' '}
+              <code className="text-primary">agentAsTool</code> to have one agent hand
+              off subtasks to another — no extra network requests involved.
             </p>
             <a href="/agents#orchestration" className={cn('text-xs text-primary', mode.font)}>
               {'>'} READ DOCS
@@ -588,9 +587,9 @@ describe('qa agent', () => {
               [MCP TOOLS]
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Connect external tools via the Model Context Protocol. Your agent can call
-              any MCP server — GitHub, Slack, databases — using{' '}
-              <code className="text-primary">connectMCPServer</code>.
+              Point your agent at any MCP server — GitHub, Slack, a database — using{' '}
+              <code className="text-primary">connectMCPServer</code>. Your agent calls
+              their tools the same way it calls yours.
             </p>
             <a href="/agents#mcp" className={cn('text-xs text-primary', mode.font)}>
               {'>'} READ DOCS
@@ -602,9 +601,10 @@ describe('qa agent', () => {
               [DURABLE AGENTS]
             </div>
             <p className="text-xs text-muted-foreground mb-3">
-              Persist agent execution state across restarts with{' '}
-              <code className="text-primary">InMemoryCheckpointStore</code> or a custom
-              store. Resume long-running agents after failures or server redeploys.
+              Save agent state so a long-running job can pick up where it left off after
+              a failure or redeploy. Use{' '}
+              <code className="text-primary">InMemoryCheckpointStore</code> to start, or
+              plug in your own.
             </p>
             <a href="/agents#durable" className={cn('text-xs text-primary', mode.font)}>
               {'>'} READ DOCS
@@ -614,9 +614,9 @@ describe('qa agent', () => {
 
         <InfoCard title="FULL AGENT REFERENCE">
           The <a href="/agents" className="text-primary underline">/agents</a> reference
-          page covers every option on <code className="text-primary">defineAgent</code>,
-          all guardrail factories, the full StateGraph API, evals and datasets, semantic
-          memory, computer-use tools, and voice (TTS/STT/realtime).
+          covers every option on <code className="text-primary">defineAgent</code>, all
+          built-in guardrail factories, evals and datasets, semantic memory, computer-use
+          tools, and voice (TTS/STT/realtime).
         </InfoCard>
       </Section>
     </DocLayout>

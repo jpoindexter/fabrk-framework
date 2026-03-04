@@ -1,6 +1,6 @@
 # FABRK Framework Documentation
 
-FABRK is a monorepo of packages designed to eliminate the boilerplate that AI coding agents write from scratch on every project. Instead of generating 500 lines of custom auth, payments, and dashboard UI, you import working implementations.
+FABRK is a monorepo of packages that gives AI coding agents working implementations to import instead of generating everything from scratch. Auth, payments, dashboard UI — you import them. You don't write them.
 
 The framework has two distinct layers:
 
@@ -66,6 +66,6 @@ The packages that ship React components (`@fabrk/components`, `@fabrk/design-sys
 
 **`mode` for Tailwind classes.** The `mode` object from `@fabrk/design-system` maps token names to Tailwind strings. Components use it so the theme can change at runtime via CSS variables without a rebuild.
 
-**Adapter pattern.** External services (payments, email, storage) are accessed through interfaces. The concrete adapter is injected at startup. In-memory defaults are provided for tests and local development.
+**Adapter pattern.** Every external service — payments, email, storage — sits behind a simple interface. You swap the real service for a fake one in tests without changing your app code. In-memory defaults are provided for local development.
 
 **Web Crypto API throughout.** No `node:crypto` — everything runs on edge runtimes and browser workers. Use `bytesToHex` and `generateRandomHex` from `@fabrk/core` rather than inlining hex conversion.

@@ -221,6 +221,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       if (id === "virtual:fabrk/entry-client") return "\0virtual:fabrk/entry-client";
       if (id === "virtual:fabrk/entry-ssr") return "\0virtual:fabrk/entry-ssr";
       if (id === "virtual:fabrk/entry-rsc") return "\0virtual:fabrk/entry-rsc";
+      if (id === "virtual:fabrk/entry-client-hydrate") return "\0virtual:fabrk/entry-client-hydrate";
       if (id === "virtual:fabrk/routes") return "\0virtual:fabrk/routes";
       if (id === "virtual:fabrk/route-types") return "\0virtual:fabrk/route-types";
       return null;
@@ -241,6 +242,9 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       }
       if (id === "\0virtual:fabrk/entry-rsc") {
         return ENTRY_RSC_CODE;
+      }
+      if (id === "\0virtual:fabrk/entry-client-hydrate") {
+        return ENTRY_CLIENT_HYDRATE_CODE;
       }
       return null;
     },
@@ -453,6 +457,48 @@ window.__FABRK_RSC_NAVIGATE__ = async function(url) {
 };
 
 // Accept HMR updates so RSC state survives hot reloads
+if (import.meta.hot) {
+  import.meta.hot.accept();
+}
+`;
+
+const ENTRY_CLIENT_HYDRATE_CODE = `
+import { hydrateRoot } from 'react-dom/client';
+import * as React from 'react';
+import { routes } from 'virtual:fabrk/routes';
+
+function patternToRegex(pattern) {
+  const p = pattern
+    .replace(/\\[\\.\\.\\.(\\w+)\\]/g, '(.+)')
+    .replace(/\\[(\\w+)\\]/g, '([^/]+)');
+  return new RegExp('^' + p + '$');
+}
+
+function extractParams(pattern, pathname) {
+  const paramNames = [];
+  const re = /\\[(?:\\.\\.\\.)?([\\w]+)\\]/g;
+  let m;
+  while ((m = re.exec(pattern)) !== null) paramNames.push(m[1]); // eslint-disable-line
+  const match = pathname.match(patternToRegex(pattern));
+  if (!match) return {};
+  const params = {};
+  paramNames.forEach((name, i) => { params[name] = match[i + 1] ?? ''; });
+  return params;
+}
+
+const pathname = window.location.pathname.replace(/\\/+$/, '') || '/';
+const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
+
+for (const route of routes) {
+  if (route.type !== 'page') continue;
+  if (pathname.match(patternToRegex(route.pattern)) && route.module.default) {
+    const params = extractParams(route.pattern, pathname);
+    const root = document.getElementById('root');
+    if (root) hydrateRoot(root, React.createElement(route.module.default, { params, searchParams }));
+    break;
+  }
+}
+
 if (import.meta.hot) {
   import.meta.hot.accept();
 }

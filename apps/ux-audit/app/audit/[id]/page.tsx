@@ -1,61 +1,104 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AuditResult, RoadmapItem } from '../../../src/heuristics.js';
 
-const SEVERITY_BG: Record<string, string> = {
-  P0: '#FEF2F2',
-  P1: '#FFF7ED',
-  P2: '#FEFCE8',
-  P3: '#F8F7F4',
-  pass: '#F0FDF4',
+const SEV: Record<string, { bg: string; color: string }> = {
+  P0: { bg: '#FFF0F0', color: '#C20000' },
+  P1: { bg: '#FFF4EC', color: '#C15000' },
+  P2: { bg: '#FFFBEB', color: '#9A6B00' },
+  P3: { bg: '#F5F5F4', color: '#666462' },
+  pass: { bg: '#F0FAF4', color: '#1A7A3E' },
 };
-const SEVERITY_TEXT: Record<string, string> = {
-  P0: '#DC2626',
-  P1: '#EA580C',
-  P2: '#CA8A04',
-  P3: '#6B7280',
-  pass: '#16A34A',
-};
-const EFFORT_LABEL: Record<string, string> = {
-  low: 'Low effort',
-  medium: 'Medium effort',
-  high: 'High effort',
-};
+
+const EFFORT: Record<string, string> = { low: 'Low effort', medium: 'Medium effort', high: 'High effort' };
+
+const STEPS = [
+  'Queued',
+  'Capturing screenshots at 1440×900',
+  'Evaluating 10 heuristic categories',
+  'Comparing against competitors',
+  'Building prioritized roadmap',
+];
 
 function ScoreBar({ score }: { score: number }) {
   return (
-    <div className="flex gap-1 items-center">
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       {[1, 2, 3, 4, 5].map(n => (
-        <div
-          key={n}
-          className="h-1.5 w-5 rounded-full"
-          style={{ background: n <= Math.round(score) ? '#7C3AED' : '#E8E6E1' }}
-        />
+        <div key={n} style={{ height: 3, width: 18, background: n <= Math.round(score) ? '#111110' : '#E4E4E2', borderRadius: 1 }} />
       ))}
-      <span className="text-xs text-gray-400 ml-1">{score.toFixed(1)}</span>
+      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', marginLeft: 2 }}>{score.toFixed(1)}</span>
     </div>
   );
 }
 
-function RoadmapCard({ item }: { item: RoadmapItem }) {
+function SevBadge({ sev }: { sev: string }) {
   return (
-    <div
-      className="rounded-xl px-5 py-4 space-y-2"
-      style={{ background: SEVERITY_BG[item.priority], border: `1px solid ${SEVERITY_TEXT[item.priority]}22` }}
-    >
-      <div className="flex items-center justify-between">
-        <span
-          className="text-xs font-semibold px-2 py-0.5 rounded-full"
-          style={{ background: SEVERITY_TEXT[item.priority] + '18', color: SEVERITY_TEXT[item.priority] }}
-        >
-          {item.priority}
-        </span>
-        <span className="text-xs text-gray-400">{EFFORT_LABEL[item.effort]}</span>
+    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '2px 6px', background: SEV[sev]?.bg ?? '#F5F5F4', color: SEV[sev]?.color ?? '#666', borderRadius: 2 }}>
+      {sev}
+    </span>
+  );
+}
+
+function RoadmapRow({ item }: { item: RoadmapItem }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto', gap: 16, padding: '16px 0', borderBottom: '1px solid #F2F2F0', alignItems: 'start' }}>
+      <SevBadge sev={item.priority} />
+      <div>
+        <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{item.heuristic}</p>
+        <p style={{ fontSize: 13, fontWeight: 600, color: '#111110', margin: '0 0 4px' }}>{item.finding}</p>
+        <p style={{ fontSize: 12, color: '#6B6B69', margin: 0, lineHeight: 1.55 }}>{item.action}</p>
       </div>
-      <p className="text-xs text-gray-500">{item.heuristic}</p>
-      <p className="text-sm font-medium text-gray-900">{item.finding}</p>
-      <p className="text-xs text-gray-500 pt-1">{item.action}</p>
+      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', flexShrink: 0, paddingTop: 2 }}>{EFFORT[item.effort]}</span>
+    </div>
+  );
+}
+
+function ProcessingScreen({ status }: { status: 'pending' | 'processing' }) {
+  const [step, setStep] = useState(0);
+  const startRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (status === 'pending') { setStep(0); return; }
+    if (!startRef.current) startRef.current = Date.now();
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - (startRef.current ?? Date.now());
+      if (elapsed < 2800) setStep(1);
+      else if (elapsed < 5600) setStep(2);
+      else if (elapsed < 7200) setStep(3);
+      else setStep(4);
+    }, 400);
+    return () => clearInterval(interval);
+  }, [status]);
+
+  return (
+    <div style={{ maxWidth: 480, margin: '80px auto 0', padding: '0 32px' }}>
+      <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 32px' }}>
+        {status === 'pending' ? 'Queued' : 'Processing'}
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+        {STEPS.map((label, i) => {
+          const done = i < step;
+          const active = i === step;
+          return (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0', borderBottom: i < STEPS.length - 1 ? '1px solid #F2F2F0' : 'none' }}>
+              <div style={{ width: 20, height: 20, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {done ? (
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: '#1A7A3E' }}>✓</span>
+                ) : active ? (
+                  <div style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid #111110', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                ) : (
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#E4E4E2' }} />
+                )}
+              </div>
+              <span style={{ fontSize: 13, color: done ? '#6B6B69' : active ? '#111110' : '#B0B0AE', fontWeight: active ? 600 : 400 }}>
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -63,10 +106,10 @@ function RoadmapCard({ item }: { item: RoadmapItem }) {
 export default function AuditPage({ params }: { params: { id: string } }) {
   const [audit, setAudit] = useState<AuditResult | null>(null);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
-
     async function poll() {
       try {
         const res = await fetch(`/api/audit?id=${params.id}`);
@@ -78,102 +121,101 @@ export default function AuditPage({ params }: { params: { id: string } }) {
         setError('Failed to fetch audit status');
       }
     }
-
     poll();
     timer = setInterval(poll, 3000);
     return () => clearInterval(timer);
   }, [params.id]);
 
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
   return (
-    <div className="min-h-screen" style={{ background: '#F8F7F4', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <nav style={{ borderBottom: '1px solid #E8E6E1', background: '#FDFCFA' }} className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <a href="/" className="font-serif text-lg font-semibold text-gray-900 hover:text-gray-600 transition-colors"
-          style={{ fontFamily: 'Lora, Georgia, serif' }}>
-          ux audit
-        </a>
-        <span className="text-xs text-gray-400">{params.id.slice(0, 8).toUpperCase()}</span>
+    <div style={{ background: '#F8F8F6', minHeight: '100vh', fontFamily: 'Manrope, sans-serif', color: '#111110' }}>
+
+      {/* Nav */}
+      <nav style={{ borderBottom: '1px solid #E4E4E2', background: '#F8F8F6' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
+          <a href="/" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', color: '#111110', textDecoration: 'none' }}>
+            AUDIT
+          </a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {audit?.status === 'complete' && (
+              <button
+                onClick={copyLink}
+                style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6B6B69', background: 'none', border: '1px solid #E4E4E2', borderRadius: 3, padding: '5px 12px', cursor: 'pointer' }}
+              >
+                {copied ? 'Copied!' : 'Copy link'}
+              </button>
+            )}
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.06em' }}>
+              {params.id.slice(0, 8).toUpperCase()}
+            </span>
+          </div>
+        </div>
       </nav>
 
-      <main className="max-w-4xl mx-auto px-8 py-16 space-y-16">
+      <main style={{ maxWidth: 860, margin: '0 auto', padding: '0 32px 80px' }}>
+
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-5 py-4 text-sm text-red-600">{error}</div>
+          <div style={{ marginTop: 40, padding: '12px 16px', background: '#FFF0F0', border: '1px solid #FECACA', borderRadius: 3, fontSize: 13, color: '#C20000' }}>{error}</div>
         )}
 
         {!audit && !error && (
-          <div className="text-center py-24">
-            <div className="w-8 h-8 rounded-full border-2 border-purple-600 border-t-transparent animate-spin mx-auto mb-4" />
-            <p className="text-sm text-gray-400">Loading your audit…</p>
-          </div>
+          <ProcessingScreen status="pending" />
         )}
 
-        {audit?.status === 'pending' && (
-          <div className="text-center py-24 space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-purple-600 border-t-transparent animate-spin mx-auto" />
-            <p className="text-base font-medium text-gray-900">Payment received — queued</p>
-            <p className="text-sm text-gray-400">Your audit will begin processing shortly.</p>
-          </div>
-        )}
-
-        {audit?.status === 'processing' && (
-          <div className="text-center py-24 space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-purple-600 border-t-transparent animate-spin mx-auto" />
-            <p className="text-base font-medium text-gray-900">Capturing screenshots and evaluating…</p>
-            <p className="text-sm text-gray-400">Evaluating 10 heuristic categories. Usually 5–10 minutes.</p>
-          </div>
+        {(audit?.status === 'pending' || audit?.status === 'processing') && (
+          <ProcessingScreen status={audit.status} />
         )}
 
         {audit?.status === 'failed' && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-5 space-y-2">
-            <p className="font-medium text-red-700">Audit failed</p>
-            <p className="text-sm text-red-500">{audit.error}</p>
-            <p className="text-xs text-gray-400">Audit ID: {params.id}</p>
+          <div style={{ marginTop: 40, padding: '16px 20px', background: '#FFF0F0', border: '1px solid #FECACA', borderRadius: 3 }}>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#C20000', margin: '0 0 4px' }}>Audit failed</p>
+            <p style={{ fontSize: 12, color: '#C20000', margin: '0 0 8px' }}>{audit.error}</p>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', margin: 0 }}>{params.id}</p>
           </div>
         )}
 
         {audit?.status === 'complete' && audit.yourProduct && (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 56, paddingTop: 48 }}>
+
             {/* Header */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">Audit complete</p>
-              <h1 className="font-serif text-3xl font-bold text-gray-900"
-                style={{ fontFamily: 'Lora, Georgia, serif' }}>
-                {audit.yourProduct.url}
-              </h1>
-              <div className="flex items-center gap-4">
+            <div>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 10px' }}>Audit complete</p>
+              <h1 style={{ fontSize: 28, fontWeight: 700, letterSpacing: '-0.02em', margin: '0 0 12px' }}>{audit.yourProduct.url}</h1>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
                 <ScoreBar score={audit.yourProduct.overall} />
-                <span className="text-xs text-gray-400">Overall score</span>
+                <span style={{ fontSize: 12, color: '#6B6B69' }}>Overall score</span>
               </div>
-              <p className="text-sm text-gray-600 max-w-2xl leading-relaxed">{audit.yourProduct.summary}</p>
+              <p style={{ fontSize: 14, color: '#6B6B69', lineHeight: 1.65, maxWidth: 620, margin: 0 }}>{audit.yourProduct.summary}</p>
             </div>
 
             {/* Heuristic scores */}
-            <div className="space-y-4">
-              <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">Heuristic scores</p>
-              <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid #E8E6E1', background: '#FDFCFA' }}>
+            <div>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 16px' }}>Heuristic scores</p>
+              <div style={{ border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden', background: '#fff' }}>
                 {audit.yourProduct.scores.map((s, i) => (
                   <div
                     key={s.id}
-                    className="px-6 py-4 grid grid-cols-[1fr_auto] gap-6 items-start"
-                    style={{ borderBottom: i < audit.yourProduct!.scores.length - 1 ? '1px solid #E8E6E1' : 'none' }}
+                    style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, padding: '14px 18px', borderBottom: i < audit.yourProduct!.scores.length - 1 ? '1px solid #F2F2F0' : 'none', alignItems: 'start' }}
                   >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="text-xs font-semibold px-2 py-0.5 rounded-full"
-                          style={{ background: SEVERITY_TEXT[s.severity] + '18', color: SEVERITY_TEXT[s.severity] }}
-                        >
-                          {s.severity}
-                        </span>
-                        <span className="text-sm font-medium text-gray-900 capitalize">
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <SevBadge sev={s.severity} />
+                        <span style={{ fontSize: 13, fontWeight: 600, color: '#111110', textTransform: 'capitalize' }}>
                           {s.id.replace(/_/g, ' ')}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 leading-relaxed">{s.finding}</p>
-                      {s.severity !== 'pass' && (
-                        <p className="text-xs text-gray-400">{s.recommendation}</p>
+                      <p style={{ fontSize: 12, color: '#6B6B69', margin: '0 0 4px', lineHeight: 1.55 }}>{s.finding}</p>
+                      {s.severity !== 'pass' && s.recommendation && (
+                        <p style={{ fontSize: 11, color: '#9A9A98', margin: 0, lineHeight: 1.5 }}>{s.recommendation}</p>
                       )}
                     </div>
-                    <div className="pt-1">
+                    <div style={{ paddingTop: 2 }}>
                       <ScoreBar score={s.score} />
                     </div>
                   </div>
@@ -183,31 +225,29 @@ export default function AuditPage({ params }: { params: { id: string } }) {
 
             {/* Gap analysis */}
             {audit.competitors.length > 0 && audit.gapAnalysis && (
-              <div className="space-y-4">
-                <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">Gap analysis</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <p className="text-xs font-medium text-green-600">You have the edge</p>
+              <div>
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 16px' }}>Gap analysis</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: '#1A7A3E', margin: '0 0 10px' }}>You have the edge</p>
                     {audit.gapAnalysis.youWin.length === 0
-                      ? <p className="text-xs text-gray-400">No clear advantages identified.</p>
+                      ? <p style={{ fontSize: 12, color: '#6B6B69' }}>No clear advantages identified.</p>
                       : audit.gapAnalysis.youWin.map((w, i) => (
-                          <div key={i} className="rounded-xl px-4 py-3 space-y-1"
-                            style={{ background: '#F0FDF4', border: '1px solid #BBF7D0' }}>
-                            <p className="text-xs font-semibold text-green-700">{w.heuristic}</p>
-                            <p className="text-xs text-gray-600">{w.detail}</p>
+                          <div key={i} style={{ border: '1px solid #D1FAE5', borderRadius: 3, padding: '10px 14px', marginBottom: 8, background: '#F0FAF4' }}>
+                            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#1A7A3E', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{w.heuristic}</p>
+                            <p style={{ fontSize: 12, color: '#374151', margin: 0, lineHeight: 1.5 }}>{w.detail}</p>
                           </div>
                         ))}
                   </div>
-                  <div className="space-y-3">
-                    <p className="text-xs font-medium text-red-500">Competitors have the edge</p>
+                  <div>
+                    <p style={{ fontSize: 11, fontWeight: 600, color: '#C15000', margin: '0 0 10px' }}>Competitors have the edge</p>
                     {audit.gapAnalysis.theyWin.length === 0
-                      ? <p className="text-xs text-gray-400">No competitor advantages identified.</p>
+                      ? <p style={{ fontSize: 12, color: '#6B6B69' }}>No competitor advantages identified.</p>
                       : audit.gapAnalysis.theyWin.map((w, i) => (
-                          <div key={i} className="rounded-xl px-4 py-3 space-y-1"
-                            style={{ background: '#FEF2F2', border: '1px solid #FECACA' }}>
-                            <p className="text-xs font-semibold text-red-600">{w.heuristic}</p>
-                            <p className="text-xs text-gray-500">{w.competitor}</p>
-                            <p className="text-xs text-gray-600">{w.detail}</p>
+                          <div key={i} style={{ border: '1px solid #FED7AA', borderRadius: 3, padding: '10px 14px', marginBottom: 8, background: '#FFF7ED' }}>
+                            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#C15000', margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{w.heuristic}</p>
+                            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#9A6B00', margin: '0 0 4px' }}>{w.competitor}</p>
+                            <p style={{ fontSize: 12, color: '#374151', margin: 0, lineHeight: 1.5 }}>{w.detail}</p>
                           </div>
                         ))}
                   </div>
@@ -217,31 +257,34 @@ export default function AuditPage({ params }: { params: { id: string } }) {
 
             {/* Roadmap */}
             {audit.roadmap && audit.roadmap.length > 0 && (
-              <div className="space-y-4">
-                <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">Prioritized roadmap</p>
-                <div className="space-y-3">
-                  {audit.roadmap.map((item, i) => <RoadmapCard key={i} item={item} />)}
+              <div>
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 4px' }}>Prioritized roadmap</p>
+                <p style={{ fontSize: 12, color: '#6B6B69', margin: '0 0 16px' }}>Sorted by priority, then effort</p>
+                <div>
+                  {audit.roadmap.map((item, i) => <RoadmapRow key={i} item={item} />)}
                 </div>
               </div>
             )}
 
             {/* Competitor summaries */}
             {audit.competitors.length > 0 && (
-              <div className="space-y-6">
-                <p className="text-xs font-semibold tracking-widest uppercase text-gray-400">Competitor evaluations</p>
-                {audit.competitors.map((comp, i) => (
-                  <div key={i} className="rounded-2xl px-6 py-5 space-y-3"
-                    style={{ background: '#FDFCFA', border: '1px solid #E8E6E1' }}>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-gray-900">{comp.url}</p>
-                      <ScoreBar score={comp.overall} />
+              <div>
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 16px' }}>Competitor evaluations</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {audit.competitors.map((comp, i) => (
+                    <div key={i} style={{ border: '1px solid #E4E4E2', borderRadius: 4, padding: '16px 18px', background: '#fff' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, color: '#111110' }}>{comp.url}</span>
+                        <ScoreBar score={comp.overall} />
+                      </div>
+                      <p style={{ fontSize: 12, color: '#6B6B69', lineHeight: 1.6, margin: 0 }}>{comp.summary}</p>
                     </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">{comp.summary}</p>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             )}
-          </>
+
+          </div>
         )}
       </main>
     </div>

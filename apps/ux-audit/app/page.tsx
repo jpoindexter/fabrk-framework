@@ -3,6 +3,54 @@
 import './globals.css';
 import { useState } from 'react';
 
+const SEV: Record<string, { bg: string; color: string }> = {
+  P0: { bg: '#FFF0F0', color: '#C20000' },
+  P1: { bg: '#FFF4EC', color: '#C15000' },
+  P2: { bg: '#FFFBEB', color: '#9A6B00' },
+  P3: { bg: '#F5F5F4', color: '#666462' },
+  pass: { bg: '#F0FAF4', color: '#1A7A3E' },
+};
+
+const PREVIEW = [
+  { label: 'visibility', score: 4.0, sev: 'pass' },
+  { label: 'user control', score: 2.5, sev: 'P1' },
+  { label: 'flexibility', score: 2.0, sev: 'P1' },
+  { label: 'error recovery', score: 2.5, sev: 'P1' },
+  { label: 'consistency', score: 4.0, sev: 'pass' },
+  { label: 'error prevention', score: 3.0, sev: 'P2' },
+];
+
+const INPUT: React.CSSProperties = {
+  width: '100%',
+  padding: '9px 12px',
+  border: '1px solid #E4E4E2',
+  borderRadius: 3,
+  fontSize: 14,
+  color: '#111110',
+  background: '#fff',
+  outline: 'none',
+  fontFamily: 'Manrope, sans-serif',
+  transition: 'border-color 0.12s',
+};
+
+const LABEL: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  color: '#111110',
+  marginBottom: 6,
+  letterSpacing: '0.01em',
+};
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={LABEL}>{label}</label>
+      {children}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [yourUrl, setYourUrl] = useState('');
   const [competitors, setCompetitors] = useState(['', '', '']);
@@ -14,21 +62,20 @@ export default function HomePage() {
 
   const competitorCount = competitors.filter(Boolean).length;
   const price = competitorCount <= 1 ? '$149' : '$299';
-  const priceLabel = competitorCount <= 1 ? 'Single competitor' : `${competitorCount} competitors`;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const res = await fetch('/api/checkout', {
+      const res = await fetch('/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ yourUrl, competitorUrls: competitors, userType, keyFlows, email }),
       });
-      const data = await res.json() as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? 'Checkout failed');
-      window.location.href = data.url;
+      const data = await res.json() as { id?: string; error?: string };
+      if (!res.ok || !data.id) throw new Error(data.error ?? 'Failed to start audit');
+      window.location.href = `/audit/${data.id}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
@@ -36,121 +83,169 @@ export default function HomePage() {
   }
 
   return (
-    <div className="font-sans min-h-screen" style={{ background: '#F8F7F4', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ background: '#F8F8F6', minHeight: '100vh', fontFamily: 'Manrope, sans-serif', color: '#111110' }}>
 
       {/* Nav */}
-      <nav style={{ borderBottom: '1px solid #E8E6E1' }} className="px-8 py-4 flex items-center justify-between max-w-6xl mx-auto">
-        <span className="font-serif text-lg font-semibold text-gray-900" style={{ fontFamily: 'Lora, Georgia, serif' }}>
-          ux audit
-        </span>
-        <div className="flex items-center gap-4">
-          <a href="#how" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">How it works</a>
-          <a href="#pricing" className="text-sm text-gray-500 hover:text-gray-900 transition-colors">Pricing</a>
-          <a
-            href="#audit"
-            className="text-sm font-medium px-4 py-2 rounded-full text-white transition-colors"
-            style={{ background: '#7C3AED' }}
-          >
-            Run an audit
-          </a>
+      <nav style={{ borderBottom: '1px solid #E4E4E2', background: '#F8F8F6', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 52 }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, fontWeight: 600, letterSpacing: '0.06em', color: '#111110' }}>
+            AUDIT
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <a href="/sample" style={{ fontSize: 13, color: '#6B6B69', textDecoration: 'none' }}>Sample report</a>
+            <a href="#how" style={{ fontSize: 13, color: '#6B6B69', textDecoration: 'none' }}>How it works</a>
+            <a
+              href="#form"
+              style={{ fontSize: 13, fontWeight: 600, padding: '6px 14px', background: '#111110', color: '#fff', textDecoration: 'none', borderRadius: 3 }}
+            >
+              Run audit
+            </a>
+          </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="max-w-4xl mx-auto px-8 pt-24 pb-20 text-center">
-        <p className="text-sm font-medium mb-6 tracking-wide uppercase" style={{ color: '#7C3AED' }}>
-          Nielsen Norman Heuristics · Calibrated to BigTech Standards
-        </p>
-        <h1
-          className="text-5xl md:text-6xl font-bold leading-tight text-gray-900 mb-6"
-          style={{ fontFamily: 'Lora, Georgia, serif' }}
-        >
-          The UX audit your agency<br />
-          <span style={{ color: '#7C3AED' }}>charges $10K for.</span><br />
-          In 10 minutes.
-        </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed mb-10">
-          Heuristic evaluation across 10 categories. Side-by-side competitor comparison.
-          Severity-coded gap analysis. Prioritized roadmap.
-        </p>
-        <div className="flex items-center justify-center gap-4">
-          <a
-            href="#audit"
-            className="px-8 py-3.5 rounded-full text-white font-medium text-base transition-colors"
-            style={{ background: '#7C3AED' }}
-          >
-            Start your audit
-          </a>
-          <a href="#how" className="px-8 py-3.5 rounded-full text-gray-700 font-medium text-base border border-gray-300 hover:border-gray-400 transition-colors">
-            See how it works
-          </a>
+      <section style={{ maxWidth: 1080, margin: '0 auto', padding: '72px 32px 72px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 72, alignItems: 'start' }}>
+
+          {/* Left */}
+          <div>
+            <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20, margin: '0 0 20px' }}>
+              Nielsen Norman · 10 categories · BigTech calibrated
+            </p>
+            <h1 style={{ fontSize: 44, fontWeight: 700, lineHeight: 1.08, margin: '0 0 18px', letterSpacing: '-0.025em', color: '#111110' }}>
+              Know where your UX<br />is losing users.
+            </h1>
+            <p style={{ fontSize: 15, color: '#6B6B69', lineHeight: 1.65, maxWidth: 400, margin: '0 0 36px' }}>
+              Heuristic evaluation across 10 categories. Side-by-side competitor comparison.
+              Severity-coded gap analysis with a prioritized roadmap. Under 10 minutes.
+            </p>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+              <a
+                href="#form"
+                style={{ padding: '9px 20px', background: '#111110', color: '#fff', textDecoration: 'none', borderRadius: 3, fontSize: 13, fontWeight: 600 }}
+              >
+                Run your audit
+              </a>
+              <a
+                href="/sample"
+                style={{ padding: '9px 20px', border: '1px solid #E4E4E2', color: '#111110', textDecoration: 'none', borderRadius: 3, fontSize: 13, fontWeight: 500 }}
+              >
+                See sample report
+              </a>
+            </div>
+          </div>
+
+          {/* Right: score preview */}
+          <div style={{ border: '1px solid #E4E4E2', background: '#fff', borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid #E4E4E2', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#FAFAF8' }}>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6B6B69' }}>yourproduct.com</span>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, fontWeight: 600, color: '#111110' }}>3.2 / 5.0</span>
+            </div>
+            {PREVIEW.map(({ label, score, sev }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: '1px solid #F2F2F0' }}>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', width: 96, flexShrink: 0 }}>
+                  {label}
+                </span>
+                <div style={{ display: 'flex', gap: 2, flex: 1 }}>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <div key={n} style={{ height: 3, flex: 1, background: n <= Math.round(score) ? '#111110' : '#E4E4E2', borderRadius: 1 }} />
+                  ))}
+                </div>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#111110', width: 22, textAlign: 'right', flexShrink: 0 }}>
+                  {score.toFixed(1)}
+                </span>
+                <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, padding: '2px 5px', background: SEV[sev].bg, color: SEV[sev].color, borderRadius: 2, width: 30, textAlign: 'center', flexShrink: 0 }}>
+                  {sev}
+                </span>
+              </div>
+            ))}
+            <div style={{ padding: '9px 14px', background: '#FAFAF8' }}>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#C15000' }}>3 issues require immediate attention</span>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Social proof strip */}
-      <div style={{ borderTop: '1px solid #E8E6E1', borderBottom: '1px solid #E8E6E1', background: '#FDFCFA' }}
-        className="py-5 text-center">
-        <p className="text-sm text-gray-400">
-          Calibrated to production standards from&nbsp;&nbsp;
-          <span className="font-medium text-gray-600">Apple</span>&nbsp;·&nbsp;
-          <span className="font-medium text-gray-600">Google</span>&nbsp;·&nbsp;
-          <span className="font-medium text-gray-600">YouTube</span>
-        </p>
+      {/* Calibrated strip */}
+      <div style={{ borderTop: '1px solid #E4E4E2', borderBottom: '1px solid #E4E4E2' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '12px 32px', display: 'flex', alignItems: 'center', gap: 28 }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}>
+            Calibrated to
+          </span>
+          {['Apple', 'Google', 'YouTube', 'Stripe', 'Linear'].map(name => (
+            <span key={name} style={{ fontSize: 13, fontWeight: 500, color: '#6B6B69' }}>{name}</span>
+          ))}
+        </div>
       </div>
 
       {/* How it works */}
-      <section id="how" className="max-w-5xl mx-auto px-8 py-24">
-        <p className="text-xs font-semibold tracking-widest uppercase text-gray-400 text-center mb-3">How it works</p>
-        <h2 className="font-serif text-3xl font-bold text-center text-gray-900 mb-16"
-          style={{ fontFamily: 'Lora, Georgia, serif' }}>
-          From URL to actionable report in under 10 minutes
-        </h2>
-        <div className="grid grid-cols-3 gap-12">
+      <section id="how" style={{ maxWidth: 1080, margin: '0 auto', padding: '72px 32px' }}>
+        <div style={{ marginBottom: 36 }}>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 8px' }}>Process</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.015em', margin: 0 }}>How it works</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: '#E4E4E2', border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden' }}>
           {[
-            { n: '01', title: 'Submit your URLs', body: 'Enter your product URL and up to 3 competitor URLs. Tell us who your users are and which flows matter most.' },
-            { n: '02', title: 'AI evaluates & compares', body: 'We screenshot every product at 1440×900, then run Claude Opus vision evaluation across all 10 Nielsen Norman heuristics.' },
-            { n: '03', title: 'Get your roadmap', body: 'Receive a severity-coded gap analysis (P0–P3) and a prioritized improvement roadmap sorted by impact and effort.' },
+            { n: '01', title: 'Submit your URLs', body: 'Enter your product URL and up to 3 competitor URLs. Tell us your primary user type and the key flows you want evaluated.' },
+            { n: '02', title: 'AI evaluates', body: 'Screenshots are captured at 1440×900 and evaluated against all 10 Nielsen Norman heuristics, calibrated to production standards at BigTech companies.' },
+            { n: '03', title: 'Get your roadmap', body: 'Receive a severity-coded gap analysis (P0–P3) and a prioritized improvement roadmap sorted by impact-to-effort ratio.' },
           ].map(step => (
-            <div key={step.n} className="space-y-3">
-              <span className="text-4xl font-serif font-bold" style={{ color: '#E8E6E1', fontFamily: 'Lora, Georgia, serif' }}>{step.n}</span>
-              <h3 className="font-semibold text-gray-900 text-base">{step.title}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{step.body}</p>
+            <div key={step.n} style={{ background: '#F8F8F6', padding: '28px 28px 28px' }}>
+              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6B6B69', display: 'block', marginBottom: 14 }}>{step.n}</span>
+              <h3 style={{ fontSize: 14, fontWeight: 600, margin: '0 0 8px', color: '#111110' }}>{step.title}</h3>
+              <p style={{ fontSize: 13, color: '#6B6B69', lineHeight: 1.6, margin: 0 }}>{step.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Audit form */}
-      <section id="audit" style={{ background: '#FDFCFA', borderTop: '1px solid #E8E6E1', borderBottom: '1px solid #E8E6E1' }}
-        className="py-24">
-        <div className="max-w-2xl mx-auto px-8">
-          <p className="text-xs font-semibold tracking-widest uppercase text-gray-400 text-center mb-3">Run your audit</p>
-          <h2 className="font-serif text-3xl font-bold text-center text-gray-900 mb-12"
-            style={{ fontFamily: 'Lora, Georgia, serif' }}>
-            Start with your product URL
-          </h2>
+      {/* Pricing table */}
+      <div style={{ borderTop: '1px solid #E4E4E2' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 32px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: '#E4E4E2', border: '1px solid #E4E4E2', borderRadius: 4, overflow: 'hidden', maxWidth: 560 }}>
+          {[
+            { plan: 'Solo', price: '$149', desc: 'Your product + 1 competitor', features: ['10 heuristic categories', 'Side-by-side gap analysis', 'Prioritized roadmap'] },
+            { plan: 'Deep Dive', price: '$299', desc: 'Your product + up to 3 competitors', features: ['Everything in Solo', 'Multi-competitor comparison', 'Broader gap analysis'] },
+          ].map(tier => (
+            <div key={tier.plan} style={{ background: '#fff', padding: '24px' }}>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6B6B69', margin: '0 0 8px', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{tier.plan}</p>
+              <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 28, fontWeight: 600, color: '#111110', margin: '0 0 4px', letterSpacing: '-0.02em' }}>{tier.price}</p>
+              <p style={{ fontSize: 12, color: '#6B6B69', margin: '0 0 16px' }}>{tier.desc}</p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {tier.features.map(f => (
+                  <li key={f} style={{ fontSize: 12, color: '#6B6B69', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', color: '#1A7A3E', fontSize: 10 }}>✓</span>{f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 block">Your product URL</label>
+      {/* Form */}
+      <section id="form" style={{ borderTop: '1px solid #E4E4E2', background: '#fff' }}>
+        <div style={{ maxWidth: 580, margin: '0 auto', padding: '64px 32px' }}>
+          <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: '#6B6B69', letterSpacing: '0.12em', textTransform: 'uppercase', margin: '0 0 8px' }}>Run your audit</p>
+          <h2 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.015em', margin: '0 0 36px' }}>Start with your product URL</h2>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <Field label="Your product URL">
               <input
                 type="url"
                 required
                 value={yourUrl}
                 onChange={e => setYourUrl(e.target.value)}
                 placeholder="https://yourproduct.com"
-                className="w-full px-4 py-3 rounded-lg text-sm text-gray-900 placeholder-gray-400 transition-colors"
-                style={{ border: '1px solid #D1CEC8', background: '#fff', outline: 'none' }}
-                onFocus={e => (e.target.style.borderColor = '#7C3AED')}
-                onBlur={e => (e.target.style.borderColor = '#D1CEC8')}
+                style={INPUT}
+                onFocus={e => (e.currentTarget.style.borderColor = '#111110')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#E4E4E2')}
               />
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 block">
-                Competitor URLs <span className="text-gray-400 font-normal">— up to 3</span>
-              </label>
-              <div className="space-y-2">
+            <div>
+              <label style={LABEL}>Competitor URLs <span style={{ fontWeight: 400, color: '#6B6B69' }}>— up to 3</span></label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {competitors.map((url, i) => (
                   <input
                     key={i}
@@ -162,98 +257,84 @@ export default function HomePage() {
                       setCompetitors(next);
                     }}
                     placeholder={`https://competitor${i + 1}.com`}
-                    className="w-full px-4 py-3 rounded-lg text-sm text-gray-900 placeholder-gray-400 transition-colors"
-                    style={{ border: '1px solid #D1CEC8', background: '#fff', outline: 'none' }}
-                    onFocus={e => (e.target.style.borderColor = '#7C3AED')}
-                    onBlur={e => (e.target.style.borderColor = '#D1CEC8')}
+                    style={INPUT}
+                    onFocus={e => (e.currentTarget.style.borderColor = '#111110')}
+                    onBlur={e => (e.currentTarget.style.borderColor = '#E4E4E2')}
                   />
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 block">Primary user type</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Field label="Primary user type">
                 <input
                   type="text"
                   required
                   value={userType}
                   onChange={e => setUserType(e.target.value)}
                   placeholder="e.g. Startup founder"
-                  className="w-full px-4 py-3 rounded-lg text-sm text-gray-900 placeholder-gray-400"
-                  style={{ border: '1px solid #D1CEC8', background: '#fff', outline: 'none' }}
-                  onFocus={e => (e.target.style.borderColor = '#7C3AED')}
-                  onBlur={e => (e.target.style.borderColor = '#D1CEC8')}
+                  style={INPUT}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#111110')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#E4E4E2')}
                 />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700 block">Your email</label>
+              </Field>
+              <Field label="Your email">
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="you@company.com"
-                  className="w-full px-4 py-3 rounded-lg text-sm text-gray-900 placeholder-gray-400"
-                  style={{ border: '1px solid #D1CEC8', background: '#fff', outline: 'none' }}
-                  onFocus={e => (e.target.style.borderColor = '#7C3AED')}
-                  onBlur={e => (e.target.style.borderColor = '#D1CEC8')}
+                  style={INPUT}
+                  onFocus={e => (e.currentTarget.style.borderColor = '#111110')}
+                  onBlur={e => (e.currentTarget.style.borderColor = '#E4E4E2')}
                 />
-              </div>
+              </Field>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700 block">Key flows to evaluate</label>
+            <Field label="Key flows to evaluate">
               <textarea
                 required
                 value={keyFlows}
                 onChange={e => setKeyFlows(e.target.value)}
                 placeholder="e.g. Onboarding, dashboard overview, primary CTA flow"
                 rows={3}
-                className="w-full px-4 py-3 rounded-lg text-sm text-gray-900 placeholder-gray-400 resize-none"
-                style={{ border: '1px solid #D1CEC8', background: '#fff', outline: 'none' }}
-                onFocus={e => (e.target.style.borderColor = '#7C3AED')}
-                onBlur={e => (e.target.style.borderColor = '#D1CEC8')}
+                style={{ ...INPUT, resize: 'none' }}
+                onFocus={e => (e.currentTarget.style.borderColor = '#111110')}
+                onBlur={e => (e.currentTarget.style.borderColor = '#E4E4E2')}
               />
-            </div>
+            </Field>
 
             {error && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{error}</p>
+              <div style={{ padding: '10px 14px', background: '#FFF0F0', border: '1px solid #FECACA', borderRadius: 3, fontSize: 13, color: '#C20000' }}>
+                {error}
+              </div>
             )}
 
-            <div id="pricing" className="flex items-center justify-between pt-2">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 6, borderTop: '1px solid #E4E4E2' }}>
               <div>
-                <p className="text-2xl font-bold text-gray-900">{price}</p>
-                <p className="text-sm text-gray-400">{priceLabel} · one-time</p>
+                <p style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 22, fontWeight: 600, margin: '0 0 2px', color: '#111110', letterSpacing: '-0.02em' }}>{price}</p>
+                <p style={{ fontSize: 11, color: '#6B6B69', margin: 0 }}>
+                  {competitorCount <= 1 ? 'single competitor' : `${competitorCount} competitors`} · one-time
+                </p>
               </div>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-8 py-3.5 rounded-full text-white font-medium text-sm transition-opacity"
-                style={{ background: '#7C3AED', opacity: loading ? 0.6 : 1 }}
+                style={{ padding: '9px 20px', background: '#111110', color: '#fff', border: 'none', borderRadius: 3, fontSize: 13, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1 }}
               >
-                {loading ? 'Redirecting…' : 'Run audit →'}
+                {loading ? 'Starting…' : 'Run audit →'}
               </button>
             </div>
           </form>
         </div>
       </section>
 
-      {/* Methodology footer note */}
-      <section className="max-w-4xl mx-auto px-8 py-20 text-center">
-        <p className="text-xs font-semibold tracking-widest uppercase text-gray-400 mb-4">Methodology</p>
-        <p className="text-sm text-gray-500 leading-relaxed max-w-2xl mx-auto">
-          Every audit applies Nielsen Norman's 10 usability heuristics, calibrated to production standards
-          at Apple, Google, and YouTube. Scores are 1–5 with severity ratings P0 (blocks tasks) through P3 (polish).
-          Screenshots at 1440×900. Evaluation via Claude Opus. Report ready in 5–10 minutes.
-        </p>
-      </section>
-
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid #E8E6E1' }} className="py-8">
-        <div className="max-w-6xl mx-auto px-8 flex items-center justify-between">
-          <span className="font-serif text-sm text-gray-400" style={{ fontFamily: 'Lora, Georgia, serif' }}>ux audit</span>
-          <p className="text-xs text-gray-400">© {new Date().getFullYear()} · UX Audit</p>
+      <footer style={{ borderTop: '1px solid #E4E4E2' }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#6B6B69' }}>AUDIT</span>
+          <p style={{ fontSize: 12, color: '#6B6B69', margin: 0 }}>© {new Date().getFullYear()}</p>
         </div>
       </footer>
     </div>

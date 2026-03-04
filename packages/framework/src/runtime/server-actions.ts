@@ -11,7 +11,7 @@ export interface ServerActionRegistry {
 
 /**
  * Server actions are functions marked with `"use server"` that can be
- * called from the client via RSC or form submissions.
+ * called from the client via fetch or form submissions.
  *
  * Each action is identified by a stable ID (typically a hash of
  * the file path + export name).
@@ -69,7 +69,7 @@ export function validateCsrf(request: Request): boolean {
  * Handle a server action request.
  *
  * Actions are dispatched via:
- * - `x-action-id` header (RSC navigation)
+ * - `x-action-id` header (fetch navigation)
  * - Form submission with hidden `$ACTION_ID` field
  *
  * CSRF validation is performed via Origin vs Host header comparison.

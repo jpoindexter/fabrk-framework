@@ -3,13 +3,13 @@ import { fabrkPlugin } from "../runtime/plugin";
 
 describe("HMR / React Fast Refresh", () => {
   it("includes fabrk:react-refresh plugin", () => {
-    const plugins = fabrkPlugin({ rsc: false });
+    const plugins = fabrkPlugin({});
     const names = plugins.map((p) => p.name);
     expect(names).toContain("fabrk:react-refresh");
   });
 
   it("adds react plugins when @vitejs/plugin-react is available", async () => {
-    const plugins = fabrkPlugin({ rsc: false });
+    const plugins = fabrkPlugin({});
     const refreshPlugin = plugins.find((p) => p.name === "fabrk:react-refresh")!;
     const configHook = refreshPlugin.config as (config: { plugins?: unknown[] }) => Promise<void>;
 
@@ -21,7 +21,7 @@ describe("HMR / React Fast Refresh", () => {
   });
 
   it("entry-client code includes import.meta.hot.accept()", () => {
-    const plugins = fabrkPlugin({ rsc: false });
+    const plugins = fabrkPlugin({});
     const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
 
     const configHook = plugins.find((p) => p.name === "fabrk:router")!.config as (
@@ -37,7 +37,7 @@ describe("HMR / React Fast Refresh", () => {
   });
 
   it("entry-client HMR guard uses optional chaining", () => {
-    const plugins = fabrkPlugin({ rsc: false });
+    const plugins = fabrkPlugin({});
     const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
 
     const configHook = plugins.find((p) => p.name === "fabrk:router")!.config as (

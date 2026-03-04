@@ -18,8 +18,6 @@ export interface FabrkRuntimeOptions {
   appDir?: string;
   /** Custom HTML shell function. */
   htmlShell?: (options: { head: string; body: string }) => string;
-  /** Enable RSC (React Server Components). Defaults to true when @vitejs/plugin-rsc is available. */
-  rsc?: boolean;
   /** OG image templates keyed by name. */
   ogTemplates?: Map<string, OGTemplate>;
 }
@@ -107,7 +105,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
               viteServer: server,
               middlewarePath: middlewarePath ?? undefined,
               appDir: appDirResolved,
-              rsc: options.rsc === true,
               i18n: fabrkConfig.i18n,
             });
 
@@ -219,8 +216,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
 
     resolveId(id: string) {
       if (id === "virtual:fabrk/entry-client") return "\0virtual:fabrk/entry-client";
-      if (id === "virtual:fabrk/entry-ssr") return "\0virtual:fabrk/entry-ssr";
-      if (id === "virtual:fabrk/entry-rsc") return "\0virtual:fabrk/entry-rsc";
       if (id === "virtual:fabrk/entry-client-hydrate") return "\0virtual:fabrk/entry-client-hydrate";
       if (id === "virtual:fabrk/routes") return "\0virtual:fabrk/routes";
       if (id === "virtual:fabrk/route-types") return "\0virtual:fabrk/route-types";
@@ -237,34 +232,14 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       if (id === "\0virtual:fabrk/entry-client") {
         return ENTRY_CLIENT_CODE;
       }
-      if (id === "\0virtual:fabrk/entry-ssr") {
-        return ENTRY_SSR_CODE;
-      }
-      if (id === "\0virtual:fabrk/entry-rsc") {
-        return ENTRY_RSC_CODE;
-      }
       if (id === "\0virtual:fabrk/entry-client-hydrate") {
         return ENTRY_CLIENT_HYDRATE_CODE;
       }
       return null;
     },
-
-    transformIndexHtml(html: string) {
-      // Rewrite virtual: script src to the /@id/ path that Vite actually serves.
-      // Without this the browser receives a literal `virtual:` URL (unknown scheme)
-      // and refuses to load it, breaking client-side hydration.
-      return html.replace(
-        /src="virtual:fabrk\/([^"]+)"/g,
-        (_: string, rest: string) => `src="/@id/__x00__virtual:fabrk/${rest}"`,
-      );
-    },
   };
 
   const plugins: Plugin[] = [routerPlugin, virtualPlugin];
-
-  if (options.rsc === true) {
-    plugins.push(rscIntegrationPlugin());
-  }
 
   plugins.push(reactRefreshPlugin({ getFabrkConfig: () => sharedFabrkConfig }));
 
@@ -324,32 +299,6 @@ function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin
   };
 }
 
-function rscIntegrationPlugin(): Plugin {
-  return {
-    name: "fabrk:rsc-integration",
-
-    async config(config) {
-      try {
-        const mod = await import("@vitejs/plugin-rsc");
-        const vitePluginRsc = mod.default as (opts?: Record<string, unknown>) => Plugin[];
-
-        const rscPlugins = vitePluginRsc({
-          entries: {
-            client: "virtual:fabrk/entry-client",
-            ssr: "virtual:fabrk/entry-ssr",
-          },
-        });
-
-        const existing = Array.isArray(config.plugins) ? config.plugins : [];
-        config.plugins = [...existing, ...rscPlugins];
-      } catch {
-        // eslint-disable-next-line no-console
-        console.log("[fabrk] @vitejs/plugin-rsc not found — using basic SSR mode");
-      }
-    },
-  };
-}
-
 function findMiddleware(appDir: string): string | null {
   for (const ext of MIDDLEWARE_EXTENSIONS) {
     const filePath = path.join(appDir, `middleware${ext}`);
@@ -367,7 +316,7 @@ export function shouldSkipPath(pathname: string): boolean {
     return true;
   }
   const lastSeg = pathname.split("/").pop() ?? "";
-  return lastSeg.includes(".") && !lastSeg.endsWith(".rsc");
+  return lastSeg.includes(".");
 }
 
 function generateRoutesModule(routes: Route[]): string {
@@ -376,9 +325,6 @@ function generateRoutesModule(routes: Route[]): string {
 
   for (let i = 0; i < routes.length; i++) {
     const route = routes[i];
-    // API routes must never be imported in the client bundle — they use
-    // server-only modules (Node.js APIs, env vars, etc.) that crash in the browser.
-    if (route.type !== "page") continue;
     const varName = `route${i}`;
     imports.push(`import * as ${varName} from ${JSON.stringify(route.filePath)};`);
     routeEntries.push(
@@ -394,42 +340,6 @@ function generateRoutesModule(routes: Route[]): string {
     `];`,
   ].join("\n");
 }
-
-const ENTRY_RSC_CODE = `
-import { renderToReadableStream, createClientManifest } from "@vitejs/plugin-rsc/rsc";
-
-export function renderRsc(element) {
-  const manifest = createClientManifest();
-  return renderToReadableStream(element, manifest);
-}
-
-export { createClientManifest };
-`;
-
-const ENTRY_SSR_CODE = `
-import { createFromReadableStream } from "react-server-dom-webpack/client";
-import { renderToReadableStream } from "react-dom/server";
-import { injectRSCPayload } from "rsc-html-stream/server";
-import * as React from "react";
-
-export async function renderToHtml(rscStream, options = {}) {
-  const [forSsr, forClient] = rscStream.tee();
-  const contentPromise = createFromReadableStream(forSsr);
-
-  function App() {
-    return React.use(contentPromise);
-  }
-
-  const htmlStream = await renderToReadableStream(
-    React.createElement(App),
-    { bootstrapScriptContent: options.bootstrapScript }
-  );
-
-  return htmlStream.pipeThrough(
-    injectRSCPayload(forClient, { nonce: options.nonce })
-  );
-}
-`;
 
 const ENTRY_CLIENT_CODE = `
 import { createFromReadableStream } from "react-server-dom-webpack/client";
@@ -482,17 +392,16 @@ import { routes } from 'virtual:fabrk/routes';
 
 function patternToRegex(pattern) {
   const p = pattern
-    .replace(/\\[\\.\\.\\.(\\w+)\\]/g, '(.+)')   // [...param] catch-all
-    .replace(/\\[(\\w+)\\]/g, '([^/]+)')          // [param] Next.js style
-    .replace(/:(\\w+)/g, '([^/]+)');              // :param Express style
+    .replace(/\\[\\.\\.\\.(\\w+)\\]/g, '(.+)')
+    .replace(/\\[(\\w+)\\]/g, '([^/]+)');
   return new RegExp('^' + p + '$');
 }
 
 function extractParams(pattern, pathname) {
   const paramNames = [];
-  const re = /\\[(?:\\.\\.\\.)?([\\w]+)\\]|:(\\w+)/g;
+  const re = /\\[(?:\\.\\.\\.)?([\\w]+)\\]/g;
   let m;
-  while ((m = re.exec(pattern)) !== null) paramNames.push(m[1] || m[2]); // eslint-disable-line
+  while ((m = re.exec(pattern)) !== null) paramNames.push(m[1]); // eslint-disable-line
   const match = pathname.match(patternToRegex(pattern));
   if (!match) return {};
   const params = {};

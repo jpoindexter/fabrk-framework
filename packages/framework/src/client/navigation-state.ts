@@ -48,7 +48,6 @@ declare global {
   interface Window {
     __FABRK_PREFETCH_CACHE__?: Map<string, CacheEntry>;
     __FABRK_PARAMS__?: Record<string, string>;
-    __FABRK_RSC_NAVIGATE__?: (url: string) => Promise<void>;
     __FABRK_NAVIGATE__?: () => void;
   }
 }

@@ -28,9 +28,9 @@ describe("1d: shouldSkipPath last-segment check", () => {
     expect(shouldSkipPath("/favicon.ico")).toBe(true);
   });
 
-  it("allows .rsc endpoints", () => {
-    expect(shouldSkipPath("/about.rsc")).toBe(false);
-    expect(shouldSkipPath("/dashboard/settings.rsc")).toBe(false);
+  it("skips .rsc endpoints (RSC removed)", () => {
+    expect(shouldSkipPath("/about.rsc")).toBe(true);
+    expect(shouldSkipPath("/dashboard/settings.rsc")).toBe(true);
   });
 
   it("allows dotted path segments that are not file extensions", () => {
@@ -80,9 +80,6 @@ function setupBrowserMocks() {
       return true;
     }),
     __FABRK_PREFETCH_CACHE__: new Map(),
-    __FABRK_RSC_NAVIGATE__: undefined as
-      | ((url: string) => Promise<void>)
-      | undefined,
     __FABRK_PARAMS__: undefined as Record<string, string> | undefined,
   };
 
@@ -281,14 +278,12 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
     delete globalThis.document;
   });
 
-  it("swaps #root content from fetched HTML in non-RSC mode", async () => {
+  it("swaps #root content from fetched HTML", async () => {
     const rootEl = { innerHTML: "old content" };
     (globalThis.document as unknown as { getElementById: ReturnType<typeof vi.fn> })
       .getElementById = vi.fn((id: string) =>
         id === "root" ? rootEl : null
       );
-
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = undefined;
 
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -308,8 +303,6 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
   });
 
   it("falls back to window.location.href on fetch error", async () => {
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = undefined;
-
     globalThis.fetch = vi.fn().mockRejectedValue(new Error("network"));
 
     let locationSet = false;
@@ -330,7 +323,6 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
     (globalThis.document as unknown as { getElementById: ReturnType<typeof vi.fn> })
       .getElementById = vi.fn(() => rootEl);
 
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = undefined;
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: () =>
@@ -349,7 +341,6 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
     (globalThis.document as unknown as { getElementById: ReturnType<typeof vi.fn> })
       .getElementById = vi.fn(() => rootEl);
 
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = undefined;
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: () =>
@@ -366,7 +357,6 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
     (globalThis.document as unknown as { getElementById: ReturnType<typeof vi.fn> })
       .getElementById = vi.fn(() => rootEl);
 
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = undefined;
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: () =>
@@ -383,7 +373,6 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
     (globalThis.document as unknown as { getElementById: ReturnType<typeof vi.fn> })
       .getElementById = vi.fn(() => rootEl);
 
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = undefined;
     env.mockWindow.scrollY = 300;
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -398,15 +387,6 @@ describe("1a: navigateImpl non-RSC SPA swap", () => {
       expect.objectContaining({ __fabrkScrollY: 300 }),
       ""
     );
-  });
-
-  it("delegates to RSC navigate when available", async () => {
-    const rscNavigate = vi.fn().mockResolvedValue(undefined);
-    env.mockWindow.__FABRK_RSC_NAVIGATE__ = rscNavigate;
-
-    await navigateImpl("/about", "push");
-
-    expect(rscNavigate).toHaveBeenCalledWith("/about");
   });
 
   it("rejects cross-origin URLs", async () => {
@@ -425,7 +405,7 @@ describe("1c: entry-client dispatches NAVIGATE_EVENT", () => {
     // We can't execute the virtual module, but we can verify the source code
     // contains the fix by importing the plugin and checking the generated code
     const pluginModule = await import("../runtime/plugin");
-    const plugins = pluginModule.fabrkPlugin({ rsc: false });
+    const plugins = pluginModule.fabrkPlugin();
 
     // Find the virtual entries plugin
     const virtualPlugin = plugins.find(
@@ -462,101 +442,5 @@ describe("1c: Link uses navigateImpl for unified navigation", () => {
     expect(linkSource).not.toContain("history.replaceState");
     // Should NOT contain un-awaited __FABRK_RSC_NAVIGATE__
     expect(linkSource).not.toContain("__FABRK_RSC_NAVIGATE__");
-  });
-});
-
-// --- Bug fix: generateRoutesModule skips API routes ---
-
-describe("Bug fix: generateRoutesModule excludes API routes from client bundle", () => {
-  it("plugin source contains guard skipping non-page routes in generateRoutesModule", async () => {
-    const fs = await import("node:fs");
-    const pluginSource = fs.readFileSync(
-      new URL("../runtime/plugin.ts", import.meta.url).pathname,
-      "utf-8"
-    );
-    expect(pluginSource).toContain('route.type !== "page"');
-    expect(pluginSource).toContain("// API routes must never be imported in the client bundle");
-  });
-
-  it("ENTRY_CLIENT_HYDRATE_CODE skips non-page routes when rendering", async () => {
-    const pluginModule = await import("../runtime/plugin");
-    const plugins = pluginModule.fabrkPlugin({ rsc: false });
-    const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries");
-    const loadFn = virtualPlugin!.load as (id: string) => string | null;
-    const code = loadFn("\0virtual:fabrk/entry-client-hydrate")!;
-    expect(code).toContain("route.type !== 'page'");
-  });
-});
-
-// --- Bug fix: Express :param style in patternToRegex / extractParams ---
-//
-// Mirror the exact logic shipped in ENTRY_CLIENT_HYDRATE_CODE so we can run unit
-// tests without evaluating generated code strings at runtime.
-
-function patternToRegex(pattern: string): RegExp {
-  const p = pattern
-    .replace(/\[\.\.\.(\w+)\]/g, "(.+)")
-    .replace(/\[(\w+)\]/g, "([^/]+)")
-    .replace(/:(\w+)/g, "([^/]+)");
-  return new RegExp("^" + p + "$");
-}
-
-function extractParams(pattern: string, pathname: string): Record<string, string> {
-  const paramNames = [...pattern.matchAll(/\[(?:\.\.\.)?(\w+)\]|:(\w+)/g)]
-    .map((m) => (m[1] ?? m[2])!);
-  const match = pathname.match(patternToRegex(pattern));
-  if (!match) return {};
-  const params: Record<string, string> = {};
-  paramNames.forEach((name, i) => { params[name] = match[i + 1] ?? ""; });
-  return params;
-}
-
-describe("Bug fix: ENTRY_CLIENT_HYDRATE_CODE patternToRegex handles Express :param style", () => {
-  it("source code contains Express :param handler in ENTRY_CLIENT_HYDRATE_CODE", async () => {
-    const pluginModule = await import("../runtime/plugin");
-    const plugins = pluginModule.fabrkPlugin({ rsc: false });
-    const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries");
-    const loadFn = virtualPlugin!.load as (id: string) => string | null;
-    const code = loadFn("\0virtual:fabrk/entry-client-hydrate")!;
-    expect(code).toContain(":(\\w+)");
-    expect(code).toContain("Express style");
-  });
-
-  it("matches Next.js [id] bracket-style params", () => {
-    expect("/post/123".match(patternToRegex("/post/[id]"))).toBeTruthy();
-  });
-
-  it("matches Express :id style params", () => {
-    expect("/post/123".match(patternToRegex("/post/:id"))).toBeTruthy();
-  });
-
-  it("does not match wrong path with Express :id pattern", () => {
-    expect("/other/foo/bar".match(patternToRegex("/post/:id"))).toBeNull();
-  });
-
-  it("extracts params from [id] bracket style", () => {
-    expect(extractParams("/post/[id]", "/post/123")).toEqual({ id: "123" });
-  });
-
-  it("extracts params from :id Express style", () => {
-    expect(extractParams("/post/:id", "/post/123")).toEqual({ id: "123" });
-  });
-
-  it("extracts from dynamic audit route /audit/:id", () => {
-    expect(extractParams("/audit/:id", "/audit/abc-123")).toEqual({ id: "abc-123" });
-  });
-
-  it("returns {} when Express pattern does not match pathname", () => {
-    expect(extractParams("/post/:id", "/blog/123")).toEqual({});
-  });
-
-  it("handles catch-all [...rest] style", () => {
-    expect("/a/b/c".match(patternToRegex("/[...rest]"))).toBeTruthy();
-  });
-
-  it("[id] and :id both extract the same value for identical URLs", () => {
-    const bracket = extractParams("/audit/[id]", "/audit/xyz");
-    const express = extractParams("/audit/:id", "/audit/xyz");
-    expect(bracket).toEqual(express);
   });
 });

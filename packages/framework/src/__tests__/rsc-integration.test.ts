@@ -1,72 +1,28 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { fabrkPlugin } from "../runtime/plugin";
 
-describe("RSC Integration", () => {
-  describe("fabrkPlugin RSC option", () => {
-    it("returns rsc-integration plugin when rsc is explicitly true", () => {
-      const plugins = fabrkPlugin({ rsc: true });
-      const names = plugins.map((p) => p.name);
-      expect(names).toContain("fabrk:rsc-integration");
-    });
-
-    it("omits rsc-integration plugin by default (RSC is opt-in)", () => {
-      const plugins = fabrkPlugin();
-      const names = plugins.map((p) => p.name);
-      expect(names).not.toContain("fabrk:rsc-integration");
-    });
-
-    it("omits rsc-integration plugin when rsc is false", () => {
-      const plugins = fabrkPlugin({ rsc: false });
-      const names = plugins.map((p) => p.name);
-      expect(names).not.toContain("fabrk:rsc-integration");
-    });
-
+describe("Plugin virtual entries", () => {
+  describe("fabrkPlugin base plugins", () => {
     it("always includes router and virtual-entries plugins", () => {
-      const plugins = fabrkPlugin({ rsc: false });
+      const plugins = fabrkPlugin();
       const names = plugins.map((p) => p.name);
       expect(names).toContain("fabrk:router");
       expect(names).toContain("fabrk:virtual-entries");
     });
 
-    it("includes 4 plugins with RSC explicitly enabled", () => {
-      const plugins = fabrkPlugin({ rsc: true });
-      expect(plugins).toHaveLength(4);
-    });
-
-    it("includes 3 plugins with RSC default (opt-in not set)", () => {
+    it("includes 3 plugins (router, virtual-entries, react-refresh)", () => {
       const plugins = fabrkPlugin();
       expect(plugins).toHaveLength(3);
     });
 
-    it("includes 3 plugins with RSC disabled", () => {
-      const plugins = fabrkPlugin({ rsc: false });
-      expect(plugins).toHaveLength(3);
+    it("does not include rsc-integration plugin", () => {
+      const plugins = fabrkPlugin();
+      const names = plugins.map((p) => p.name);
+      expect(names).not.toContain("fabrk:rsc-integration");
     });
   });
 
-  describe("virtual entry modules", () => {
-    it("resolves virtual:fabrk/entry-rsc", () => {
-      const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
-      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
-
-      expect(resolveId.call({} as never, "virtual:fabrk/entry-rsc")).toBe(
-        "\0virtual:fabrk/entry-rsc"
-      );
-    });
-
-    it("resolves virtual:fabrk/entry-ssr", () => {
-      const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
-      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
-
-      expect(resolveId.call({} as never, "virtual:fabrk/entry-ssr")).toBe(
-        "\0virtual:fabrk/entry-ssr"
-      );
-    });
-
+  describe("virtual module resolution", () => {
     it("resolves virtual:fabrk/entry-client", () => {
       const plugins = fabrkPlugin();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -78,7 +34,51 @@ describe("RSC Integration", () => {
       );
     });
 
-    it("loads entry-client with hydration code", () => {
+    it("resolves virtual:fabrk/entry-client-hydrate", () => {
+      const plugins = fabrkPlugin();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
+      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
+
+      expect(resolveId.call({} as never, "virtual:fabrk/entry-client-hydrate")).toBe(
+        "\0virtual:fabrk/entry-client-hydrate"
+      );
+    });
+
+    it("resolves virtual:fabrk/routes", () => {
+      const plugins = fabrkPlugin();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
+      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
+
+      expect(resolveId.call({} as never, "virtual:fabrk/routes")).toBe(
+        "\0virtual:fabrk/routes"
+      );
+    });
+
+    it("does not resolve unknown virtual modules", () => {
+      const plugins = fabrkPlugin();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
+      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
+
+      expect(resolveId.call({} as never, "virtual:fabrk/unknown")).toBeNull();
+      expect(resolveId.call({} as never, "react")).toBeNull();
+    });
+
+    it("does not resolve removed RSC virtual modules", () => {
+      const plugins = fabrkPlugin();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
+      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
+
+      expect(resolveId.call({} as never, "virtual:fabrk/entry-rsc")).toBeNull();
+      expect(resolveId.call({} as never, "virtual:fabrk/entry-ssr")).toBeNull();
+    });
+  });
+
+  describe("virtual module loading", () => {
+    it("loads entry-client with hydrateRoot and SPA navigation", () => {
       const plugins = fabrkPlugin();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
@@ -93,11 +93,10 @@ describe("RSC Integration", () => {
       const code = load.call({} as never, "\0virtual:fabrk/entry-client");
 
       expect(code).toContain("hydrateRoot");
-      expect(code).toContain("rscStream");
-      expect(code).toContain("createFromReadableStream");
+      expect(code).toContain("import.meta.hot");
     });
 
-    it("loads entry-ssr with renderToHtml export", () => {
+    it("loads entry-client-hydrate with route-based hydration", () => {
       const plugins = fabrkPlugin();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
@@ -109,15 +108,14 @@ describe("RSC Integration", () => {
       configHook.call({} as never, { root: "/tmp/test" });
 
       const load = virtualPlugin.load as (id: string) => string | null;
-      const code = load.call({} as never, "\0virtual:fabrk/entry-ssr");
+      const code = load.call({} as never, "\0virtual:fabrk/entry-client-hydrate");
 
-      expect(code).toContain("renderToHtml");
-      expect(code).toContain("injectRSCPayload");
-      expect(code).toContain("createFromReadableStream");
-      expect(code).toContain("renderToReadableStream");
+      expect(code).toContain("hydrateRoot");
+      expect(code).toContain("virtual:fabrk/routes");
+      expect(code).toContain("__FABRK_NAVIGATE__");
     });
 
-    it("loads entry-rsc with renderRsc export", () => {
+    it("returns null for removed RSC virtual modules", () => {
       const plugins = fabrkPlugin();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
@@ -129,36 +127,9 @@ describe("RSC Integration", () => {
       configHook.call({} as never, { root: "/tmp/test" });
 
       const load = virtualPlugin.load as (id: string) => string | null;
-      const code = load.call({} as never, "\0virtual:fabrk/entry-rsc");
 
-      expect(code).toContain("renderRsc");
-      expect(code).toContain("createClientManifest");
-      expect(code).toContain("renderToReadableStream");
-    });
-
-    it("does not resolve unknown virtual modules", () => {
-      const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
-      const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
-
-      expect(resolveId.call({} as never, "virtual:fabrk/unknown")).toBeNull();
-      expect(resolveId.call({} as never, "react")).toBeNull();
-    });
-  });
-
-  describe("rsc-integration plugin graceful fallback", () => {
-    it("config hook does not throw when @vitejs/plugin-rsc is missing", async () => {
-      const plugins = fabrkPlugin({ rsc: true });
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const rscPlugin = plugins.find((p) => p.name === "fabrk:rsc-integration")!;
-      const configHook = rscPlugin.config as (config: { plugins?: unknown[] }) => Promise<void>;
-
-      const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
-      const mockConfig = { plugins: [] };
-      await expect(configHook.call({} as never, mockConfig)).resolves.not.toThrow();
-
-      logSpy.mockRestore();
+      expect(load.call({} as never, "\0virtual:fabrk/entry-rsc")).toBeNull();
+      expect(load.call({} as never, "\0virtual:fabrk/entry-ssr")).toBeNull();
     });
   });
 });

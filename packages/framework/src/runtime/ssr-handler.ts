@@ -27,8 +27,6 @@ export interface SSRHandlerOptions {
   middlewarePath?: string;
   /** Resolved app directory path for loading boundary files. */
   appDir?: string;
-  /** Whether RSC mode is active (plugin-rsc installed and configured). */
-  rsc?: boolean;
   /** i18n configuration for locale-prefix routing. */
   i18n?: I18nConfig;
   /** @internal Override react module loading for testing. */
@@ -51,7 +49,7 @@ export async function handleRequest(
   request: Request,
   options: SSRHandlerOptions
 ): Promise<Response> {
-  const { routes, viteServer, htmlShell = DEFAULT_HTML_SHELL, middlewarePath, appDir, rsc, i18n } = options;
+  const { routes, viteServer, htmlShell = DEFAULT_HTML_SHELL, middlewarePath, appDir, i18n } = options;
 
   let mwResponseHeaders: Headers | undefined;
 
@@ -82,11 +80,6 @@ export async function handleRequest(
   const url = new URL(request.url);
   let pathname = url.pathname;
 
-  const isRscRequest = pathname.endsWith(".rsc");
-  if (isRscRequest) {
-    pathname = pathname.slice(0, -4) || "/";
-  }
-
   let locale: string | undefined;
   if (i18n) {
     const extracted = extractLocale(pathname, i18n);
@@ -111,13 +104,9 @@ export async function handleRequest(
     return handleApiRoute(request, matched, viteServer);
   }
 
-  if (isRscRequest && rsc) {
-    return handleRscPayload(matched, viteServer, appDir);
-  }
-
   const response = await runWithContext(request, () =>
     startSpan("fabrk.ssr.request", () =>
-      handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, rsc, locale)
+      handlePageRoute(request, matched, viteServer, htmlShell, options._reactLoader, appDir, locale)
     )
   );
 
@@ -177,82 +166,6 @@ async function handleApiRoute(
   }
 }
 
-async function handleRscPayload(
-  matched: RouteMatch,
-  viteServer: ViteDevServer,
-  _appDir?: string,
-): Promise<Response> {
-  try {
-    const pageMod = await viteServer.ssrLoadModule(matched.route.filePath);
-    const PageComponent = pageMod.default;
-
-    if (typeof PageComponent !== "function") {
-      return new Response("Page component must export a default function", {
-        status: 500,
-        headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
-      });
-    }
-
-    const rscEntry = await viteServer.ssrLoadModule("virtual:fabrk/entry-rsc");
-    const renderRsc = rscEntry.renderRsc;
-
-    if (typeof renderRsc !== "function") {
-      return new Response("RSC renderer not available", {
-        status: 500,
-        headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
-      });
-    }
-
-    const React = await import("react");
-    const createElement = React.createElement ?? React.default?.createElement;
-
-    if (typeof createElement !== "function") {
-      return new Response("React not available", {
-        status: 500,
-        headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
-      });
-    }
-
-    let element: React.ReactNode = createElement(PageComponent as React.FC<Record<string, unknown>>, { params: matched.params });
-
-    for (const layoutPath of matched.route.layoutPaths.slice().reverse()) {
-      const layoutMod = await viteServer.ssrLoadModule(layoutPath);
-      if (typeof layoutMod.default === "function") {
-        element = createElement(layoutMod.default as React.FC<Record<string, unknown>>, { children: element });
-      }
-    }
-
-    const rscStream = renderRsc(element);
-
-    return new Response(rscStream, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/x-component",
-        "Transfer-Encoding": "chunked",
-        ...buildSecurityHeaders(),
-      },
-    });
-  } catch (err) {
-    if (isRedirectError(err)) {
-      return new Response(null, {
-        status: err.statusCode,
-        headers: { Location: err.url, ...buildSecurityHeaders() },
-      });
-    }
-    if (isNotFoundError(err)) {
-      return new Response("Not Found", {
-        status: 404,
-        headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
-      });
-    }
-    console.error("[fabrk] RSC payload render error:", err);
-    return new Response("Internal server error", {
-      status: 500,
-      headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
-    });
-  }
-}
-
 async function handlePageRoute(
   request: Request,
   matched: RouteMatch,
@@ -260,7 +173,6 @@ async function handlePageRoute(
   htmlShell: (options: { head: string; body: string }) => string,
   reactLoader?: ReactModuleLoader,
   appDir?: string,
-  rsc?: boolean,
   locale?: string,
 ): Promise<Response> {
   try {
@@ -412,30 +324,6 @@ async function handlePageRoute(
       for (let i = layouts.length - 1; i >= 0; i--) {
         element = createElement(layouts[i], { children: element });
       }
-    }
-
-    if (rsc) {
-      try {
-        const rscEntry = await viteServer.ssrLoadModule("virtual:fabrk/entry-rsc");
-        const ssrEntry = await viteServer.ssrLoadModule("virtual:fabrk/entry-ssr");
-
-        if (typeof rscEntry.renderRsc === "function" && typeof ssrEntry.renderToHtml === "function") {
-          const rscStream = rscEntry.renderRsc(element);
-          const htmlStream = await ssrEntry.renderToHtml(rscStream, {
-            bootstrapScript: `window.__FABRK_RSC__ = true;`,
-          });
-
-          return new Response(htmlStream, {
-            status: 200,
-            headers: {
-              ...routeHeaders,
-              "Content-Type": "text/html; charset=utf-8",
-              "Transfer-Encoding": "chunked",
-              ...buildSecurityHeaders(),
-            },
-          });
-        }
-      } catch { /* ignore */ }
     }
 
     const renderToReadableStream = reactDomServer.renderToReadableStream ?? reactDomServer.default?.renderToReadableStream;

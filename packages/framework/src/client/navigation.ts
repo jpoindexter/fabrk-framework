@@ -79,7 +79,7 @@ function isSafeUrl(url: string): boolean {
 }
 
 /**
- * Swap page content for non-RSC SPA navigation.
+ * Swap page content for SPA navigation.
  * HTML originates from same-origin server responses only (enforced by isSafeUrl).
  */
 function swapContent(html: string): void {
@@ -114,9 +114,7 @@ export async function navigateImpl(
     history.replaceState({}, "", url);
   }
 
-  if (window.__FABRK_RSC_NAVIGATE__) {
-    await window.__FABRK_RSC_NAVIGATE__(url);
-  } else if (typeof window.__FABRK_NAVIGATE__ === "function") {
+  if (typeof window.__FABRK_NAVIGATE__ === "function") {
     window.__FABRK_NAVIGATE__();
   } else {
     let html = getPrefetchResponse(url);

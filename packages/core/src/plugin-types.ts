@@ -489,12 +489,6 @@ export interface AuditEvent {
 
 // STORE INTERFACES
 
-/**
- * Base store interface pattern.
- * Each adapter package provides concrete implementations (e.g. PrismaPaymentStore).
- * The framework ships with InMemory stores for development.
- */
-
 export interface PaymentStore {
   getCustomer(userId: string): Promise<CustomerInfo | null>
   saveCustomer(customer: CustomerInfo): Promise<void>

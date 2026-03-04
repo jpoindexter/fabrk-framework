@@ -100,7 +100,6 @@ export function defineStateGraph<S>(config: StateGraphConfig<S>): {
       let input = initialInput;
       let cycles = 0;
 
-      // If resuming from an interrupt, jump to the target node with patched state
       if (opts?.resumeFrom) {
         currentNode = opts.resumeFrom.node;
         if (opts.resumeFrom.command.update) {
@@ -159,8 +158,6 @@ export function defineStateGraph<S>(config: StateGraphConfig<S>): {
           state = result.state;
         }
 
-        // Resolve next node: check for a conditional edge override first,
-        // then fall back to the value returned by the node itself.
         const edge = config.edges.find((e) => e.from === currentNode);
         const resolvedNext: string = edge
           ? typeof edge.to === 'function'
@@ -168,8 +165,7 @@ export function defineStateGraph<S>(config: StateGraphConfig<S>): {
             : edge.to
           : result.nextNode;
 
-        // If resuming from an interrupt and this is the resume node (cycles === 0),
-        // use command.goto to override the next node.
+        // On the first cycle of a resume, command.goto overrides the computed next node.
         const isResumeNode = opts?.resumeFrom && currentNode === opts.resumeFrom.node && cycles === 0;
         const finalNext = isResumeNode && opts?.resumeFrom?.command.goto
           ? opts.resumeFrom.command.goto

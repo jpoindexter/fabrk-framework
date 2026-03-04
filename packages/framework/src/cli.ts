@@ -2,6 +2,8 @@
 
 import path from "node:path";
 import fs from "node:fs";
+import { runBuild } from "./cli/build-command";
+import { runCheck } from "./cli/check-command";
 
 const VERSION = "0.2.0";
 const command = process.argv[2];
@@ -112,325 +114,7 @@ async function dev(): Promise<void> {
 }
 
 async function build(): Promise<void> {
-  const root = process.cwd();
-  const args = parseArgs(rawArgs);
-  const target = typeof args.target === "string" ? args.target : "node";
-
-  // eslint-disable-next-line no-console
-  console.log(`\n  fabrk build v${VERSION} (target: ${target})\n`);
-
-  const { loadFabrkConfig } = await import("./config/fabrk-config");
-  const fabrkConfig = await loadFabrkConfig(root);
-
-  const { build: viteBuild } = await import("vite");
-  const { fabrkPlugin, agentPlugin, dashboardPlugin, userConfigPath } =
-    await loadFabrkViteConfig(root);
-
-  const buildPlugins = userConfigPath
-    ? []
-    : [fabrkPlugin(), agentPlugin(), dashboardPlugin()];
-
-  // Step 1: Client build → dist/client/
-  // eslint-disable-next-line no-console
-  console.log("  [1/6] Building client bundle...");
-  await viteBuild({
-    configFile: userConfigPath ?? false,
-    root,
-    plugins: buildPlugins,
-    build: {
-      outDir: "dist/client",
-      manifest: true,
-    },
-  });
-
-  // Step 2: SSR build → dist/server/
-  const appDir = path.join(root, "app");
-  if (fs.existsSync(appDir)) {
-    const { scanRoutes } = await import("./runtime/router");
-    const routes = scanRoutes(appDir);
-
-    if (routes.length > 0) {
-      // eslint-disable-next-line no-console
-      console.log("  [2/6] Building server bundle...");
-
-      const { generateServerEntry } = await import("./runtime/server-entry-gen");
-      const entrySource = generateServerEntry(routes, appDir);
-
-      // Write generated entry to temp file
-      const tmpEntryPath = path.join(root, ".fabrk-server-entry.ts");
-      fs.writeFileSync(tmpEntryPath, entrySource);
-
-      try {
-        if (target === "worker") {
-          // Worker build — export default { fetch } format
-          const workerWrapper = `
-import { createFetchHandler } from "${path.resolve(root, "node_modules/@fabrk/framework/dist/runtime/worker-entry.js")}";
-import { routes, layoutModules, boundaryModules } from "./.fabrk-server-entry";
-
-const modules = new Map();
-routes.forEach(r => modules.set(r.filePath, r.module));
-
-const layoutMap = new Map();
-Object.entries(layoutModules).forEach(([k, v]) => layoutMap.set(k, v));
-
-const handler = createFetchHandler({
-  routes,
-  modules,
-  layoutModules: layoutMap,
-});
-
-export default { fetch: handler.fetch };
-`;
-          const workerEntryPath = path.join(root, ".fabrk-worker-entry.ts");
-          fs.writeFileSync(workerEntryPath, workerWrapper);
-
-          await viteBuild({
-            configFile: false,
-            root,
-            build: {
-              ssr: workerEntryPath,
-              outDir: "dist/server",
-              rollupOptions: {
-                output: { entryFileNames: "worker.js" },
-              },
-            },
-            plugins: buildPlugins,
-          });
-
-          // Cleanup
-          fs.unlinkSync(workerEntryPath);
-        } else {
-          // Node SSR build
-          await viteBuild({
-            configFile: userConfigPath ?? false,
-            root,
-            build: {
-              ssr: tmpEntryPath,
-              outDir: "dist/server",
-            },
-            plugins: buildPlugins,
-          });
-        }
-      } finally {
-        // Cleanup temp entry
-        if (fs.existsSync(tmpEntryPath)) {
-          fs.unlinkSync(tmpEntryPath);
-        }
-      }
-    } else {
-      // eslint-disable-next-line no-console
-      console.log("  [2/6] No routes found, skipping server build.");
-    }
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("  [2/6] No app/ directory, skipping server build.");
-  }
-
-  // Step 3: Static generation (pre-render eligible pages)
-  // eslint-disable-next-line no-console
-  console.log("  [3/6] Static generation...");
-  const serverDir = path.join(root, "dist", "server");
-  if (fs.existsSync(serverDir)) {
-    try {
-      // Find the built server entry
-      const serverFiles = fs.readdirSync(serverDir).filter(
-        (f) => f.endsWith(".js") || f.endsWith(".mjs"),
-      );
-      if (serverFiles.length > 0) {
-        const serverEntryPath = path.join(serverDir, serverFiles[0]);
-        const serverEntry = await import(serverEntryPath);
-
-        const { collectStaticRoutes, renderStaticPage } = await import(
-          "./runtime/static-export"
-        );
-
-        const modulesMap = new Map<string, Record<string, unknown>>();
-        if (serverEntry.routes) {
-          for (const r of serverEntry.routes) {
-            modulesMap.set(r.filePath, r.module);
-          }
-        }
-
-        const layoutModulesMap = new Map<string, Record<string, unknown>>();
-        if (serverEntry.layoutModules) {
-          for (const [k, v] of Object.entries(serverEntry.layoutModules)) {
-            layoutModulesMap.set(k, v as Record<string, unknown>);
-          }
-        }
-
-        const staticRoutes = await collectStaticRoutes({
-          routes: serverEntry.routes ?? [],
-          modules: modulesMap,
-        });
-
-        if (staticRoutes.length > 0) {
-          const clientDir = path.join(root, "dist", "client");
-          let generated = 0;
-
-          for (const sr of staticRoutes) {
-            try {
-              const mod = modulesMap.get(sr.route.filePath);
-              if (!mod) continue;
-
-              const html = await renderStaticPage(
-                mod,
-                sr.params,
-                layoutModulesMap,
-                sr.route.layoutPaths,
-              );
-
-              const outPath = path.join(clientDir, sr.outputPath);
-              const outDir = path.dirname(outPath);
-              if (!fs.existsSync(outDir)) {
-                fs.mkdirSync(outDir, { recursive: true });
-              }
-              fs.writeFileSync(outPath, html);
-              generated++;
-            } catch (err) {
-              console.warn(
-                `  [fabrk] Static render failed for ${sr.outputPath}:`,
-                err,
-              );
-            }
-          }
-
-          // eslint-disable-next-line no-console
-          console.log(
-            `        Generated ${generated} static page(s)`,
-          );
-        } else {
-          // eslint-disable-next-line no-console
-          console.log("        No static pages to generate.");
-        }
-      } else {
-        // eslint-disable-next-line no-console
-        console.log("        No server entry found, skipping.");
-      }
-    } catch (err) {
-      console.warn("  [fabrk] Static generation failed:", err);
-    }
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("        No server build, skipping.");
-  }
-
-  // Step 4: Sitemap + robots.txt
-  // eslint-disable-next-line no-console
-  console.log("  [4/6] Sitemap generation...");
-  if (fabrkConfig.siteUrl) {
-    try {
-      const appDir = path.join(root, "app");
-      if (fs.existsSync(appDir)) {
-        const { scanRoutes } = await import("./runtime/router");
-        const { generateSitemap } = await import("./build/sitemap-gen");
-        const sitemapRoutes = scanRoutes(appDir);
-
-        if (sitemapRoutes.length > 0) {
-          const clientDir = path.join(root, "dist", "client");
-          await generateSitemap({
-            baseUrl: fabrkConfig.siteUrl,
-            routes: sitemapRoutes,
-            outDir: clientDir,
-          });
-          // eslint-disable-next-line no-console
-          console.log(
-            `        Generated sitemap.xml + robots.txt (${sitemapRoutes.filter((r) => r.type === "page").length} pages)`
-          );
-        } else {
-          // eslint-disable-next-line no-console
-          console.log("        No routes for sitemap.");
-        }
-      } else {
-        // eslint-disable-next-line no-console
-        console.log("        No app/ directory, skipping.");
-      }
-    } catch (err) {
-      console.warn("  [fabrk] Sitemap generation failed:", err);
-    }
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("        No siteUrl in fabrk.config — skipping. Set siteUrl to enable.");
-  }
-
-  // Step 5: Generate AGENTS.md
-  // eslint-disable-next-line no-console
-  console.log("  [5/6] Generating AGENTS.md...");
-  try {
-    const { scanAgents } = await import("./agents/scanner");
-    const { scanTools } = await import("./tools/scanner");
-
-    const scannedAgents = scanAgents(root);
-    const scannedTools = scanTools(root);
-
-    if (scannedAgents.length > 0 || scannedTools.length > 0) {
-      const { generateAgentsMd } = await import("./build/agents-md");
-      const { loadToolDefinitions } = await import("./tools/loader");
-
-      // Load real tool definitions for descriptions
-      const toolDefs = await loadToolDefinitions(scannedTools);
-
-      // Load real agent definitions
-      const agentEntries = await Promise.all(
-        scannedAgents.map(async (a) => {
-          try {
-            const mod = await import(a.filePath);
-            const def = mod.default ?? mod;
-            if (def && typeof def === "object" && typeof def.model === "string") {
-              return {
-                name: a.name,
-                route: a.routePattern,
-                model: def.model as string,
-                auth: (def.auth as string) ?? "none",
-                tools: (def.tools as string[]) ?? [],
-              };
-            }
-          } catch { /* skip invalid agent files */ }
-          return {
-            name: a.name,
-            route: a.routePattern,
-            model: "default",
-            auth: "none",
-            tools: [] as string[],
-          };
-        })
-      );
-
-      const md = generateAgentsMd({
-        agents: agentEntries,
-        tools: toolDefs.map((t) => ({
-          name: t.name,
-          description: t.description,
-        })),
-        prompts: [],
-      });
-
-      const outPath = path.join(root, "AGENTS.md");
-      fs.writeFileSync(outPath, md);
-      // eslint-disable-next-line no-console
-      console.log(
-        `        Generated (${scannedAgents.length} agents, ${scannedTools.length} tools)`
-      );
-    } else {
-      // eslint-disable-next-line no-console
-      console.log("        No agents or tools found, skipping.");
-    }
-  } catch (err) {
-    console.warn("  [fabrk] AGENTS.md generation failed:", err);
-  }
-
-  // Step 5: Done
-  // eslint-disable-next-line no-console
-  console.log("  [6/6] Build complete.\n");
-  // eslint-disable-next-line no-console
-  console.log("  Output:");
-  // eslint-disable-next-line no-console
-  console.log("    dist/client/ — static assets");
-  if (fs.existsSync(path.join(root, "dist", "server"))) {
-    // eslint-disable-next-line no-console
-    console.log("    dist/server/ — SSR bundle");
-  }
-  // eslint-disable-next-line no-console
-  console.log("\n  Run `fabrk start` to serve.\n");
+  await runBuild(process.cwd(), rawArgs, VERSION, loadFabrkViteConfig);
 }
 
 async function start(): Promise<void> {
@@ -452,10 +136,8 @@ async function start(): Promise<void> {
   const hasServerEntry = fs.existsSync(serverDir);
 
   if (hasServerEntry) {
-    // Use our production server with SSR
     const { startProdServer } = await import("./runtime/prod-server");
 
-    // Find the server entry file (could be .js or .mjs)
     let serverEntryPath = "";
     const candidates = [
       path.join(serverDir, ".fabrk-server-entry.js"),
@@ -470,7 +152,7 @@ async function start(): Promise<void> {
       }
     }
 
-    // If no specific entry found, look for any .js file
+    // Fall back to the first .js file in dist/server/
     if (!serverEntryPath) {
       const files = fs.readdirSync(serverDir).filter((f) => f.endsWith(".js") || f.endsWith(".mjs"));
       if (files.length > 0) {
@@ -483,7 +165,6 @@ async function start(): Promise<void> {
       process.exit(1);
     }
 
-    // Check for built middleware
     let middlewarePath: string | undefined;
     const middlewareCandidates = [
       path.join(serverDir, "middleware.js"),
@@ -635,139 +316,7 @@ async function agents(): Promise<void> {
 }
 
 async function check(): Promise<void> {
-  const root = process.cwd();
-  // eslint-disable-next-line no-console
-  console.log(`\n  fabrk check v${VERSION}\n`);
-
-  let issues = 0;
-
-  // Check Node.js version
-  const nodeVersion = process.versions.node;
-  const majorVersion = parseInt(nodeVersion.split(".")[0], 10);
-  if (majorVersion < 22) {
-    // eslint-disable-next-line no-console
-    console.log(`  [WARN] Node.js ${nodeVersion} detected — Node.js 22+ recommended`);
-    issues++;
-  } else {
-    // eslint-disable-next-line no-console
-    console.log(`  [OK]   Node.js ${nodeVersion}`);
-  }
-
-  // Check for package.json
-  const pkgPath = path.join(root, "package.json");
-  if (fs.existsSync(pkgPath)) {
-    // eslint-disable-next-line no-console
-    console.log("  [OK]   package.json found");
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("  [FAIL] No package.json found");
-    issues++;
-  }
-
-  // Check for fabrk config
-  const hasConfigTs = fs.existsSync(path.join(root, "fabrk.config.ts"));
-  const hasConfigJs = fs.existsSync(path.join(root, "fabrk.config.js"));
-  if (hasConfigTs || hasConfigJs) {
-    // eslint-disable-next-line no-console
-    console.log(`  [OK]   ${hasConfigTs ? "fabrk.config.ts" : "fabrk.config.js"} found`);
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("  [INFO] No fabrk.config found (using defaults)");
-  }
-
-  // Check for app directory
-  const hasAppDir = fs.existsSync(path.join(root, "app"));
-  if (hasAppDir) {
-    // eslint-disable-next-line no-console
-    console.log("  [OK]   app/ directory found");
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("  [INFO] No app/ directory (no file-system routing)");
-  }
-
-  // Check for vite config
-  const viteConfigs = ["vite.config.ts", "vite.config.js", "vite.config.mjs"];
-  const hasViteConfig = viteConfigs.some((f) => fs.existsSync(path.join(root, f)));
-  if (hasViteConfig) {
-    // eslint-disable-next-line no-console
-    console.log("  [OK]   Vite config found");
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("  [INFO] No vite config (fabrk will use defaults)");
-  }
-
-  // Check agents
-  try {
-    const { scanAgents } = await import("./agents/scanner");
-    const agents = scanAgents(root);
-    if (agents.length > 0) {
-      // eslint-disable-next-line no-console
-      console.log(`  [OK]   ${agents.length} agent(s) discovered`);
-
-      // Validate agent definitions
-      for (const agent of agents) {
-        try {
-          const mod = await import(agent.filePath);
-          const def = mod.default ?? mod;
-          if (!def || typeof def !== "object") {
-            // eslint-disable-next-line no-console
-            console.log(`  [WARN] Agent "${agent.name}" has no valid definition export`);
-            issues++;
-          } else if (typeof def.model !== "string") {
-            // eslint-disable-next-line no-console
-            console.log(`  [WARN] Agent "${agent.name}" is missing a "model" field`);
-            issues++;
-          }
-        } catch {
-          // eslint-disable-next-line no-console
-          console.log(`  [WARN] Agent "${agent.name}" failed to load — check for syntax errors`);
-          issues++;
-        }
-      }
-    } else {
-      // eslint-disable-next-line no-console
-      console.log("  [INFO] No agents found");
-    }
-  } catch {
-    // eslint-disable-next-line no-console
-    console.log("  [INFO] Agent scanning not available");
-  }
-
-  // Check tools
-  try {
-    const { scanTools } = await import("./tools/scanner");
-    const tools = scanTools(root);
-    if (tools.length > 0) {
-      // eslint-disable-next-line no-console
-      console.log(`  [OK]   ${tools.length} tool(s) discovered`);
-    } else {
-      // eslint-disable-next-line no-console
-      console.log("  [INFO] No tools found");
-    }
-  } catch {
-    // eslint-disable-next-line no-console
-    console.log("  [INFO] Tool scanning not available");
-  }
-
-  // Check for TypeScript
-  const hasTsConfig = fs.existsSync(path.join(root, "tsconfig.json"));
-  if (hasTsConfig) {
-    // eslint-disable-next-line no-console
-    console.log("  [OK]   tsconfig.json found");
-  } else {
-    // eslint-disable-next-line no-console
-    console.log("  [INFO] No tsconfig.json");
-  }
-
-  // eslint-disable-next-line no-console
-  console.log();
-  if (issues === 0) {
-    // eslint-disable-next-line no-console
-    console.log("  All checks passed.\n");
-  } else {
-    // eslint-disable-next-line no-console
-    console.log(`  ${issues} issue(s) found.\n`);
-  }
+  await runCheck(process.cwd(), VERSION);
 }
 
 async function test(): Promise<void> {
@@ -775,17 +324,8 @@ async function test(): Promise<void> {
   // eslint-disable-next-line no-console
   console.log(`\n  fabrk test v${VERSION}\n`);
 
-  // Check if vitest is available
   try {
     const { execFileSync } = await import("node:child_process");
-
-    // Look for test files
-    const testPatterns = [
-      path.join(root, "**/*.test.ts"),
-      path.join(root, "**/*.test.tsx"),
-      path.join(root, "**/*.spec.ts"),
-      path.join(root, "**/*.spec.tsx"),
-    ];
 
     // eslint-disable-next-line no-console
     console.log("  Running vitest...\n");

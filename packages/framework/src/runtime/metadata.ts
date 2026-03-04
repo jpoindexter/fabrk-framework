@@ -82,7 +82,6 @@ export async function resolveMetadata(
   mod: Record<string, unknown>,
   context: GenerateMetadataContext
 ): Promise<Metadata> {
-  // Dynamic metadata takes priority
   if (typeof mod.generateMetadata === "function") {
     const result = await mod.generateMetadata(context);
     if (result && typeof result === "object") return result as Metadata;
@@ -103,7 +102,6 @@ export function mergeMetadata(layers: Metadata[]): Metadata {
   let titleTemplate: string | undefined;
 
   for (const layer of layers) {
-    // Title resolution with template propagation
     if (layer.title !== undefined) {
       if (typeof layer.title === "object") {
         const titleObj = layer.title;

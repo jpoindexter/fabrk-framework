@@ -26,7 +26,6 @@ export function agentAsTool(
       const message = typeof input.message === "string" ? input.message : JSON.stringify(input);
       const handler = await handlerFactory(options.name);
 
-      // Read and increment delegation depth from parent request
       const parentDepth = parseInt(
         options.parentRequest?.headers.get(DEPTH_HEADER) ?? "0",
         10
@@ -52,7 +51,6 @@ export function agentAsTool(
 
       const contentType = res.headers.get("Content-Type") ?? "";
       if (contentType.includes("text/event-stream")) {
-        // Collect SSE stream into text
         const text = await res.text();
         const lines = text.split("\n").filter((l) => l.startsWith("data: "));
         let result = "";

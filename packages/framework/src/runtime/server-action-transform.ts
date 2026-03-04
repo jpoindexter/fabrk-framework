@@ -71,7 +71,6 @@ function extractExports(code: string): ExportedFn[] {
     exports.push({ name: m[2], isDefault: false, isAsync: !!m[1] });
   }
 
-  // export const name = async (...) => ...
   const constRe = /export\s+const\s+(\w+)\s*=\s*(async\s+)?(?:function|\(|[^=]+=>\s*)/g;
   while ((m = constRe.exec(code)) !== null) {
     const name = m[1];
@@ -80,13 +79,11 @@ function extractExports(code: string): ExportedFn[] {
     }
   }
 
-  // export default async function name(...)
   const defaultFnRe = /export\s+default\s+(async\s+)?function\s+(\w+)/g;
   while ((m = defaultFnRe.exec(code)) !== null) {
     exports.push({ name: m[2], isDefault: true, isAsync: !!m[1] });
   }
 
-  // export default async function(...)  (anonymous)
   if (/export\s+default\s+(async\s+)?function\s*\(/.test(code)) {
     if (!exports.some((e) => e.isDefault)) {
       const asyncMatch = code.match(/export\s+default\s+(async\s+)?function\s*\(/);

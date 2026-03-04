@@ -118,7 +118,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     },
 
     async closeBundle() {
-      // Only run during build (not dev server watch mode)
       if (this.meta?.watchMode !== false) return;
 
       const outDir = path.resolve(root, "dist", "client");
@@ -138,7 +137,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       const staticRoutes = await collectStaticRoutes({ routes, modules });
       let prerendered = 0;
 
-      // ISR pre-render — write pre-rendered HTML for ISR pages to dist/server/isr-prerender/
       const isrPreDir = path.resolve(root, "dist", "server", "isr-prerender");
       let isrPrerendered = 0;
 
@@ -146,7 +144,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
         const mod = modules.get(route.filePath);
 
         if (mod && typeof mod.revalidate === "number") {
-          // ISR page — pre-render to dist/server/isr-prerender/ for warm cache at startup
           try {
             const layoutModules = new Map<string, Record<string, unknown>>();
             for (const lp of route.layoutPaths) {
@@ -171,7 +168,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
           continue;
         }
 
-        // Static page — write directly to dist/client/
         try {
           const layoutModules = new Map<string, Record<string, unknown>>();
           for (const lp of route.layoutPaths) {
@@ -252,7 +248,6 @@ function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin
 
     async config(config) {
       try {
-        // Dynamic string prevents TS from resolving the optional peer dep
         const specifier = "@vitejs/plugin-react";
         const mod = await import(/* @vite-ignore */ specifier);
         const pluginReact = mod.default as (opts?: Record<string, unknown>) => Plugin[];
@@ -263,7 +258,6 @@ function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin
         if (fabrkConfig?.reactCompiler) {
           let compilerAvailable = false;
           try {
-            // Dynamic string prevents TS from resolving the optional peer dep
             const compilerSpecifier = "babel-plugin-react-compiler";
             await import(/* @vite-ignore */ compilerSpecifier);
             compilerAvailable = true;
@@ -362,7 +356,6 @@ if (rootEl) {
   reactRoot = hydrateRoot(rootEl, React.createElement(App));
 }
 
-// RSC navigation: fetch .rsc payload and re-render
 window.__FABRK_RSC_NAVIGATE__ = async function(url) {
   const rscUrl = url.endsWith("/") ? url.slice(0, -1) + ".rsc" : url + ".rsc";
   const response = await fetch(rscUrl);

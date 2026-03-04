@@ -45,7 +45,6 @@ export class InMemoryCheckpointStore implements CheckpointStore {
     }
     const updated = { ...state, updatedAt: Date.now() };
     this.store.set(id, updated);
-    // Also push to history, keyed by agentName:sessionId derived from checkpoint fields
     this._pushHistory(state.agentName, id, updated);
   }
 
@@ -77,7 +76,6 @@ export class InMemoryCheckpointStore implements CheckpointStore {
         `Checkpoint iteration ${targetIteration} not found for ${agentName}:${sessionId}`
       );
     }
-    // Restore as current (use the checkpoint's id as store key)
     await this.save(target.id, target);
     return target;
   }
@@ -93,7 +91,6 @@ export class InMemoryCheckpointStore implements CheckpointStore {
     }
     const entries = this.history.get(key)!;
     entries.push(state);
-    // Evict oldest when over the cap
     if (entries.length > MAX_HISTORY_PER_SESSION) {
       entries.shift();
     }

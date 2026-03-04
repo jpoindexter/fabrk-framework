@@ -88,7 +88,6 @@ export async function handleStartAgent(
       iteration = event.iteration;
     }
 
-    // Checkpoint after each iteration's tool results
     if (event.type === "tool-result" || event.type === "usage") {
       await options.checkpointStore.save(checkpointId, {
         id: checkpointId,

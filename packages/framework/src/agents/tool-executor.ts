@@ -94,7 +94,6 @@ export function createToolExecutor(
 
       const merged = mergeHooks(hooks, tool.hooks);
 
-      // Human-in-the-loop approval check
       if (tool.requiresApproval && merged.onApprovalRequired) {
         const approvalId = crypto.randomUUID();
         const result = await merged.onApprovalRequired(name, input, approvalId);

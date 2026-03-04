@@ -154,10 +154,6 @@ export async function runWorkflow(
   }
 }
 
-/**
- * Determines the id of the step that suspended by finding the first step
- * in the definition whose id does not appear in completed results.
- */
 function findSuspendedStepId(steps: WorkflowStep[], completed: StepResult[]): string {
   const completedIds = new Set(completed.map((r) => r.stepId));
   return findFirstMissingId(steps, completedIds) ?? "unknown";
@@ -190,10 +186,7 @@ export async function resumeWorkflow(
     MAX_STEPS_HARD_CAP
   );
 
-  // Rebuild context from completed steps
   const completedIds = new Set(partialResult.completedSteps.map((r) => r.stepId));
-
-  // Seed history and input from already-completed steps
   const history = partialResult.completedSteps.map((r) => ({
     stepId: r.stepId,
     output: r.output,

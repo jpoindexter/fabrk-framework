@@ -23,8 +23,7 @@ describe("openai-compat", () => {
   });
 
   it("registered compat providers are accessible via registry", async () => {
-    // Import openai-compat to trigger side-effect registrations
-    await import("./openai-compat");
+    await import("./openai-compat-providers");
     const { getProviderByKey, listProviders } = await import("./registry");
 
     const providers = listProviders();
@@ -49,7 +48,7 @@ describe("openai-compat", () => {
   });
 
   it("prefix routing works for compat providers", async () => {
-    await import("./openai-compat");
+    await import("./openai-compat-providers");
     const { getProvider } = await import("./registry");
 
     expect(getProvider("deepseek-chat")?.key).toBe("deepseek");
@@ -61,19 +60,19 @@ describe("openai-compat", () => {
   });
 
   it("groq: prefix routes to groq", async () => {
-    await import("./openai-compat");
+    await import("./openai-compat-providers");
     const { getProvider } = await import("./registry");
     expect(getProvider("groq:llama-3.3-70b")?.key).toBe("groq");
   });
 
   it("together: prefix routes to together", async () => {
-    await import("./openai-compat");
+    await import("./openai-compat-providers");
     const { getProvider } = await import("./registry");
     expect(getProvider("together:meta-llama/Llama-3-70b")?.key).toBe("together");
   });
 
   it("azure: prefix routes to azure", async () => {
-    await import("./openai-compat");
+    await import("./openai-compat-providers");
     const { getProvider } = await import("./registry");
     expect(getProvider("azure:my-deployment")?.key).toBe("azure");
   });
@@ -105,7 +104,7 @@ describe("openai-compat", () => {
   });
 
   it("perplexity sonar prefix is matched before generic llama prefix", async () => {
-    await import("./openai-compat");
+    await import("./openai-compat-providers");
     const { getProvider } = await import("./registry");
     // "llama-3.1-sonar-large" should match perplexity's "llama-3.1-sonar" prefix
     const match = getProvider("llama-3.1-sonar-large-128k-online");

@@ -77,9 +77,7 @@ async function resolveNextAgent(
   };
   const text = (data.choices[0]?.message?.content ?? '').trim();
 
-  // Validate: must be one of the known agent names or END
   if (text === 'END' || agentNames.includes(text)) return text;
-
   // Unknown response → stop to avoid infinite loops
   return 'END';
 }

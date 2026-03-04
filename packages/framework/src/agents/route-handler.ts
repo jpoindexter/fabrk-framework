@@ -6,7 +6,7 @@ import type { MemoryStore } from "./memory/types";
 import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
 import { createLLMBridge } from "./llm-bridge";
-import { callWithFallback, type LLMCallResult } from "./llm-caller";
+import { callWithFallback, resolveToolGenerateFn, resolveToolStreamFn, type LLMCallResult } from "./llm-caller";
 import { checkBudget, recordCost, type BudgetContext } from "./budget-guard";
 import { createAuthGuard } from "../middleware/auth-guard";
 import { buildSecurityHeaders } from "../middleware/security";
@@ -19,7 +19,6 @@ import { compressThread } from "./memory/compress";
 
 const approvalHandler = createApprovalHandler();
 
-/** Serialize message content for memory storage — always produces a string */
 function serializeContentForMemory(content: string | unknown[]): string {
   if (typeof content === "string") return content;
   return JSON.stringify(content);
@@ -104,59 +103,10 @@ function agentLoopEventToSSE(event: AgentLoopEvent): SSEEvent | null {
   }
 }
 
-async function resolveGenerateFn(bridge: { provider: string; resolvedModel: string }) {
-  try {
-    const { getProviderByKey } = await import("@fabrk/ai");
-    const adapter = getProviderByKey(bridge.provider);
-    if (adapter) {
-      return adapter.makeGenerateWithTools({
-        openaiModel: bridge.resolvedModel,
-        anthropicModel: bridge.resolvedModel,
-        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
-      });
-    }
-  } catch {
-    // Fall through to core providers
-  }
-  if (bridge.provider === "anthropic") {
-    const { anthropicGenerateWithTools } = await import("@fabrk/ai");
-    return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-      anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
-  }
-  const { openaiGenerateWithTools } = await import("@fabrk/ai");
-  return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-    openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
-}
-
-async function resolveStreamFn(bridge: { provider: string; resolvedModel: string }) {
-  try {
-    const { getProviderByKey } = await import("@fabrk/ai");
-    const adapter = getProviderByKey(bridge.provider);
-    if (adapter) {
-      return adapter.makeStreamWithTools({
-        openaiModel: bridge.resolvedModel,
-        anthropicModel: bridge.resolvedModel,
-        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
-      });
-    }
-  } catch {
-    // Fall through to core providers
-  }
-  if (bridge.provider === "anthropic") {
-    const { anthropicStreamWithTools } = await import("@fabrk/ai");
-    return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-      anthropicStreamWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
-  }
-  const { openaiStreamWithTools } = await import("@fabrk/ai");
-  return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
-    openaiStreamWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
-}
-
 export function createAgentHandler(options: AgentHandlerOptions) {
   const authGuard = createAuthGuard(options.auth);
   const agentName = options.model.split("/").pop() || "agent";
 
-  // Build long-term memory tools if configured
   const longTermConfig = typeof options.memory === "object" ? options.memory?.longTerm : undefined;
   const longTermTools: ToolDefinition[] = [];
   if (longTermConfig && longTermConfig.autoInjectTool !== false) {
@@ -271,10 +221,8 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       ? body.sessionId.slice(0, 128)
       : "default";
 
-    // Per-user and per-tenant budgets must only come from authenticated middleware
-    // context, never from raw client-supplied request headers. Reading x-user-id /
-    // x-tenant-id directly would allow any caller to spoof another user's budget
-    // bucket. Pass these values via AgentHandlerOptions instead.
+    // Per-user and per-tenant budgets must come from authenticated middleware context,
+    // not raw request headers — any caller could otherwise spoof budget bucket keys.
     const budgetContext: BudgetContext = {};
 
     const budgetError = checkBudget(agentName, sessionId, options.budget, budgetContext);
@@ -282,7 +230,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: budgetError }, 429);
     }
 
-    // Memory: load thread history if threadId provided
     let threadId = typeof body.threadId === "string" ? body.threadId.slice(0, 128) : undefined;
     let historyMessages: Array<{ role: string; content: string | unknown[] }> = [];
 
@@ -293,7 +240,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           return jsonResponse({ error: "Thread not found or does not belong to this agent" }, 404);
         }
 
-        // Compression: run before loading history so the compressed version is used
         const memoryConfig = typeof options.memory === "object" ? options.memory : undefined;
         if (memoryConfig?.compression?.enabled && options.memoryStore) {
           await compressThread(threadId, options.memoryStore, {
@@ -318,7 +264,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     const sanitized = body.messages.map(({ role, content }) => ({ role, content }));
     const allMessages = [...historyMessages, ...sanitized];
 
-    // Working memory: prepend computed context as a system message before systemPrompt
     let workingMemoryPrefix: { role: string; content: string } | undefined;
     const memoryConfig = typeof options.memory === "object" ? options.memory : undefined;
     if (memoryConfig?.workingMemory && options.memoryStore && threadId) {
@@ -340,9 +285,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     const requestStartMs = Date.now();
 
     try {
-      // Agent loop path — when tools are available
       if (hasTools) {
-        // onApprovalRequired: stores resolve in pendingApprovals, suspends until POST /approve
         const onApprovalRequired: ToolExecutorHooks["onApprovalRequired"] = (
           toolName,
           _input,
@@ -364,13 +307,13 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         const getGenerateWithTools = async () => {
           if (options._generateWithTools) return options._generateWithTools;
           const bridge = createLLMBridge({ model: options.model });
-          return resolveGenerateFn(bridge);
+          return resolveToolGenerateFn(bridge);
         };
 
         const getStreamWithTools = async () => {
           if (options._streamWithTools) return options._streamWithTools;
           const bridge = createLLMBridge({ model: options.model });
-          return resolveStreamFn(bridge);
+          return resolveToolStreamFn(bridge);
         };
 
         const getCalculateCost = async () => {
@@ -454,7 +397,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
               outputText: streamContent || undefined,
             });
 
-            // Persist to memory after stream completes
             if (options.memoryStore && threadId) {
               const lastUserMsg = sanitized[sanitized.length - 1];
               if (lastUserMsg) {
@@ -475,7 +417,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           });
         }
 
-        // Batch mode — collect events
         let content = "";
         let totalPromptTokens = 0;
         let totalCompletionTokens = 0;
@@ -521,7 +462,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           outputText: content || undefined,
         });
 
-        // Persist to memory
         if (options.memoryStore && threadId) {
           const lastUserMsg = sanitized[sanitized.length - 1];
           if (lastUserMsg) {
@@ -549,7 +489,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         }, 200);
       }
 
-      // Simple path — no tools
       if (options.stream) {
         return createSSEResponse(async function* (): AsyncGenerator<SSEEvent> {
           let result: LLMCallResult;
@@ -577,7 +516,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
             outputText: result.content || undefined,
           });
 
-          // Persist to memory after streaming completes
           if (options.memoryStore && threadId) {
             const lastUserMsg = sanitized[sanitized.length - 1];
             if (lastUserMsg) {
@@ -632,7 +570,6 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         outputText: result.content || undefined,
       });
 
-      // Persist to memory
       if (options.memoryStore && threadId) {
         const lastUserMsg = sanitized[sanitized.length - 1];
         if (lastUserMsg) {

@@ -232,7 +232,6 @@ async function handlePageRoute(
       }
     }
 
-    // Load island components
     const islandComponents: Record<string, React.ComponentType> = {};
     if (matched.route.islands) {
       for (const [islandName, islandPath] of Object.entries(matched.route.islands)) {
@@ -514,8 +513,6 @@ import "${pageRelative}";
   return template;
 }
 
-// Vite 7's ssrLoadModule without an importer doesn't externalize CJS modules.
-// Native import() handles CJS↔ESM interop correctly via Node.js.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function defaultReactLoader(): Promise<[any, any]> {
   const [rdServer, react] = await Promise.all([

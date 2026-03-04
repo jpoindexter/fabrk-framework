@@ -73,9 +73,6 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     islands,
   } = modules;
 
-  // We use React.createElement throughout to avoid JSX transform issues in SSR
-
-  // Innermost: the page component + islands (each island in its own Suspense)
   const children: React.ReactElement[] = [React.createElement(Page, { key: "__page", params, searchParams })];
 
   if (islands) {
@@ -94,7 +91,6 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     ? React.createElement(Page, { params, searchParams })
     : React.createElement(React.Fragment, null, ...children);
 
-  // Wrap in Suspense if loading.tsx exists
   if (loadingFallback) {
     const Loading = loadingFallback;
     element = React.createElement(
@@ -104,7 +100,6 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     );
   }
 
-  // Wrap in NotFoundBoundary if not-found.tsx exists
   if (notFoundFallback) {
     element = React.createElement(
       NotFoundBoundary,
@@ -112,7 +107,6 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     );
   }
 
-  // Wrap in ErrorBoundary if error.tsx exists
   if (errorFallback) {
     element = React.createElement(
       ErrorBoundary,
@@ -120,12 +114,9 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     );
   }
 
-  // Wrap in layouts (innermost layout first, then outward)
-  // The innermost layout receives parallel route slots as named props
   for (let i = layouts.length - 1; i >= 0; i--) {
     const layoutProps: Record<string, unknown> = { children: element };
 
-    // Pass slot components to the innermost layout
     if (i === layouts.length - 1 && slots) {
       for (const [slotName, SlotComponent] of Object.entries(slots)) {
         layoutProps[slotName] = React.createElement(SlotComponent);
@@ -135,7 +126,6 @@ export function buildPageTree(options: BuildPageTreeOptions): React.ReactElement
     element = React.createElement(layouts[i], layoutProps as { children: React.ReactNode });
   }
 
-  // Outermost: global error boundary
   if (globalErrorFallback) {
     element = React.createElement(
       GlobalErrorBoundary,

@@ -1,5 +1,5 @@
 import type { LLMBridge } from "./llm-bridge";
-import type { LLMMessage, LLMContentPart } from "@fabrk/ai";
+import type { LLMMessage, LLMContentPart, LLMToolSchema, LLMToolResult, LLMStreamEvent, GenerationOptions } from "@fabrk/ai";
 
 export interface LLMCallResult {
   content: string;
@@ -100,6 +100,58 @@ async function callWithRetry(bridge: LLMBridge, messages: Message[]): Promise<LL
     }
   }
   throw new Error("[fabrk] callWithRetry: no attempts configured");
+}
+
+export async function resolveToolGenerateFn(
+  bridge: Pick<LLMBridge, "provider" | "resolvedModel">
+): Promise<(msgs: LLMMessage[], tools: LLMToolSchema[], opts?: GenerationOptions) => Promise<LLMToolResult>> {
+  try {
+    const { getProviderByKey } = await import("@fabrk/ai");
+    const adapter = getProviderByKey(bridge.provider);
+    if (adapter) {
+      return adapter.makeGenerateWithTools({
+        openaiModel: bridge.resolvedModel,
+        anthropicModel: bridge.resolvedModel,
+        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
+      });
+    }
+  } catch {
+    // Fall through to core providers
+  }
+  if (bridge.provider === "anthropic") {
+    const { anthropicGenerateWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+      anthropicGenerateWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
+  }
+  const { openaiGenerateWithTools } = await import("@fabrk/ai");
+  return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+    openaiGenerateWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
+}
+
+export async function resolveToolStreamFn(
+  bridge: Pick<LLMBridge, "provider" | "resolvedModel">
+): Promise<(msgs: LLMMessage[], tools: LLMToolSchema[], opts?: GenerationOptions) => AsyncGenerator<LLMStreamEvent>> {
+  try {
+    const { getProviderByKey } = await import("@fabrk/ai");
+    const adapter = getProviderByKey(bridge.provider);
+    if (adapter) {
+      return adapter.makeStreamWithTools({
+        openaiModel: bridge.resolvedModel,
+        anthropicModel: bridge.resolvedModel,
+        ...({ _model: bridge.resolvedModel } as Record<string, unknown>),
+      });
+    }
+  } catch {
+    // Fall through to core providers
+  }
+  if (bridge.provider === "anthropic") {
+    const { anthropicStreamWithTools } = await import("@fabrk/ai");
+    return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+      anthropicStreamWithTools(msgs, tools, { anthropicModel: bridge.resolvedModel });
+  }
+  const { openaiStreamWithTools } = await import("@fabrk/ai");
+  return (msgs: LLMMessage[], tools: LLMToolSchema[]) =>
+    openaiStreamWithTools(msgs, tools, { openaiModel: bridge.resolvedModel });
 }
 
 export async function callWithFallback(

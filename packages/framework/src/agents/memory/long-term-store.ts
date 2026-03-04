@@ -16,7 +16,7 @@ export interface LongTermStore {
 }
 
 export class InMemoryLongTermStore implements LongTermStore {
-  private entries = new Map<string, LongTermEntry>(); // key: `${namespace}::${key}`
+  private entries = new Map<string, LongTermEntry>();
 
   async set(namespace: string, key: string, value: string, metadata?: Record<string, unknown>): Promise<void> {
     const mapKey = `${namespace}::${key}`;
@@ -49,7 +49,6 @@ export class InMemoryLongTermStore implements LongTermStore {
     return keys;
   }
 
-  // search: exact match score=1.0; substring match score=0.5; no match returns []
   async search(namespace: string, query: string, topK = 10): Promise<Array<{ key: string; value: string; score: number }>> {
     const results: Array<{ key: string; value: string; score: number }> = [];
     for (const entry of this.entries.values()) {

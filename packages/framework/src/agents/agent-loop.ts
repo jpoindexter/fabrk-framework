@@ -66,7 +66,6 @@ export async function* runAgentLoop(
   if (options.inputGuardrails && options.inputGuardrails.length > 0) {
     const lastUser = [...messages].reverse().find((m) => m.role === "user");
     if (lastUser) {
-      // Multimodal messages: concatenate text parts for guardrail checking
       const rawContent = lastUser.content;
       const textContent = typeof rawContent === "string"
         ? rawContent
@@ -216,7 +215,6 @@ export async function* runAgentLoop(
       return;
     }
 
-    // Batch path
     const result = await options.generateWithTools(messages, options.toolSchemas, options.generationOptions);
     const { costUSD } = options.calculateCost(
       options.model,

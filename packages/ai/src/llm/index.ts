@@ -61,6 +61,7 @@ export {
 
 export { makeOpenAICompatAdapter } from './openai-compat'
 export type { OpenAICompatOptions } from './openai-compat'
+import './openai-compat-providers'
 
 export {
   generateWithTools as cohereGenerateWithTools,

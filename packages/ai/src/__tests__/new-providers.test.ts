@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getProvider, listProviders } from '../llm/registry';
-import '../llm/openai-compat'; // trigger registrations
-import '../llm/cohere-tools';  // trigger cohere registration
-import '../llm/bedrock-tools'; // trigger bedrock registration
+import '../llm/openai-compat-providers'; // trigger registrations
+import '../llm/cohere-tools';             // trigger cohere registration
+import '../llm/bedrock-tools';            // trigger bedrock registration
 
 describe('makeOpenAICompatAdapter — baseURL propagation', () => {
   beforeEach(() => { vi.resetModules() })
@@ -24,6 +24,7 @@ describe('makeOpenAICompatAdapter — baseURL propagation', () => {
     }))
 
     const { makeOpenAICompatAdapter } = await import('../llm/openai-compat')
+    await import('../llm/openai-compat-providers')
     const adapter = makeOpenAICompatAdapter({
       key: 'test-provider',
       baseURL: 'https://api.groq.com/openai/v1',

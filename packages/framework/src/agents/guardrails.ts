@@ -117,17 +117,11 @@ export function piiRedactor(): Guardrail {
   };
 }
 
-/** A guardrail that may be async. Extends the sync Guardrail type. */
 export type AsyncGuardrail = (
   content: string,
   ctx: GuardrailContext
 ) => GuardrailResult | Promise<GuardrailResult>;
 
-/**
- * Run all guardrails in parallel via Promise.all.
- * Accepts both sync Guardrail and async AsyncGuardrail.
- * Returns the first blocked result (by array order), or pass if all pass.
- */
 export async function runGuardrailsParallel(
   guardrails: Array<Guardrail | AsyncGuardrail>,
   content: string,

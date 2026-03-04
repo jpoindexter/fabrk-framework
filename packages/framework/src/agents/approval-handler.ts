@@ -10,7 +10,6 @@ interface ApprovalEntry {
   expiresAt?: number;
 }
 
-// Module-level map: agentName -> Map<approvalId, ApprovalEntry>
 export const pendingApprovals = new Map<string, Map<string, ApprovalEntry>>();
 
 /** Remove all entries whose TTL has elapsed across all agents. */

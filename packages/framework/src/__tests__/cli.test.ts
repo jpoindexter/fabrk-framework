@@ -80,7 +80,7 @@ describe("CLI command structure", () => {
     expect(source).toContain("case \"test\":");
 
     expect(source).toContain("createServer");
-    expect(source).toContain("viteBuild");
+    expect(source).toContain("runBuild");
   });
 
   it("cli.ts has correct version", async () => {

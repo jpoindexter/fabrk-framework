@@ -116,6 +116,8 @@ export async function navigateImpl(
 
   if (window.__FABRK_RSC_NAVIGATE__) {
     await window.__FABRK_RSC_NAVIGATE__(url);
+  } else if (typeof window.__FABRK_NAVIGATE__ === "function") {
+    window.__FABRK_NAVIGATE__();
   } else {
     let html = getPrefetchResponse(url);
     if (!html) {

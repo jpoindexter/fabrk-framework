@@ -486,18 +486,33 @@ function extractParams(pattern, pathname) {
   return params;
 }
 
-const pathname = window.location.pathname.replace(/\\/+$/, '') || '/';
-const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
+let reactRoot = null;
 
-for (const route of routes) {
-  if (route.type !== 'page') continue;
-  if (pathname.match(patternToRegex(route.pattern)) && route.module.default) {
-    const params = extractParams(route.pattern, pathname);
-    const root = document.getElementById('root');
-    if (root) hydrateRoot(root, React.createElement(route.module.default, { params, searchParams }));
-    break;
+function renderCurrentRoute() {
+  const pathname = window.location.pathname.replace(/\\/+$/, '') || '/';
+  const searchParams = Object.fromEntries(new URLSearchParams(window.location.search));
+
+  for (const route of routes) {
+    if (route.type !== 'page') continue;
+    if (pathname.match(patternToRegex(route.pattern)) && route.module.default) {
+      const params = extractParams(route.pattern, pathname);
+      window.__FABRK_PARAMS__ = params;
+      const root = document.getElementById('root');
+      if (!root) return;
+      const el = React.createElement(route.module.default, { params, searchParams });
+      if (!reactRoot) {
+        reactRoot = hydrateRoot(root, el);
+      } else {
+        React.startTransition(() => reactRoot.render(el));
+      }
+      break;
+    }
   }
 }
+
+renderCurrentRoute();
+window.__FABRK_NAVIGATE__ = renderCurrentRoute;
+window.addEventListener('popstate', renderCurrentRoute);
 
 if (import.meta.hot) {
   import.meta.hot.accept();

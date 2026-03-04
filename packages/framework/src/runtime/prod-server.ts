@@ -45,8 +45,14 @@ import { handleTTSRequest, handleSTTRequest } from "../agents/voice-handler";
 import { handleRealtimeUpgrade } from "../agents/voice-ws-handler";
 import type { VoiceConfig } from "@fabrk/ai";
 import { createApprovalHandler } from "../agents/approval-handler";
+import { readManifest, getEntryAssets } from "./asset-manifest";
+import type { Manifest } from "./asset-manifest";
 
 const approvalHandler = createApprovalHandler();
+
+// Populated by startProdServer once manifest is loaded
+let _cssTags = "";
+let _scriptTags = "";
 
 export interface ProdServerOptions {
   /** Path to dist/ directory. */
@@ -352,9 +358,11 @@ async function renderPageToString(
 <head>
   <meta charset="UTF-8" />
   ${head}
+${_cssTags}
 </head>
 <body>
   <div id="root">${ssrBody}</div>
+${_scriptTags}
 </body>
 </html>`;
 
@@ -480,10 +488,12 @@ async function handlePageRoute(
 <head>
   <meta charset="UTF-8" />
   ${head}
+${_cssTags}
 </head>
 <body>
   <div id="root">`;
       const suffix = `</div>
+${_scriptTags}
 </body>
 </html>`;
 
@@ -535,9 +545,11 @@ async function handlePageRoute(
 <head>
   <meta charset="UTF-8" />
   ${head}
+${_cssTags}
 </head>
 <body>
   <div id="root">${ssrBody}</div>
+${_scriptTags}
 </body>
 </html>`;
 
@@ -627,6 +639,14 @@ export async function startProdServer(
   } = options;
 
   const clientDir = path.join(distDir, "client");
+
+  // Load Vite manifest to inject asset tags into SSR HTML
+  const _manifest: Manifest | null = readManifest(clientDir);
+  if (_manifest) {
+    const { scripts, styles } = getEntryAssets(_manifest);
+    _cssTags = styles.map((href) => `  <link rel="stylesheet" href="${href}" />`).join("\n");
+    _scriptTags = scripts.map((src) => `  <script type="module" src="${src}"></script>`).join("\n");
+  }
 
   let serverEntry: ServerEntry;
   try {

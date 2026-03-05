@@ -88,7 +88,7 @@ export function defineAgent(options: DefineAgentOptions): AgentDefinition {
     tools: options.tools ?? [],
     budget: options.budget,
     stream: options.stream ?? true,
-    auth: options.auth ?? "none",
+    auth: options.auth ?? "required",
     memory: options.memory,
     agents: options.agents,
     skills: options.skills,

@@ -178,7 +178,7 @@ describe("handleRealtimeUpgrade", () => {
     expect(socket.destroy).toHaveBeenCalled();
   });
 
-  it("allows all origins when allowedOrigins contains wildcard", async () => {
+  it("blocks wildcard origins in production (no credential separation in WebSockets)", async () => {
     const socket = mockSocket();
     const req = mockReq({ headers: { origin: "https://any-origin.com" } });
 
@@ -188,7 +188,7 @@ describe("handleRealtimeUpgrade", () => {
       allowedOrigins: ["*"],
     });
 
-    expect(socket.destroy).not.toHaveBeenCalled();
+    expect(socket.destroy).toHaveBeenCalled();
   });
 
   it("uses env OPENAI_API_KEY as fallback", async () => {

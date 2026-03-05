@@ -135,9 +135,9 @@ export async function handleSTTRequest(
     return jsonResponse({ error: `File too large (max ${maxSizeMB}MB)` }, 413);
   }
 
-  if (file.type && !ALLOWED_AUDIO_TYPES.has(file.type)) {
+  if (!file.type || !ALLOWED_AUDIO_TYPES.has(file.type)) {
     return jsonResponse({
-      error: `Unsupported audio type: ${file.type}`,
+      error: file.type ? `Unsupported audio type: ${file.type}` : "Missing Content-Type on audio file",
     }, 415);
   }
 

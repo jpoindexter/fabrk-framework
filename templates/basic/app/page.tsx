@@ -1,4 +1,6 @@
 import { Button, Card } from '@fabrk/components'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/design-system'
 
 export default function Home() {
   return (
@@ -38,7 +40,7 @@ export default function Home() {
         <div className="text-center">
           <p className="text-sm text-muted-foreground">
             Edit{' '}
-            <code className="bg-muted px-2 py-1 rounded font-mono text-xs">
+            <code className={cn('bg-muted px-2 py-1 text-xs', mode.radius, mode.font)}>
               app/page.tsx
             </code>{' '}
             to get started

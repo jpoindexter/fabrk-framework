@@ -100,6 +100,13 @@ export function createMCPServer(options: {
   prompts?: MCPPromptDef[];
   rateLimit?: number;
   rateLimitWindowMs?: number;
+  /**
+   * Trust `X-Forwarded-For` / `X-Real-IP` headers for per-IP rate limiting.
+   * Only enable when the MCP server sits behind a trusted reverse proxy that
+   * sets these headers. Without a proxy, clients can spoof them and bypass
+   * per-IP limits. Default: `false` (all anonymous requests share one bucket).
+   */
+  trustForwardedFor?: boolean;
 }): MCPServer {
   const toolMap = new Map(options.tools.map((t) => [t.name, t]));
   const limiter = new RateLimiter(options.rateLimit, options.rateLimitWindowMs);
@@ -226,9 +233,14 @@ export function createMCPServer(options: {
   }
 
   async function httpHandler(req: Request): Promise<Response> {
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-      ?? req.headers.get("x-real-ip")
-      ?? "unknown";
+    // Only use forwarded headers when explicitly configured — without a trusted
+    // proxy in front, X-Forwarded-For is client-controlled and can be spoofed
+    // to exhaust other IPs' buckets or bypass per-IP limits entirely.
+    const clientIp = options.trustForwardedFor
+      ? (req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+        ?? req.headers.get("x-real-ip")
+        ?? "unknown")
+      : "unknown";
     const rateResult = limiter.check(clientIp);
     if (!rateResult.allowed) {
       return new Response(

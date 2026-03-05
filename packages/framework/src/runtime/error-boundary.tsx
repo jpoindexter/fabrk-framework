@@ -84,7 +84,7 @@ export class ErrorBoundary extends React.Component<
         React.createElement("h2", null, "Something went wrong"),
         React.createElement(
           "pre",
-          { style: { color: "#e53e3e", whiteSpace: "pre-wrap" } },
+          { style: { color: "var(--color-destructive)", whiteSpace: "pre-wrap" } },
           error.message
         ),
         React.createElement(
@@ -224,7 +224,7 @@ export class GlobalErrorBoundary extends React.Component<
           React.createElement("h1", null, "Application Error"),
           React.createElement(
             "pre",
-            { style: { color: "#e53e3e", whiteSpace: "pre-wrap" } },
+            { style: { color: "var(--color-destructive)", whiteSpace: "pre-wrap" } },
             error.message
           ),
           React.createElement(

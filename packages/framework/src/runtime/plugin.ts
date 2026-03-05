@@ -377,8 +377,12 @@ function generateRoutesModule(routes: Route[]): string {
   const imports: string[] = [];
   const routeEntries: string[] = [];
 
-  for (let i = 0; i < routes.length; i++) {
-    const route = routes[i];
+  // Only include page routes in the client bundle. API routes have server-only
+  // imports (DB credentials, secret keys, etc.) that must not reach the browser.
+  const clientRoutes = routes.filter((r) => r.type === "page");
+
+  for (let i = 0; i < clientRoutes.length; i++) {
+    const route = clientRoutes[i];
     const varName = `route${i}`;
     imports.push(`import * as ${varName} from ${JSON.stringify(route.filePath)};`);
     routeEntries.push(

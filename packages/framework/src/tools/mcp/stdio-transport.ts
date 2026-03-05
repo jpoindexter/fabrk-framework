@@ -1,12 +1,28 @@
 import type { MCPServer } from "./server";
 import type { ToolDefinition } from "../define-tool";
 
-const BLOCKED_COMMANDS = new Set(["sh", "bash", "cmd", "cmd.exe", "powershell", "pwsh", "zsh"]);
+// Allowlist of commands permitted for MCP stdio transport.
+// A blocklist approach (blocking sh, bash, etc.) is trivially bypassed via
+// trailing spaces, mixed case, or unlisted shells. An allowlist ensures only
+// known-safe runtimes can be spawned.
+const ALLOWED_COMMANDS = new Set([
+  "node", "node.exe",
+  "npx", "npx.cmd",
+  "python", "python3", "python.exe", "python3.exe",
+  "uvx",
+  "deno",
+  "bun",
+]);
 
 function validateCommand(command: string): void {
-  const base = command.split("/").pop()?.split("\\").pop() ?? command;
-  if (BLOCKED_COMMANDS.has(base)) {
-    throw new Error(`Blocked command: ${base}. MCP stdio requires a specific binary.`);
+  // Extract the binary name from a full path (e.g. /usr/local/bin/node → node)
+  const base = command.split("/").pop()?.split("\\").pop()?.trim() ?? command;
+  if (!ALLOWED_COMMANDS.has(base.toLowerCase())) {
+    throw new Error(
+      `Command not permitted for MCP stdio: "${base}". ` +
+      `Allowed: ${[...ALLOWED_COMMANDS].join(", ")}. ` +
+      `Pass an absolute path to one of these binaries if needed.`
+    );
   }
 }
 

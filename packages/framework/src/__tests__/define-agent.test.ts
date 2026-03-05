@@ -24,7 +24,7 @@ describe("defineAgent", () => {
     });
 
     expect(agent.stream).toBe(true);
-    expect(agent.auth).toBe("none");
+    expect(agent.auth).toBe("required");
     expect(agent.tools).toEqual([]);
   });
 

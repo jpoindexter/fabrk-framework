@@ -83,16 +83,11 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
         const payloadStr = decodePayload(payload)
         const event = s.webhooks.constructEvent(payloadStr, signature, config.webhookSecret)
 
-        // Replay protection: two-sided timestamp check.
-        // Math.abs() would accept future-dated events (attacker sets timestamp far in
-        // the future so the event remains "valid" forever). Use explicit bounds instead.
-        const now = Math.floor(Date.now() / 1000)
-        if (event.created < now - 300) {
-          return { verified: false, error: 'Webhook timestamp too old (possible replay)' }
-        }
-        if (event.created > now + 30) {
-          return { verified: false, error: 'Webhook timestamp in the future (possible replay)' }
-        }
+        // Note: replay protection is handled by constructEvent() above, which
+        // validates the `t=` timestamp in the Stripe-Signature header (300s window
+        // by default). event.created is the original event creation time, NOT the
+        // delivery timestamp — checking it here would reject legitimate delayed
+        // retries. The idempotency cache below handles duplicate delivery.
 
         if (!stripeCache.markProcessed(event.id)) {
           return {

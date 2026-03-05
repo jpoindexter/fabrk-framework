@@ -12,20 +12,20 @@ describe("createStdioClient — validateCommand", () => {
     it(`rejects blocked shell: ${shell}`, async () => {
       const { createStdioClient } = await import("../tools/mcp/stdio-transport");
       await expect(createStdioClient(shell)).rejects.toThrow(
-        `Blocked command: ${shell}`
+        "Command not permitted for MCP stdio"
       );
     });
   }
 
   it("rejects shell buried in absolute path (/usr/bin/bash)", async () => {
     const { createStdioClient } = await import("../tools/mcp/stdio-transport");
-    await expect(createStdioClient("/usr/bin/bash")).rejects.toThrow("Blocked command: bash");
+    await expect(createStdioClient("/usr/bin/bash")).rejects.toThrow("Command not permitted for MCP stdio");
   });
 
   it("rejects shell buried in Windows-style path (C:\\Windows\\System32\\cmd.exe)", async () => {
     const { createStdioClient } = await import("../tools/mcp/stdio-transport");
     await expect(createStdioClient("C:\\Windows\\System32\\cmd.exe")).rejects.toThrow(
-      "Blocked command: cmd.exe"
+      "Command not permitted for MCP stdio"
     );
   });
 });

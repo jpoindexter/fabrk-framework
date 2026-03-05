@@ -78,8 +78,9 @@ export function LogStream({
       ref={containerRef}
       onScroll={handleScroll}
       className={cn(
-        'overflow-auto border border-border bg-background p-[var(--grid-4)] font-mono text-xs',
+        'overflow-auto border border-border bg-background p-[var(--grid-4)] text-xs',
         mode.radius,
+        mode.font,
         className
       )}
       style={{ maxHeight }}

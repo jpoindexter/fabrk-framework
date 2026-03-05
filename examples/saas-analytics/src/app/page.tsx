@@ -35,6 +35,8 @@ import {
   Globe,
 } from 'lucide-react'
 import { useState } from 'react'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/design-system'
 
 // --- Mock Data ---
 
@@ -109,7 +111,7 @@ const navSections: { title: string; items: NavItemData[] }[] = [
 function NavItem({ item }: { item: NavItemData }) {
   return (
     <button
-      className={`flex w-full items-center gap-2 rounded-md px-2 py-[6px] text-left text-[13px] transition-colors ${
+      className={`flex w-full items-center gap-2 ${mode.radius} px-2 py-[6px] text-left text-[13px] transition-colors ${
         item.active
           ? 'bg-foreground text-background font-medium'
           : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
@@ -119,7 +121,7 @@ function NavItem({ item }: { item: NavItemData }) {
       <span className="flex-1">{item.label}</span>
       {item.badge && (
         <span
-          className={`flex h-[18px] min-w-[18px] items-center justify-center rounded px-1 text-[10px] font-medium ${
+          className={`flex h-[18px] min-w-[18px] items-center justify-center ${mode.radius} px-1 text-[10px] font-medium ${
             item.active ? 'bg-background/20 text-background' : 'bg-secondary text-muted-foreground'
           }`}
         >
@@ -144,7 +146,7 @@ export default function AnalyticsDashboard() {
         {/* Logo */}
         <div className="flex items-center justify-between px-3 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-md bg-foreground text-background text-xs font-bold">
+            <div className={cn('flex size-7 items-center justify-center bg-foreground text-background text-xs font-bold', mode.radius)}>
               F
             </div>
             <span className="text-[13px] font-semibold">FABRK</span>
@@ -156,10 +158,10 @@ export default function AnalyticsDashboard() {
 
         {/* Search */}
         <div className="px-2.5 pb-1">
-          <div className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-[5px] text-muted-foreground">
+          <div className={cn('flex items-center gap-1.5 border border-border bg-background px-2.5 py-[5px] text-muted-foreground', mode.radius)}>
             <Search className="size-3" />
             <span className="text-[12px]">Search</span>
-            <kbd className="ml-auto rounded border border-border bg-card px-1 py-[1px] text-[10px]">/</kbd>
+            <kbd className={cn('ml-auto border border-border bg-card px-1 py-[1px] text-[10px]', mode.radius)}>/</kbd>
           </div>
         </div>
 
@@ -220,7 +222,7 @@ export default function AnalyticsDashboard() {
               <Bell className="size-[15px]" />
               <span className="absolute -top-0.5 -right-0.5 flex size-1.5 rounded-full bg-destructive" />
             </button>
-            <button className="rounded-md border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+            <button className={cn('border border-border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors', mode.radius)}>
               Account Settings
             </button>
           </div>

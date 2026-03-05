@@ -27,9 +27,13 @@ export class InMemoryISRCache implements ISRCacheHandler {
   }
 
   async set(key: string, entry: ISRCacheEntry): Promise<void> {
-    if (!this.map.has(key) && this.map.size >= MAX_ENTRIES) {
+    // Evict before inserting to prevent exceeding MAX_ENTRIES under concurrent
+    // load. Use a synchronous loop (not async) so the check and delete happen
+    // atomically within the JS event-loop turn.
+    while (!this.map.has(key) && this.map.size >= MAX_ENTRIES) {
       const oldest = this.map.keys().next();
-      if (!oldest.done) await this.delete(oldest.value);
+      if (oldest.done) break;
+      this.deleteSync(oldest.value);
     }
 
     this.map.set(key, entry);
@@ -44,10 +48,9 @@ export class InMemoryISRCache implements ISRCacheHandler {
     }
   }
 
-  async delete(key: string): Promise<void> {
+  private deleteSync(key: string): void {
     const entry = this.map.get(key);
     if (!entry) return;
-
     this.map.delete(key);
     for (const tag of entry.tags) {
       const keys = this.tagIndex.get(tag);
@@ -56,6 +59,10 @@ export class InMemoryISRCache implements ISRCacheHandler {
         if (keys.size === 0) this.tagIndex.delete(tag);
       }
     }
+  }
+
+  async delete(key: string): Promise<void> {
+    this.deleteSync(key);
   }
 
   async deleteByTag(tag: string): Promise<void> {

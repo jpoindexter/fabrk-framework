@@ -30,8 +30,9 @@ function isOriginAllowed(
     return false;
   }
 
-  if (config.allowedOrigins.includes("*")) return true;
-
+  // Wildcard "*" is not supported for WebSocket upgrades. Unlike HTTP CORS,
+  // WebSockets have no credential separation at the browser level — any origin
+  // could open a socket and stream audio or receive data. Force explicit origins.
   const origin = req.headers.origin;
   if (!origin) return false;
   return config.allowedOrigins.includes(origin);

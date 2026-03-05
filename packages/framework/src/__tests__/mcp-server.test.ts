@@ -234,13 +234,14 @@ describe("MCP Server", () => {
       expect(res.headers.get("X-RateLimit-Remaining")).toBe("0");
     });
 
-    it("rate limits are per-IP", async () => {
+    it("rate limits are per-IP when trustForwardedFor is enabled", async () => {
       const server = createMCPServer({
         name: "test",
         version: "1.0",
         tools: [],
         rateLimit: 1,
         rateLimitWindowMs: 60_000,
+        trustForwardedFor: true,
       });
 
       const makeReq = (ip: string) =>

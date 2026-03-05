@@ -118,11 +118,12 @@ describe("handleRealtimeUpgrade", () => {
 
   it("passes correct config to RealtimeProxy", async () => {
     const socket = mockSocket();
-    const req = mockReq();
+    const req = mockReq({ headers: { origin: "https://myapp.com" } });
     const config: RealtimeHandlerConfig = {
       voice: { enabled: true, realtime: { enabled: true, model: "gpt-4o-mini-realtime" } },
       openaiApiKey: "custom-key",
       isDev: false,
+      allowedOrigins: ["https://myapp.com"],
       budgetAgentName: "voice-agent",
       budgetSessionId: "session-123",
     };
@@ -165,7 +166,7 @@ describe("handleRealtimeUpgrade", () => {
     expect(socket.destroy).not.toHaveBeenCalled();
   });
 
-  it("allows all origins when no allowedOrigins configured in prod", async () => {
+  it("destroys socket when no allowedOrigins configured in prod (fail-closed)", async () => {
     const socket = mockSocket();
     const req = mockReq();
 
@@ -174,17 +175,31 @@ describe("handleRealtimeUpgrade", () => {
       isDev: false,
     });
 
+    expect(socket.destroy).toHaveBeenCalled();
+  });
+
+  it("allows all origins when allowedOrigins contains wildcard", async () => {
+    const socket = mockSocket();
+    const req = mockReq({ headers: { origin: "https://any-origin.com" } });
+
+    await handleRealtimeUpgrade(req, socket, Buffer.alloc(0), {
+      voice: { enabled: true, realtime: { enabled: true } },
+      isDev: false,
+      allowedOrigins: ["*"],
+    });
+
     expect(socket.destroy).not.toHaveBeenCalled();
   });
 
   it("uses env OPENAI_API_KEY as fallback", async () => {
     process.env.OPENAI_API_KEY = "env-key";
     const socket = mockSocket();
-    const req = mockReq();
+    const req = mockReq({ headers: { origin: "https://myapp.com" } });
 
     await handleRealtimeUpgrade(req, socket, Buffer.alloc(0), {
       voice: { enabled: true, realtime: { enabled: true } },
       isDev: false,
+      allowedOrigins: ["https://myapp.com"],
     });
 
     const proxyArgs = mockUpgrade.mock.calls[0];
@@ -194,12 +209,13 @@ describe("handleRealtimeUpgrade", () => {
   it("prefers explicit apiKey over env", async () => {
     process.env.OPENAI_API_KEY = "env-key";
     const socket = mockSocket();
-    const req = mockReq();
+    const req = mockReq({ headers: { origin: "https://myapp.com" } });
 
     await handleRealtimeUpgrade(req, socket, Buffer.alloc(0), {
       voice: { enabled: true, realtime: { enabled: true } },
       openaiApiKey: "explicit-key",
       isDev: false,
+      allowedOrigins: ["https://myapp.com"],
     });
 
     const proxyArgs = mockUpgrade.mock.calls[0];

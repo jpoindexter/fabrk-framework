@@ -13,6 +13,7 @@ export interface A2AServerOptions {
   name?: string;
   description?: string;
   version?: string;
+  validateRequest?: (req: Request) => boolean | Promise<boolean>;
 }
 
 /**
@@ -33,6 +34,16 @@ export function createA2AServer(
 
   return async (req: Request): Promise<Response | null> => {
     const url = new URL(req.url, options.baseUrl);
+
+    if (options.validateRequest) {
+      const allowed = await options.validateRequest(req);
+      if (!allowed) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+        });
+      }
+    }
 
     if (url.pathname === '/.well-known/agent.json' && req.method === 'GET') {
       const card: A2AAgentCard = {

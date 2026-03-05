@@ -1,5 +1,5 @@
 import type { AuthStore, ApiKeyStore, Session, ApiKeyInfo } from '@fabrk/core'
-import { timingSafeEqual } from '@fabrk/core'
+import { timingSafeEqual, bytesToHex } from '@fabrk/core'
 
 export type { AuthStore, ApiKeyStore }
 
@@ -47,19 +47,26 @@ export class InMemoryAuthStore implements AuthStore {
   private order: string[] = []
   private readonly maxEntries = 10_000
 
+  private async hashToken(token: string): Promise<string> {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token))
+    return bytesToHex(new Uint8Array(buf))
+  }
+
   async getSession(sessionToken: string): Promise<Session | null> {
-    const session = this.sessions.get(sessionToken)
+    const hash = await this.hashToken(sessionToken)
+    const session = this.sessions.get(hash)
     if (!session) return null
     if (session.expiresAt && session.expiresAt < new Date()) {
-      this.sessions.delete(sessionToken)
+      this.sessions.delete(hash)
       return null
     }
     return session
   }
 
   async createSession(session: Session & { token: string }): Promise<void> {
-    this.sessions.set(session.token, session)
-    this.order.push(session.token)
+    const hash = await this.hashToken(session.token)
+    this.sessions.set(hash, session)
+    this.order.push(hash)
     while (this.sessions.size > this.maxEntries) {
       const oldest = this.order.shift()
       if (oldest) this.sessions.delete(oldest)
@@ -67,7 +74,8 @@ export class InMemoryAuthStore implements AuthStore {
   }
 
   async deleteSession(sessionToken: string): Promise<void> {
-    this.sessions.delete(sessionToken)
+    const hash = await this.hashToken(sessionToken)
+    this.sessions.delete(hash)
   }
 }
 

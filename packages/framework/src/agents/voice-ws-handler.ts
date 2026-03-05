@@ -27,8 +27,10 @@ function isOriginAllowed(
   }
 
   if (!config.allowedOrigins || config.allowedOrigins.length === 0) {
-    return true;
+    return false;
   }
+
+  if (config.allowedOrigins.includes("*")) return true;
 
   const origin = req.headers.origin;
   if (!origin) return false;

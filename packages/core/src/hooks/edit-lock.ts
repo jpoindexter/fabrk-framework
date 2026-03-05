@@ -2,40 +2,18 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
-// TYPES
-
 export interface EditLockConflict {
   userId: string;
   userName: string;
 }
 
 export interface UseEditLockOptions {
-  /** Callback to acquire/refresh the lock. Return true if acquired. */
   onAcquire: () => Promise<boolean | EditLockConflict>;
-  /** Callback to release the lock. */
   onRelease: () => Promise<void>;
-  /** Heartbeat interval in ms (default 10000) */
   heartbeatInterval?: number;
 }
 
-/**
- * Heartbeat-based edit lock with conflict detection.
- * Provide your own acquire/release callbacks — keeps the hook API-agnostic.
- *
- * @example
- * ```tsx
- * const lock = useEditLock({
- *   onAcquire: async () => {
- *     const res = await fetch('/api/locks', { method: 'POST', body: JSON.stringify({ resourceId }) })
- *     if (res.status === 409) return (await res.json()).lockedBy
- *     return res.ok
- *   },
- *   onRelease: () => fetch('/api/locks', { method: 'DELETE', body: JSON.stringify({ resourceId }) }),
- * })
- *
- * <button onClick={lock.acquire}> EDIT</button>
- * ```
- */
+/** Caller-supplied acquire/release keeps the lock mechanism API-agnostic. */
 export function useEditLock({
   onAcquire,
   onRelease,

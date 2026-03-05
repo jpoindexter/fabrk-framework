@@ -1,16 +1,5 @@
-/**
- * Vector similarity functions
- *
- * Pure TypeScript implementations for cosine similarity, distance,
- * k-nearest-neighbors search, and centroid calculation.
- */
-
 import type { SimilarityResult } from './types'
 
-/**
- * Calculate cosine similarity between two vectors.
- * Returns a value between -1 and 1, where 1 means identical.
- */
 export function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length !== b.length) {
     throw new Error(`Vector dimension mismatch: ${a.length} vs ${b.length}`)
@@ -33,24 +22,10 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return dotProduct / (normA * normB)
 }
 
-/**
- * Calculate cosine distance between two vectors.
- * Returns a value between 0 and 2, where 0 means identical.
- */
 export function cosineDistance(a: number[], b: number[]): number {
   return 1 - cosineSimilarity(a, b)
 }
 
-/**
- * Find k nearest neighbors by cosine similarity.
- *
- * @example
- * ```ts
- * const query = await embed('search query')
- * const results = findNearest(query, allVectors, 10, 0.5)
- * // results: [{ index: 3, similarity: 0.92 }, { index: 7, similarity: 0.88 }, ...]
- * ```
- */
 export function findNearest(
   query: number[],
   vectors: number[][],
@@ -68,10 +43,6 @@ export function findNearest(
     .slice(0, k)
 }
 
-/**
- * Calculate the centroid (average) of a set of vectors.
- * The result is L2-normalized.
- */
 export function centroid(vectors: number[][]): number[] | null {
   if (vectors.length === 0) return null
 
@@ -88,7 +59,6 @@ export function centroid(vectors: number[][]): number[] | null {
     result[i] /= vectors.length
   }
 
-  // L2 normalize
   let norm = 0
   for (let i = 0; i < dim; i++) {
     norm += result[i] * result[i]
@@ -104,10 +74,6 @@ export function centroid(vectors: number[][]): number[] | null {
   return result
 }
 
-/**
- * Jaccard similarity between two strings (word-level).
- * Useful for comparing reasoning steps or short texts.
- */
 export function jaccardSimilarity(text1: string, text2: string): number {
   const set1 = new Set(text1.toLowerCase().split(/\s+/).filter(Boolean))
   const set2 = new Set(text2.toLowerCase().split(/\s+/).filter(Boolean))

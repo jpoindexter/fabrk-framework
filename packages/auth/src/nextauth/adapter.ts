@@ -1,22 +1,3 @@
-/**
- * NextAuth Adapter
- *
- * Implements AuthAdapter wrapping NextAuth (Auth.js v5).
- * NextAuth is an optional peer dependency.
- *
- * @example
- * ```ts
- * import { createNextAuthAdapter } from '@fabrk/auth'
- *
- * const auth = createNextAuthAdapter({
- *   providers: ['google', 'credentials'],
- *   sessionStrategy: 'jwt',
- * })
- *
- * registry.register('auth', auth)
- * ```
- */
-
 import type { AuthAdapter } from '@fabrk/core'
 import type {
   Session,
@@ -219,7 +200,6 @@ export function createNextAuthAdapter(
         return { verified: true, usedBackupCode: false }
       }
 
-      // Constant-time backup code verification
       const hashedCodes = mfaBackupCodes.get(userId) ?? []
       const { valid, matchedIndex } = await verifyBackupCode(code, hashedCodes)
       if (valid) {

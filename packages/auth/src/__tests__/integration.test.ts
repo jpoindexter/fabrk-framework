@@ -82,7 +82,6 @@ describe('Auth + Middleware Integration', () => {
         return new Response(JSON.stringify({ success: true }), { status: 200 })
       })
 
-      // Valid key works
       const req = new Request('https://example.com/api/data', {
         headers: { Authorization: `Bearer ${result.key}` },
       })
@@ -91,7 +90,6 @@ describe('Auth + Middleware Integration', () => {
       expect(receivedKeyInfo.id).toBe(result.id)
       expect(receivedKeyInfo.scopes).toEqual(['read', 'write'])
 
-      // Revoke, then reject
       await adapter.revokeApiKey(result.id)
       const res2 = await handler(new Request('https://example.com/api/data', {
         headers: { Authorization: `Bearer ${result.key}` },
@@ -153,7 +151,6 @@ describe('Auth + Middleware Integration', () => {
       expect(authedRes.status).toBe(200)
       expect(receivedSession.userId).toBe('user-456')
 
-      // No session → 401
       const noAuthHandler = withAuth(
         createNextAuthAdapter({ authInstance: async () => null }),
         async (_req, session) => new Response(JSON.stringify({ userId: session.userId }), { status: 200 })

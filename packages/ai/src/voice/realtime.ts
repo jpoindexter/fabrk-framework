@@ -133,9 +133,7 @@ export class RealtimeProxy {
           }
 
           clientWs.send(text);
-        } catch {
-          // Send failure — client likely disconnected
-        }
+        } catch { /* ignored */ }
       });
 
       upstream.on('close', () => {
@@ -159,9 +157,7 @@ export class RealtimeProxy {
         if (!upstreamOpen) return;
         try {
           upstream.send(typeof data === 'string' ? data : data.toString('utf-8'));
-        } catch {
-          // Upstream send failure
-        }
+        } catch { /* ignored */ }
       });
 
       clientWs.on('close', () => {

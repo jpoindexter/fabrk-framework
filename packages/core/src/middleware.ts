@@ -1,8 +1,3 @@
-/**
- * Middleware utilities for FABRK framework
- *
- * Composable middleware system for chaining request/response handlers.
- */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export type MiddlewareFunction<TContext = any> = (
@@ -15,26 +10,6 @@ export interface Middleware<TContext = any> {
   run: (context: TContext) => Promise<void>;
 }
 
-/**
- * Create a middleware chain
- *
- * @example
- * ```ts
- * const middleware = createMiddleware()
- *   .use(async (ctx, next) => {
- *     console.log('Before')
- *     await next()
- *     console.log('After')
- *   })
- *   .use(async (ctx, next) => {
- *     // Auth check
- *     if (!ctx.user) throw new Error('Unauthorized')
- *     await next()
- *   })
- *
- * await middleware.run({ user: null })
- * ```
- */
 export function createMiddleware<TContext = any>(): Middleware<TContext> {
   const middlewares: MiddlewareFunction<TContext>[] = [];
 
@@ -64,14 +39,6 @@ export function createMiddleware<TContext = any>(): Middleware<TContext> {
   };
 }
 
-/**
- * Compose multiple middleware functions into one
- *
- * @example
- * ```ts
- * const combined = compose(authMiddleware, loggingMiddleware, validationMiddleware)
- * ```
- */
 export function compose<TContext = any>(
   ...middlewares: MiddlewareFunction<TContext>[]
 ): MiddlewareFunction<TContext> {

@@ -2,18 +2,6 @@
 
 import { useState, useCallback } from 'react';
 
-/**
- * Read a CSRF token from a cookie and provide a fetch wrapper that attaches it.
- *
- * @param cookieName - Cookie to read (default 'csrf-token')
- * @param headerName - Header to send (default 'x-csrf-token')
- *
- * @example
- * ```tsx
- * const { token, csrfFetch } = useCsrfToken()
- * await csrfFetch('/api/users', { method: 'POST', body: JSON.stringify(data) })
- * ```
- */
 export function useCsrfToken(
   cookieName = 'csrf-token',
   headerName = 'x-csrf-token'

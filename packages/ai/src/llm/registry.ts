@@ -59,8 +59,6 @@ export function listProviders(): string[] {
   return [...providers.keys()];
 }
 
-// -- Built-in provider registrations --
-
 registerProvider("openai", {
   key: "openai",
   prefixes: ["gpt-", "o1-", "o3-", "o4-", "chatgpt-"],
@@ -115,7 +113,6 @@ registerProvider("google", {
   envKey: "GOOGLE_AI_API_KEY",
   makeGenerateWithTools(config) {
     return async (messages, tools, opts) => {
-      // Google uses OpenAI-compatible endpoint via openai SDK
       const { generateWithTools } = await import("./openai-tools");
       return generateWithTools(messages, tools, {
         ...config,
@@ -149,7 +146,6 @@ registerProvider("ollama", {
         ...config,
         openaiApiKey: "ollama",
         openaiModel: stripped,
-        // OpenAI SDK accepts baseURL via config — we set it via env resolution
       }, opts);
     };
   },

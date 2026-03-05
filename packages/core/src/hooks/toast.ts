@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 
-// TYPES
-
 export type ToastVariant = 'success' | 'error' | 'info' | 'warning';
 
 export interface Toast {
@@ -23,18 +21,6 @@ export interface UseToastReturn {
   dismissAll: () => void;
 }
 
-/**
- * Framework-agnostic toast state management.
- * Pair with your own Toaster component or <Toaster /> from @fabrk/components.
- *
- * @param options.duration - Auto-dismiss delay in ms (default 4000, 0 to disable)
- *
- * @example
- * ```tsx
- * const { toasts, success, error, dismiss } = useToast()
- * success('Saved', 'Changes saved successfully')
- * ```
- */
 export function useToast(options?: { duration?: number }): UseToastReturn {
   const { duration = 4000 } = options ?? {};
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -60,7 +46,6 @@ export function useToast(options?: { duration?: number }): UseToastReturn {
     [duration, dismiss]
   );
 
-  // Cleanup timers on unmount
   useEffect(() => {
     const timers = timersRef.current;
     return () => timers.forEach((t) => clearTimeout(t));

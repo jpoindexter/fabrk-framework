@@ -41,11 +41,9 @@ export async function generateObject<T = unknown>(
 
   for (const m of messages) {
     if (m.role === "system") {
-      // system content is always a string
       systemInstruction = { parts: [{ text: m.content as string }] };
       continue;
     }
-    // Extract text: join text parts for multimodal messages, pass string as-is
     const text = typeof m.content === "string"
       ? m.content
       : m.content

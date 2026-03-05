@@ -1,7 +1,3 @@
-/**
- * Ollama LLM client implementation (local models)
- */
-
 import type { LLMClient, LLMOpts, LLMConfig } from './types'
 import { LLM_DEFAULTS, MAX_TOKENS_LIMIT } from './types'
 
@@ -60,7 +56,6 @@ export class OllamaClient implements LLMClient {
   constructor(config: Partial<LLMConfig> = {}) {
     this.config = { ...LLM_DEFAULTS, ...config, provider: 'ollama' }
 
-    // Validate the base URL on construction
     const baseUrl = this.config.ollamaBaseUrl || LLM_DEFAULTS.ollamaBaseUrl
     validateOllamaUrl(baseUrl)
   }

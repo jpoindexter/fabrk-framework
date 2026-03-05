@@ -432,7 +432,6 @@ registerProvider("hunyuan", makeOpenAICompatAdapter({
   stripPrefix: "hunyuan:",
 }));
 
-// Local / self-hosted OpenAI-compatible servers
 registerProvider("vllm", makeOpenAICompatAdapter({
   key: "vllm",
   baseURL: "http://localhost:8000/v1",

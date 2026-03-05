@@ -1,23 +1,3 @@
-/**
- * TOTP (Time-based One-Time Password) Implementation
- *
- * RFC 6238 compliant TOTP generation and verification.
- * Uses Web Crypto API — no Node.js-specific dependencies.
- *
- * @example
- * ```ts
- * import { generateTotpSecret, verifyTotp, generateTotpUri } from '@fabrk/auth'
- *
- * // Setup
- * const secret = generateTotpSecret()
- * const uri = generateTotpUri(secret, 'user@example.com', 'MyApp')
- * // Display URI as QR code
- *
- * // Verification
- * const valid = await verifyTotp(secret, '123456')
- * ```
- */
-
 import { timingSafeEqual, bytesToHex } from '@fabrk/core'
 
 /**
@@ -62,12 +42,6 @@ export function generateTotpUri(
   return `otpauth://totp/${encodedIssuer}:${encodedEmail}?secret=${secret}&issuer=${encodedIssuer}&algorithm=SHA1&digits=6&period=30`
 }
 
-/**
- * Verify a TOTP code against a secret
- *
- * Checks the current time step and one step before/after
- * to account for clock skew.
- */
 export async function verifyTotp(
   secret: string,
   code: string,
@@ -94,7 +68,7 @@ export async function verifyTotp(
     const counter = Math.floor((now + i * timeStep) / timeStep)
     const expected = await generateHotp(secret, counter)
     if (await timingSafeEqual(expected, code)) {
-      // Record code as used. Expire after the full window span to prevent reuse.
+      // Expire after the full window span to prevent reuse within the valid period.
       // The code is valid for (2 * safeWindow + 1) * timeStep seconds.
       const expiresInMs = (2 * safeWindow + 1) * timeStep * 1000
       usedCodes.set(replayKey, Date.now() + expiresInMs)

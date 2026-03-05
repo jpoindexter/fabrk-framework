@@ -384,9 +384,6 @@ export function getCostTracker(): AICostTracker {
   return defaultTracker;
 }
 
-/**
- * Set custom cost store (call at app startup)
- */
 export function setCostStore(store: CostStore): void {
   defaultStore = store;
   defaultTracker = new AICostTracker(store, { dailyBudget: parseBudgetFromEnv() });

@@ -45,7 +45,6 @@ function toAnthropicMessages(messages: LLMMessage[]): { system?: string; message
 
   for (const m of messages) {
     if (m.role === "system") {
-      // system role always carries a string
       system = m.content as string;
       continue;
     }
@@ -253,7 +252,7 @@ export async function* streamWithTools(
       if (usage) {
         yield {
           type: "usage",
-          promptTokens: 0, // Anthropic sends input tokens on message_start
+          promptTokens: 0,
           completionTokens: usage.output_tokens ?? 0,
         };
       }

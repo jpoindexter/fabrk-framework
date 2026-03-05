@@ -1,254 +1,158 @@
-/**
- * Provider-agnostic types for FABRK plugin system
- *
- * These types define the contracts between the framework and adapter packages.
- * Adapters (Stripe, Resend, S3, etc.) implement these interfaces without
- * the framework needing to know which provider is being used.
- */
-
 export interface CheckoutOptions {
-  /** Price ID from payment provider */
   priceId: string
-  /** Customer email for association */
   customerEmail?: string
-  /** Customer ID from payment provider */
   customerId?: string
-  /** URL to redirect on success */
   successUrl: string
-  /** URL to redirect on cancel */
   cancelUrl: string
-  /** Whether this is a subscription checkout */
   subscription?: boolean
-  /** Trial period in days */
   trialDays?: number
-  /** Arbitrary metadata to attach */
   metadata?: Record<string, string>
 }
 
 export interface CheckoutResult {
-  /** Checkout session ID */
   id: string
-  /** URL to redirect the customer to */
   url: string
-  /** Provider-specific raw response */
   raw?: unknown
 }
 
 export interface WebhookEvent {
-  /** Event type (e.g. 'checkout.completed', 'subscription.updated') */
+  /** e.g. 'checkout.completed', 'subscription.updated' */
   type: string
-  /** Event ID from provider */
   id: string
-  /** Parsed event data */
   data: Record<string, unknown>
-  /** Provider-specific raw event */
   raw?: unknown
 }
 
 export interface WebhookResult {
-  /** Whether verification passed */
   verified: boolean
-  /** Parsed event, if verified */
   event?: WebhookEvent
-  /** Error message, if verification failed */
   error?: string
   /** Whether this event was already processed (idempotency) */
   duplicate?: boolean
 }
 
 export interface CustomerInfo {
-  /** Customer ID from provider */
   id: string
-  /** Customer email */
   email: string
-  /** Display name */
   name?: string
-  /** Active subscription IDs */
   subscriptions?: string[]
-  /** Arbitrary metadata */
   metadata?: Record<string, string>
 }
 
 export interface SubscriptionInfo {
-  /** Subscription ID from provider */
   id: string
-  /** Current status */
   status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'unpaid' | 'paused'
-  /** Price ID */
   priceId: string
-  /** Current period start */
   currentPeriodStart: Date
-  /** Current period end */
   currentPeriodEnd: Date
-  /** Whether set to cancel at period end */
   cancelAtPeriodEnd: boolean
 }
 
 export interface Session {
-  /** User ID */
   userId: string
-  /** User email */
   email: string
-  /** Display name */
   name?: string
-  /** Avatar URL */
   image?: string
-  /** User role */
   role?: string
-  /** Session expiry */
   expiresAt?: Date
-  /** Additional session data */
   metadata?: Record<string, unknown>
 }
 
 export interface ApiKeyInfo {
-  /** Key ID (public identifier) */
   id: string
-  /** Key prefix for display (e.g. 'fabrk_live_abc...') */
+  /** e.g. 'fabrk_live_abc...' */
   prefix: string
-  /** Key name/label */
   name: string
-  /** Scopes/permissions */
   scopes: string[]
-  /** Creation timestamp */
   createdAt: Date
-  /** Last used timestamp */
   lastUsedAt?: Date
-  /** Expiry timestamp */
   expiresAt?: Date
-  /** Whether the key is active */
   active: boolean
 }
 
 export interface ApiKeyCreateResult {
-  /** Key ID */
   id: string
-  /** The full key (only returned on creation, never stored) */
+  /** Full key — only returned on creation, never stored */
   key: string
-  /** Display prefix */
   prefix: string
 }
 
 export interface MfaSetupResult {
-  /** TOTP secret */
   secret: string
-  /** QR code data URI */
   qrCodeUrl: string
-  /** Backup codes (only shown once) */
+  /** Only shown once at setup time */
   backupCodes: string[]
 }
 
 export interface MfaVerifyResult {
-  /** Whether verification succeeded */
   verified: boolean
-  /** Whether a backup code was used */
   usedBackupCode?: boolean
 }
 
 export interface EmailOptions {
-  /** Recipient email(s) */
   to: string | string[]
-  /** Email subject */
   subject: string
-  /** HTML body */
   html?: string
-  /** Plain text body */
   text?: string
-  /** Reply-to address */
   replyTo?: string
-  /** CC recipients */
   cc?: string | string[]
-  /** BCC recipients */
   bcc?: string | string[]
-  /** Custom headers */
   headers?: Record<string, string>
-  /** Tags for analytics */
   tags?: Array<{ name: string; value: string }>
 }
 
 export interface EmailResult {
-  /** Message ID from provider */
   id: string
-  /** Whether send was successful */
   success: boolean
-  /** Error message if failed */
   error?: string
 }
 
 export interface EmailTemplateData {
-  /** Template name */
   template: string
-  /** Template variables */
   data: Record<string, unknown>
 }
 
 export interface UploadOptions {
-  /** File data (ArrayBuffer, Blob, or ReadableStream) */
   file: ArrayBuffer | Blob | ReadableStream
-  /** File name */
   filename: string
-  /** MIME type */
   contentType: string
-  /** Storage path/key */
   path?: string
-  /** Whether the file should be publicly accessible */
   public?: boolean
-  /** Max file size in bytes */
   maxSize?: number
-  /** Allowed MIME types */
   allowedTypes?: string[]
-  /** Arbitrary metadata */
   metadata?: Record<string, string>
 }
 
 export interface UploadResult {
-  /** Storage key/path */
   key: string
-  /** Public URL (if publicly accessible) */
   url?: string
-  /** File size in bytes */
   size: number
-  /** Content type */
   contentType: string
 }
 
 export interface SignedUrlOptions {
-  /** Storage key */
   key: string
-  /** URL expiry in seconds (default: 3600) */
   expiresIn?: number
-  /** Content disposition for downloads */
   contentDisposition?: string
 }
 
 export interface SignedUrlResult {
-  /** Pre-signed URL */
   url: string
-  /** Expiry timestamp */
   expiresAt: Date
 }
 
 export interface RateLimitOptions {
-  /** Identifier (e.g. IP address, user ID) */
   identifier: string
-  /** Limit name/bucket */
   limit: string
-  /** Max requests in window */
   max?: number
-  /** Window size in seconds */
   windowSeconds?: number
 }
 
 export interface RateLimitResult {
-  /** Whether the request is allowed */
   allowed: boolean
-  /** Remaining requests in window */
   remaining: number
-  /** Total limit */
   limit: number
-  /** Window reset timestamp */
   resetAt: Date
-  /** Retry-After header value in seconds */
   retryAfter?: number
 }
 
@@ -265,199 +169,123 @@ export type NotificationType =
 export type NotificationPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export interface NotificationOptions {
-  /** Notification type */
   type: NotificationType
-  /** Title */
   title: string
-  /** Message body */
   message: string
-  /** Priority level */
   priority?: NotificationPriority
-  /** Whether to persist to database */
   persist?: boolean
-  /** Auto-dismiss after ms (0 = no auto-dismiss) */
+  /** Auto-dismiss after ms; 0 = no auto-dismiss */
   duration?: number
-  /** Action URL to navigate to */
   actionUrl?: string
-  /** Action label */
   actionLabel?: string
-  /** Target user IDs (empty = broadcast) */
+  /** Empty = broadcast to all users */
   userIds?: string[]
-  /** Arbitrary metadata */
   metadata?: Record<string, unknown>
 }
 
 export interface Notification extends NotificationOptions {
-  /** Notification ID */
   id: string
-  /** Creation timestamp */
   createdAt: Date
-  /** Whether read by user */
   read: boolean
-  /** Whether dismissed by user */
   dismissed: boolean
 }
 
 export interface FeatureFlagOptions {
-  /** Flag name */
   name: string
-  /** Whether enabled */
   enabled: boolean
-  /** Rollout percentage (0-100) */
   rolloutPercent?: number
-  /** Target user IDs for flag */
   targetUsers?: string[]
-  /** Target roles */
   targetRoles?: string[]
-  /** Arbitrary metadata */
   metadata?: Record<string, unknown>
 }
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed'
 
 export interface JobOptions {
-  /** Job type/name */
   type: string
-  /** Job payload */
   payload: Record<string, unknown>
-  /** Priority (higher = processed first) */
+  /** Higher = processed first */
   priority?: number
-  /** Max retry attempts */
   maxRetries?: number
-  /** Delay before processing (ms) */
   delay?: number
-  /** Scheduled execution time */
   scheduledAt?: Date
 }
 
 export interface Job extends JobOptions {
-  /** Job ID */
   id: string
-  /** Current status */
   status: JobStatus
-  /** Number of attempts */
   attempts: number
-  /** Creation timestamp */
   createdAt: Date
-  /** Last attempt timestamp */
   lastAttemptAt?: Date
-  /** Completion timestamp */
   completedAt?: Date
-  /** Error message from last failure */
   error?: string
-  /** Result data */
   result?: unknown
 }
 
 export interface WebhookConfig {
-  /** Webhook ID */
   id: string
-  /** Target URL */
   url: string
-  /** Events to subscribe to */
   events: string[]
-  /** Signing secret */
   secret: string
-  /** Whether active */
   active: boolean
-  /** Creation timestamp */
   createdAt: Date
 }
 
 export interface WebhookDelivery {
-  /** Delivery ID */
   id: string
-  /** Webhook ID */
   webhookId: string
-  /** Event type */
   event: string
-  /** HTTP status code from target */
   statusCode?: number
-  /** Whether delivery succeeded */
   success: boolean
-  /** Number of attempts */
   attempts: number
-  /** Delivery timestamp */
   deliveredAt: Date
-  /** Response body (truncated) */
   response?: string
 }
 
 export type OrgRole = 'owner' | 'admin' | 'member' | 'guest'
 
 export interface Organization {
-  /** Organization ID */
   id: string
-  /** Organization name */
   name: string
-  /** URL-safe slug */
   slug: string
-  /** Owner user ID */
   ownerId: string
-  /** Organization logo URL */
   logoUrl?: string
-  /** Creation timestamp */
   createdAt: Date
-  /** Organization settings */
   settings?: Record<string, unknown>
 }
 
 export interface OrgMember {
-  /** User ID */
   userId: string
-  /** Organization ID */
   orgId: string
-  /** Member role */
   role: OrgRole
-  /** Join timestamp */
   joinedAt: Date
-  /** Display name */
   name?: string
-  /** Email */
   email: string
-  /** Avatar URL */
   image?: string
 }
 
 export interface OrgInvite {
-  /** Invite ID */
   id: string
-  /** Organization ID */
   orgId: string
-  /** Invitee email */
   email: string
-  /** Invited role */
   role: OrgRole
-  /** Invite token */
   token: string
-  /** Inviter user ID */
   invitedBy: string
-  /** Expiry timestamp */
   expiresAt: Date
-  /** Whether accepted */
   accepted: boolean
 }
 
 export interface AuditEvent {
-  /** Event ID */
   id: string
-  /** Actor user ID */
   actorId: string
-  /** Action performed */
   action: string
-  /** Resource type (e.g. 'user', 'org', 'apiKey') */
+  /** e.g. 'user', 'org', 'apiKey' */
   resourceType: string
-  /** Resource ID */
   resourceId: string
-  /** Organization ID (for scoping) */
   orgId?: string
-  /** Event metadata */
   metadata?: Record<string, unknown>
-  /** IP address */
   ipAddress?: string
-  /** User agent */
   userAgent?: string
-  /** Timestamp */
   timestamp: Date
   /** Monotonic sequence number for deterministic ordering within the hash chain */
   sequence?: number

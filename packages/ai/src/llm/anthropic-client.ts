@@ -1,7 +1,3 @@
-/**
- * Anthropic LLM client implementation
- */
-
 import type { LLMClient, LLMOpts, LLMConfig } from './types'
 import { LLM_DEFAULTS, MAX_TOKENS_LIMIT } from './types'
 

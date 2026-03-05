@@ -1,7 +1,3 @@
-/**
- * Cohere embedding provider
- */
-
 import type { EmbeddingProvider, EmbeddingConfig } from './types'
 import { EMBEDDING_DEFAULTS, MAX_TEXT_LENGTH } from './types'
 import { resolveEnv } from '../utils/env'

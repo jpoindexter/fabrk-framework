@@ -200,9 +200,6 @@ export const MODEL_PRICING: Record<
   },
 };
 
-/**
- * Calculate cost for a given model and token usage
- */
 export function calculateCost(
   model: string,
   promptTokens: number,

@@ -1,9 +1,3 @@
-/**
- * Organization / Team Management
- *
- * CRUD operations for organizations, members, and invitations.
- */
-
 import { generateRandomHex } from '../crypto'
 import type {
   Organization,
@@ -14,27 +8,17 @@ import type {
 } from '../plugin-types'
 
 export interface TeamManager {
-  /** Create an organization */
   createOrg(options: { name: string; slug: string; ownerId: string; ownerEmail: string }): Promise<Organization>
-  /** Get organization by ID */
   getOrg(id: string): Promise<Organization | null>
-  /** Get organization by slug */
   getOrgBySlug(slug: string): Promise<Organization | null>
-  /** Update organization */
   updateOrg(id: string, updates: Partial<Pick<Organization, 'name' | 'logoUrl' | 'settings'>>): Promise<void>
-  /** Delete organization */
   deleteOrg(id: string): Promise<void>
-  /** Get members of an organization */
   getMembers(orgId: string): Promise<OrgMember[]>
-  /** Add a member to an organization */
   addMember(orgId: string, userId: string, role: OrgRole, info: { name?: string; email: string }): Promise<void>
-  /** Update a member's role */
   updateMemberRole(orgId: string, userId: string, role: OrgRole): Promise<void>
-  /** Remove a member from an organization */
   removeMember(orgId: string, userId: string): Promise<void>
-  /** Create an invitation */
   createInvite(orgId: string, email: string, role: OrgRole, invitedBy: string): Promise<OrgInvite>
-  /** Accept an invitation (email validates the accepting user matches the invite) */
+  /** Email validates the accepting user matches the invite recipient */
   acceptInvite(token: string, userId: string, email?: string): Promise<OrgMember | null>
 }
 
@@ -130,7 +114,6 @@ export function createTeamManager(store: TeamStore): TeamManager {
       const invite = await store.acceptInvite(token)
       if (!invite) return null
 
-      // Verify the accepting user matches the invited email when provided
       if (email && invite.email.toLowerCase() !== email.toLowerCase()) {
         return null
       }

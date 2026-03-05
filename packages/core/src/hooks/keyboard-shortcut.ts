@@ -2,34 +2,17 @@
 
 import { useEffect } from 'react';
 
-// TYPES
-
 export interface KeyboardShortcutOptions {
-  /** Keyboard key (e.g. 'k', 'Escape', '/') */
   key: string;
-  /** Modifier keys required */
   meta?: boolean;
   ctrl?: boolean;
   shift?: boolean;
   alt?: boolean;
-  /** Callback when shortcut fires */
   handler: (e: KeyboardEvent) => void;
-  /** Disable the shortcut (default: false) */
   disabled?: boolean;
 }
 
-/**
- * Register a global keyboard shortcut. Ignores input/textarea focus.
- *
- * @example
- * ```tsx
- * useKeyboardShortcut({
- *   key: 'k',
- *   meta: true,
- *   handler: () => setCommandPaletteOpen(true),
- * })
- * ```
- */
+/** Ignores input/textarea focus unless a meta/ctrl modifier is held. */
 export function useKeyboardShortcut({
   key,
   meta,

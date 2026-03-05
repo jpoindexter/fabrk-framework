@@ -1,7 +1,3 @@
-/**
- * React Hooks for FABRK Framework
- */
-
 export { useBilling } from './billing'
 
 export { useTeam } from './teams'

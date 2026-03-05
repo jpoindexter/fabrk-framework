@@ -14,22 +14,6 @@ export interface CreateFabrkOptions extends FabrkConfigInput {
   disableDefaults?: boolean
 }
 
-/**
- * Create a FABRK framework instance (synchronous, no auto-wiring)
- *
- * Use this when you want to manually register adapters, or when
- * you don't need adapter auto-detection.
- *
- * @example
- * ```ts
- * import { createFabrk } from '@fabrk/core'
- *
- * const fabrk = createFabrk({
- *   ai: { costTracking: true },
- *   theme: { system: 'terminal' },
- * })
- * ```
- */
 export function createFabrk(config: FabrkConfigInput = {}): FabrkInstance {
   const validatedConfig = fabrkConfigSchema.parse(config)
   const registry = new PluginRegistry()
@@ -41,32 +25,6 @@ export function createFabrk(config: FabrkConfigInput = {}): FabrkInstance {
   }
 }
 
-/**
- * Initialize a FABRK framework instance with auto-wiring.
- *
- * Reads the config and automatically creates + registers adapters
- * from installed @fabrk/* packages. This is the recommended way to
- * start FABRK in production.
- *
- * @example
- * ```ts
- * import { initFabrk } from '@fabrk/core'
- *
- * const fabrk = await initFabrk({
- *   payments: { adapter: 'stripe', mode: 'live' },
- *   auth: { adapter: 'nextauth', apiKeys: { enabled: true } },
- *   email: { adapter: 'resend', from: 'hi@myapp.com' },
- *   notifications: { enabled: true },
- *   teams: { enabled: true },
- * })
- *
- * // All adapters are auto-created and registered:
- * const payments = fabrk.registry.getPayment() // StripeAdapter
- * const auth = fabrk.registry.getAuth()         // NextAuthAdapter
- * const email = fabrk.registry.getEmail()       // ResendAdapter
- * const { notifications, teams } = fabrk.features!
- * ```
- */
 export async function initFabrk(options: CreateFabrkOptions = {}): Promise<FabrkInstance> {
   const { plugins, adapters, disableDefaults, ...config } = options
   const withDefaults = disableDefaults ? config : applyDevDefaults(config)
@@ -74,7 +32,6 @@ export async function initFabrk(options: CreateFabrkOptions = {}): Promise<Fabrk
 
   const { registry, features } = await autoWire(validatedConfig, adapters)
 
-  // Register any additional user-provided plugins
   if (plugins) {
     for (const plugin of plugins) {
       registry.addPlugin(plugin)

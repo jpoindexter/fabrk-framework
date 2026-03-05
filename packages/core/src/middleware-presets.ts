@@ -1,20 +1,3 @@
-/**
- * Middleware Presets
- *
- * Pre-built middleware functions for common patterns.
- * These wrap adapter interfaces into composable middleware.
- *
- * @example
- * ```ts
- * import { createFabrk, authMiddleware, rateLimitMiddleware } from '@fabrk/core'
- *
- * const fabrk = createFabrk({ ... })
- * fabrk.middleware
- *   .use(rateLimitMiddleware(rateLimit))
- *   .use(authMiddleware(auth))
- * ```
- */
-
 import type { MiddlewareFunction } from './middleware'
 import type { AuthAdapter, RateLimitAdapter } from './plugins'
 
@@ -29,7 +12,6 @@ export function authMiddleware(
   adapter: AuthAdapter
 ): MiddlewareFunction<RequestContext> {
   return async (ctx, next) => {
-    // Try session
     const session = await adapter.getSession(ctx.request)
     if (session) {
       ctx.session = { userId: session.userId, email: session.email, role: session.role }
@@ -37,7 +19,6 @@ export function authMiddleware(
       return
     }
 
-    // Try API key
     const authHeader = ctx.request.headers.get('Authorization')
     const apiKeyHeader = ctx.request.headers.get('X-API-Key')
     const key = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : apiKeyHeader

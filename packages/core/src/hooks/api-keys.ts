@@ -3,28 +3,6 @@
 import { useMemo } from 'react';
 import { useOptionalFabrk } from '../context';
 
-/**
- * Access API key management from the auth adapter
- *
- * @example
- * ```tsx
- * function ApiKeyManager() {
- *   const apiKeys = useAPIKeys()
- *   if (!apiKeys) return <p>Auth not configured</p>
- *
- *   const handleCreate = async () => {
- *     const result = await apiKeys.create({
- *       userId: 'user_123',
- *       name: 'Production Key',
- *       scopes: ['read', 'write'],
- *     })
- *     console.log('Key:', result.key)
- *   }
- *
- *   return <button onClick={handleCreate}>&gt; CREATE KEY</button>
- * }
- * ```
- */
 export function useAPIKeys() {
   const fabrk = useOptionalFabrk();
   const auth = fabrk?.registry.getAuth();

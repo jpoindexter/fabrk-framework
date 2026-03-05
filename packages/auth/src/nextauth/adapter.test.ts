@@ -69,12 +69,10 @@ describe('API Key lifecycle', () => {
   it('should create, validate, and revoke keys', async () => {
     const adapter = createNextAuthAdapter()
 
-    // Create
     const result = await adapter.createApiKey({ userId: 'user-1', name: 'Test Key', scopes: ['read', 'write'] })
     expect(result.key).toMatch(/^fabrk_live_/)
     expect(result.id).toBeDefined()
 
-    // Validate
     const keyInfo = await adapter.validateApiKey(result.key)
     expect(keyInfo).not.toBeNull()
     expect(keyInfo!.id).toBe(result.id)
@@ -82,7 +80,6 @@ describe('API Key lifecycle', () => {
     expect(keyInfo!.scopes).toEqual(['read', 'write'])
     expect(keyInfo!.active).toBe(true)
 
-    // Revoke
     await adapter.revokeApiKey(result.id)
     expect(await adapter.validateApiKey(result.key)).toBeNull()
   })

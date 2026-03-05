@@ -1,13 +1,3 @@
-/**
- * FABRK Auto-Wiring
- *
- * Reads the framework config and automatically creates + registers the
- * appropriate adapters from installed @fabrk/* packages.
- *
- * This is what makes FABRK feel like a real framework — you define config
- * and everything wires up automatically.
- */
-
 import type { FabrkConfigInput } from './types'
 import { PluginRegistry } from './plugins'
 import type {
@@ -43,9 +33,6 @@ function env(key: string, fallback = ''): string {
   }
 }
 
-/**
- * Feature modules auto-created from config
- */
 export interface FeatureModules {
   notifications: NotificationManager | null
   teams: TeamManager | null
@@ -54,20 +41,11 @@ export interface FeatureModules {
   jobs: JobQueue | null
 }
 
-/**
- * Result of auto-wiring
- */
 export interface AutoWireResult {
   registry: PluginRegistry
   features: FeatureModules
 }
 
-/**
- * User-provided adapter overrides.
- *
- * If provided, these take priority over auto-detected adapters.
- * Use this when you need custom adapter configurations.
- */
 export interface AdapterOverrides {
   payment?: PaymentAdapter
   auth?: AuthAdapter
@@ -76,23 +54,6 @@ export interface AdapterOverrides {
   rateLimit?: RateLimitAdapter
 }
 
-/**
- * User-provided store overrides.
- *
- * Replace in-memory stores with persistent implementations (e.g. Prisma).
- * Any store not provided falls back to its in-memory default.
- *
- * @example
- * ```ts
- * import { PrismaTeamStore, PrismaAuditStore } from '@fabrk/store-prisma'
- * import { prisma } from './lib/prisma'
- *
- * const { features } = await autoWire(config, {}, {
- *   team: new PrismaTeamStore(prisma),
- *   audit: new PrismaAuditStore(prisma),
- * })
- * ```
- */
 export interface StoreOverrides {
   team?: TeamStore
   notification?: NotificationStore
@@ -102,23 +63,6 @@ export interface StoreOverrides {
   audit?: AuditStore
 }
 
-/**
- * Auto-wire adapters and feature modules from config.
- *
- * Attempts dynamic imports of @fabrk/* packages and creates adapters
- * based on config. Falls back gracefully when packages aren't installed.
- *
- * @example
- * ```ts
- * import { autoWire } from '@fabrk/core'
- *
- * const { registry, features } = await autoWire({
- *   payments: { adapter: 'stripe', mode: 'test' },
- *   auth: { adapter: 'nextauth', apiKeys: { enabled: true } },
- *   notifications: { enabled: true },
- * })
- * ```
- */
 export async function autoWire(
   config: FabrkConfigInput,
   overrides?: AdapterOverrides,

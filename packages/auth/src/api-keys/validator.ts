@@ -1,22 +1,3 @@
-/**
- * API Key Validator
- *
- * Validates API keys by hashing and looking up in the store.
- * Supports scope/permission checking.
- *
- * @example
- * ```ts
- * import { createApiKeyValidator } from '@fabrk/auth'
- *
- * const validator = createApiKeyValidator(apiKeyStore)
- * const keyInfo = await validator.validate('fabrk_live_abc...')
- *
- * if (keyInfo && validator.hasScope(keyInfo, 'write')) {
- *   // Authorized
- * }
- * ```
- */
-
 import type { ApiKeyInfo, ApiKeyStore } from '@fabrk/core'
 import { hashApiKey } from './generator'
 

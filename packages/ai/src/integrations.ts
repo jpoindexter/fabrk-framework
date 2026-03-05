@@ -1,15 +1,3 @@
-/**
- * AI-Friendly Integration Helpers
- *
- * @example
- * import { ai } from '@fabrk/ai';
- *
- * const result = await ai.claude.generate({
- *   prompt: 'Generate a user profile form',
- *   feature: 'form-generation',
- * });
- */
-
 import { getCostTracker } from './tracker';
 import { AppError, successResponse, errorResponse, type APIResponse } from './types';
 import { MAX_TOKENS_LIMIT, LLM_DEFAULTS } from './llm/types';
@@ -38,20 +26,7 @@ export interface GenerateResult {
   model: string;
 }
 
-/**
- * Claude AI integration with automatic cost tracking
- */
 export const claude = {
-  /**
-   * Generate text with Claude
-   *
-   * @example
-   * const result = await claude.generate({
-   *   prompt: 'Write a product description for...',
-   *   feature: 'product-description',
-   *   userId: session.user.id,
-   * });
-   */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
     const {
       prompt,
@@ -103,28 +78,12 @@ export const claude = {
     }
   },
 
-  /**
-   * Check if Claude is available (API key configured)
-   */
   isAvailable(): boolean {
     return !!((globalThis as Record<string, unknown>).process as { env?: Record<string, string> } | undefined)?.env?.ANTHROPIC_API_KEY;
   },
 };
 
-/**
- * OpenAI integration with automatic cost tracking
- */
 export const openai = {
-  /**
-   * Generate text with OpenAI
-   *
-   * @example
-   * const result = await openai.generate({
-   *   prompt: 'Write a blog post about...',
-   *   feature: 'blog-generation',
-   *   model: 'gpt-4o',
-   * });
-   */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
     const {
       prompt,
@@ -180,9 +139,6 @@ export const openai = {
     }
   },
 
-  /**
-   * Generate embeddings
-   */
   async embed(
     text: string | string[],
     model = 'text-embedding-3-small'
@@ -208,26 +164,15 @@ export const openai = {
     }
   },
 
-  /**
-   * Check if OpenAI is available (API key configured)
-   */
   isAvailable(): boolean {
     return !!((globalThis as Record<string, unknown>).process as { env?: Record<string, string> } | undefined)?.env?.OPENAI_API_KEY;
   },
 };
 
-/**
- * Unified AI interface - auto-selects available provider
- */
 export const ai = {
   claude,
   openai,
 
-  /**
-   * Generate using the best available provider
-   *
-   * @remarks Falls back through: claude → openai. Both paths track costs.
-   */
   async generate(options: GenerateOptions): Promise<APIResponse<GenerateResult>> {
     if (claude.isAvailable()) {
       return claude.generate(options);
@@ -243,9 +188,6 @@ export const ai = {
     );
   },
 
-  /**
-   * Check which providers are available
-   */
   getAvailableProviders(): string[] {
     const providers: string[] = [];
 

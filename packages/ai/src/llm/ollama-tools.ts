@@ -16,7 +16,6 @@ function resolveConfig(config: Partial<LLMConfig> = {}): LLMConfig {
 }
 
 function contentPartsToOllama(parts: LLMContentPart[]): string {
-  // Ollama's text API — skip image parts with a warning, concatenate text parts
   const textParts: string[] = [];
   for (const part of parts) {
     if (part.type === "text") {

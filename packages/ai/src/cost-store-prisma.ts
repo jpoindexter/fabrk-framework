@@ -1,23 +1,3 @@
-/**
- * Prisma-based Cost Store Implementation
- *
- * Persists AI cost events to the database for long-term tracking.
- * Use this in production instead of the in-memory store.
- *
- * This is a reference implementation. Users must provide their own
- * Prisma client instance since @fabrk/ai does not depend on Prisma.
- *
- * @example
- * ```ts
- * import { PrismaCostStore } from '@fabrk/ai'
- * import { setCostStore } from '@fabrk/ai'
- * import { prisma } from './lib/prisma' // Your Prisma instance
- *
- * // At app startup:
- * setCostStore(new PrismaCostStore(prisma))
- * ```
- */
-
 import type {
   AICostEvent,
   CostStore,

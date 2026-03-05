@@ -23,7 +23,6 @@ describe('InMemoryAuthStore', () => {
     await store.deleteSession('session-token-1')
     expect(await store.getSession('session-token-1')).toBeNull()
 
-    // Deleting non-existent should not throw
     await expect(store.deleteSession('non-existent')).resolves.toBeUndefined()
   })
 
@@ -89,7 +88,6 @@ describe('InMemoryApiKeyStore', () => {
     expect(keys).toHaveLength(1)
     expect(keys[0].name).toBe('Active Key')
 
-    // Revoking non-existent should not throw
     await expect(store.revoke('non-existent')).resolves.toBeUndefined()
   })
 
@@ -117,7 +115,6 @@ describe('InMemoryApiKeyStore', () => {
     expect(result!.lastUsedAt).toBeInstanceOf(Date)
     expect(Date.now() - result!.lastUsedAt!.getTime()).toBeLessThan(1000)
 
-    // Non-existent key should not throw
     await expect(store.updateLastUsed('non-existent')).resolves.toBeUndefined()
   })
 })

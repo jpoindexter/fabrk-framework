@@ -36,7 +36,6 @@ function contentPartsToOpenAI(parts: LLMContentPart[]): unknown[] {
 function toOpenAIMessages(messages: LLMMessage[]): unknown[] {
   return messages.map((m) => {
     if (m.role === "tool") {
-      // tool role always carries string content
       return { role: "tool", content: m.content, tool_call_id: m.toolCallId };
     }
     if (m.role === "assistant" && m.toolCalls?.length) {
@@ -195,9 +194,7 @@ export async function* streamWithTools(
       }
     }
 
-    // Usage comes in the final chunk
     if (chunk.usage) {
-      // Emit accumulated tool calls before usage
       for (const [, entry] of toolCallAccum) {
         let args: Record<string, unknown> = {};
         try {
@@ -220,7 +217,6 @@ export async function* streamWithTools(
     }
   }
 
-  // Fallback: emit tool calls if no usage chunk was received
   if (toolCallAccum.size > 0 && !toolCallsEmitted) {
     for (const [, entry] of toolCallAccum) {
       let args: Record<string, unknown> = {};

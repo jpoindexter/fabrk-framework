@@ -1,7 +1,3 @@
-/**
- * In-memory Team Store for development/testing
- */
-
 import type {
   Organization,
   OrgMember,

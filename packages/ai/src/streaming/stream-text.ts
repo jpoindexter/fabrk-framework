@@ -1,26 +1,3 @@
-/**
- * Streaming Utilities
- *
- * Helpers for working with AI text streams.
- *
- * @example
- * ```ts
- * import { streamToString, parseStreamChunks, createTextStream } from '@fabrk/ai'
- *
- * // Consume a stream to string
- * const text = await streamToString(stream)
- *
- * // Process stream chunks with callbacks
- * await parseStreamChunks(stream, {
- *   onChunk: (chunk) => console.log(chunk),
- *   onDone: (full) => console.log('Complete:', full),
- * })
- * ```
- */
-
-/**
- * Consume an async iterable stream into a single string
- */
 export async function streamToString(stream: AsyncIterable<string>): Promise<string> {
   let result = '';
   for await (const chunk of stream) {
@@ -29,9 +6,6 @@ export async function streamToString(stream: AsyncIterable<string>): Promise<str
   return result;
 }
 
-/**
- * Process stream chunks with callbacks
- */
 export async function parseStreamChunks(
   stream: AsyncIterable<string>,
   options: {
@@ -55,9 +29,6 @@ export async function parseStreamChunks(
   return accumulated;
 }
 
-/**
- * Create an async iterable text stream from a string (useful for testing)
- */
 export function createTextStream(
   text: string,
   options?: { chunkSize?: number; delayMs?: number }
@@ -95,9 +66,6 @@ export async function* concatStreams(
   }
 }
 
-/**
- * Transform stream chunks (e.g., for SSE formatting)
- */
 export async function* transformStream(
   stream: AsyncIterable<string>,
   transform: (chunk: string) => string
@@ -107,9 +75,6 @@ export async function* transformStream(
   }
 }
 
-/**
- * Convert an async iterable to a ReadableStream (for Response objects)
- */
 export function toReadableStream(stream: AsyncIterable<string>): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   return new ReadableStream({
@@ -126,9 +91,6 @@ export function toReadableStream(stream: AsyncIterable<string>): ReadableStream<
   });
 }
 
-/**
- * Convert a ReadableStream back to an async iterable
- */
 export async function* fromReadableStream(
   stream: ReadableStream<Uint8Array>
 ): AsyncIterable<string> {

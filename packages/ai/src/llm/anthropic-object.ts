@@ -18,7 +18,6 @@ function extractSystemAndMessages(messages: LLMMessage[]): { system?: string; me
 
   for (const m of messages) {
     if (m.role === "system") {
-      // system content is always a string
       system = m.content as string;
       continue;
     }

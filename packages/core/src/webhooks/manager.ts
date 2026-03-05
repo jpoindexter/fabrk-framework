@@ -70,14 +70,12 @@ function validateWebhookUrl(url: string): void {
     throw new Error('Invalid webhook URL: malformed URL')
   }
 
-  // Only allow http and https schemes
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
     throw new Error(
       `Invalid webhook URL scheme. Only http: and https: are allowed.`
     )
   }
 
-  // Reject private/internal network targets
   if (isPrivateOrReservedHost(parsed.hostname)) {
     throw new Error(
       `Webhook URL targets a private or reserved network address. This is not allowed to prevent SSRF attacks.`

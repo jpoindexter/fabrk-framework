@@ -1,10 +1,3 @@
-/**
- * @fabrk/config
- *
- * Type-safe configuration builder for the FABRK framework.
- * All sections are optional — only configure what you use.
- */
-
 import { z } from 'zod'
 
 const frameworkConfigSchema = z.object({
@@ -71,7 +64,7 @@ const emailConfigSchema = z.object({
 
 const storageConfigSchema = z.object({
   adapter: z.enum(['s3', 'r2', 'local']).default('local'),
-  maxFileSize: z.number().default(10 * 1024 * 1024), // 10MB
+  maxFileSize: z.number().default(10 * 1024 * 1024),
   allowedTypes: z.array(z.string()).optional(),
   config: z.object({
     bucket: z.string().optional(),
@@ -167,7 +160,6 @@ export const fabrkConfigSchema = z.object({
 export type FabrkConfig = z.infer<typeof fabrkConfigSchema>
 export type FabrkConfigInput = z.input<typeof fabrkConfigSchema>
 
-// Re-export individual schema sections for package-level validation
 export {
   frameworkConfigSchema,
   aiConfigSchema,
@@ -198,44 +190,6 @@ export type FeatureFlagsConfig = z.infer<typeof featureFlagsConfigSchema>
 export type WebhooksConfig = z.infer<typeof webhooksConfigSchema>
 export type JobsConfig = z.infer<typeof jobsConfigSchema>
 
-/**
- * Define a type-safe FABRK configuration.
- * All sections are optional — only configure what you use.
- *
- * @example
- * ```ts
- * import { defineFabrkConfig } from '@fabrk/config'
- *
- * export default defineFabrkConfig({
- *   framework: {
- *     runtime: 'vite',
- *     typescript: true,
- *     srcDir: 'src',
- *   },
- *   theme: {
- *     system: 'terminal',
- *     colorScheme: 'green',
- *   },
- *   ai: {
- *     costTracking: true,
- *     providers: ['claude', 'openai'],
- *   },
- *   payments: {
- *     adapter: 'stripe',
- *     mode: 'test',
- *   },
- *   auth: {
- *     adapter: 'nextauth',
- *     apiKeys: { enabled: true },
- *     mfa: { enabled: true },
- *   },
- *   security: {
- *     csrf: { enabled: true },
- *     rateLimit: { enabled: true, adapter: 'memory' },
- *   },
- * })
- * ```
- */
 export function defineFabrkConfig(config: FabrkConfigInput): FabrkConfig {
   return fabrkConfigSchema.parse(config)
 }

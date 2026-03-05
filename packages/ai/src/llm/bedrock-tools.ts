@@ -30,7 +30,6 @@ function toBedrockMessages(messages: LLMMessage[]): {
   let system: Array<{ text: string }> | undefined;
   const out: BedrockMessage[] = [];
 
-  /** Extract text from content (string or array of parts) for providers that don't support vision */
   function toText(content: LLMMessage["content"]): string {
     if (typeof content === "string") return content;
     return content

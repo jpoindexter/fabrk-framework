@@ -4,7 +4,6 @@ import { InMemoryVectorStoreAdapter } from "./adapters";
 import { chunkText } from "./chunk";
 import type { ChunkOptions } from "./chunk";
 
-/** A retrieved chunk — alias for VectorSearchResult used in reranking APIs */
 export type RetrievedChunk = VectorSearchResult;
 
 export interface RagPipelineOptions {
@@ -17,9 +16,7 @@ export interface RagPipelineOptions {
 }
 
 export interface RagPipeline {
-  /** Embed and store text documents, returns IDs of created chunks */
   ingest(text: string, metadata?: Record<string, unknown>): Promise<string[]>;
-  /** Embed query and search the store */
   search(query: string, opts?: { topK?: number; minScore?: number }): Promise<VectorSearchResult[]>;
   store: VectorStoreAdapter;
 }

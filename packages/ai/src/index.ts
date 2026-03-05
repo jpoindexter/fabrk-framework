@@ -1,12 +1,3 @@
-/**
- * @fabrk/ai — AI Integration Toolkit
- *
- * Provides LLM providers, cost tracking, embeddings, streaming,
- * prompt management, and middleware for AI-powered applications.
- *
- * @module ai
- */
-
 export type { APIResponse } from './types';
 
 export {
@@ -143,7 +134,6 @@ export type {
 export { chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter, PineconeVectorStore, createRagPipeline, CrossEncoderReranker, rerank, cohereReranking, embeddingReranking } from './rag';
 export type { ChunkOptions, TextChunk, VectorEntry, VectorSearchResult, VectorStoreAdapter, RagPipeline, RagPipelineOptions, RetrievedChunk, RerankProvider, RankResult, RerankOptions } from './rag';
 
-// Semantic cache
 export { SemanticCache } from './cache';
 export type { CachedEntry, SemanticCacheOptions } from './cache';
 

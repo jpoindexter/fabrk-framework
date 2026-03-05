@@ -247,7 +247,6 @@ export async function* streamWithTools(
     reader.releaseLock();
   }
 
-  // Flush tool calls that arrived without a matching tool-call-end event
   for (const [, entry] of toolCallAccum) {
     let args: Record<string, unknown> = {};
     try {

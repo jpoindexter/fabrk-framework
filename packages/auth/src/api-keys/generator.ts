@@ -1,21 +1,3 @@
-/**
- * API Key Generator
- *
- * Generates secure API keys in the format: fabrk_live_xxxxx
- * Keys are hashed with SHA-256 before storage — the raw key
- * is only returned once at creation time.
- *
- * @example
- * ```ts
- * import { generateApiKey, hashApiKey } from '@fabrk/auth'
- *
- * const { key, prefix, hash } = await generateApiKey({ prefix: 'fabrk', environment: 'live' })
- * // key:    "fabrk_live_a1b2c3d4e5f6..."
- * // prefix: "fabrk_live_a1b2c3"
- * // hash:   "sha256:..."
- * ```
- */
-
 import { bytesToHex } from '@fabrk/core'
 import type { ApiKeyGeneratorConfig } from '../types'
 
@@ -65,7 +47,6 @@ function base62Encode(bytes: Uint8Array): string {
 
   while (result.length < bytes.length) {
     if (i >= bytes.length) {
-      // Need more random bytes — generate a fresh batch
       const extra = new Uint8Array(bytes.length - result.length + 16)
       crypto.getRandomValues(extra)
       for (const b of extra) {

@@ -32,7 +32,6 @@ describe('generateApiKey', () => {
     const result = await generateApiKey()
 
     const parts = result.prefix.split('_')
-    // prefix = "fabrk", env = "live", display = 6 chars
     expect(parts).toHaveLength(3)
     expect(parts[2]).toHaveLength(6)
   })
@@ -40,7 +39,6 @@ describe('generateApiKey', () => {
   it('should generate key of sufficient length', async () => {
     const result = await generateApiKey({ keyLength: 32 })
 
-    // Key format: prefix_env_randomPart
     const randomPart = result.key.split('_').slice(2).join('_')
     expect(randomPart.length).toBeGreaterThanOrEqual(32)
   })

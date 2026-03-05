@@ -1,24 +1,3 @@
-/**
- * Auth Middleware
- *
- * Middleware helpers for protecting routes with session or API key auth.
- *
- * @example
- * ```ts
- * import { withAuth, withApiKey } from '@fabrk/auth'
- *
- * // In Next.js API route
- * export const POST = withAuth(async (req, session) => {
- *   return Response.json({ user: session.userId })
- * })
- *
- * // API key auth
- * export const GET = withApiKey(auth, async (req, keyInfo) => {
- *   return Response.json({ key: keyInfo.name })
- * })
- * ```
- */
-
 import type { AuthAdapter, Session, ApiKeyInfo } from '@fabrk/core'
 
 type AuthenticatedHandler = (

@@ -38,7 +38,6 @@ function toGeminiContents(messages: LLMMessage[]): { systemInstruction?: any; co
 
   for (const m of messages) {
     if (m.role === "system") {
-      // system role always carries a string
       systemInstruction = { parts: [{ text: m.content as string }] };
       continue;
     }

@@ -1,25 +1,3 @@
-/**
- * Backup Code Generation and Verification
- *
- * Generates one-time-use backup codes for MFA recovery.
- * Codes are formatted as 8-character alphanumeric strings
- * grouped in pairs for readability.
- *
- * @example
- * ```ts
- * import { generateBackupCodes, verifyBackupCode } from '@fabrk/auth'
- *
- * const codes = generateBackupCodes(10)
- * // ['A1B2-C3D4', 'E5F6-G7H8', ...]
- *
- * // Store hashed codes
- * const hashed = await hashBackupCodes(codes)
- *
- * // Verify (consumes the code)
- * const { valid, remaining } = await verifyBackupCode('A1B2-C3D4', hashedCodes)
- * ```
- */
-
 import { timingSafeEqual, hashPayload } from '@fabrk/core'
 
 export function generateBackupCodes(count: number = 10): string[] {
@@ -50,12 +28,6 @@ export async function hashBackupCodes(codes: string[]): Promise<string[]> {
   )
 }
 
-/**
- * Verify a backup code against a set of hashed codes
- *
- * Returns the index of the matched code (-1 if not found).
- * The caller is responsible for removing the used code from storage.
- */
 export async function verifyBackupCode(
   code: string,
   hashedCodes: string[]

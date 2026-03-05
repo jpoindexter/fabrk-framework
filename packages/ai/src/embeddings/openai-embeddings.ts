@@ -1,7 +1,3 @@
-/**
- * OpenAI embedding provider
- */
-
 import type { EmbeddingProvider, EmbeddingConfig } from './types'
 import { EMBEDDING_DEFAULTS } from './types'
 

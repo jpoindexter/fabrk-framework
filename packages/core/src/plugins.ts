@@ -23,9 +23,7 @@ import type {
 export interface FabrkPlugin {
   name: string
   version: string
-  /** Called once during framework startup */
   initialize?(): Promise<void>
-  /** Called on framework shutdown */
   destroy?(): Promise<void>
 }
 
@@ -123,10 +121,6 @@ export class PluginRegistry {
     }
   }
 
-  /**
-   * Destroy all registered adapters and plugins.
-   * All plugins are destroyed even if some fail; throws AggregateError if any fail.
-   */
   async destroy(): Promise<void> {
     const all = [...this.adapters.values(), ...this.plugins]
     const results = await Promise.allSettled(all.map((p) => p.destroy?.() ?? Promise.resolve()))

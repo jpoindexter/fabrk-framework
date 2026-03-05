@@ -1,10 +1,3 @@
-/**
- * @fabrk/auth
- *
- * Authentication adapters for the FABRK framework.
- * Supports NextAuth, API keys, and MFA (TOTP + backup codes).
- */
-
 export { createNextAuthAdapter } from './nextauth/adapter'
 
 export { generateApiKey, hashApiKey } from './api-keys/generator'

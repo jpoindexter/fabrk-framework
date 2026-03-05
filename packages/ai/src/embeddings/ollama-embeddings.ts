@@ -1,7 +1,3 @@
-/**
- * Ollama embedding provider (local)
- */
-
 import type { EmbeddingProvider, EmbeddingConfig } from './types'
 import { EMBEDDING_DEFAULTS } from './types'
 import { validateOllamaUrl } from '../llm/ollama-client'
@@ -12,7 +8,6 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
   constructor(config: Partial<EmbeddingConfig> = {}) {
     this.config = { ...EMBEDDING_DEFAULTS, ...config, provider: 'ollama' }
 
-    // Validate the base URL on construction to prevent SSRF
     const baseUrl = this.config.baseUrl || EMBEDDING_DEFAULTS.ollamaBaseUrl
     validateOllamaUrl(baseUrl)
   }
@@ -39,7 +34,6 @@ export class OllamaEmbeddingProvider implements EmbeddingProvider {
   }
 
   async embedBatch(texts: string[]): Promise<number[][]> {
-    // Ollama doesn't support batch natively, process sequentially with concurrency limit
     const batchSize = 5
     const results: number[][] = []
 

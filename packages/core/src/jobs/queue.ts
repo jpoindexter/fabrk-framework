@@ -143,9 +143,7 @@ export function createJobQueue(store?: JobStore): JobQueue {
         if (!running) return
         try {
           await processNext()
-        } catch {
-          // Ignore processing errors
-        }
+        } catch {}
       }, interval)
 
       // Prevent interval from keeping process alive

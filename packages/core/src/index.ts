@@ -1,9 +1,3 @@
-/**
- * @fabrk/core
- *
- * Framework runtime and core utilities for FABRK
- */
-
 export { createFabrk, initFabrk } from './framework'
 export type { CreateFabrkOptions } from './framework'
 

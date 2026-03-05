@@ -2,7 +2,7 @@
 import type { StorageAdapter } from '@fabrk/core'
 import type { UploadOptions, UploadResult, SignedUrlOptions, SignedUrlResult } from '@fabrk/core'
 import type { S3AdapterConfig } from '../types'
-import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath, sanitizeFilename } from '../validation'
+import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath, sanitizeFilename, readStreamToBuffer, DEFAULT_MAX_SIZE } from '../validation'
 
 export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
   let s3Client: any = null
@@ -73,42 +73,22 @@ export function createS3Adapter(config: S3AdapterConfig): StorageAdapter {
         ? `${sanitizePath(options.path)}/${sanitizeFilename(options.filename)}`
         : generateStorageKey(options.filename)
 
-      // Convert to buffer for S3 (must happen before size computation
-      // so ReadableStream inputs are fully buffered)
+      // Convert to buffer before size computation so all input types are handled uniformly.
+      const maxBytes = options.maxSize ?? config.maxFileSize ?? DEFAULT_MAX_SIZE
       let body: any
       if (options.file instanceof Blob) {
-        const maxBytes = options.maxSize ?? (10 * 1024 * 1024)
         if (options.file.size > maxBytes) {
           throw new Error(`File size ${options.file.size} bytes exceeds maximum ${maxBytes} bytes`)
         }
         body = Buffer.from(await options.file.arrayBuffer())
       } else if (options.file instanceof ArrayBuffer) {
-        const maxBytes = options.maxSize ?? (10 * 1024 * 1024)
         if (options.file.byteLength > maxBytes) {
           throw new Error(`File size ${options.file.byteLength} bytes exceeds maximum ${maxBytes} bytes`)
         }
         body = Buffer.from(options.file)
       } else {
-        // Abort streaming early when accumulated size exceeds the limit to prevent
-        // an attacker from exhausting process memory with a large stream (OOM DoS).
-        const maxBytes = options.maxSize ?? (10 * 1024 * 1024) // 10MB default
-        const chunks: Uint8Array[] = []
-        let totalSize = 0
-        const reader = (options.file as ReadableStream).getReader()
-        let done = false
-        while (!done) {
-          const result = await reader.read()
-          done = result.done
-          if (result.value) {
-            totalSize += result.value.length
-            if (totalSize > maxBytes) {
-              reader.cancel()
-              throw new Error(`File exceeds maximum size of ${maxBytes} bytes`)
-            }
-            chunks.push(result.value)
-          }
-        }
-        body = Buffer.concat(chunks)
+        // readStreamToBuffer aborts early to prevent OOM DoS from oversized streams.
+        body = await readStreamToBuffer(options.file as ReadableStream, maxBytes)
       }
 
       // Compute size AFTER buffering so all input types (including

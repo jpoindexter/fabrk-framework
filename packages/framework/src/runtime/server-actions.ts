@@ -52,10 +52,10 @@ export function createActionRegistry(): ServerActionRegistry {
  */
 export function validateCsrf(request: Request): boolean {
   const origin = request.headers.get("origin");
-  if (!origin) return true; // Non-browser requests are allowed
+  if (!origin) return true;
 
   const host = request.headers.get("host");
-  if (!host) return false; // Origin present but no host — reject
+  if (!host) return false;
 
   try {
     const originHost = new URL(origin).host;

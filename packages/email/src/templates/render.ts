@@ -25,7 +25,12 @@ const templates: Record<string, TemplateRenderer> = {
   invite: inviteTemplate,
 }
 
+const BLOCKED_TEMPLATE_KEYS = new Set(['__proto__', 'constructor', 'prototype'])
+
 export function registerTemplate(name: string, renderer: TemplateRenderer): void {
+  if (BLOCKED_TEMPLATE_KEYS.has(name)) {
+    throw new Error(`Invalid template name: "${name}"`)
+  }
   templates[name] = renderer
 }
 

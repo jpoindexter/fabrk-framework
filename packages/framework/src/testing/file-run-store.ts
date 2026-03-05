@@ -1,12 +1,17 @@
 import { writeFile, readFile, mkdir, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import type { EvalRunRecord, EvalRunStore, EvalRunSummary } from './dataset.js';
 
 export class FileEvalRunStore implements EvalRunStore {
   constructor(private dir = './fabrk-eval-runs') {}
 
   async save(run: EvalRunRecord): Promise<void> {
-    const datasetDir = join(this.dir, run.datasetName);
+    const base = resolve(this.dir);
+    const datasetDir = resolve(base, run.datasetName);
+    // Prevent path traversal if datasetName contains '..' segments.
+    if (!datasetDir.startsWith(base + '/') && datasetDir !== base) {
+      throw new Error(`Invalid dataset name: "${run.datasetName}"`);
+    }
     await mkdir(datasetDir, { recursive: true });
     const ts = new Date(run.runAt).toISOString().replace(/[:.]/g, '-');
     await writeFile(join(datasetDir, `run-${ts}.json`), JSON.stringify(run, null, 2));
@@ -31,9 +36,7 @@ export class FileEvalRunStore implements EvalRunStore {
           passRate: raw.passRate,
           pass: raw.pass,
         });
-      } catch {
-        // skip malformed
-      }
+      } catch { /* skip malformed */ }
     }
     return summaries;
   }

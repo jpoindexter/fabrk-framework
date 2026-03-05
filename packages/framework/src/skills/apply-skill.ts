@@ -15,7 +15,6 @@ export function applySkill(
   const skillToolNames = skill.tools.map((t) => t.name);
   const existingSkillTools = (agent as AppliedAgentOptions).skillToolDefinitions ?? [];
 
-  // Skill prompt prepends to agent prompt (agent's explicit prompt takes precedence)
   const systemPrompt = agent.systemPrompt
     ? `${skill.systemPrompt}\n\n${agent.systemPrompt}`
     : skill.systemPrompt;
@@ -25,7 +24,6 @@ export function applySkill(
     systemPrompt,
     tools: [...existingTools, ...skillToolNames],
     skillToolDefinitions: [...existingSkillTools, ...skill.tools],
-    // Preserve agent model, or use skill default
     model: agent.model || skill.defaultModel || agent.model,
   };
 }

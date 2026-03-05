@@ -116,14 +116,12 @@ export async function createStdioClient(
     });
   }
 
-  // Initialize
   await send("initialize", {
     protocolVersion: "2024-11-05",
     capabilities: {},
     clientInfo: { name: "fabrk", version: "0.2.0" },
   });
 
-  // Discover tools
   const listResult = await send("tools/list") as { tools?: Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> };
   const remoteTools: ToolDefinition[] = (listResult.tools ?? []).map((t) => ({
     name: t.name,

@@ -2,7 +2,7 @@ import type { FileValidationOptions } from './types'
 import { posix } from 'path'
 import { randomBytes } from 'crypto'
 
-const DEFAULT_MAX_SIZE = 10 * 1024 * 1024 // 10MB
+export const DEFAULT_MAX_SIZE = 10 * 1024 * 1024 // 10MB
 
 const DANGEROUS_TYPES = [
   'application/x-executable',
@@ -155,27 +155,47 @@ export function sanitizeFilename(filename: string): string {
  *
  * Works cross-platform because we normalize to POSIX separators first.
  */
+/**
+ * Buffer an entire ReadableStream, enforcing a size cap to prevent OOM DoS.
+ * Aborts reading and throws if the accumulated size exceeds `maxBytes`.
+ */
+export async function readStreamToBuffer(stream: ReadableStream, maxBytes: number): Promise<Buffer> {
+  const chunks: Uint8Array[] = []
+  let totalSize = 0
+  const reader = stream.getReader()
+  let done = false
+  while (!done) {
+    const result = await reader.read()
+    done = result.done
+    if (result.value) {
+      totalSize += result.value.length
+      if (totalSize > maxBytes) {
+        reader.cancel()
+        throw new Error(`File exceeds maximum size of ${maxBytes} bytes`)
+      }
+      chunks.push(result.value)
+    }
+  }
+  return Buffer.concat(chunks)
+}
+
 export function sanitizePath(input: string): string {
   // Reject null bytes which can truncate paths at the OS level
   if (input.includes('\0')) {
     throw new Error('Null byte in storage path')
   }
 
-  // Normalize Windows backslashes to forward slashes
   let normalized = input.replace(/\\/g, '/')
 
-  // Use POSIX normalize to resolve `.` and `..` segments
   normalized = posix.normalize(normalized)
 
   // Strip leading slashes (could be multiple after normalize)
   normalized = normalized.replace(/^\/+/, '')
 
-  // After normalization, if `..` is still present the path escapes the root
   if (normalized === '..' || normalized.startsWith('../') || normalized.includes('/../') || normalized.endsWith('/..')) {
     throw new Error(`Path traversal detected: "${input}"`)
   }
 
-  // Reject empty path
   if (normalized === '' || normalized === '.') {
     throw new Error(`Invalid storage path: "${input}"`)
   }

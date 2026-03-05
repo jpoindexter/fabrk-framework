@@ -68,7 +68,6 @@ export function useObject<T>(options: UseObjectOptions<T>) {
                 if (event.type === "delta" && event.text) {
                   accumulated += event.text;
                   try {
-                    // Progressive update — only if accumulated is valid JSON so far
                     const partial = JSON.parse(accumulated) as Partial<T>;
                     setObject(partial);
                   } catch { /* keep accumulating */ }

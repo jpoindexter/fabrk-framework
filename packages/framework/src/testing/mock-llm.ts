@@ -84,7 +84,6 @@ export class MockLLM {
   private resolve(messages: LLMMessage[]): MockResponse {
     const lastUser = messages.filter((m) => m.role === "user").pop();
     const rawContent = lastUser?.content ?? "";
-    // Extract text string for pattern matching — join text parts for multimodal messages
     const text: string = typeof rawContent === "string"
       ? rawContent
       : rawContent
@@ -140,7 +139,6 @@ export class MockLLM {
           };
         }
       } else {
-        // Emit text as a single delta
         yield { type: "text-delta" as const, content: response.content };
       }
 

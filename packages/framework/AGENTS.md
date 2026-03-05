@@ -10,7 +10,7 @@
 
 | Import | Purpose |
 |--------|---------|
-| `@fabrk/framework` | Default: Vite plugin. Named: `defineAgent`, `defineTool`, `scanRoutes`, `matchRoute`, `handleRequest`, testing helpers, built-in tools |
+| `@fabrk/framework` | Default: Vite plugin. Named: `defineAgent`, `defineTool`, `defineSkill`, `defineSupervisor`, `defineAgentNetwork`, `defineStateGraph`, `defineWorkflow`, `runGuardrails`, `useObject`, `useViewTransition`, `ViewTransitionLink`, `handleStreamObject`, testing/eval helpers, built-in tools, MCP, A2A |
 | `@fabrk/framework/fabrk` | Full API (agents, tools, SSE, budget, config, middleware, prompts, dashboard) |
 | `@fabrk/framework/client/use-agent` | `useAgent()` React hook, `parseSSELine()` |
 | `@fabrk/framework/components` | Re-exports `@fabrk/components` |
@@ -53,12 +53,18 @@ export default defineConfig({
 })
 ```
 
-The `fabrk()` default export returns an array of Vite plugins:
+The `fabrk()` default export returns an array of Vite plugins. All sub-plugins default to enabled; pass `false` to disable:
+
+```typescript
+fabrk({ agents: true, dashboard: true, serverActions: true, voice: true })
+```
+
 - `fabrk:router` — file-system routing + SSR middleware
-- `fabrk:virtual-entries` — virtual modules for client/SSR/RSC entries
-- `fabrk:rsc-integration` — optional RSC via `@vitejs/plugin-rsc`
+- `fabrk:virtual-entries` — virtual modules for client/SSR entries
 - `fabrk:agents` — agent scanning + SSE endpoints
 - `fabrk:dashboard` — `/__ai` dev dashboard
+- `fabrk:server-action-transform` — `"use server"` compiler transform (disable with `serverActions: false`)
+- `fabrk:voice` — voice routes `/__ai/tts`, `/__ai/stt`, `/__ai/realtime` (disable with `voice: false`)
 
 ## Agent System
 
@@ -71,10 +77,43 @@ export default defineAgent({
   model: 'claude-sonnet-4-6',
   tools: ['search-docs'],
   auth: 'required',
-  budget: { daily: 10.0, perSession: 0.50 },
+  budget: { daily: 10.0, perSession: 0.50, perUser: 1.0, perTenant: 50.0 },
   systemPrompt: 'You are a helpful assistant.',
+  // Structured output: parse final response as JSON and emit structured-output event
+  outputSchema: { type: 'object', properties: { answer: { type: 'string' } }, required: ['answer'] },
+  // Guardrails on input and output
+  inputGuardrails: [maxLength(4000), denyList([/profanity/i])],
+  outputGuardrails: [piiRedactor()],
+  // Hand off to sub-agents by name
+  handoffs: ['researcher', 'coder'],
+  // Long-term memory across threads
+  memory: {
+    longTerm: { store: new InMemoryLongTermStore(), namespace: 'my-agent' },
+    workingMemory: { template: (msgs) => msgs.map(m => m.content).join('\n') },
+  },
 })
 ```
+
+`DefineAgentOptions` fields (all optional except `model`):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | `string` | LLM model ID (required) |
+| `fallback` | `string[]` | Fallback model IDs tried in order |
+| `systemPrompt` | `string` | System message prepended to every conversation |
+| `tools` | `string[]` | Tool names the agent can call |
+| `budget` | `AgentBudget` | Spend limits: `daily`, `perSession`, `perUser`, `perTenant`, `alertThreshold` |
+| `stream` | `boolean` | Default: `false` |
+| `auth` | `'required'\|'optional'\|'none'` | Default: `'none'` |
+| `memory` | `boolean\|AgentMemoryConfig` | Enable memory (see Memory section) |
+| `outputSchema` | `Record<string,unknown>` | JSON Schema; enables structured-output event on final response |
+| `handoffs` | `string[]` | Agent names this agent can hand off to |
+| `inputGuardrails` | `Guardrail[]` | Run before agent processes user message |
+| `outputGuardrails` | `Guardrail[]` | Run before agent returns response |
+| `toolHooks` | `ToolExecutorHooks` | Lifecycle hooks for tool calls |
+| `generationOptions` | `GenerationOptions` | Provider-level generation params (temperature, topP, etc.) |
+| `skills` | `SkillDefinition[]` | Pre-built skill bundles to attach |
+| `agents` | `Array<{name,description}>` | Sub-agent descriptors (used with `defineSupervisor`) |
 
 ### createAgentHandler(options)
 
@@ -184,6 +223,696 @@ interface RagResult {
 ```
 
 Default formatting: numbered `[1] content`, optional `score:` line, optional `metadata keys:` line.
+
+## Orchestration
+
+### defineSupervisor(config)
+
+Creates a supervisor agent that routes or plans across sub-agents. The supervisor calls sub-agents via `agentAsTool`, injecting them as tools automatically.
+
+```typescript
+import { defineSupervisor } from '@fabrk/framework'
+
+const supervisor = defineSupervisor({
+  name: 'coordinator',
+  model: 'claude-sonnet-4-6',
+  strategy: 'router',             // 'router' | 'planner'
+  maxDelegations: 5,              // default: 5, max: 10
+  agents: [
+    { name: 'researcher', description: 'Searches the web' },
+    { name: 'coder', description: 'Writes code' },
+  ],
+  handlerFactory: async (name) => {
+    const mod = await import(`./agents/${name}`)
+    return mod.default
+  },
+})
+```
+
+`SupervisorConfig` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Supervisor agent name |
+| `model` | `string` | LLM model for the supervisor |
+| `strategy` | `'router'\|'planner'` | `router` delegates once; `planner` breaks into sequential steps |
+| `agents` | `Array<{name,description}>` | Sub-agents to delegate to |
+| `handlerFactory` | `(name: string) => Promise<handler>` | Factory that returns each sub-agent's request handler |
+| `maxDelegations` | `number` | Max sub-agent calls, capped at 10 (default: 5) |
+| `budget` | `AgentBudget` | Shared budget across delegations |
+| `systemPrompt` | `string` | Appended after strategy system prompt |
+
+### agentAsTool(descriptor, handlerFactory)
+
+Wraps a sub-agent as a `ToolDefinition` callable by any agent. Used internally by `defineSupervisor`.
+
+```typescript
+import { agentAsTool } from '@fabrk/framework'
+
+const researcherTool = agentAsTool(
+  { name: 'researcher', description: 'Searches the web for information' },
+  async (name) => (await import(`./agents/${name}`)).default
+)
+```
+
+## Multi-Agent Networks
+
+### defineAgentNetwork(config)
+
+Routes messages across multiple agents via a custom or LLM-based router. Each hop passes the output of one agent as the input to the next.
+
+```typescript
+import { defineAgentNetwork } from '@fabrk/framework'
+
+const network = defineAgentNetwork({
+  agents: {
+    researcher: { execute: async (input, ctx) => await researcher.run(input) },
+    writer:     { execute: async (input, ctx) => await writer.run(input) },
+  },
+  // Custom router function:
+  router: (input, ctx) => ctx.iteration === 0 ? 'researcher' : 'writer',
+  // OR LLM-based router:
+  // router: { model: 'gpt-4o-mini', systemPrompt: 'Pick an agent.' },
+  maxHops: 5,  // default: 5
+})
+
+const result = await network.run('Research and write an article about AI safety')
+// result: { output, hops, history }
+```
+
+`AgentNetworkConfig` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `agents` | `Record<string, {execute}>` | Map of agent name → `execute(input, ctx)` function |
+| `router` | `RouterFn \| LLMRouterConfig` | Function or LLM config to select next agent; return `'END'` to stop |
+| `maxHops` | `number` | Max agent calls before stopping (default: 5) |
+
+`AgentNetworkResult`: `{ output: string; hops: number; history: Array<{agent, input, output}> }`
+
+## StateGraph (Cyclic Workflows)
+
+### defineStateGraph(config) / createStateGraph / StateGraphBuilder
+
+Build stateful, cyclic graphs where nodes can loop back on themselves. Each node receives the current state and returns the next node name plus updated state.
+
+```typescript
+import { defineStateGraph, MessagesAnnotation, interrupt, GraphInterrupt, subgraphNode } from '@fabrk/framework'
+
+const graph = defineStateGraph<{ count: number; result: string }>({
+  nodes: [
+    {
+      name: 'increment',
+      run: async (input, state) => {
+        const count = state.count + 1
+        if (count >= 3) return { nextNode: 'END', state: { ...state, count } }
+        return { nextNode: 'increment', state: { ...state, count } }
+      },
+    },
+  ],
+  edges: [],
+  initial: 'increment',
+  initialState: { count: 0, result: '' },
+  maxCycles: 50,        // default: 50 — guard against infinite loops
+  interruptBefore: ['increment'],  // pause before these nodes
+  interruptAfter: ['increment'],   // pause after these nodes
+})
+
+// Run — returns AsyncGenerator<StateGraphEvent<S>>
+for await (const event of graph.run('start')) {
+  // event.type: 'node-enter' | 'node-exit' | 'edge' | 'done' | 'error' | 'interrupt'
+  // event.state — current state snapshot
+  // event.cycles — cycle counter
+}
+
+// Resume after interrupt:
+for await (const event of graph.run('resume', {
+  resumeFrom: { node: 'increment', command: { goto: 'increment', update: { count: 0 } } }
+})) { }
+```
+
+`StateGraphConfig<S>` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `nodes` | `GraphNode<S>[]` | Each node: `{ name, run(input, state) => Promise<NodeResult<S>> }` |
+| `edges` | `GraphEdge[]` | Static edges: `{ from, to: string\|(output,state)=>string }` |
+| `initial` | `string` | Starting node name |
+| `initialState` | `S` | Starting state value |
+| `maxCycles` | `number` | Hard cap on node executions (default: 50) |
+| `reducers` | `StateReducers<S>` | Per-field merge functions for partial state updates |
+| `interruptBefore` | `string[]` | Nodes to pause before executing |
+| `interruptAfter` | `string[]` | Nodes to pause after executing |
+
+**`MessagesAnnotation`** — pre-built annotation for `{ messages: LLMMessage[] }` state.
+
+**`interrupt(value)`** — throw from inside a node to emit an `interrupt` event and pause the graph. Resume with `resumeFrom`.
+
+**`GraphInterrupt`** — the error class thrown by `interrupt()`.
+
+**`subgraphNode(name, compiledGraph)`** — wrap a compiled `StateGraph` as a node in a parent graph.
+
+**`Command<S>`** type: `{ goto: string; update?: Partial<S> }` — passed to `resumeFrom.command`.
+
+## Workflows (Linear)
+
+### defineWorkflow / agentStep / toolStep / conditionStep / parallelStep / suspendableStep
+
+Linear, ordered execution with branching and parallelism. Each step receives a `WorkflowContext` with the original input and prior step outputs.
+
+```typescript
+import {
+  defineWorkflow, agentStep, toolStep, conditionStep, parallelStep, suspendableStep,
+  runWorkflow, createWorkflowStream,
+} from '@fabrk/framework'
+
+const wf = defineWorkflow('pipeline', [
+  agentStep('research', async (ctx) => `facts about: ${ctx.input}`),
+  conditionStep('check',
+    (ctx) => ctx.history[0].output.length > 100,
+    [agentStep('summarize', async (ctx) => `summary: ${ctx.history[0].output}`)],
+    [agentStep('expand',   async (ctx) => `expanded: ${ctx.history[0].output}`)],
+  ),
+  parallelStep('gather', [
+    toolStep('fetch-a', async (ctx) => 'data-a'),
+    toolStep('fetch-b', async (ctx) => 'data-b'),
+  ]),
+  suspendableStep('approve', async (ctx, { suspend }) => {
+    // suspend pauses the workflow and serializes resume data
+    suspend({ pendingItem: ctx.input })
+  }),
+])
+
+// Run synchronously:
+const result = await runWorkflow(wf, 'initial input', { userId: 'u_1' })
+// result: { output, steps, suspended?, resumeData? }
+
+// Stream WorkflowProgressEvent events:
+const stream = createWorkflowStream(wf, 'initial input')
+for await (const event of stream) {
+  // event: WorkflowProgressEvent — { type, stepId, output?, error? }
+}
+
+// Resume after suspend:
+import { resumeWorkflow } from '@fabrk/framework'
+const resumed = await resumeWorkflow(wf, suspendedResult, { approved: true })
+```
+
+Step types:
+- `agentStep(id, run)` — agent-executed step
+- `toolStep(id, run)` — tool-executed step
+- `conditionStep(id, condition, thenSteps, elseSteps?)` — branching
+- `parallelStep(id, steps)` — concurrent execution; all steps run simultaneously
+- `suspendableStep(id, run, opts?)` — can call `suspend(data)` to pause; resume via `resumeWorkflow`
+
+`WorkflowContext`: `{ input, history: [{stepId, output}][], metadata?, writer? }`
+
+## Durable Agent Execution
+
+Checkpoint/resume for long-running or approval-gated agents.
+
+```typescript
+import {
+  InMemoryCheckpointStore, generateCheckpointId,
+  handleStartAgent, handleResumeAgent, handleAgentStatus,
+  handleAgentHistory, handleAgentRollback,
+} from '@fabrk/framework'
+import type { CheckpointStore, CheckpointState, DurableAgentOptions } from '@fabrk/framework'
+
+const store = new InMemoryCheckpointStore()
+
+// In your API routes:
+export const POST = (req) => handleStartAgent(req, { store, agent: myAgentDef })
+export const PUT  = (req) => handleResumeAgent(req, { store })
+export const GET  = (req) => handleAgentStatus(req, { store })
+```
+
+`CheckpointState` fields:
+- `id`, `agentName`, `messages`, `iteration`, `status` (`running|paused|completed|error`)
+- `pendingApproval?: { approvalId, toolName, input, expiresAt? }` — set when `requiresApproval: true` tool is called; resume sends approval decision
+
+`CheckpointStore` methods: `save`, `load`, `delete`, `append`, `listHistory(agentName, sessionId)`, `rollback(agentName, sessionId, targetIteration)`
+
+Tools can opt into approval flow via `requiresApproval: true` on `ToolDefinition`:
+```typescript
+const myTool = defineTool({
+  name: 'deploy',
+  requiresApproval: true,   // agent pauses, emits approval-required event
+  ...
+})
+```
+
+## Memory
+
+### InMemoryLongTermStore
+
+Cross-thread persistent key-value store. Namespace-scoped. `search()` does substring matching; swap with a vector-backed implementation for semantic search.
+
+```typescript
+import { InMemoryLongTermStore } from '@fabrk/framework'
+import type { LongTermStore, LongTermEntry } from '@fabrk/framework'
+
+const store = new InMemoryLongTermStore()
+await store.set('agent-x', 'user-pref-lang', 'TypeScript')
+const val = await store.get('agent-x', 'user-pref-lang')
+const keys = await store.list('agent-x')
+const results = await store.search('agent-x', 'TypeScript', 5)
+// results: [{ key, value, score }]
+await store.delete('agent-x', 'user-pref-lang')
+```
+
+`LongTermStore` interface: `set`, `get`, `delete`, `list`, `search`.
+
+Inject into an agent via `memory.longTerm` — `memory_store` and `memory_recall` tools are auto-injected into the agent unless `autoInjectTool: false`.
+
+### buildWorkingMemory(messages, config)
+
+Computes a working memory string from the current thread's messages. Inject the result into the agent's system prompt.
+
+```typescript
+import { buildWorkingMemory } from '@fabrk/framework'
+import type { WorkingMemoryConfig } from '@fabrk/framework'
+
+const config: WorkingMemoryConfig = {
+  template: (messages) => messages.map(m => `${m.role}: ${m.content}`).join('\n'),
+  readOnly: false,  // if true, only computed at session start
+}
+const wm = buildWorkingMemory(threadMessages, config)
+```
+
+## Guardrails
+
+Guardrails are synchronous functions applied to agent input or output before the LLM sees/returns them. They can block, pass, or replace content.
+
+```typescript
+import {
+  runGuardrails, runGuardrailsParallel,
+  maxLength, denyList, requireJsonSchema, piiRedactor,
+} from '@fabrk/framework'
+import type { Guardrail, AsyncGuardrail, GuardrailContext, GuardrailResult } from '@fabrk/framework'
+
+// Compose built-in guardrails:
+const guards = [maxLength(4000), denyList([/badword/i]), piiRedactor()]
+const { content, blocked, reason } = runGuardrails(guards, userInput, {
+  agentName: 'chat', sessionId: 'sess_1', direction: 'input'
+})
+
+// Parallel (async-safe — all run concurrently):
+const result = await runGuardrailsParallel(guards, userInput, ctx)
+```
+
+Built-in guardrail factories:
+
+| Factory | Description |
+|---------|-------------|
+| `maxLength(n)` | Blocks content longer than `n` characters |
+| `denyList(patterns)` | Blocks content matching any `RegExp` in the array |
+| `requireJsonSchema(schema)` | Blocks if content is not valid JSON matching the schema's `required` fields and property types |
+| `piiRedactor()` | Replaces emails, US phone numbers, and SSNs with `[REDACTED]` |
+
+Custom guardrail shape:
+```typescript
+const myGuard: Guardrail = (content, ctx) => {
+  if (content.includes('SECRET')) return { pass: false, reason: 'Contains secret' }
+  return { pass: true }
+  // OR: return { pass: true, replacement: sanitized }
+}
+```
+
+## Skills
+
+Skills are pre-packaged (systemPrompt + tools + model) bundles that extend agent capabilities without coupling agent definitions.
+
+```typescript
+import { defineSkill, applySkill, composeSkills, scanSkills, docsSearch } from '@fabrk/framework'
+import type { SkillDefinition, ScannedSkill } from '@fabrk/framework'
+
+const codeSkill = defineSkill({
+  name: 'code-reviewer',
+  description: 'Reviews TypeScript code for bugs and style issues',
+  systemPrompt: 'You are an expert TypeScript code reviewer.',
+  tools: [myLintTool],
+  defaultModel: 'claude-sonnet-4-6',
+})
+
+// Apply one skill to an agent definition (merges tools + system prompt):
+const agent = applySkill(baseAgent, codeSkill)
+
+// Merge multiple skills:
+const agent2 = composeSkills(baseAgent, [codeSkill, searchSkill])
+
+// Auto-discover skill files under skills/:
+const skills = await scanSkills('./skills')
+
+// Built-in: docs search skill
+const search = docsSearch({ docs: [{ title: 'Intro', content: '...', url: '/docs/intro' }] })
+```
+
+## A2A Protocol (Agent-to-Agent)
+
+### createA2AServer(options)
+
+Creates an A2A-compatible HTTP request handler. Returns `(req: Request) => Promise<Response | null>` — returns `null` for non-A2A paths so you can fall through to your own routing.
+
+Routes served:
+- `GET /.well-known/agent.json` — agent card discovery
+- `POST /` — task submission (route to agent with `@agentName <message>` prefix or default to first agent)
+
+```typescript
+import { createA2AServer } from '@fabrk/framework'
+
+const a2aHandler = createA2AServer({
+  baseUrl: 'https://my-service.example.com',
+  name: 'My Agent Service',
+  version: '1.0',
+  agents: {
+    chat: { execute: async (input, sessionId) => chatAgent.run(input) },
+    coder: { execute: async (input, sessionId) => coderAgent.run(input) },
+  },
+  validateRequest: (req) => req.headers.get('X-Secret') === process.env.A2A_SECRET,
+})
+
+// In your route handler:
+export async function handler(req: Request) {
+  const a2aResponse = await a2aHandler(req)
+  if (a2aResponse) return a2aResponse
+  // ... your own routing
+}
+```
+
+### A2AClient
+
+Client for calling a remote A2A-compatible agent server.
+
+```typescript
+import { A2AClient, A2AClientError } from '@fabrk/framework'
+import type { A2AAgentCard, A2ATask, A2ATaskResult } from '@fabrk/framework'
+
+const client = new A2AClient('https://remote-agent.example.com')
+const card = await client.discover()   // GET /.well-known/agent.json
+const result = await client.sendTask({
+  message: { role: 'user', parts: [{ text: '@coder write a hello world function' }] },
+  sessionId: 'sess_123',
+})
+// result: { id, status: 'completed'|'failed'|'in_progress', artifacts?, error? }
+```
+
+`A2AClientError` has a `status?: number` field for the HTTP status code.
+
+## Evals
+
+### defineEval / runEvals
+
+Define and run evaluation suites against agents with mock LLMs.
+
+```typescript
+import {
+  defineEval, runEvals, defineDataset, FileEvalRunStore,
+  exactMatch, includes, llmAsJudge, toolCallSequence, jsonSchema,
+} from '@fabrk/framework'
+import type { EvalCase, EvalSuite, EvalCaseResult, EvalSuiteResult, EvalDataset, EvalRunStore } from '@fabrk/framework'
+
+const suite = defineEval({
+  name: 'chat-suite',
+  agent: {
+    systemPrompt: 'You are helpful.',
+    tools: [searchTool],
+    mock: mockLLM().setDefault('42'),
+    maxIterations: 5,
+  },
+  cases: [
+    { input: 'What is 6x7?', expected: '42' },
+    { input: 'Search for cats', expected: undefined },
+  ],
+  scorers: [exactMatch(), includes('42')],
+  threshold: 0.8,  // pass rate required for suite to pass
+})
+
+const dataset = defineDataset({
+  name: 'large-dataset',
+  cases: bigCaseArray,
+})
+
+const result = await runEvals(suite, {
+  dataset,
+  concurrency: 4,               // run up to 4 cases in parallel (default: 1, max: 20)
+  store: new FileEvalRunStore('./eval-runs'),
+  compareWith: previousRunRecord,
+})
+// result: { name, results, passRate, pass }
+```
+
+Built-in scorers:
+
+| Scorer | Description |
+|--------|-------------|
+| `exactMatch()` | `output === expected` |
+| `includes(str)` | `output.includes(str)` |
+| `llmAsJudge(opts)` | Uses an LLM to score quality (requires provider config) |
+| `toolCallSequence(names)` | Checks tool calls happened in order |
+| `jsonSchema(schema)` | Validates output parses as valid JSON matching schema |
+
+`FileEvalRunStore` persists runs to disk as JSON. Pass `compareWith` a previous `EvalRunRecord` to diff pass rates between runs.
+
+## Stop Conditions
+
+Control agent loop termination beyond `maxIterations`.
+
+```typescript
+import { stepCountIs, hasToolCall } from '@fabrk/framework'
+import type { StopCondition, StopConditionContext } from '@fabrk/framework'
+
+// Stop after exactly 3 tool-use rounds:
+const stop = stepCountIs(3)
+
+// Stop once a specific tool has been called:
+const stop2 = hasToolCall('final-report')
+
+// Use in runAgentLoop:
+import { runAgentLoop } from '@fabrk/framework'
+for await (const event of runAgentLoop({ ..., stopWhen: [stop, stop2] })) { }
+```
+
+Custom stop condition:
+```typescript
+const myStop: StopCondition = (ctx: StopConditionContext) => ctx.iteration >= 2
+```
+
+## Prompt Registry
+
+Version and A/B test system prompts.
+
+```typescript
+import { definePromptVersion, resolvePrompt, abTestPrompt } from '@fabrk/framework'
+import type { PromptVersion } from '@fabrk/framework'
+
+const v1 = definePromptVersion({ id: 'system-v1', content: 'You are helpful.', weight: 0.5 })
+const v2 = definePromptVersion({ id: 'system-v2', content: 'You are precise.',  weight: 0.5 })
+
+const prompt = resolvePrompt([v1, v2], 'deterministic-key')    // stable selection
+const abPrompt = abTestPrompt([v1, v2])                        // random weighted selection
+```
+
+## Client Hooks
+
+### useObject\<T\>(options)
+
+Streams a structured JSON object from an API endpoint. Works with `handleStreamObject` server-side.
+
+```typescript
+import { useObject } from '@fabrk/framework'
+
+function MyComponent() {
+  const { submit, stop, object, isLoading, error } = useObject<{ answer: string }>({
+    api: '/api/generate',
+    onFinish: (obj) => console.log('Done:', obj),
+  })
+
+  return (
+    <button onClick={() => submit({ question: 'What is AI?' })}>
+      {isLoading ? <button onClick={stop}>Stop</button> : 'Generate'}
+    </button>
+  )
+}
+```
+
+`UseObjectOptions<T>`: `api` (endpoint URL), `onFinish?: (object: T) => void`
+
+Returns: `{ submit, stop, object: Partial<T>|null, isLoading, error }`
+
+### useViewTransition() / ViewTransitionLink
+
+Wrap navigation in the browser View Transitions API with a React fallback.
+
+```typescript
+import { useViewTransition, ViewTransitionLink } from '@fabrk/framework'
+
+// Hook:
+const { startViewTransition, isPending } = useViewTransition()
+<button onClick={() => startViewTransition(() => navigate('/about'))}>Go</button>
+
+// Component (same-origin links only; modifier-key clicks pass through):
+<ViewTransitionLink href="/about">About</ViewTransitionLink>
+```
+
+## handleStreamObject (server-side)
+
+Pairs with `useObject` on the client. Runs `streamObject` and returns an SSE `Response`.
+
+```typescript
+import { handleStreamObject } from '@fabrk/framework'
+
+// app/api/generate/route.ts
+export async function POST(req: Request) {
+  const { messages } = await req.json()
+  return handleStreamObject(messages, myJsonSchema, { provider: 'openai' })
+}
+```
+
+Signature: `handleStreamObject<T>(messages: LLMMessage[], schema: JsonSchema, config?: Partial<LLMConfig>): Promise<Response>`
+
+## Runtime Features
+
+### ISR (Incremental Static Regeneration)
+
+```typescript
+import {
+  InMemoryISRCache, FilesystemISRCache, serveFromISR,
+  isrRevalidateTag, isrRevalidatePath,
+} from '@fabrk/framework'
+import type { ISRCacheHandler } from '@fabrk/framework'
+
+const cache: ISRCacheHandler = new FilesystemISRCache('./.isr-cache')
+```
+
+### OG Image Generation
+
+```typescript
+import { defineOGTemplate, handleOGRequest, isOGRequest } from '@fabrk/framework'
+import type { OGTemplate, OGFont } from '@fabrk/framework'
+
+const template = defineOGTemplate({ width: 1200, height: 630, render: (params) => /* html */ `...` })
+```
+
+### JSON-LD
+
+```typescript
+import { buildJsonLdScript, JsonLdScript } from '@fabrk/framework'
+import type { JsonLdOrganization, JsonLdProduct, JsonLdArticle, JsonLdBreadcrumb } from '@fabrk/framework'
+
+const script = buildJsonLdScript({ '@type': 'Organization', name: 'Acme' })
+```
+
+### Fetch Cache
+
+```typescript
+import { createCachedFetch, patchFetch, revalidateTag, revalidatePath } from '@fabrk/framework'
+import type { FetchCacheOptions } from '@fabrk/framework'
+```
+
+### Server Actions
+
+```typescript
+import { createActionRegistry, validateCsrf, handleServerAction } from '@fabrk/framework'
+import type { ServerActionRegistry } from '@fabrk/framework'
+```
+
+### i18n
+
+```typescript
+import { extractLocale, detectLocale, localePath, createI18nMiddleware } from '@fabrk/framework'
+import type { I18nConfig } from '@fabrk/framework'
+```
+
+## OpenTelemetry
+
+```typescript
+import { initTracer, startSpan, setSpanAttributes, getActiveSpan } from '@fabrk/framework'
+import type { SpanAttributes } from '@fabrk/framework'
+
+// In fabrk.config.ts:
+export default defineFabrkConfig({
+  tracing: {
+    enabled: true,
+    exporter: 'otlp',              // 'console' | 'otlp'
+    endpoint: 'http://localhost:4318/v1/traces',
+    serviceName: 'my-app',
+    headers: { 'x-honeycomb-team': process.env.HONEYCOMB_KEY! },
+  },
+})
+```
+
+`TracingConfig` fields: `enabled`, `exporter`, `endpoint`, `headers`, `serviceName`.
+
+## Tool Result Types (Multimodal)
+
+`ToolResult.content` is an array of `ToolOutputPart` — allows tools to return text, images, or files.
+
+```typescript
+import type { TextPart, ImagePart, FilePart, ToolOutputPart, ToolResult } from '@fabrk/framework'
+
+// Text (most common):
+const result: ToolResult = { content: [{ type: 'text', text: 'hello' }] }
+
+// Image:
+const imgResult: ToolResult = {
+  content: [{ type: 'image', data: base64String, mediaType: 'image/png' }]
+}
+
+// File:
+const fileResult: ToolResult = {
+  content: [{ type: 'file', name: 'report.pdf', data: base64String, mediaType: 'application/pdf' }]
+}
+```
+
+## Computer Use Tools
+
+```typescript
+import { defineBashTool, defineTextEditorTool, defineComputerTool } from '@fabrk/framework'
+import type { BashToolOptions, TextEditorToolOptions, ComputerToolOptions } from '@fabrk/framework'
+
+const bash = defineBashTool({ allowedCommands: ['ls', 'cat'] })
+const editor = defineTextEditorTool({ workdir: '/tmp/sandbox' })
+const computer = defineComputerTool({ screenshotFn: async () => base64Screenshot })
+```
+
+These match the Anthropic `computer_use_20250124` API tool format.
+
+## Config Reference
+
+```typescript
+// fabrk.config.ts
+import { defineFabrkConfig } from '@fabrk/framework/fabrk'
+
+export default defineFabrkConfig({
+  siteUrl: 'https://myapp.com',
+  ai: { defaultModel: 'claude-sonnet-4-6', fallback: ['gpt-4o'], budget: { daily: 50 } },
+  agents: { maxIterations: 15, defaultStream: true },
+  mcp: { expose: true, consume: ['https://remote-mcp.example.com'] },
+  auth: { provider: 'nextauth', apiKeys: true, mfa: true },
+  security: { csrf: true, csp: true, rateLimit: { windowMs: 60_000, max: 100 } },
+  deploy: { target: 'workers' },   // 'workers' | 'node' | 'vercel'
+  tracing: { enabled: true, exporter: 'otlp' },
+  reactCompiler: true,
+  voice: { /* VoiceConfig */ },
+  i18n: { /* I18nConfig */ },
+})
+```
+
+## Voice
+
+```typescript
+import { handleTTSRequest, handleSTTRequest, handleRealtimeUpgrade } from '@fabrk/framework'
+import type { RealtimeHandlerConfig } from '@fabrk/framework'
+
+// API routes:
+export const POST = handleTTSRequest   // text-to-speech
+export const PUT  = handleSTTRequest   // speech-to-text
+// WebSocket upgrade for realtime voice:
+export const GET  = (req, socket, head) => handleRealtimeUpgrade(req, socket, head, config)
+```
+
+Voice routes are served at `/__ai/tts`, `/__ai/stt`, `/__ai/realtime` when `voice: true` (default) in the Vite plugin.
 
 ## Testing Framework
 

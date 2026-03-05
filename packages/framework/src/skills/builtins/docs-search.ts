@@ -29,9 +29,7 @@ export function docsSearch(options: { dir: string; name?: string }): SkillDefini
         const content = fs.readFileSync(file, "utf-8");
         if (content.toLowerCase().includes(query)) {
           const relativePath = path.relative(dir, file);
-          // Extract matching lines with context
-          const lines = content.split("\n");
-          const matchingLines = lines
+          const matchingLines = content.split("\n")
             .map((line, i) => ({ line, index: i }))
             .filter(({ line }) => line.toLowerCase().includes(query))
             .slice(0, 3)

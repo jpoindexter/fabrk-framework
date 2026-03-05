@@ -57,7 +57,6 @@ export function useAgent(agentName: string) {
 
   const send = useCallback(
     async (content: string | AgentContentPart[]) => {
-      // Cancel any in-progress stream before starting a new one
       abortControllerRef.current?.abort();
       abortControllerRef.current = new AbortController();
 
@@ -192,7 +191,6 @@ export function useAgent(agentName: string) {
           }
         }
       } catch (err) {
-        // Ignore user-initiated aborts — not an error
         if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {

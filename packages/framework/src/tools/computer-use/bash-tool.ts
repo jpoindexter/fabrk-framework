@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../define-tool.js';
+import { textResult } from '../define-tool.js';
 
 export interface BashToolOptions {
   /** Called to actually execute the bash command. Must be provided in production. */
@@ -29,16 +30,16 @@ export function defineBashTool(options?: BashToolOptions): ToolDefinition {
     handler: async (input) => {
       const command = input.command as string;
       if (!command || typeof command !== 'string') {
-        return { content: [{ type: 'text', text: 'Error: command must be a non-empty string' }] };
+        return textResult('Error: command must be a non-empty string');
       }
       if (!options?.onExecute) {
-        return { content: [{ type: 'text', text: '[bash tool: no executor configured]' }] };
+        return textResult('[bash tool: no executor configured]');
       }
       try {
         const output = await options.onExecute(command);
-        return { content: [{ type: 'text', text: output }] };
+        return textResult(output);
       } catch (err) {
-        return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+        return textResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
   };

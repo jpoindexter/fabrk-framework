@@ -58,7 +58,6 @@ export function createCorsHandler(config: CorsConfig): CorsHandler {
 
     if (!isAllowed(origin)) return headers
 
-    // Use the specific origin (not *) when credentials are enabled
     headers['Access-Control-Allow-Origin'] = credentials ? origin : (origins.includes('*') ? '*' : origin)
 
     /** @security Vary: Origin prevents shared caches from serving a response with the wrong ACAO header to a different origin (cache poisoning). Required whenever ACAO is not a static wildcard '*'. */

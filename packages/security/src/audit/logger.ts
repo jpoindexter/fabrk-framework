@@ -62,7 +62,6 @@ export function createAuditLogger(store: AuditStore): AuditLogger {
             const recent = await store.query({ limit: 1 })
             if (recent.length > 0 && recent[0].hash) {
               lastHash = recent[0].hash
-              // Resume sequence from the last stored event
               sequenceCounter = (recent[0].sequence ?? 0) + 1
             }
           } catch {

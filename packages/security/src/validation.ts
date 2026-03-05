@@ -16,7 +16,6 @@ export function stripHtml(input: string): string {
 export function sanitizeUrl(input: string): string | null {
   try {
     const url = new URL(input)
-    // Only allow http/https protocols
     if (!['http:', 'https:'].includes(url.protocol)) {
       return null
     }

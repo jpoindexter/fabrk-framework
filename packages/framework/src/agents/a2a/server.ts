@@ -80,7 +80,6 @@ export function createA2AServer(
         });
       }
 
-      // Extract agent name from message: "@agentName some input" or fall back to first agent
       const text = task.message.parts.map((p) => p.text).join(' ');
       const agentMatch = text.match(/^@(\w+)\s*/);
       const agentName = agentMatch ? agentMatch[1] : agentNames[0];

@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../define-tool.js';
+import { textResult } from '../define-tool.js';
 
 export type ComputerAction =
   | 'screenshot'
@@ -60,18 +61,18 @@ export function defineComputerTool(options?: ComputerToolOptions): ToolDefinitio
       const action = input.action as ComputerAction;
       if (action === 'screenshot') {
         if (!options?.onScreenshot) {
-          return { content: [{ type: 'text', text: '[computer tool: screenshot not configured]' }] };
+          return textResult('[computer tool: screenshot not configured]');
         }
         try {
           const base64 = await options.onScreenshot();
-          return { content: [{ type: 'text', text: base64 }] };
+          return textResult(base64);
         } catch (err) {
-          return { content: [{ type: 'text', text: `Screenshot error: ${err instanceof Error ? err.message : String(err)}` }] };
+          return textResult(`Screenshot error: ${err instanceof Error ? err.message : String(err)}`);
         }
       }
 
       if (!options?.onAction) {
-        return { content: [{ type: 'text', text: `[computer tool: action '${action}' not configured]` }] };
+        return textResult(`[computer tool: action '${action}' not configured]`);
       }
 
       const params: Record<string, unknown> = {};
@@ -83,9 +84,9 @@ export function defineComputerTool(options?: ComputerToolOptions): ToolDefinitio
 
       try {
         await options.onAction(action, params);
-        return { content: [{ type: 'text', text: `Action '${action}' completed` }] };
+        return textResult(`Action '${action}' completed`);
       } catch (err) {
-        return { content: [{ type: 'text', text: `Action error: ${err instanceof Error ? err.message : String(err)}` }] };
+        return textResult(`Action error: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
   };

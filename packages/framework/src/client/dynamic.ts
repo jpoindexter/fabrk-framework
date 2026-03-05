@@ -35,7 +35,6 @@ export function dynamic<P extends Record<string, any> = Record<string, any>>(
   const { loading, ssr = true } = options;
 
   if (!ssr) {
-    // Client-only: render nothing during SSR, load after mount
     function ClientOnlyDynamic(props: P) {
       const [Component, setComponent] = useState<ComponentType<P> | null>(null);
 

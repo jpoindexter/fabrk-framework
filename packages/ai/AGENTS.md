@@ -157,11 +157,10 @@ SDK call, extract token counts, calculate cost via `MODEL_PRICING`, and persist 
 
 ## LLM Client Abstraction
 
-Single-method interface across OpenAI, Anthropic, and Ollama. Useful when you want
-to swap providers without changing call sites.
+Single-method interface across OpenAI, Anthropic, Google, Ollama, Cohere, and AWS Bedrock. Useful when you want to swap providers without changing call sites.
 
 ```ts
-import { getLLMClient, LLM_DEFAULTS } from '@fabrk/ai'
+import { getLLMClient, LLM_DEFAULTS, generateObject, streamObject, streamObjectPartial } from '@fabrk/ai'
 
 // OpenAI (default provider)
 const client = getLLMClient({ provider: 'openai' })
@@ -175,20 +174,64 @@ const text = await client.generate({
 // Anthropic
 const claudeClient = getLLMClient({ provider: 'anthropic' })
 
+// Google Gemini
+const geminiClient = getLLMClient({ provider: 'google' })
+
 // Ollama (local)
 const ollamaClient = getLLMClient({
   provider: 'ollama',
   ollamaBaseUrl: 'http://localhost:11434',
   ollamaModel: 'llama3.1:8b-instruct',
 })
+
+// Structured output (returns typed object):
+const result = await generateObject(messages, schema, { provider: 'openai' })
+// result: GenerateObjectResult<T> — { object: T, usage: {...} }
+
+// Stream structured object:
+for await (const event of streamObject(messages, schema, { provider: 'openai' })) {
+  // event: StreamObjectEvent — { type: 'delta'|'done'|'error', text?, object? }
+}
 ```
 
-`LLMConfig` fields: `provider`, `openaiModel`, `anthropicModel`, `ollamaModel`,
-`ollamaBaseUrl`, `maxTokens`, `temperature`, `timeoutMs`.
+`LLMConfig` fields: `provider`, `openaiModel`, `anthropicModel`, `ollamaModel`, `ollamaBaseUrl`, `maxTokens`, `temperature`, `timeoutMs`.
 
 `LLM_DEFAULTS`: provider `openai`, model `gpt-4o`, maxTokens `3000`, temperature `0.2`, timeout `90s`.
 
-Exported clients: `OpenAIClient`, `AnthropicClient`, `OllamaClient` (instantiate directly if needed).
+Exported clients: `OpenAIClient`, `AnthropicClient`, `GoogleClient`, `OllamaClient` (instantiate directly if needed).
+
+### Provider Registry
+
+Register custom OpenAI-compatible providers at runtime:
+
+```ts
+import { registerProvider, getProvider, getProviderByKey, listProviders, makeOpenAICompatAdapter } from '@fabrk/ai'
+import type { ProviderAdapter, OpenAICompatOptions } from '@fabrk/ai'
+
+const adapter = makeOpenAICompatAdapter({ baseUrl: 'https://api.together.ai/v1', apiKey: process.env.TOGETHER_KEY! })
+registerProvider('together', adapter)
+const p = getProvider('together')   // retrieve by name
+listProviders()                     // ['openai', 'anthropic', 'google', 'ollama', 'together', ...]
+```
+
+### Tool-calling provider functions
+
+Low-level functions for multi-turn tool-calling — used internally by the agent loop but available for custom integrations:
+
+```ts
+import {
+  openaiGenerateWithTools, openaiStreamWithTools,
+  anthropicGenerateWithTools, anthropicStreamWithTools,
+  googleGenerateWithTools, googleStreamWithTools,
+  ollamaGenerateWithTools, ollamaStreamWithTools,
+  cohereGenerateWithTools, cohereStreamWithTools,
+  bedrockGenerateWithTools, bedrockStreamWithTools,
+} from '@fabrk/ai'
+```
+
+Each pair has signatures:
+- `generateWithTools(messages, tools, opts?) => Promise<LLMToolResult>`
+- `streamWithTools(messages, tools, opts?) => AsyncGenerator<LLMStreamEvent>`
 
 ---
 
@@ -277,7 +320,7 @@ const messages = createMessagePair(systemTpl, 'Explain async/await', { role: 'co
 
 ```ts
 import {
-  getEmbeddingProvider, cosineSimilarity, findNearest
+  getEmbeddingProvider, cosineSimilarity, findNearest, EMBEDDING_DEFAULTS
 } from '@fabrk/ai'
 
 const provider = getEmbeddingProvider({ provider: 'openai' })
@@ -293,10 +336,142 @@ jaccardSimilarity(setA, setB)  // set-based overlap
 centroid(vectors)              // average vector
 ```
 
-Providers: `OpenAIEmbeddingProvider` (default model `text-embedding-3-small`),
-`OllamaEmbeddingProvider`.
+Providers: `OpenAIEmbeddingProvider`, `OllamaEmbeddingProvider`, `CohereEmbeddingProvider`,
+`VoyageEmbeddingProvider`, `AzureEmbeddingProvider`.
+
+Default: `getEmbeddingProvider({ provider: 'openai' })` uses `text-embedding-3-small`.
 
 ---
+
+## RAG (Retrieval-Augmented Generation)
+
+### createRagPipeline(options)
+
+Chunking, embedding, vector storage, and search in one pipeline. Pluggable store via `VectorStoreAdapter`.
+
+```ts
+import {
+  createRagPipeline, chunkText, InMemoryVectorStore, InMemoryVectorStoreAdapter,
+  PineconeVectorStore, getEmbeddingProvider,
+} from '@fabrk/ai'
+import type { RagPipeline, RagPipelineOptions, RetrievedChunk } from '@fabrk/ai'
+
+const embedder = getEmbeddingProvider({ provider: 'openai' })
+
+const pipeline = createRagPipeline({
+  embedder,
+  store: new InMemoryVectorStoreAdapter(),   // default
+  chunkOptions: { size: 512, overlap: 50 },
+  topK: 5,
+  minScore: 0.7,
+  reranker: crossEncoder.fn(),               // optional reranker (see below)
+})
+
+// Ingest:
+const chunkIds = await pipeline.ingest('Long document text...', { source: 'manual' })
+
+// Search:
+const results = await pipeline.search('user query', { topK: 3, minScore: 0.75 })
+// results: VectorSearchResult[] — { id, text, score, metadata }
+```
+
+`RagPipelineOptions` fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `embedder` | `EmbeddingProvider` | Required. Used for both ingestion and search |
+| `store` | `VectorStoreAdapter` | Default: `InMemoryVectorStoreAdapter` |
+| `chunkOptions` | `ChunkOptions` | `{ size?, overlap? }` |
+| `topK` | `number` | Default results returned (default: 5) |
+| `minScore` | `number` | Filter threshold |
+| `reranker` | `(query, chunks) => Promise<RetrievedChunk[]>` | Applied after initial retrieval (fetches 3× topK candidates) |
+
+### Reranking
+
+```ts
+import {
+  rerank, cohereReranking, embeddingReranking, CrossEncoderReranker,
+} from '@fabrk/ai'
+import type { RerankProvider, RankResult, RerankOptions } from '@fabrk/ai'
+
+// Cohere /v2/rerank API:
+const { ranking } = await rerank({
+  model: cohereReranking('rerank-v3.5'),   // requires COHERE_API_KEY
+  query: 'rainfall in cities',
+  documents: ['sunny beach', 'rainy city', 'snowy mountain'],
+  topN: 2,
+})
+// ranking[]: { originalIndex, score, document }
+
+// Embedding-based reranking (no API key needed):
+const model = embeddingReranking(embedder)
+
+// Custom cross-encoder (bring your own scoring function):
+const crossEncoder = new CrossEncoderReranker(
+  async (query, text) => myModel.score(query, text)   // returns 0-1
+)
+// Use as pipeline reranker:
+const pipeline = createRagPipeline({ embedder, reranker: crossEncoder.fn() })
+```
+
+`CrossEncoderReranker`:
+- `constructor(score: (query, text) => Promise<number>)`
+- `.rerank(query, chunks)` — returns chunks sorted by descending score
+- `.fn()` — returns the reranker function suitable for `RagPipelineOptions.reranker`
+
+### chunkText(text, options?)
+
+Split text into overlapping chunks for embedding.
+
+```ts
+import { chunkText } from '@fabrk/ai'
+import type { ChunkOptions, TextChunk } from '@fabrk/ai'
+
+const chunks = chunkText('Long text...', { size: 512, overlap: 50 })
+// chunks[]: { text, index }
+```
+
+## Semantic Cache
+
+Cache LLM responses by semantic similarity of the prompt — avoids redundant API calls for near-identical queries.
+
+```ts
+import { SemanticCache } from '@fabrk/ai'
+import type { SemanticCacheOptions, CachedEntry } from '@fabrk/ai'
+
+const cache = new SemanticCache({
+  embedder: getEmbeddingProvider({ provider: 'openai' }),
+  threshold: 0.92,    // similarity threshold (default: 0.9)
+  maxEntries: 1000,
+})
+
+const hit = await cache.get('What is TypeScript?')
+if (hit) return hit.response
+
+const response = await llm.generate(...)
+await cache.set('What is TypeScript?', response)
+```
+
+## Voice
+
+TTS, STT, and realtime voice providers. Used by `@fabrk/framework` voice routes.
+
+```ts
+import {
+  OpenAITTSProvider, ElevenLabsTTSProvider,
+  OpenAISTTProvider, RealtimeProxy,
+  getTTSContentType, VOICE_DEFAULTS,
+  ALLOWED_TTS_FORMATS, ALLOWED_AUDIO_TYPES,
+  TTS_MAX_TEXT_LENGTH, TTS_MIN_SPEED, TTS_MAX_SPEED,
+} from '@fabrk/ai'
+import type { VoiceTTSProvider, VoiceSTTProvider, TTSOptions, STTOptions, STTResult, VoiceConfig, RealtimeUsage, RealtimeProxyOptions } from '@fabrk/ai'
+
+const tts = new OpenAITTSProvider()
+const audioBuffer = await tts.synthesize('Hello world', { voice: 'alloy', format: 'mp3' })
+
+const stt = new OpenAISTTProvider()
+const { text } = await stt.transcribe(audioBlob)
+```
 
 ## Middleware (Budget & Fallback)
 

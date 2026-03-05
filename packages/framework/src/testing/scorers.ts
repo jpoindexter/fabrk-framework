@@ -99,7 +99,7 @@ export function jsonSchema(schema: {
 
     if (schema.required) {
       for (const key of schema.required) {
-        if (!(key in obj)) {
+        if (!Object.hasOwn(obj, key)) {
           return { score: 0, pass: false, reason: `Missing required field: ${key}` };
         }
       }
@@ -107,7 +107,7 @@ export function jsonSchema(schema: {
 
     if (schema.properties) {
       for (const [key, spec] of Object.entries(schema.properties)) {
-        if (key in obj && spec.type) {
+        if (Object.hasOwn(obj, key) && spec.type) {
           const actual = Array.isArray(obj[key]) ? "array" : typeof obj[key];
           if (actual !== spec.type) {
             return { score: 0, pass: false, reason: `Field "${key}" expected type "${spec.type}", got "${actual}"` };

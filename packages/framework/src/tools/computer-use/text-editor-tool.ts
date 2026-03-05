@@ -1,4 +1,5 @@
 import type { ToolDefinition } from '../define-tool.js';
+import { textResult } from '../define-tool.js';
 
 export type TextEditorCommand = 'view' | 'create' | 'str_replace' | 'insert' | 'undo_edit';
 
@@ -59,7 +60,7 @@ export function defineTextEditorTool(options?: TextEditorToolOptions): ToolDefin
       const command = input.command as TextEditorCommand;
       const path = input.path as string;
       if (!options?.onExecute) {
-        return { content: [{ type: 'text', text: '[text_editor tool: no executor configured]' }] };
+        return textResult('[text_editor tool: no executor configured]');
       }
       try {
         const output = await options.onExecute({
@@ -71,9 +72,9 @@ export function defineTextEditorTool(options?: TextEditorToolOptions): ToolDefin
           insertLine: input.insert_line as number | undefined,
           viewRange: input.view_range as [number, number] | undefined,
         });
-        return { content: [{ type: 'text', text: output }] };
+        return textResult(output);
       } catch (err) {
-        return { content: [{ type: 'text', text: `Error: ${err instanceof Error ? err.message : String(err)}` }] };
+        return textResult(`Error: ${err instanceof Error ? err.message : String(err)}`);
       }
     },
   };

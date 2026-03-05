@@ -74,7 +74,6 @@ async function runSteps(
       } catch (err) {
         const durationMs = Date.now() - stepStart;
         if (err instanceof SuspendError) {
-          // Don't emit step-error for suspend — it's intentional
           throw err;
         }
         const error = err instanceof Error ? err.message : String(err);

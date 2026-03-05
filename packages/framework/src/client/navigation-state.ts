@@ -52,7 +52,6 @@ declare global {
   }
 }
 
-// Module-level fallback for non-browser environments (SSR/tests)
 let moduleCache: Map<string, CacheEntry> | null = null;
 
 function getCache(): Map<string, CacheEntry> {

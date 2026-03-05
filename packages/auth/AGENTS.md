@@ -168,9 +168,10 @@ Scopes apply only to API key auth. For session-based role checks, inspect
 
 | Store | Use case |
 |-------|----------|
-| `InMemoryAuthStore` | Dev/testing — sessions held in a `Map` |
-| `InMemoryApiKeyStore` | Dev/testing — timing-safe lookup, filters revoked/expired keys, tracks `lastUsedAt` |
+| `InMemoryAuthStore` | Dev/testing — sessions stored by SHA-256 hash of the token; capped at 10,000 entries (LRU eviction); auto-expires sessions past `expiresAt` |
+| `InMemoryApiKeyStore` | Dev/testing — constant-time (`timingSafeEqual`) hash lookup iterates all keys to prevent timing attacks; filters revoked/expired keys; tracks `lastUsedAt` |
 | Custom `ApiKeyStore` | Production — implement `getByHash`, `create`, `revoke`, `listByUser`, `updateLastUsed` |
+| Custom `AuthStore` | Production — implement `getSession`, `createSession`, `deleteSession` |
 
 ---
 

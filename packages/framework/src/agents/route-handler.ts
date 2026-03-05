@@ -208,6 +208,23 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     const authResult = await authGuard(req);
     if (authResult) return authResult;
 
+    // Derive a stable, opaque userId from the Bearer token so threads are bound
+    // to the caller's credential. SHA-256 avoids storing raw tokens in memory.
+    // Auth mode "none" has no token → no userId → no per-user isolation (expected).
+    const authHeader = req.headers.get("Authorization");
+    let requestUserId: string | undefined;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7).trim();
+      if (token) {
+        const encoded = new TextEncoder().encode(token);
+        const hashBuf = await crypto.subtle.digest("SHA-256", encoded);
+        requestUserId = Array.from(new Uint8Array(hashBuf))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("")
+          .slice(0, 32);
+      }
+    }
+
     const depthError = checkDelegationDepth(req);
     if (depthError) {
       return jsonResponse({ error: depthError }, 429);
@@ -261,6 +278,11 @@ export function createAgentHandler(options: AgentHandlerOptions) {
         if (!thread || thread.agentName !== agentName) {
           return jsonResponse({ error: "Thread not found or does not belong to this agent" }, 404);
         }
+        // Enforce per-user thread isolation: if the thread was created with a userId,
+        // the caller must present the same credential. Prevents cross-user memory leakage.
+        if (thread.userId !== undefined && thread.userId !== requestUserId) {
+          return jsonResponse({ error: "Thread not found or does not belong to this agent" }, 404);
+        }
 
         const memoryConfig = typeof options.memory === "object" ? options.memory : undefined;
         if (memoryConfig?.compression?.enabled && options.memoryStore) {
@@ -278,7 +300,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
           content: m.content,
         }));
       } else {
-        const thread = await options.memoryStore.createThread(agentName);
+        const thread = await options.memoryStore.createThread(agentName, requestUserId);
         threadId = thread.id;
       }
     }

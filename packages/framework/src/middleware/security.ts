@@ -17,11 +17,20 @@ export function buildSecurityHeaders(
     headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
   }
 
-  if (config?.csp) {
-    // 'unsafe-inline' is intentionally absent from script-src — it defeats XSS
-    // protection. Apps that need inline scripts must use nonces or hashes.
+  // Always emit a CSP. Permissive default still blocks cross-origin loads; strict
+  // mode (config.csp: true) additionally removes unsafe-inline from script-src
+  // to defeat XSS payloads — apps that need inline scripts should use nonces.
+  if (config?.csp === false) {
+    // Explicit opt-out — caller handles CSP themselves.
+  } else if (config?.csp === true) {
+    // Strict: no unsafe-inline in script-src
     headers["Content-Security-Policy"] =
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'";
+      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'";
+  } else {
+    // Default (no config): permissive baseline — allows inline scripts so dev dashboard
+    // and SSR pages with inline hydration work, while still blocking third-party origins.
+    headers["Content-Security-Policy"] =
+      "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'";
   }
 
   return headers;

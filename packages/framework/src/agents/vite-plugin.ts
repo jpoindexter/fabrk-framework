@@ -164,7 +164,7 @@ export function agentPlugin(): Plugin {
 
             const handler = createAgentHandler({
               model,
-              auth: agentDef.auth ?? "none",
+              auth: agentDef.auth ?? "required",
               tools: agentToolNames,
               stream,
               systemPrompt,

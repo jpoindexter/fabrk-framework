@@ -92,7 +92,9 @@ export async function handleOGRequest(
 
   const template = templates.get(templateName);
   if (!template) {
-    return jsonError(`Template "${templateName}" not found`, 404);
+    // Cap reflected name to prevent response-inflation from large query strings
+    const safeName = templateName.slice(0, 64);
+    return jsonError(`Template "${safeName}" not found`, 404);
   }
 
   const [satori, resvg] = await Promise.all([loadSatori(), loadResvg()]);

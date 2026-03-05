@@ -7,7 +7,7 @@ export class InMemoryMemoryStore implements MemoryStore {
   private threads = new Map<string, Thread>();
   private messages = new Map<string, ThreadMessage[]>();
 
-  async createThread(agentName: string): Promise<Thread> {
+  async createThread(agentName: string, userId?: string): Promise<Thread> {
     if (this.threads.size >= MAX_THREADS) {
       const oldest = this.threads.keys().next().value;
       if (oldest !== undefined) {
@@ -19,6 +19,7 @@ export class InMemoryMemoryStore implements MemoryStore {
     const thread: Thread = {
       id: crypto.randomUUID(),
       agentName,
+      ...(userId !== undefined ? { userId } : {}),
       createdAt: new Date(),
       updatedAt: new Date(),
     };

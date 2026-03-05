@@ -1,20 +1,3 @@
-/**
- * Lemon Squeezy Payment Adapter
- *
- * Implements PaymentAdapter using Lemon Squeezy API.
- *
- * @example
- * ```ts
- * import { createLemonSqueezyAdapter } from '@fabrk/payments'
- *
- * const payments = createLemonSqueezyAdapter({
- *   apiKey: process.env.LEMONSQUEEZY_API_KEY!,
- *   storeId: process.env.LEMONSQUEEZY_STORE_ID!,
- *   webhookSecret: process.env.LEMONSQUEEZY_WEBHOOK_SECRET!,
- * })
- * ```
- */
-
 import type { PaymentAdapter } from '@fabrk/core'
 import type {
   CheckoutOptions,
@@ -25,9 +8,9 @@ import type {
 } from '@fabrk/core'
 import type { LemonSqueezyAdapterConfig } from '../types'
 import { timingSafeEqual, hashPayload, bytesToHex } from '@fabrk/core'
-import { createIdempotencyCache } from '../idempotency'
+import { createIdempotencyCache, DEFAULT_CACHE_SIZE, decodePayload } from '../idempotency'
 
-const lsCache = createIdempotencyCache(10_000)
+const lsCache = createIdempotencyCache(DEFAULT_CACHE_SIZE)
 
 export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): PaymentAdapter {
   const baseUrl = 'https://api.lemonsqueezy.com/v1'
@@ -66,7 +49,6 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
     const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(payload))
     const expectedSignature = bytesToHex(new Uint8Array(signed))
 
-    // Constant-time comparison to prevent timing attacks
     return timingSafeEqual(expectedSignature, signature)
   }
 
@@ -114,7 +96,7 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
 
     async handleWebhook(payload: string | ArrayBuffer, signature: string): Promise<WebhookResult> {
       try {
-        const payloadStr = typeof payload === 'string' ? payload : new TextDecoder().decode(payload)
+        const payloadStr = decodePayload(payload)
         const verified = await verifyWebhookSignature(payloadStr, signature)
 
         if (!verified) {
@@ -142,7 +124,6 @@ export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): Pa
           return { verified: false, error: 'Webhook timestamp in the future (possible replay)' }
         }
 
-        // Idempotency: reject duplicate event IDs
         // Derive a deterministic ID from payload hash when event has no webhook_id
         const eventId = event.meta?.webhook_id ?? `derived:${await hashPayload(payloadStr)}`
         const eventType = event.meta?.event_name ?? 'unknown'

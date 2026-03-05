@@ -1,23 +1,3 @@
-/**
- * Stripe Payment Adapter
- *
- * Implements PaymentAdapter using Stripe SDK.
- * Stripe is provided as an optional peer dependency.
- *
- * @example
- * ```ts
- * import { createStripeAdapter } from '@fabrk/payments'
- *
- * const payments = createStripeAdapter({
- *   secretKey: process.env.STRIPE_SECRET_KEY!,
- *   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
- * })
- *
- * // Register with FABRK
- * registry.register('payment', payments)
- * ```
- */
-
 import type { PaymentAdapter } from '@fabrk/core'
 import type {
   CheckoutOptions,
@@ -27,10 +7,9 @@ import type {
   SubscriptionInfo,
 } from '@fabrk/core'
 import type { StripeAdapterConfig } from '../types'
-import { createIdempotencyCache } from '../idempotency'
+import { createIdempotencyCache, DEFAULT_CACHE_SIZE, decodePayload } from '../idempotency'
 
-// Shared idempotency cache to reject duplicate webhook events
-const stripeCache = createIdempotencyCache(10_000)
+const stripeCache = createIdempotencyCache(DEFAULT_CACHE_SIZE)
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -56,7 +35,6 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
     version: '1.0.0',
 
     async initialize() {
-      // Validate Stripe is available
       await getStripe()
     },
 
@@ -102,7 +80,7 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
       const s = await getStripe()
 
       try {
-        const payloadStr = typeof payload === 'string' ? payload : new TextDecoder().decode(payload)
+        const payloadStr = decodePayload(payload)
         const event = s.webhooks.constructEvent(payloadStr, signature, config.webhookSecret)
 
         // Replay protection: two-sided timestamp check.
@@ -116,7 +94,6 @@ export function createStripeAdapter(config: StripeAdapterConfig): PaymentAdapter
           return { verified: false, error: 'Webhook timestamp in the future (possible replay)' }
         }
 
-        // Idempotency: reject duplicate event IDs
         if (!stripeCache.markProcessed(event.id)) {
           return {
             verified: true,

@@ -1,15 +1,13 @@
-/**
- * Shared Idempotency Cache
- *
- * Reusable bounded Set+queue for deduplicating webhook events
- * across all payment adapters (Stripe, Polar, Lemon Squeezy).
- */
-
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 export interface IdempotencyCache {
-  /** Returns true if the id was new (first seen), false if duplicate. */
   markProcessed(id: string): boolean
+}
+
+export const DEFAULT_CACHE_SIZE = 10_000
+
+export function decodePayload(payload: string | ArrayBuffer): string {
+  return typeof payload === 'string' ? payload : new TextDecoder().decode(payload)
 }
 
 /**

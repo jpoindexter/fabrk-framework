@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import type { SSEEvent } from "../agents/sse-stream";
+import { readSSELines } from "./sse-reader";
 
 export type AgentContentPart =
   | { type: "text"; text: string }
@@ -91,81 +92,66 @@ export function useAgent(agentName: string) {
 
         if (contentType.includes("text/event-stream") && res.body) {
           const reader = res.body.getReader();
-          const decoder = new TextDecoder();
           let assistantContent = "";
-          let buffer = "";
 
           setMessages((prev) => [
             ...prev,
             { role: "assistant", content: "" },
           ]);
 
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
+          for await (const line of readSSELines(reader)) {
+            const event = parseSSELine(line);
+            if (!event) continue;
 
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() ?? "";
-
-              for (const line of lines) {
-                const event = parseSSELine(line);
-                if (!event) continue;
-
-                if (event.type === "text-delta") {
-                  assistantContent += event.content;
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = {
-                      role: "assistant",
-                      content: assistantContent,
-                    };
-                    return updated;
-                  });
-                } else if (event.type === "text") {
-                  assistantContent = event.content;
-                  setMessages((prev) => {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = {
-                      role: "assistant",
-                      content: assistantContent,
-                    };
-                    return updated;
-                  });
-                } else if (event.type === "tool-call") {
-                  setToolCalls((prev) => [
-                    ...prev,
-                    { name: event.name, input: event.input, iteration: event.iteration },
-                  ]);
-                } else if (event.type === "tool-result") {
-                  setToolCalls((prev) => {
-                    const updated = [...prev];
-                    const idx = updated.findIndex(
-                      (tc) => tc.name === event.name && tc.output === undefined
-                    );
-                    if (idx >= 0) {
-                      updated[idx] = {
-                        ...updated[idx],
-                        output: event.output,
-                        durationMs: event.durationMs,
-                      };
-                    }
-                    return updated;
-                  });
-                } else if (event.type === "usage") {
-                  setUsage({
-                    promptTokens: event.promptTokens,
-                    completionTokens: event.completionTokens,
-                  });
-                  setCost((prev) => prev + event.cost);
-                } else if (event.type === "error") {
-                  setError(event.message);
+            if (event.type === "text-delta") {
+              assistantContent += event.content;
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: assistantContent,
+                };
+                return updated;
+              });
+            } else if (event.type === "text") {
+              assistantContent = event.content;
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: assistantContent,
+                };
+                return updated;
+              });
+            } else if (event.type === "tool-call") {
+              setToolCalls((prev) => [
+                ...prev,
+                { name: event.name, input: event.input, iteration: event.iteration },
+              ]);
+            } else if (event.type === "tool-result") {
+              setToolCalls((prev) => {
+                const updated = [...prev];
+                const idx = updated.findIndex(
+                  (tc) => tc.name === event.name && tc.output === undefined
+                );
+                if (idx >= 0) {
+                  updated[idx] = {
+                    ...updated[idx],
+                    output: event.output,
+                    durationMs: event.durationMs,
+                  };
                 }
-              }
+                return updated;
+              });
+            } else if (event.type === "usage") {
+              setUsage({
+                promptTokens: event.promptTokens,
+                completionTokens: event.completionTokens,
+              });
+              setCost((prev) => prev + event.cost);
+            } else if (event.type === "error") {
+              setError(event.message);
             }
-          } finally {
-            reader.releaseLock();
           }
         } else {
           const data = await res.json();

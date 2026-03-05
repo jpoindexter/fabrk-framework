@@ -1,19 +1,3 @@
-/**
- * Polar Payment Adapter
- *
- * Implements PaymentAdapter using Polar API.
- * Polar provides open-source friendly payment processing.
- *
- * @example
- * ```ts
- * import { createPolarAdapter } from '@fabrk/payments'
- *
- * const payments = createPolarAdapter({
- *   accessToken: process.env.POLAR_ACCESS_TOKEN!,
- * })
- * ```
- */
-
 import type { PaymentAdapter } from '@fabrk/core'
 import type {
   CheckoutOptions,
@@ -24,9 +8,9 @@ import type {
 } from '@fabrk/core'
 import type { PolarAdapterConfig } from '../types'
 import { timingSafeEqual, hashPayload } from '@fabrk/core'
-import { createIdempotencyCache } from '../idempotency'
+import { createIdempotencyCache, DEFAULT_CACHE_SIZE, decodePayload } from '../idempotency'
 
-const polarCache = createIdempotencyCache(10_000)
+const polarCache = createIdempotencyCache(DEFAULT_CACHE_SIZE)
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -67,7 +51,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
     signatureHeader: string
   ): Promise<boolean> {
     const secret = config.webhookSecret!
-    // svix secrets may be prefixed with "whsec_"; the actual key is base64-encoded after the prefix
+    // svix secrets are prefixed with "whsec_" and the remainder is base64-encoded
     const secretBytes = secret.startsWith('whsec_')
       ? Uint8Array.from(atob(secret.slice(6)), (c) => c.charCodeAt(0))
       : new TextEncoder().encode(secret)
@@ -86,12 +70,10 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
     const signed = await crypto.subtle.sign('HMAC', key, encoder.encode(message))
     const expectedSignature = btoa(String.fromCharCode(...new Uint8Array(signed)))
 
-    // The header contains space-separated signatures, each prefixed with "v1,"
     const signatures = signatureHeader.split(' ')
     for (const sig of signatures) {
       const parts = sig.split(',')
       if (parts.length < 2) continue
-      // parts[0] is the version (e.g., "v1"), parts[1] is the base64 signature
       const sigValue = parts.slice(1).join(',')
       if (await timingSafeEqual(sigValue, expectedSignature)) {
         return true
@@ -106,7 +88,7 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
     version: '1.0.0',
 
     isConfigured(): boolean {
-      return Boolean(config.accessToken)
+      return Boolean(config.accessToken && config.webhookSecret)
     },
 
     async createCheckout(options: CheckoutOptions): Promise<CheckoutResult> {
@@ -129,9 +111,8 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
 
     async handleWebhook(payload: string | ArrayBuffer, signature: string, headers?: Record<string, string>): Promise<WebhookResult> {
       try {
-        const payloadStr = typeof payload === 'string' ? payload : new TextDecoder().decode(payload)
+        const payloadStr = decodePayload(payload)
 
-        // Verify signature if webhookSecret is configured
         if (config.webhookSecret) {
           const webhookId = headers?.['webhook-id'] ?? ''
           const timestamp = headers?.['webhook-timestamp'] ?? ''
@@ -163,7 +144,6 @@ export function createPolarAdapter(config: PolarAdapterConfig): PaymentAdapter {
 
         const event = JSON.parse(payloadStr)
 
-        // Idempotency: reject duplicate event IDs
         // Derive a deterministic ID from payload hash when event has no ID
         const eventId = event.id ?? `derived:${await hashPayload(payloadStr)}`
         if (!polarCache.markProcessed(eventId)) {

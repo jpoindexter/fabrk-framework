@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import { readSSELines } from "./sse-reader";
 
 export interface UseObjectOptions<T> {
   /** API endpoint that streams the object (must return SSE or JSON) */
@@ -46,39 +47,24 @@ export function useObject<T>(options: UseObjectOptions<T>) {
 
         if (contentType.includes("text/event-stream") && res.body) {
           const reader = res.body.getReader();
-          const decoder = new TextDecoder();
           let accumulated = "";
-          let buffer = "";
 
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
+          for await (const line of readSSELines(reader)) {
+            if (!line.startsWith("data: ")) continue;
+            const json = line.slice("data: ".length);
+            let event: { type: string; text?: string; object?: T };
+            try { event = JSON.parse(json); } catch { continue; }
 
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() ?? "";
-
-              for (const line of lines) {
-                if (!line.startsWith("data: ")) continue;
-                const json = line.slice("data: ".length);
-                let event: { type: string; text?: string; object?: T };
-                try { event = JSON.parse(json); } catch { continue; }
-
-                if (event.type === "delta" && event.text) {
-                  accumulated += event.text;
-                  try {
-                    const partial = JSON.parse(accumulated) as Partial<T>;
-                    setObject(partial);
-                  } catch { /* keep accumulating */ }
-                } else if (event.type === "done" && event.object) {
-                  setObject(event.object as Partial<T>);
-                  options.onFinish?.(event.object);
-                }
-              }
+            if (event.type === "delta" && event.text) {
+              accumulated += event.text;
+              try {
+                const partial = JSON.parse(accumulated) as Partial<T>;
+                setObject(partial);
+              } catch { /* keep accumulating */ }
+            } else if (event.type === "done" && event.object) {
+              setObject(event.object as Partial<T>);
+              options.onFinish?.(event.object);
             }
-          } finally {
-            reader.releaseLock();
           }
         } else {
           const data = await res.json() as { object?: T };

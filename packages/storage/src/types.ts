@@ -13,6 +13,8 @@ export interface S3AdapterConfig {
   forcePathStyle?: boolean
   /** Default signed URL expiry in seconds */
   defaultExpiresIn?: number
+  /** Max file size in bytes (default: 10MB) */
+  maxFileSize?: number
 }
 
 export interface R2AdapterConfig {

@@ -2,6 +2,13 @@ import type { ToolDefinition, ToolResult } from "../../tools/define-tool";
 
 const MAX_DELEGATION_DEPTH = 5;
 const DEPTH_HEADER = "X-Fabrk-Delegation-Depth";
+// Random secret generated once per process. Only included on internal
+// agent-to-agent requests; external callers can't forge it, so the depth
+// header is trusted only when this secret is present. Fixes the
+// "isLocalhostRequest always true" bug — prod-server always constructs
+// Request objects with http://localhost, making hostname checks meaningless.
+export const INTERNAL_SECRET_HEADER = "X-Fabrk-Internal-Secret";
+export const internalSecret = crypto.randomUUID();
 
 export function agentAsTool(
   options: {
@@ -37,6 +44,7 @@ export function agentAsTool(
         headers: {
           "Content-Type": "application/json",
           [DEPTH_HEADER]: childDepth,
+          [INTERNAL_SECRET_HEADER]: internalSecret,
         },
         body: JSON.stringify({
           messages: [{ role: "user", content: message }],
@@ -72,23 +80,20 @@ export function agentAsTool(
 }
 
 /**
- * Returns true when the request originates from the same server (localhost).
- * Only internal same-server calls are allowed to set the delegation depth header;
- * external callers could otherwise forge it to bypass depth limits.
+ * Returns true when the request is an internal agent-to-agent call.
+ * We use a per-process random secret rather than checking the URL hostname —
+ * prod-server always constructs Request objects with http://localhost, making
+ * hostname checks unreliable. External callers cannot know or forge the secret.
  */
-function isLocalhostRequest(req: Request): boolean {
-  try {
-    const host = new URL(req.url).hostname;
-    return host === "localhost" || host === "127.0.0.1" || host === "::1";
-  } catch {
-    return false;
-  }
+function isInternalRequest(req: Request): boolean {
+  const presented = req.headers.get(INTERNAL_SECRET_HEADER);
+  return presented !== null && presented === internalSecret;
 }
 
 export function checkDelegationDepth(req: Request): string | null {
   // Only trust the header from internal same-server calls. External callers
   // start at depth 0 regardless of what header they send.
-  const rawHeader = isLocalhostRequest(req) ? req.headers.get(DEPTH_HEADER) : null;
+  const rawHeader = isInternalRequest(req) ? req.headers.get(DEPTH_HEADER) : null;
   const depth = parseInt(rawHeader ?? "0", 10);
   if (depth >= MAX_DELEGATION_DEPTH) {
     return `Maximum delegation depth (${MAX_DELEGATION_DEPTH}) exceeded`;

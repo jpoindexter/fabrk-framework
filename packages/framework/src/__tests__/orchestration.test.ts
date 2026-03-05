@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { agentAsTool, detectCircularDeps, checkDelegationDepth } from "../agents/orchestration/agent-tool";
+import { agentAsTool, detectCircularDeps, checkDelegationDepth, INTERNAL_SECRET_HEADER, internalSecret } from "../agents/orchestration/agent-tool";
 import { defineSupervisor } from "../agents/orchestration/supervisor";
 
 describe("Agent Orchestration", () => {
@@ -75,39 +75,50 @@ describe("Agent Orchestration", () => {
   });
 
   describe("checkDelegationDepth", () => {
-    it("returns null when under limit", () => {
+    it("returns null when under limit (with internal secret)", () => {
       const req = new Request("http://localhost/api/agents/test", {
-        headers: { "X-Fabrk-Delegation-Depth": "2" },
+        headers: {
+          "X-Fabrk-Delegation-Depth": "2",
+          [INTERNAL_SECRET_HEADER]: internalSecret,
+        },
       });
       expect(checkDelegationDepth(req)).toBeNull();
     });
 
-    it("returns error when at limit", () => {
+    it("returns error when at limit (with internal secret)", () => {
       const req = new Request("http://localhost/api/agents/test", {
-        headers: { "X-Fabrk-Delegation-Depth": "5" },
+        headers: {
+          "X-Fabrk-Delegation-Depth": "5",
+          [INTERNAL_SECRET_HEADER]: internalSecret,
+        },
       });
       const result = checkDelegationDepth(req);
       expect(result).toContain("Maximum delegation depth");
     });
 
     it("treats missing header as depth 0", () => {
-      const req = new Request("http://localhost/api/agents/test");
+      const req = new Request("http://localhost/api/agents/test", {
+        headers: { [INTERNAL_SECRET_HEADER]: internalSecret },
+      });
       expect(checkDelegationDepth(req)).toBeNull();
     });
 
-    it("ignores depth header from external origins (non-localhost)", () => {
-      // An external caller sending depth=5 should be treated as depth 0 (not blocked)
-      const req = new Request("http://external.example.com/api/agents/test", {
+    it("ignores depth header when internal secret is absent (external caller)", () => {
+      // External caller forging depth=5 — no secret → depth ignored → null
+      const req = new Request("http://localhost/api/agents/test", {
         headers: { "X-Fabrk-Delegation-Depth": "5" },
       });
       expect(checkDelegationDepth(req)).toBeNull();
     });
 
-    it("trusts depth header from 127.0.0.1", () => {
-      const req = new Request("http://127.0.0.1/api/agents/test", {
-        headers: { "X-Fabrk-Delegation-Depth": "5" },
+    it("ignores depth header when internal secret is wrong", () => {
+      const req = new Request("http://localhost/api/agents/test", {
+        headers: {
+          "X-Fabrk-Delegation-Depth": "5",
+          [INTERNAL_SECRET_HEADER]: "wrong-secret",
+        },
       });
-      expect(checkDelegationDepth(req)).toContain("Maximum delegation depth");
+      expect(checkDelegationDepth(req)).toBeNull();
     });
   });
 

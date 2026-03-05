@@ -37,7 +37,7 @@ const TYPOGRAPHY_SCALE = [
   { label: 'H3 SUBSECTION', class: 'text-sm font-semibold uppercase', example: '[INSTALL]' },
   { label: 'BODY', class: 'text-sm', example: 'Stop generating 500 lines of custom components.' },
   { label: 'SMALL / HELPER', class: 'text-xs text-muted-foreground', example: 'Optional helper text shown below inputs' },
-  { label: 'CODE', class: 'text-xs font-mono', example: 'import { Button } from "@fabrk/components"' },
+  { label: 'CODE', class: `text-xs ${mode.font}`, example: 'import { Button } from "@fabrk/components"' },
   { label: 'LABEL / BADGE', class: 'text-xs font-bold uppercase', example: '[ACTIVE]   [STATUS]   [v0.2.0]' },
   { label: 'BUTTON', class: 'text-xs font-bold uppercase', example: '> SUBMIT   > GET STARTED   > SAVE CHANGES' },
 ]
@@ -92,7 +92,7 @@ export default function DesignSystemPage() {
               <div className={cn('h-10', t.class)} />
               <div className="px-2 py-1.5 bg-card">
                 <div className={cn('text-xs font-bold text-foreground', mode.font)}>{t.label}</div>
-                <div className="text-xs text-muted-foreground font-mono">{t.token}</div>
+                <div className={cn('text-xs text-muted-foreground', mode.font)}>{t.token}</div>
               </div>
             </div>
           ))}
@@ -106,7 +106,7 @@ export default function DesignSystemPage() {
             {TEXT_TOKENS.map((t) => (
               <div key={t.class} className="flex items-center justify-between px-4 py-2">
                 <span className={cn('text-sm', t.class)}>{t.example}</span>
-                <code className="text-xs text-muted-foreground font-mono">{t.label}</code>
+                <code className={cn('text-xs text-muted-foreground', mode.font)}>{t.label}</code>
               </div>
             ))}
           </div>
@@ -132,7 +132,7 @@ className="bg-gray-100 text-gray-900"`}</CodeBlock>
           {TYPOGRAPHY_SCALE.map((t) => (
             <div key={t.label} className="px-4 py-3 flex items-baseline justify-between gap-4">
               <span className={cn(t.class, t.label.startsWith('H') || t.label === 'LABEL / BADGE' || t.label === 'BUTTON' ? mode.font : '')}>{t.example}</span>
-              <code className="text-xs text-muted-foreground font-mono shrink-0">{t.label}</code>
+              <code className={cn('text-xs text-muted-foreground shrink-0', mode.font)}>{t.label}</code>
             </div>
           ))}
         </div>
@@ -163,12 +163,12 @@ import { cn } from '@fabrk/core'
         <div className={cn('border border-border bg-card divide-y divide-border mb-6', mode.radius)}>
           {[
             { key: 'mode.radius', value: mode.radius || 'rounded-none', desc: 'Border radius — apply to every full-border element' },
-            { key: 'mode.font', value: mode.font || 'font-mono', desc: 'Font family — apply to headings, labels, buttons' },
+            { key: 'mode.font', value: mode.font, desc: 'Font family — apply to headings, labels, buttons' },
             { key: 'mode.textTransform', value: mode.textTransform || 'uppercase', desc: 'Text transform — uppercase for terminal aesthetic' },
           ].map((item) => (
             <div key={item.key} className="px-4 py-3 grid grid-cols-3 gap-2">
               <code className={cn('text-xs text-primary', mode.font)}>{item.key}</code>
-              <code className="text-xs text-foreground font-mono">{item.value}</code>
+              <code className={cn('text-xs text-foreground', mode.font)}>{item.value}</code>
               <span className="text-xs text-muted-foreground">{item.desc}</span>
             </div>
           ))}

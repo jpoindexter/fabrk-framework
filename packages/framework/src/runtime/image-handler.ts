@@ -94,6 +94,25 @@ export async function handleImageRequest(
     });
   }
 
+  // Defense-in-depth: reject URLs with traversal sequences or unsafe chars
+  // BEFORE path.resolve normalization. path.resolve + startsWith catches
+  // traversal too, but this allowlist prevents encoding tricks and null bytes.
+  const SAFE_IMAGE_URL = /^\/[\w\-/.]+$/;
+  const ALLOWED_IMAGE_EXTS = new Set([".jpg", ".jpeg", ".png", ".webp", ".avif", ".gif", ".svg"]);
+  if (!SAFE_IMAGE_URL.test(params.url) || params.url.includes("..")) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+    });
+  }
+  const requestedExt = path.extname(params.url).toLowerCase();
+  if (!ALLOWED_IMAGE_EXTS.has(requestedExt)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+    });
+  }
+
   const filePath = path.resolve(rootDir, `.${params.url}`);
   if (!filePath.startsWith(path.resolve(rootDir) + path.sep)) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {

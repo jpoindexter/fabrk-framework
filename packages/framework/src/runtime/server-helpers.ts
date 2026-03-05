@@ -36,6 +36,7 @@ export function permanentRedirect(url: string): never {
 export function validateRedirectUrl(url: string): void {
   // Strip all control characters and whitespace variants that could be used
   // to smuggle scheme prefixes past trimStart() (tab, VT, FF, CRLF, etc.)
+  // eslint-disable-next-line no-control-regex -- intentionally strips ASCII control chars 0x00–0x20 and DEL (0x7f)
   const stripped = url.replace(/[\x00-\x20\x7f]/g, "");
 
   // Allowlist: must start with exactly one "/" (relative path).

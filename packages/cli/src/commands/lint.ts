@@ -62,13 +62,19 @@ export function registerLintCommand(program: Command): void {
           }
         }
 
+        // font-mono violates design system — must use mode.font so the monospace
+        // font adapts with the active theme instead of being hardcoded.
+        if (/\bfont-mono\b/.test(content)) {
+          const count = (content.match(/\bfont-mono\b/g) ?? []).length;
+          issues.push(`Hardcoded font-mono (use mode.font from @fabrk/design-system): ${count} occurrence${count > 1 ? 's' : ''}`);
+        }
+
         const inlineStyleRegex = /style\s*=\s*\{\{/g;
         const inlineMatches = content.match(inlineStyleRegex);
         if (inlineMatches) {
           issues.push(`Inline styles found (${inlineMatches.length} occurrences)`);
         }
 
-        // Check for dangerouslySetInnerHTML usage
         if (content.includes('dangerously' + 'SetInnerHTML')) {
           issues.push('dangerouslySetInnerHTML usage detected');
         }

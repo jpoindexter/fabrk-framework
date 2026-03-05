@@ -35,6 +35,74 @@ function getHardcodedViolations(classString) {
     })
 }
 
+// ---------------------------------------------------------------------------
+// Design System Enforcement Rule: no-font-mono
+//
+// Prevents `font-mono` in className props and cn() calls.
+// Components must use `mode.font` from @fabrk/design-system instead so the
+// monospace font family adapts with the active theme.
+// ---------------------------------------------------------------------------
+
+const noFontMono = {
+  meta: {
+    type: 'problem',
+    docs: {
+      description: 'Prevent hardcoded font-mono — use mode.font from @fabrk/design-system',
+    },
+    schema: [],
+  },
+  create(context) {
+    function checkClassString(node, classString) {
+      const classes = classString.split(/\s+/)
+      if (classes.includes('font-mono')) {
+        context.report({
+          node,
+          message:
+            'Hardcoded "font-mono" violates FABRK design system. Use mode.font from @fabrk/design-system so the font adapts with the active theme.',
+        })
+      }
+    }
+
+    return {
+      JSXAttribute(node) {
+        if (node.name.name !== 'className') return
+        if (!node.value) return
+        const val = node.value
+        if (val.type === 'Literal' && typeof val.value === 'string') {
+          checkClassString(node, val.value)
+          return
+        }
+        if (
+          val.type === 'JSXExpressionContainer' &&
+          val.expression.type === 'Literal' &&
+          typeof val.expression.value === 'string'
+        ) {
+          checkClassString(node, val.expression.value)
+          return
+        }
+        if (
+          val.type === 'JSXExpressionContainer' &&
+          val.expression.type === 'TemplateLiteral'
+        ) {
+          for (const quasi of val.expression.quasis) {
+            checkClassString(node, quasi.value.cooked ?? quasi.value.raw)
+          }
+        }
+      },
+      CallExpression(node) {
+        const callee = node.callee
+        const name = callee.type === 'Identifier' ? callee.name : null
+        if (name !== 'cn' && name !== 'clsx' && name !== 'cx') return
+        for (const arg of node.arguments) {
+          if (arg.type === 'Literal' && typeof arg.value === 'string') {
+            checkClassString(arg, arg.value)
+          }
+        }
+      },
+    }
+  },
+}
+
 const noHardcodedColors = {
   meta: {
     type: 'problem',
@@ -144,11 +212,12 @@ export default [
       '@typescript-eslint': typescript,
       react,
       'react-hooks': reactHooks,
-      fabrk: { rules: { 'no-hardcoded-colors': noHardcodedColors } },
+      fabrk: { rules: { 'no-hardcoded-colors': noHardcodedColors, 'no-font-mono': noFontMono } },
     },
     rules: {
       // Design system
       'fabrk/no-hardcoded-colors': 'error',
+      'fabrk/no-font-mono': 'error',
 
       // Disable base rules that TypeScript handles natively
       'no-unused-vars': 'off',

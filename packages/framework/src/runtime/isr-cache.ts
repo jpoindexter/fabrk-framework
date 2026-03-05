@@ -180,7 +180,6 @@ export class FilesystemISRCache implements ISRCacheHandler {
   }
 
   private keyToFile(key: string): string {
-    // Strip leading slash, replace remaining slashes with __ to stay flat
     const safe = key.replace(/^\//, "").replace(/\//g, "__") || "__root";
     return nodePath.join(this.dir, `${safe}.json`);
   }

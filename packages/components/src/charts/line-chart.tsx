@@ -150,8 +150,6 @@ export function LineChart({
   );
 }
 
-/* ----- Line Chart Card Wrapper ----- */
-
 export interface LineChartCardProps extends LineChartProps {
   /** Card title */
   title: string;

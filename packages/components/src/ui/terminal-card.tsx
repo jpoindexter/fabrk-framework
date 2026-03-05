@@ -323,7 +323,6 @@ const FeaturesCard = React.forwardRef<HTMLDivElement, FeaturesCardProps>(
 );
 FeaturesCard.displayName = 'FeaturesCard';
 
-// Generate deterministic hex code from string (consistent but varied)
 function generateHexFromTitle(title: string): string {
   let hash = 0;
   for (let i = 0; i < title.length; i++) {

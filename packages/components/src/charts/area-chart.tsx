@@ -90,7 +90,6 @@ export function AreaChart({
     <div className={cn('w-full', className)}>
       <ResponsiveContainer width="100%" height={height}>
         <RechartsAreaChart data={data} margin={margin}>
-          {/* Gradient definitions */}
           {gradient && (
             <defs>
               {series.map((s, index) => {
@@ -161,8 +160,6 @@ export function AreaChart({
   );
 }
 
-/* ----- Area Chart Card Wrapper ----- */
-
 export interface AreaChartCardProps extends AreaChartProps {
   /** Card title */
   title: string;
@@ -194,8 +191,6 @@ export function AreaChartCard({
     </ChartCard>
   );
 }
-
-/* ----- Stacked Area Chart Variant ----- */
 
 export interface StackedAreaChartProps extends Omit<AreaChartProps, 'series'> {
   /** Data keys for each stack segment */

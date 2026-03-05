@@ -74,10 +74,8 @@ export function PieChart({
     const largeArc = endAngle - startAngle > 180 ? 1 : 0;
 
     if (innerRadius === 0) {
-      // Pie chart (solid)
       return `M ${center} ${center} L ${x1} ${y1} A ${outerRadius} ${outerRadius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
     } else {
-      // Donut chart (hollow)
       const x3 = center + innerRadius * Math.cos(endAngleRad);
       const y3 = center + innerRadius * Math.sin(endAngleRad);
       const x4 = center + innerRadius * Math.cos(startAngleRad);

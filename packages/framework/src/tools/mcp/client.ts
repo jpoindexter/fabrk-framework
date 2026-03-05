@@ -8,6 +8,38 @@ export class MCPClientError extends Error {
   }
 }
 
+/**
+ * Block requests to cloud metadata endpoints to prevent SSRF credential theft.
+ * Does NOT block localhost/RFC-1918 — MCP servers legitimately run locally.
+ * Blocks 169.254.169.254 (AWS/GCP/Azure) and known metadata hostnames
+ * which have no valid use as MCP or OAuth2 token endpoints.
+ */
+function assertNotSsrf(rawUrl: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new MCPClientError(`Invalid URL: ${rawUrl}`);
+  }
+
+  const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, ""); // strip IPv6 brackets
+
+  const blockedHosts = [
+    "metadata.google.internal",
+    "169.254.169.254", // AWS/GCP/Azure/DigitalOcean metadata
+    "100.100.100.200", // Alibaba Cloud metadata
+  ];
+  if (blockedHosts.includes(host)) {
+    throw new MCPClientError(`SSRF blocked: cloud metadata endpoint ${host}`);
+  }
+
+  // Block 169.254.x.x range (link-local, encompasses all cloud metadata IPs)
+  const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\./);
+  if (v4 && Number(v4[1]) === 169 && Number(v4[2]) === 254) {
+    throw new MCPClientError(`SSRF blocked: link-local address ${host}`);
+  }
+}
+
 export interface MCPConnection {
   tools: ToolDefinition[];
   disconnect: () => Promise<void>;
@@ -47,6 +79,7 @@ export class OAuth2TokenCache {
     if (opts.clientSecret) body.set("client_secret", opts.clientSecret);
     if (opts.scopes?.length) body.set("scope", opts.scopes.join(" "));
 
+    assertNotSsrf(opts.tokenUrl);
     const resp = await fetch(opts.tokenUrl, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -205,7 +238,7 @@ export async function connectMCPServer(
     throw new Error("MCP HTTP transport requires a URL");
   }
 
-  // Validate URL scheme
+  assertNotSsrf(options.url);
   const parsed = new URL(options.url);
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw new Error(`Invalid MCP URL scheme: ${parsed.protocol}`);

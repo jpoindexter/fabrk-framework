@@ -235,7 +235,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     },
   };
 
-  const plugins: Plugin[] = [routerPlugin, virtualPlugin];
+  const plugins: Plugin[] = [routerPlugin, virtualPlugin, designSystemPlugin()];
 
   plugins.push(reactRefreshPlugin({ getFabrkConfig: () => sharedFabrkConfig }));
 
@@ -289,6 +289,50 @@ function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin
         // eslint-disable-next-line no-console
         console.log("[fabrk] @vitejs/plugin-react not found — HMR/Fast Refresh disabled");
       }
+    },
+  };
+}
+
+// Tailwind color names that produce hardcoded (non-semantic) classes.
+const DS_HARDCODED_COLORS = [
+  "slate","gray","zinc","neutral","stone",
+  "red","orange","amber","yellow","lime",
+  "green","emerald","teal","cyan","sky",
+  "blue","indigo","violet","purple","fuchsia",
+  "pink","rose",
+];
+const DS_COLOR_PREFIXES = ["bg","text","border","ring","fill","stroke","outline","decoration","from","via","to"];
+const DS_HARDCODED_RE = new RegExp(
+  `\\b(?:${DS_COLOR_PREFIXES.join("|")})-(?:${DS_HARDCODED_COLORS.join("|")})-\\d+\\b`
+);
+const DS_BARE_RE = /\b(?:bg|text|border|ring)-(?:white|black)\b/;
+
+/** Warns in dev when source files contain hardcoded Tailwind color classes. */
+function designSystemPlugin(): Plugin {
+  return {
+    name: "fabrk:design-system",
+    enforce: "pre",
+
+    transform(code: string, id: string) {
+      if (!/\.(tsx|jsx)$/.test(id)) return null;
+      if (id.includes("node_modules")) return null;
+
+      const classNameMatches = code.matchAll(/className\s*=\s*["'`]([^"'`]+)["'`]/g);
+      for (const match of classNameMatches) {
+        const classes = match[1];
+        if (DS_HARDCODED_RE.test(classes) || DS_BARE_RE.test(classes)) {
+          const violating = classes.split(/\s+/).filter(
+            (c) => DS_HARDCODED_RE.test(c) || DS_BARE_RE.test(c)
+          );
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[fabrk] Design system violation in ${id.replace(process.cwd() + "/", "")}: ` +
+            `hardcoded color class(es) "${violating.join(" ")}" — use semantic tokens ` +
+            `(bg-primary, text-foreground, border-border, etc.)`
+          );
+        }
+      }
+      return null;
     },
   };
 }

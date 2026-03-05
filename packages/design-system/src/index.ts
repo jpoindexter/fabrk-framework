@@ -77,3 +77,8 @@ export type {
 
 export { mode } from './mode';
 export type { ModeConfig } from './mode';
+
+// DESIGN SYSTEM ENFORCEMENT
+
+export { checkDesignTokens, isDesignSystemCompliant } from './enforce';
+export type { DesignTokenViolation } from './enforce';

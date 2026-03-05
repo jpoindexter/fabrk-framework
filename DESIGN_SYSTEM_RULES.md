@@ -515,3 +515,38 @@ formatStatusText('active')      // "ACTIVE"
 ```
 
 These functions are preferred over manual string formatting when building new components to ensure consistent output.
+
+---
+
+## Automated Enforcement
+
+The design system rules are enforced at three layers:
+
+### 1. ESLint Rule (`fabrk/no-hardcoded-colors`)
+
+Runs automatically on `pnpm lint`. Reports a **warning** for any hardcoded Tailwind color class in `className` props and `cn()` / `clsx()` calls:
+
+```
+warning  Hardcoded color "bg-blue-500" violates FABRK design system.
+         Use semantic tokens: bg-primary, text-foreground, border-border, etc.
+```
+
+The rule checks `className` literals, JSX expression containers, template literal static parts, and `cn('...')` / `clsx('...')` call arguments.
+
+### 2. Vite Dev-Server Warning (`fabrk:design-system`)
+
+During `pnpm dev`, the FABRK Vite plugin scans `.tsx` / `.jsx` files at transform time. Any `className` string containing a hardcoded color class emits a console warning with the file path and offending classes.
+
+### 3. Programmatic Check
+
+```ts
+import { checkDesignTokens, isDesignSystemCompliant } from '@fabrk/design-system'
+
+const violations = checkDesignTokens('bg-blue-500 text-foreground p-4')
+// → [{ class: 'bg-blue-500', suggestion: 'use bg-primary, bg-card, ...' }]
+
+isDesignSystemCompliant('bg-primary text-foreground') // true
+isDesignSystemCompliant('bg-blue-500 text-white')     // false
+```
+
+Both functions strip responsive/state prefixes (`sm:`, `hover:`, `dark:`, etc.) before checking, so `hover:bg-blue-500` is correctly flagged.

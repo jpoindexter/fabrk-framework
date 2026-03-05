@@ -10,9 +10,15 @@ describe("Plugin virtual entries", () => {
       expect(names).toContain("fabrk:virtual-entries");
     });
 
-    it("includes 3 plugins (router, virtual-entries, react-refresh)", () => {
+    it("includes 4 plugins (router, virtual-entries, design-system, react-refresh)", () => {
       const plugins = fabrkPlugin();
-      expect(plugins).toHaveLength(3);
+      expect(plugins).toHaveLength(4);
+    });
+
+    it("includes design-system plugin", () => {
+      const plugins = fabrkPlugin();
+      const names = plugins.map((p) => p.name);
+      expect(names).toContain("fabrk:design-system");
     });
 
     it("does not include rsc-integration plugin", () => {

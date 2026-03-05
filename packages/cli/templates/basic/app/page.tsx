@@ -100,7 +100,7 @@ export default function Home() {
             <div className="space-y-3 max-w-md">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">PROGRESS</span>
-                <span className="text-sm font-mono text-primary">{progress}%</span>
+                <span className={cn('text-sm text-primary', mode.font)}>{progress}%</span>
               </div>
               <Progress value={progress} />
               <div className="flex gap-2">
@@ -127,7 +127,7 @@ export default function Home() {
       {/* Quick Start */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold uppercase">[QUICK START]</h2>
-        <Card className={cn('p-6 border border-border font-mono text-sm space-y-2', mode.radius)}>
+        <Card className={cn('p-6 border border-border text-sm space-y-2', mode.radius, mode.font)}>
           <p className="text-muted-foreground"># Add components</p>
           <p className="text-primary">fabrk add button card dialog</p>
           <p className="text-muted-foreground mt-3"># Add a feature module</p>

@@ -30,7 +30,15 @@ export class A2AClient {
     // Block cloud metadata endpoints and RFC-1918 private ranges.
     // A2A targets are remote agent servers; there is no valid use case for reaching
     // internal infrastructure (metadata services, databases, other internal services).
-    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    let host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+
+    // IPv4-mapped IPv6 (::ffff:192.168.x.x) bypasses the IPv4 blocklist unless
+    // we detect and extract the embedded address before applying range checks.
+    const v4mapped = host.match(/^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/i);
+    if (v4mapped) {
+      host = v4mapped[1]; // treat as plain IPv4 for all subsequent checks
+    }
+
     const blockedHosts = ["metadata.google.internal", "169.254.169.254", "100.100.100.200"];
     if (blockedHosts.includes(host)) {
       throw new A2AClientError(`A2A SSRF blocked: cloud metadata endpoint ${host}`);

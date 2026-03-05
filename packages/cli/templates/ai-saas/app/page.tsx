@@ -69,7 +69,7 @@ export default function Home() {
 
           <div className="space-y-4">
             <h3 className="text-sm font-bold uppercase">[RECENT ACTIVITY]</h3>
-            <Card className={cn('p-4 border border-border font-mono text-sm space-y-2', mode.radius)}>
+            <Card className={cn('p-4 border border-border text-sm space-y-2', mode.radius, mode.font)}>
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">14:32:01</span>
                 <span className="text-primary">GPT-4o</span>
@@ -93,7 +93,7 @@ export default function Home() {
 
           <div className="space-y-4">
             <h3 className="text-sm font-bold uppercase">[CONFIGURATION]</h3>
-            <Card className={cn('p-4 border border-border font-mono text-xs space-y-1', mode.radius)}>
+            <Card className={cn('p-4 border border-border text-xs space-y-1', mode.radius, mode.font)}>
               <p className="text-muted-foreground">// fabrk.config.ts</p>
               <p>{'export default createFabrkConfig({'}</p>
               <p className="pl-4">{'ai: {'}</p>

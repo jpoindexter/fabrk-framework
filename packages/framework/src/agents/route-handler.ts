@@ -27,6 +27,7 @@ function serializeContentForMemory(content: string | unknown[]): string {
 const ALLOWED_ROLES = new Set(["user", "assistant"]);
 const MAX_PARTS = 20;
 const MAX_BASE64_BYTES = 2 * 1024 * 1024;
+const MAX_REQUEST_BYTES = 4 * 1024 * 1024; // 4 MB hard cap before JSON parsing
 
 function validateMessages(
   messages: Array<{ role: unknown; content: unknown }>
@@ -212,10 +213,21 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: depthError }, 429);
     }
 
+    // Enforce body size limit before parsing — prevents memory exhaustion DoS.
+    // Content-Length header is checked first; streaming bodies are capped by byte count.
+    const contentLength = req.headers.get("content-length");
+    if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_BYTES) {
+      return jsonResponse({ error: "Request body too large" }, 413);
+    }
+
     type IncomingMessage = { role: string; content: string | unknown[] };
     let body: { messages?: IncomingMessage[]; sessionId?: string; threadId?: string };
     try {
-      body = await req.json();
+      const text = await req.text();
+      if (text.length > MAX_REQUEST_BYTES) {
+        return jsonResponse({ error: "Request body too large" }, 413);
+      }
+      body = JSON.parse(text);
     } catch {
       return jsonResponse({ error: "Invalid JSON" }, 400);
     }

@@ -110,10 +110,13 @@ export function createA2AServer(
           headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
         });
       } catch (err) {
+        // Log internally but never expose raw error messages to callers —
+        // they can contain internal paths, DB strings, or upstream API details.
+        console.error(`[fabrk] A2A task "${task.id}" failed:`, err);
         const result: A2ATaskResult = {
           id: task.id,
           status: 'failed',
-          error: { message: err instanceof Error ? err.message : String(err) },
+          error: { message: 'Task execution failed' },
         };
         return new Response(JSON.stringify(result), {
           status: 500,

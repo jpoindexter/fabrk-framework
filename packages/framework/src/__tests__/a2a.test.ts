@@ -138,7 +138,7 @@ describe("A2A Server", () => {
     expect(resp!.status).toBe(500);
     const result: A2ATaskResult = await resp!.json();
     expect(result.status).toBe('failed');
-    expect(result.error?.message).toBe('agent failure');
+    expect(result.error?.message).toBe('Task execution failed');
   });
 
   it("POST / with invalid JSON returns 400", async () => {

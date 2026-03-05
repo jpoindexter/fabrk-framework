@@ -145,7 +145,7 @@ export default function Home() {
         {/* Recent Activity Table */}
         <Card className={cn('p-4 border border-border', mode.radius)}>
           <h3 className="text-sm font-bold uppercase mb-4">[RECENT EVENTS]</h3>
-          <div className="space-y-2 font-mono text-xs">
+          <div className={cn('space-y-2 text-xs', mode.font)}>
             <div className="flex justify-between border-b border-border pb-2">
               <span className="text-muted-foreground w-20">TIME</span>
               <span className="text-muted-foreground flex-1">EVENT</span>

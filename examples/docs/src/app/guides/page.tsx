@@ -1321,7 +1321,7 @@ export default function ChatPage() {
         )}
 
         {toolCalls.map((tc, i) => (
-          <div key={i} className="text-xs border border-border p-2 font-mono">
+          <div key={i} className={cn('text-xs border border-border p-2', mode.radius, mode.font)}>
             <span className="text-primary">[TOOL] {tc.name}</span>
             {tc.output && (
               <span className="text-muted-foreground"> → {tc.durationMs}ms</span>
@@ -1330,7 +1330,7 @@ export default function ChatPage() {
         ))}
 
         {error && (
-          <div className="text-xs text-destructive border border-destructive p-2">
+          <div className={cn('text-xs text-destructive border border-destructive p-2', mode.radius)}>
             [ERROR] {error}
           </div>
         )}

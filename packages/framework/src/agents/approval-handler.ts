@@ -2,6 +2,8 @@ import { buildSecurityHeaders } from '../middleware/security.js';
 
 const APPROVAL_TTL_MS = 300_000; // 5 minutes
 const MAX_PENDING_APPROVALS = 1_000;
+const MAX_MODIFIED_INPUT_KEYS = 50;
+const MAX_MODIFIED_INPUT_BYTES = 64 * 1024; // 64 KB
 
 interface ApprovalEntry {
   resolve: (result: { approved: boolean; modifiedInput?: Record<string, unknown> }) => void;
@@ -84,6 +86,39 @@ export function createApprovalHandler() {
         { status: 400, headers }
       );
     }
+
+    // Validate modifiedInput: must be a plain object, size-bounded, key-count bounded.
+    // The tool-executor does a JSON round-trip to strip prototype chains, but we validate
+    // structural constraints here so oversized payloads never reach the tool handler.
+    let safeModifiedInput: Record<string, unknown> | undefined;
+    if (approved && modifiedInput !== undefined) {
+      if (
+        typeof modifiedInput !== 'object' ||
+        modifiedInput === null ||
+        Array.isArray(modifiedInput)
+      ) {
+        return new Response(
+          JSON.stringify({ error: 'modifiedInput must be a plain object' }),
+          { status: 400, headers }
+        );
+      }
+      const keys = Object.keys(modifiedInput as object);
+      if (keys.length > MAX_MODIFIED_INPUT_KEYS) {
+        return new Response(
+          JSON.stringify({ error: `modifiedInput exceeds ${MAX_MODIFIED_INPUT_KEYS} key limit` }),
+          { status: 400, headers }
+        );
+      }
+      const serialized = JSON.stringify(modifiedInput);
+      if (serialized.length > MAX_MODIFIED_INPUT_BYTES) {
+        return new Response(
+          JSON.stringify({ error: 'modifiedInput payload too large' }),
+          { status: 400, headers }
+        );
+      }
+      safeModifiedInput = modifiedInput as Record<string, unknown>;
+    }
+
     evictExpired();
     const entry = getAgentApprovals(agentName).get(approvalId);
     if (!entry) {
@@ -95,7 +130,7 @@ export function createApprovalHandler() {
     getAgentApprovals(agentName).delete(approvalId);
     entry.resolve({
       approved,
-      modifiedInput: approved ? (modifiedInput as Record<string, unknown>) : undefined,
+      modifiedInput: safeModifiedInput,
     });
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers });
   };

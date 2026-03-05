@@ -392,7 +392,7 @@ export default function SettingsPage() {
                         <KeyRound className="size-4 shrink-0 text-muted-foreground" />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium">{key.name}</div>
-                          <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                          <div className={cn('text-xs text-muted-foreground mt-0.5', mode.font)}>
                             {key.prefix}
                           </div>
                         </div>

@@ -1,4 +1,6 @@
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/design-system'
 
 export default function AgentsPage() {
   return (
@@ -9,7 +11,7 @@ export default function AgentsPage() {
 
       {/* SECTION INDEX */}
       <Section title="SECTION INDEX">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs font-mono">
+        <div className={cn('grid grid-cols-2 md:grid-cols-3 gap-2 text-xs', mode.font)}>
           {[
             ['#define', 'Defining an Agent'],
             ['#tools', 'Tools'],
@@ -27,7 +29,7 @@ export default function AgentsPage() {
             <a
               key={href}
               href={href}
-              className="block border border-border bg-card p-3 text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
+              className={cn('block border border-border bg-card p-3 text-muted-foreground hover:text-foreground hover:border-primary transition-colors', mode.radius)}
             >
               {label}
             </a>

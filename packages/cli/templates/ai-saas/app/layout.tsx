@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className="font-mono antialiased">
+      <body className="antialiased">
         <ThemeProvider defaultColorTheme="green">
           <FabrkProvider>
             {children}

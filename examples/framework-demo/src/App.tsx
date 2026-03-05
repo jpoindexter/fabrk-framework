@@ -124,8 +124,8 @@ function SeverityBar({ label, critical, high, medium, total }: {
       <span className="col-span-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{label}</span>
       <div className="col-span-9 h-1.5 bg-muted rounded-full flex overflow-hidden mx-4">
         <div className="bg-destructive" style={{ width: pct(critical) }} />
-        <div className="bg-orange-400" style={{ width: pct(high) }} />
-        <div className="bg-yellow-400" style={{ width: pct(medium) }} />
+        <div className="bg-secondary" style={{ width: pct(high) }} />
+        <div className="bg-muted-foreground" style={{ width: pct(medium) }} />
       </div>
       <span className="col-span-1 text-[10px] font-bold text-muted-foreground text-right">
         {Math.round(((critical + high + medium) / total) * 100)}%
@@ -225,7 +225,7 @@ export default function App() {
                 <div>
                   <div className="flex justify-between items-start mb-4">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">[TECH_DEBT]</span>
-                    <div className="p-1.5 bg-orange-100 text-orange-600 rounded">
+                    <div className="p-1.5 bg-muted text-muted-foreground rounded">
                       <Timer className="size-4" />
                     </div>
                   </div>
@@ -300,7 +300,7 @@ export default function App() {
             delta="6.1%"
             deltaDown
             icon={<Bug className="size-4" />}
-            iconBg="bg-purple-100 text-purple-600"
+            iconBg="bg-muted text-muted-foreground"
           />
         </div>
         <div className="col-span-12 md:col-span-4">
@@ -309,14 +309,14 @@ export default function App() {
             value="14"
             delta="16%"
             icon={<AlertTriangle className="size-4" />}
-            iconBg="bg-red-100 text-red-600"
+            iconBg="bg-muted text-destructive"
           />
         </div>
         <div className="col-span-12 md:col-span-4">
           <Card size="auto">
             <CardContent padding="md">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 rounded bg-blue-100 text-blue-600">
+                <div className="p-2 rounded bg-muted text-primary">
                   <ShieldCheck className="size-4" />
                 </div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">[VULNERABILITIES]</span>
@@ -341,11 +341,11 @@ export default function App() {
                     <span className="text-[9px] font-bold text-muted-foreground uppercase">Critical</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-orange-400" />
+                    <div className="h-2 w-2 rounded-full bg-secondary" />
                     <span className="text-[9px] font-bold text-muted-foreground uppercase">High</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-yellow-400" />
+                    <div className="h-2 w-2 rounded-full bg-muted-foreground" />
                     <span className="text-[9px] font-bold text-muted-foreground uppercase">Medium</span>
                   </div>
                 </div>

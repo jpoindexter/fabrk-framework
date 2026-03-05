@@ -243,3 +243,49 @@ const myMode: ModeConfig = mode
 ```
 
 `ModeConfig` has these top-level keys: `radius`, `font`, `textTransform`, `color`, `spacing`, `typography`, `state`.
+
+---
+
+## Design Token Enforcement
+
+Three layers enforce the "no hardcoded colors" rule. They share the same violation definition: any Tailwind utility with a numeric color scale (`bg-blue-500`, `text-red-400`, `border-gray-200`) or bare white/black (`bg-white`, `text-black`). Responsive and state variants are stripped before checking (`hover:bg-blue-500` → `bg-blue-500`).
+
+**Allowed:** `bg-primary`, `bg-card`, `bg-muted`, `bg-secondary`, `bg-accent`, `bg-destructive`, `text-foreground`, `text-muted-foreground`, `text-primary`, `text-destructive`, `text-success`, `border-border`, `border-primary`, `border-input`, `border-destructive`, and all other semantic tokens.
+
+**Blocked:** `bg-blue-500`, `text-red-400`, `bg-white`, `text-black`, `border-gray-200`, `ring-purple-300`, arbitrary hex values (`bg-[#ff0000]`), gradient stops (`from-blue-500`), etc.
+
+### Layer 1 — ESLint rule `fabrk/no-hardcoded-colors`
+
+Error-level. Runs in CI. Checks `className=`, `cn()`, and `clsx()` call sites statically.
+
+### Layer 2 — Vite plugin `fabrk:design-system`
+
+Warns at dev-server transform time when a source file contains a hardcoded color class. Zero overhead in production builds.
+
+### Layer 3 — `checkDesignTokens()` (programmatic)
+
+```ts
+import { checkDesignTokens, isDesignSystemCompliant } from '@fabrk/design-system'
+
+const violations = checkDesignTokens('bg-blue-500 text-white p-4')
+// → [
+//   { class: 'bg-blue-500', suggestion: 'use bg-background, bg-card, ...' },
+//   { class: 'text-white',  suggestion: 'use text-foreground, ...' },
+// ]
+
+isDesignSystemCompliant('bg-card text-foreground p-4') // true
+isDesignSystemCompliant('bg-white text-black')         // false
+```
+
+Use in tests to assert that generated className strings are compliant before they reach the DOM.
+
+### `DesignTokenViolation` Interface
+
+```ts
+import type { DesignTokenViolation } from '@fabrk/design-system'
+
+interface DesignTokenViolation {
+  class: string        // the offending class (with any variant prefix)
+  suggestion?: string  // human-readable replacement hint
+}
+```

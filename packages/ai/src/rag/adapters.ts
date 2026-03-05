@@ -46,6 +46,16 @@ export class PineconeVectorStore implements VectorStoreAdapter {
   private readonly apiKey: string;
 
   constructor(private opts: PineconeVectorStoreOptions) {
+    // Block cloud metadata endpoints — host is used as https://${host}/...
+    const lowerHost = opts.host.toLowerCase();
+    const blockedHosts = ["metadata.google.internal", "169.254.169.254", "100.100.100.200"];
+    if (blockedHosts.includes(lowerHost)) {
+      throw new Error(`Pinecone: SSRF blocked — cloud metadata host ${opts.host}`);
+    }
+    const v4 = lowerHost.match(/^(\d{1,3})\.(\d{1,3})\./);
+    if (v4 && Number(v4[1]) === 169 && Number(v4[2]) === 254) {
+      throw new Error(`Pinecone: SSRF blocked — link-local address ${opts.host}`);
+    }
     this.host = opts.host;
     this.namespace = opts.namespace;
     this.apiKey = opts.apiKey ?? process.env.PINECONE_API_KEY ?? "";

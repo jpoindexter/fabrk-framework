@@ -22,6 +22,23 @@ export class AzureEmbeddingProvider implements EmbeddingProvider {
       throw new Error('AzureEmbeddingProvider requires baseUrl (your Azure OpenAI endpoint)')
     }
 
+    // Block cloud metadata endpoints — Azure OpenAI endpoints are always *.openai.azure.com
+    try {
+      const parsed = new URL(this.config.baseUrl)
+      const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, '')
+      const blockedHosts = ['metadata.google.internal', '169.254.169.254', '100.100.100.200']
+      if (blockedHosts.includes(host)) {
+        throw new Error(`AzureEmbeddingProvider: SSRF blocked — cloud metadata endpoint ${host}`)
+      }
+      const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\./)
+      if (v4 && Number(v4[1]) === 169 && Number(v4[2]) === 254) {
+        throw new Error(`AzureEmbeddingProvider: SSRF blocked — link-local address ${host}`)
+      }
+    } catch (e) {
+      if (e instanceof TypeError) throw new Error(`AzureEmbeddingProvider: invalid baseUrl ${this.config.baseUrl}`)
+      throw e
+    }
+
     this.endpoint = this.config.baseUrl.replace(/\/$/, '')
     this.deployment = this.config.model ?? 'text-embedding-3-small'
   }

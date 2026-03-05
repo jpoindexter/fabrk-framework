@@ -28,6 +28,7 @@ const storage = createS3Adapter({
   // endpoint?: string        // for S3-compatible services (MinIO, etc.)
   // forcePathStyle?: boolean // required for some S3-compatible services
   // defaultExpiresIn?: 3600  // signed URL TTL in seconds
+  // maxFileSize?: number     // default: DEFAULT_MAX_SIZE (10MB)
 })
 ```
 
@@ -61,7 +62,7 @@ const storage = createLocalAdapter({
 })
 ```
 
-Provide a `signingSecret` if signed URLs must survive process restarts.
+Provide a `signingSecret` if signed URLs must survive process restarts. `initialize()` resolves `config.directory` to an absolute path — subsequent operations use the resolved path, not the raw `directory` string.
 
 ---
 
@@ -95,7 +96,10 @@ interface StorageAdapter {
 ## Validation Utilities
 
 ```ts
-import { validateFile, validateMagicBytes, generateStorageKey, sanitizePath } from '@fabrk/storage'
+import {
+  validateFile, validateMagicBytes, generateStorageKey, sanitizePath,
+  readStreamToBuffer, DEFAULT_MAX_SIZE,
+} from '@fabrk/storage'
 
 // Check size + MIME type before uploading
 const result = validateFile(
@@ -119,6 +123,20 @@ const safe = sanitizePath(userInput) // throws on '..' traversal or null bytes
 `validateFile` blocks dangerous MIME types by default: `text/html`, `image/svg+xml`,
 `application/javascript`, `application/wasm`, executables, and shell scripts.
 Magic-byte checking is supported for PNG, JPEG, GIF, WebP, PDF, and ZIP.
+
+**`DEFAULT_MAX_SIZE`** — `10 * 1024 * 1024` (10MB). Used as the default for both S3 and Local adapters. Reference this constant instead of hardcoding the value:
+
+```ts
+import { DEFAULT_MAX_SIZE } from '@fabrk/storage'
+
+const result = validateFile(file, { maxSize: DEFAULT_MAX_SIZE })
+```
+
+**`readStreamToBuffer(stream, maxBytes)`** — converts a `ReadableStream` to a `Buffer` with OOM protection. Throws if the accumulated size exceeds `maxBytes`. Used internally by both S3 and local adapters when the upload source is a stream.
+
+```ts
+const buffer = await readStreamToBuffer(readableStream, DEFAULT_MAX_SIZE)
+```
 
 ---
 

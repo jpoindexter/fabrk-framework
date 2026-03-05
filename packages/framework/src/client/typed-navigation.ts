@@ -34,9 +34,9 @@ export function buildHref(
   for (const [key, value] of Object.entries(params)) {
     const arrayVal = Array.isArray(value) ? value.join("/") : value;
     href = href
-      .replace(`[[...${key}]]`, arrayVal)
-      .replace(`[...${key}]`, arrayVal)
-      .replace(`[${key}]`, arrayVal);
+      .replace(`[[...${key}]]`, () => arrayVal)
+      .replace(`[...${key}]`, () => arrayVal)
+      .replace(`[${key}]`, () => arrayVal);
   }
   return href;
 }

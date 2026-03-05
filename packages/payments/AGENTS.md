@@ -93,6 +93,35 @@ interface PaymentAdapter {
 
 ---
 
+## Idempotency Internals
+
+All three adapters share the following exports from `packages/payments/src/idempotency.ts`:
+
+**`DEFAULT_CACHE_SIZE`** — `10_000`. Maximum number of processed event IDs held in the in-process idempotency cache before LRU eviction. All three adapters use this value — do not hardcode it.
+
+**`decodePayload(payload)`** — normalizes `string | ArrayBuffer` to `string`. All adapters call this instead of inlining `new TextDecoder().decode(payload)`.
+
+```ts
+// internal use only — consumed by adapters, not typically called directly
+import { DEFAULT_CACHE_SIZE, decodePayload } from '@fabrk/payments/idempotency'
+```
+
+---
+
+## Polar `isConfigured()` — Security Note
+
+`isConfigured()` checks **both** `accessToken` AND `webhookSecret`. An adapter configured without a `webhookSecret` returns `false` from `isConfigured()` and `handleWebhook()` returns `{ verified: false, error: '...' }` for every call. Previously only `accessToken` was checked, which silently allowed an unconfigured webhook secret to pass the readiness check.
+
+```ts
+// Both are required — missing either means isConfigured() === false
+const payments = createPolarAdapter({
+  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  webhookSecret: process.env.POLAR_WEBHOOK_SECRET!, // required
+})
+```
+
+---
+
 ## Webhook Handling Pattern
 
 All adapters include replay protection (5-minute timestamp window) and in-process

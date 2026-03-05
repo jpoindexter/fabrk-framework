@@ -12,7 +12,7 @@
 |--------|---------|
 | `@fabrk/framework` | Default: Vite plugin. Named: `defineAgent`, `defineTool`, `defineSkill`, `defineSupervisor`, `defineAgentNetwork`, `defineStateGraph`, `defineWorkflow`, `runGuardrails`, `useObject`, `useViewTransition`, `ViewTransitionLink`, `handleStreamObject`, testing/eval helpers, built-in tools, MCP, A2A |
 | `@fabrk/framework/fabrk` | Full API (agents, tools, SSE, budget, config, middleware, prompts, dashboard) |
-| `@fabrk/framework/client/use-agent` | `useAgent()` React hook, `parseSSELine()` |
+| `@fabrk/framework/client/use-agent` | `useAgent()` React hook, `parseSSELine()`, `readSSELines()` |
 | `@fabrk/framework/components` | Re-exports `@fabrk/components` |
 | `@fabrk/framework/themes` | Re-exports `@fabrk/design-system` |
 | `@fabrk/framework/worker` | `createFetchHandler()` for edge runtimes |
@@ -61,6 +61,7 @@ fabrk({ agents: true, dashboard: true, serverActions: true, voice: true })
 
 - `fabrk:router` — file-system routing + SSR middleware
 - `fabrk:virtual-entries` — virtual modules for client/SSR entries
+- `fabrk:design-system` — warns at dev-server transform time when `.tsx`/`.jsx` files contain hardcoded Tailwind color classes (e.g. `bg-blue-500`) in `className` strings; logs with file path and offending classes
 - `fabrk:agents` — agent scanning + SSE endpoints
 - `fabrk:dashboard` — `/__ai` dev dashboard
 - `fabrk:server-action-transform` — `"use server"` compiler transform (disable with `serverActions: false`)
@@ -785,6 +786,8 @@ import type { ISRCacheHandler } from '@fabrk/framework'
 const cache: ISRCacheHandler = new FilesystemISRCache('./.isr-cache')
 ```
 
+`FilesystemISRCache.keyToFile()` validates the resolved file path against the cache directory using `path.resolve().startsWith(this.dir)`. Cache keys that escape the directory (e.g. `../../etc/passwd`) throw immediately.
+
 ### OG Image Generation
 
 ```typescript
@@ -1130,6 +1133,22 @@ Dashboard aggregates errors by agent (`errorStats.byAgent`) and surfaces the 20 
 
 Cost trends are aggregated hourly with per-agent breakdown. Tool stats include call count, average duration in ms, and the list of agents that called each tool.
 
+## Client Utilities
+
+### readSSELines (src/client/sse-reader.ts)
+
+```typescript
+import { readSSELines } from '@fabrk/framework/client/use-agent'
+
+const reader = response.body!.getReader()
+for await (const line of readSSELines(reader)) {
+  // line is a raw SSE line, e.g. "data: {...}"
+}
+// reader.releaseLock() is called automatically in the finally block
+```
+
+`readSSELines(reader: ReadableStreamDefaultReader<Uint8Array>): AsyncGenerator<string>` — yields raw SSE lines from a `ReadableStream`, handling buffering across chunk boundaries. Releases the reader lock in `finally` on both completion and error. Use this instead of a manual `while (true) { reader.read() }` loop. `useAgent` and `useObject` both use this internally.
+
 ## Client Hook
 
 ```typescript
@@ -1148,6 +1167,23 @@ import { createAuthGuard, buildSecurityHeaders } from '@fabrk/framework/fabrk'
 const guard = createAuthGuard('required')
 const headers = buildSecurityHeaders()
 ```
+
+### compileMatcher / runMiddleware
+
+`compileMatcher(pattern)` in `src/runtime/middleware.ts` escapes literal dots before pattern compilation, so `/api/v1.2/foo` matches only a literal dot, not any character.
+
+`runMiddleware` validates `redirectUrl` via `validateRedirectUrl()` before issuing a 307. Returns a 400 JSON response if the URL uses a blocked scheme (`javascript:`, `data:`, `vbscript:`).
+
+### validateRedirectUrl
+
+```typescript
+import { validateRedirectUrl } from '@fabrk/framework'
+
+validateRedirectUrl('/safe/path')          // ok
+validateRedirectUrl('javascript:alert(1)') // throws
+```
+
+Exported from `src/runtime/server-helpers.ts`. Blocks `javascript:`, `data:`, and `vbscript:` schemes. Allows relative paths and protocol-relative URLs.
 
 ## Config
 
@@ -1209,9 +1245,24 @@ The following models have pricing entries in `@fabrk/ai` (per 1K tokens, USD):
 | `text-embedding-3-small` | $0.00002 |
 | `text-embedding-3-large` | $0.00013 |
 
+## MCP Client Security
+
+`assertNotSsrf(url)` in `src/tools/mcp/client.ts` is called automatically before every MCP HTTP connect and every OAuth2 token fetch. It blocks:
+
+- `169.254.169.254` — AWS/GCP/Azure/DigitalOcean instance metadata
+- `metadata.google.internal` — GCP metadata hostname
+- `100.100.100.200` — Alibaba Cloud metadata
+- Full `169.254.0.0/16` range — all link-local addresses
+
+Localhost and RFC-1918 addresses are intentionally allowed (MCP servers legitimately run locally). Throws `MCPClientError` with a descriptive message on block. Invalid URLs also throw `MCPClientError`.
+
 ## Security
 
 - Path traversal protection on prompt loading
+- `FilesystemISRCache` containment guard — `keyToFile()` validates `path.resolve().startsWith(dir)` and throws on traversal attempts
+- `compileMatcher` escapes literal dots in URL patterns before compiling to RegExp
+- `runMiddleware` validates `redirectUrl` via `validateRedirectUrl()` before issuing 307; returns 400 on unsafe schemes
+- `assertNotSsrf()` in the MCP client blocks cloud metadata endpoints before any HTTP connect or OAuth2 token fetch
 - Error internals never leaked to HTTP clients (all error paths return generic messages; details logged server-side)
 - Request body size capped at 1 MB on MCP endpoint and agent routes
 - Session cost map capped at 10,000 entries

@@ -162,6 +162,14 @@ API key is read from `Authorization: Bearer <key>` or `X-API-Key: <key>`.
 Scopes apply only to API key auth. For session-based role checks, inspect
 `session.role` inside your handler.
 
+All 401 and 403 responses from `withAuth`, `withApiKey`, and `withAuthOrApiKey` include the following security headers in addition to `Content-Type: application/json`:
+
+| Header | Value |
+|--------|-------|
+| `X-Content-Type-Options` | `nosniff` |
+| `X-Frame-Options` | `DENY` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+
 ---
 
 ## Stores

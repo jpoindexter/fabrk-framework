@@ -18,14 +18,24 @@ export class A2AClientError extends Error {
  */
 export class A2AClient {
   constructor(private readonly baseUrl: string) {
+    let parsed: URL;
     try {
-      const parsed = new URL(baseUrl);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        throw new Error(`Invalid A2A base URL scheme: ${parsed.protocol}`);
-      }
-    } catch (e) {
-      if (e instanceof TypeError) throw new Error(`Invalid A2A base URL: ${baseUrl}`);
-      throw e;
+      parsed = new URL(baseUrl);
+    } catch {
+      throw new Error(`Invalid A2A base URL: ${baseUrl}`);
+    }
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error(`Invalid A2A base URL scheme: ${parsed.protocol}`);
+    }
+    // Block cloud metadata endpoints — A2A targets are remote agent servers, never local infrastructure
+    const host = parsed.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    const blockedHosts = ["metadata.google.internal", "169.254.169.254", "100.100.100.200"];
+    if (blockedHosts.includes(host)) {
+      throw new A2AClientError(`A2A SSRF blocked: cloud metadata endpoint ${host}`);
+    }
+    const v4 = host.match(/^(\d{1,3})\.(\d{1,3})\./);
+    if (v4 && Number(v4[1]) === 169 && Number(v4[2]) === 254) {
+      throw new A2AClientError(`A2A SSRF blocked: link-local address ${host}`);
     }
   }
 

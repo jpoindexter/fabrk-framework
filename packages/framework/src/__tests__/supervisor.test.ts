@@ -87,9 +87,14 @@ describe("defineSupervisor — shape", () => {
     expect(def.tools).toContain("agent-b");
   });
 
-  it("stream defaults to true and auth to none", () => {
+  it("stream defaults to true and auth defaults to required", () => {
     const def = defineSupervisor({ ...BASE_CONFIG, strategy: "router" });
     expect(def.stream).toBe(true);
+    expect(def.auth).toBe("required");
+  });
+
+  it("auth can be set to none explicitly", () => {
+    const def = defineSupervisor({ ...BASE_CONFIG, strategy: "router", auth: "none" });
     expect(def.auth).toBe("none");
   });
 });

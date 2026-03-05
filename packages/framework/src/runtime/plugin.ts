@@ -303,15 +303,27 @@ const DS_HARDCODED_COLORS = [
 ];
 const DS_COLOR_PREFIXES = ["bg","text","border","ring","fill","stroke","outline","decoration","from","via","to"];
 const DS_HARDCODED_RE = new RegExp(
-  `\\b(?:${DS_COLOR_PREFIXES.join("|")})-(?:${DS_HARDCODED_COLORS.join("|")})-\\d+\\b`
+  `\\b(?:${DS_COLOR_PREFIXES.join("|")})-(?:${DS_HARDCODED_COLORS.join("|")})-(?:\\d+|\\[.+?\\])\\b`
 );
 const DS_BARE_RE = /\b(?:bg|text|border|ring)-(?:white|black)\b/;
+// Catches arbitrary hex/rgb values: bg-[#fff], text-[rgb(255,0,0)], border-[hsl(0,0%,0%)]
+const DS_ARBITRARY_RE = /\b(?:bg|text|border|ring|fill|stroke)-\[(?:#[0-9a-fA-F]{3,8}|rgba?|hsl)/;
 
-/** Warns in dev when source files contain hardcoded Tailwind color classes. */
+function isHardcodedColor(cls: string): boolean {
+  const base = cls.replace(/^(?:[a-zA-Z0-9_-]+:)+/, ""); // strip variant prefixes
+  return DS_HARDCODED_RE.test(base) || DS_BARE_RE.test(base) || DS_ARBITRARY_RE.test(base);
+}
+
+/** Dev-time warning + build-time error for hardcoded Tailwind color classes in JSX/TSX files. */
 function designSystemPlugin(): Plugin {
+  let isBuild = false;
   return {
     name: "fabrk:design-system",
     enforce: "pre",
+
+    configResolved(config) {
+      isBuild = config.command === "build";
+    },
 
     transform(code: string, id: string) {
       if (!/\.(tsx|jsx)$/.test(id)) return null;
@@ -319,17 +331,21 @@ function designSystemPlugin(): Plugin {
 
       const classNameMatches = code.matchAll(/className\s*=\s*["'`]([^"'`]+)["'`]/g);
       for (const match of classNameMatches) {
-        const classes = match[1];
-        if (DS_HARDCODED_RE.test(classes) || DS_BARE_RE.test(classes)) {
-          const violating = classes.split(/\s+/).filter(
-            (c) => DS_HARDCODED_RE.test(c) || DS_BARE_RE.test(c)
-          );
+        const violating = match[1].split(/\s+/).filter(isHardcodedColor);
+        if (violating.length === 0) continue;
+
+        const file = id.replace(process.cwd() + "/", "");
+        const msg =
+          `[fabrk] Design system violation in ${file}: ` +
+          `hardcoded color class(es) "${violating.join(" ")}" — use semantic tokens ` +
+          `(bg-primary, text-foreground, border-border, etc.)`;
+
+        if (isBuild) {
+          // Error in production builds — ESLint should catch this in CI but belt-and-suspenders
+          this.error(msg);
+        } else {
           // eslint-disable-next-line no-console
-          console.warn(
-            `[fabrk] Design system violation in ${id.replace(process.cwd() + "/", "")}: ` +
-            `hardcoded color class(es) "${violating.join(" ")}" — use semantic tokens ` +
-            `(bg-primary, text-foreground, border-border, etc.)`
-          );
+          console.warn(msg);
         }
       }
       return null;

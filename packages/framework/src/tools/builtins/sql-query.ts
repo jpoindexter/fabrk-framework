@@ -80,6 +80,11 @@ export function sqlQueryTool(options: SqlQueryOptions): ToolDefinition {
         safeParams = params;
       }
 
+      // Hard limit before regex to prevent O(n²) backtracking on unclosed dollar-quotes
+      if (sql.length > 64_000) {
+        return textResult("ERROR: Query too large (max 64,000 characters).");
+      }
+
       // Strip single-quoted string literals first, then dollar-quoted string
       // literals (PostgreSQL extension). Dollar-quoted strings of the form
       // $tag$...$tag$ can embed semicolons that would bypass the multi-statement

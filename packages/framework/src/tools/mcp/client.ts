@@ -38,6 +38,11 @@ function assertNotSsrf(rawUrl: string): void {
   if (v4 && Number(v4[1]) === 169 && Number(v4[2]) === 254) {
     throw new MCPClientError(`SSRF blocked: link-local address ${host}`);
   }
+
+  // Block IPv6 link-local (fe80::/10) — not reachable on legitimate MCP or OAuth2 endpoints
+  if (host.startsWith("fe80")) {
+    throw new MCPClientError(`SSRF blocked: IPv6 link-local address ${host}`);
+  }
 }
 
 export interface MCPConnection {

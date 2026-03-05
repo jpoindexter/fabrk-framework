@@ -73,7 +73,7 @@ export function agentPlugin(): Plugin {
               res.end(JSON.stringify({ error: "Approval routes only available on localhost" }));
               return;
             }
-            const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approvals".length));
+            const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approvals".length)).replace(/[\r\n]/g, "");
             const webRes = handleListApprovals(agentName);
             await writeWebResponse(res, webRes);
             return;
@@ -93,7 +93,7 @@ export function agentPlugin(): Plugin {
               res.end(JSON.stringify({ error: "Approval routes only available on localhost" }));
               return;
             }
-            const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approve".length));
+            const agentName = decodeURIComponent(pathname.slice("/__ai/agents/".length, -"/approve".length)).replace(/[\r\n]/g, "");
             const webReq = await nodeToWebRequest(req, url);
             const webRes = await approvalHandler(webReq, agentName);
             await writeWebResponse(res, webRes);

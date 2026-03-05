@@ -11,7 +11,8 @@ import { isImageRequest } from "./image-handler";
 
 function sanitizeRedirectUrl(url: string): string {
   const stripped = url.replace(/[\r\n]/g, "");
-  if (stripped.startsWith("/") || stripped.startsWith("#")) return stripped;
+  // Reject // prefix — protocol-relative URLs resolve to an arbitrary domain (open redirect)
+  if ((stripped.startsWith("/") && !stripped.startsWith("//")) || stripped.startsWith("#")) return stripped;
   return "/";
 }
 

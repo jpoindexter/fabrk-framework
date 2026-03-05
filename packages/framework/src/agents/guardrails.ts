@@ -94,7 +94,8 @@ export function requireJsonSchema(schema: Record<string, unknown>): Guardrail {
 }
 
 const PII_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
-  { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, label: "email" },
+  // Domain split on dots prevents catastrophic backtracking on malformed input (e.g. a@aaaaaa!)
+  { pattern: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}/g, label: "email" },
   { pattern: /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, label: "phone" },
   { pattern: /\b\d{3}-\d{2}-\d{4}\b/g, label: "SSN" },
 ];

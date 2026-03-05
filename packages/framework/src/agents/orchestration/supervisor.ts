@@ -12,6 +12,8 @@ export interface SupervisorConfig {
   maxDelegations?: number;
   budget?: AgentBudget;
   systemPrompt?: string;
+  /** Auth requirement for the supervisor route. Defaults to "required". */
+  auth?: "required" | "none";
   handlerFactory: (name: string) => Promise<(req: Request) => Promise<Response>>;
 }
 
@@ -46,7 +48,7 @@ export function defineSupervisor(config: SupervisorConfig): SupervisorDefinition
     toolDefinitions: agentTools,
     budget: config.budget,
     stream: true,
-    auth: "none",
+    auth: config.auth ?? "required",
     agents: config.agents,
     memory: false,
     maxDelegations,

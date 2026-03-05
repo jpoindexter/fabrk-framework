@@ -29,17 +29,23 @@ export function permanentRedirect(url: string): never {
 
 /**
  * Validate redirect URLs to prevent open redirect attacks.
- * Allows: relative paths (/foo, /foo/bar), protocol-relative (//example.com)
- * Blocks: javascript:, data:, vbscript: schemes
+ * Allows: relative paths (/foo, /foo/bar)
+ * Blocks: javascript:, data:, vbscript: schemes; // protocol-relative (resolves to arbitrary host); CRLF
  */
 export function validateRedirectUrl(url: string): void {
-  const lower = url.toLowerCase().trim();
+  const stripped = url.replace(/[\r\n]/g, "");
+  const lower = stripped.toLowerCase().trimStart();
 
   const dangerousSchemes = ["javascript:", "data:", "vbscript:"];
   for (const scheme of dangerousSchemes) {
     if (lower.startsWith(scheme)) {
       throw new Error(`Unsafe redirect URL scheme: ${scheme}`);
     }
+  }
+
+  // // prefix is a protocol-relative URL — browser resolves to attacker's domain
+  if (lower.startsWith("//")) {
+    throw new Error(`Unsafe redirect URL: protocol-relative URLs not allowed`);
   }
 }
 

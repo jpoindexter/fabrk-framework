@@ -195,7 +195,7 @@ export async function startProdServer(
       ) {
         const agentName = decodeURIComponent(
           approvalUrl.pathname.slice("/__ai/agents/".length, -"/approve".length)
-        );
+        ).replace(/[\r\n]/g, "");
         const bodyChunks: Buffer[] = [];
         let bodySize = 0;
         const APPROVE_MAX_BODY = 64 * 1024;

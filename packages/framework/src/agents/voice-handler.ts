@@ -112,7 +112,6 @@ export async function handleSTTRequest(
     return jsonResponse({ error: "Content-Type must be multipart/form-data" }, 400);
   }
 
-  // Check content-length before reading body
   const contentLength = parseInt(req.headers.get("content-length") || "0", 10);
   if (contentLength > MAX_STT_BODY_BYTES) {
     return jsonResponse({ error: `File too large (max ${MAX_STT_FILE_SIZE_MB}MB)` }, 413);

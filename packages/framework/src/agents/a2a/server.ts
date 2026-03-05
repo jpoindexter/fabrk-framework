@@ -33,7 +33,6 @@ export function createA2AServer(
   return async (req: Request): Promise<Response | null> => {
     const url = new URL(req.url, options.baseUrl);
 
-    // GET /.well-known/agent.json — agent card discovery
     if (url.pathname === '/.well-known/agent.json' && req.method === 'GET') {
       const card: A2AAgentCard = {
         name: options.name ?? 'FABRK Agent Network',
@@ -51,7 +50,6 @@ export function createA2AServer(
       });
     }
 
-    // POST / — send a task
     if (url.pathname === '/' && req.method === 'POST') {
       let task: A2ATask;
       try {
@@ -113,6 +111,6 @@ export function createA2AServer(
       }
     }
 
-    return null; // not an A2A route
+    return null;
   };
 }

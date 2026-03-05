@@ -219,11 +219,9 @@ export function providerFallback(config: FallbackConfig): AIMiddlewareFunction {
       for (let retry = 0; retry <= maxRetries; retry++) {
         try {
           await next()
-          // Success — return without trying other providers
           return
         } catch (err) {
           lastError = err instanceof Error ? err : new Error(String(err))
-          // Only retry if there are retries left
           if (retry < maxRetries) {
             continue
           }
@@ -233,7 +231,6 @@ export function providerFallback(config: FallbackConfig): AIMiddlewareFunction {
       if (lastError) {
         errors.push({ provider, error: lastError })
 
-        // Notify about fallback if there's a next provider
         if (i < config.providers.length - 1) {
           const nextProvider = config.providers[i + 1]
           config.onFallback?.(provider, nextProvider, lastError)

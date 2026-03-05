@@ -250,7 +250,6 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
     }
   }
 
-  // Scan for island files in this directory
   const islands: Record<string, string> = {};
   for (const entry of entries) {
     if (!entry.isFile()) continue;

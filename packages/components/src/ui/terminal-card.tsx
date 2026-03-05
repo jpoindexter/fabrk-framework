@@ -390,7 +390,6 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
         )}
         {...props}
       >
-        {/* Terminal Header */}
         <div
           className={cn(
             'flex h-11 shrink-0 items-center justify-between border-b px-4',
@@ -403,14 +402,11 @@ const MetricCard = React.forwardRef<HTMLDivElement, MetricCardProps>(
           {icon && <span className={mode.color.text.accent}>{icon}</span>}
         </div>
 
-        {/* Content */}
         <div className="flex flex-1 flex-col items-center justify-center px-6 py-8 text-center">
-          {/* Value */}
           <div className={cn('text-5xl font-bold leading-none', mode.font, mode.color.text.accent)}>
             {value}
           </div>
 
-          {/* Label */}
           <div className={cn('mt-2 text-sm font-bold uppercase tracking-wide', mode.font)}>
             {label}
           </div>
@@ -498,7 +494,6 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
         )}
         {...props}
       >
-        {/* Header */}
         <div
           className={cn(
             'flex h-11 shrink-0 items-center justify-between border-b px-4',
@@ -511,9 +506,8 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
           {icon && <span className={mode.color.text.accent}>{icon}</span>}
         </div>
 
-        {/* Main Content */}
         <div className="flex flex-col p-6 pb-0">
-          {/* Headline - max 2 lines */}
+          {/* line-clamp-2 + min-h-line-2 keeps card heights consistent when headlines vary in length */}
           <h3
             className={cn(
               'text-sm font-bold leading-tight uppercase tracking-wide line-clamp-2 min-h-line-2',
@@ -524,7 +518,7 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
             {headline}
           </h3>
 
-          {/* Description - fixed height for consistency */}
+          {/* line-clamp-3 + min-h-line-3 prevents layout shift across the card grid */}
           <p
             className={cn(
               'text-sm leading-relaxed mt-3 line-clamp-3 min-h-line-3',
@@ -536,7 +530,6 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
           </p>
         </div>
 
-        {/* Stats Band */}
         {stats && stats.length > 0 && (
           <div className={cn('border-y border-border bg-background py-4 px-6 flex gap-4 mt-4')}>
             {stats.map((stat, index) => (
@@ -566,7 +559,6 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
           </div>
         )}
 
-        {/* Includes List - always show 3 items for consistency */}
         {includes && includes.length > 0 && (
           <div className="p-6 flex flex-col gap-2">
             <p
@@ -597,7 +589,6 @@ const FeatureCard = React.forwardRef<HTMLDivElement, FeatureCardProps>(
           </div>
         )}
 
-        {/* CTA Button */}
         {ctaLabel && ctaHref && (
           <div className="p-6 pt-0 mt-auto">
             <a

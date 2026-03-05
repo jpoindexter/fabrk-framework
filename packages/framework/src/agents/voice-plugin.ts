@@ -21,7 +21,6 @@ export function voicePlugin(): Plugin {
       let fabrkConfig: FabrkConfig = {};
       const configReady = loadFabrkConfig(root).then((c) => { fabrkConfig = c; });
 
-      // WebSocket upgrade for realtime
       server.httpServer?.on("upgrade", async (req, socket, head) => {
         const url = req.url ?? "";
         if (!url.startsWith("/__ai/realtime")) return;

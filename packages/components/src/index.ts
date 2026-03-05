@@ -103,6 +103,8 @@ export * from './ai'
 // Notification Center
 export { NotificationCenter } from './notifications/notification-center'
 export type { NotificationCenterItem, NotificationCenterProps } from './notifications/notification-center'
+export { NotificationItem } from './notifications/notification-item'
+export type { NotificationItemProps } from './notifications/notification-item'
 
 // Admin Components
 export { AuditLog } from './admin/audit-log'

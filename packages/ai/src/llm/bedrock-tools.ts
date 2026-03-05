@@ -252,7 +252,6 @@ export async function* streamWithTools(
   }
 }
 
-// Register Bedrock provider
 registerProvider("bedrock", {
   key: "bedrock",
   prefixes: ["bedrock:"],

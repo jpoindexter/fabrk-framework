@@ -26,7 +26,6 @@ function contentPartsToOpenAI(parts: LLMContentPart[]): unknown[] {
     if (part.type === "text") {
       return { type: "text", text: part.text };
     }
-    // image part
     const url = part.url
       ? part.url
       : `data:${part.mimeType ?? "image/jpeg"};base64,${part.base64}`;
@@ -171,7 +170,6 @@ export async function* streamWithTools(
     { timeout: resolved.timeoutMs }
   );
 
-  // Accumulate tool call deltas
   const toolCallAccum = new Map<number, { id: string; name: string; args: string }>();
   let toolCallsEmitted = false;
 

@@ -25,7 +25,6 @@ function contentPartsToAnthropic(parts: LLMContentPart[]): unknown[] {
     if (part.type === "text") {
       return { type: "text", text: part.text };
     }
-    // image part
     if (part.url) {
       return { type: "image", source: { type: "url", url: part.url } };
     }
@@ -137,7 +136,6 @@ export async function generateWithTools(
       }),
       system,
       messages: anthropicMessages,
-      // "none" maps to passing no tools (Anthropic doesn't have a tool_choice: none)
       tools: !noneChoice && tools.length > 0 ? toAnthropicTools(tools) : undefined,
       ...(toolChoice !== undefined && { tool_choice: toolChoice }),
     },
@@ -212,7 +210,6 @@ export async function* streamWithTools(
     { timeout: resolved.timeoutMs }
   );
 
-  // Track current tool use block
   let currentToolId = "";
   let currentToolName = "";
   let currentToolInput = "";

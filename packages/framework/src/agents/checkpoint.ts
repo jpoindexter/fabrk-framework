@@ -62,13 +62,13 @@ export class InMemoryCheckpointStore implements CheckpointStore {
   }
 
   async listHistory(agentName: string, sessionId: string): Promise<CheckpointState[]> {
-    const key = `${agentName}:${sessionId}`;
+    const key = `${agentName}\x00${sessionId}`;
     const entries = this.history.get(key) ?? [];
     return [...entries].sort((a, b) => a.iteration - b.iteration);
   }
 
   async rollback(agentName: string, sessionId: string, targetIteration: number): Promise<CheckpointState> {
-    const key = `${agentName}:${sessionId}`;
+    const key = `${agentName}\x00${sessionId}`;
     const entries = this.history.get(key) ?? [];
     const target = entries.find((c) => c.iteration === targetIteration);
     if (!target) {
@@ -85,7 +85,7 @@ export class InMemoryCheckpointStore implements CheckpointStore {
   }
 
   private _pushHistory(agentName: string, sessionId: string, state: CheckpointState): void {
-    const key = `${agentName}:${sessionId}`;
+    const key = `${agentName}\x00${sessionId}`;
     if (!this.history.has(key)) {
       this.history.set(key, []);
     }

@@ -187,7 +187,7 @@ describe('handleResumeAgent', () => {
 describe('handleAgentStatus', () => {
   it('returns 404 for unknown checkpointId', async () => {
     const store = new InMemoryCheckpointStore();
-    const resp = await handleAgentStatus('myAgent', 'no-such-id', store);
+    const resp = await handleAgentStatus('myAgent', 'no-such-id', store, '127.0.0.1');
     expect(resp.status).toBe(404);
     const body = await resp.json() as { error: string };
     expect(body.error).toContain('not found');
@@ -206,7 +206,7 @@ describe('handleAgentStatus', () => {
       createdAt: now,
       updatedAt: now,
     });
-    const resp = await handleAgentStatus('myAgent', 'cp-status', store);
+    const resp = await handleAgentStatus('myAgent', 'cp-status', store, '127.0.0.1');
     expect(resp.status).toBe(200);
     const body = await resp.json() as Record<string, unknown>;
     expect(body.id).toBe('cp-status');
@@ -229,7 +229,7 @@ describe('handleAgentStatus', () => {
       createdAt: now,
       updatedAt: now,
     });
-    const resp = await handleAgentStatus('attackerAgent', 'cp-idor', store);
+    const resp = await handleAgentStatus('attackerAgent', 'cp-idor', store, '127.0.0.1');
     expect(resp.status).toBe(404);
     const body = await resp.json() as { error: string };
     expect(body.error).toContain('not found');
@@ -237,7 +237,7 @@ describe('handleAgentStatus', () => {
 
   it('response includes security headers', async () => {
     const store = new InMemoryCheckpointStore();
-    const resp = await handleAgentStatus('myAgent', 'missing', store);
+    const resp = await handleAgentStatus('myAgent', 'missing', store, '127.0.0.1');
     expect(resp.headers.get('x-content-type-options')).toBe('nosniff');
   });
 });

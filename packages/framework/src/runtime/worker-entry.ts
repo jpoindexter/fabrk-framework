@@ -9,6 +9,12 @@ import {
 } from "./metadata";
 import { isImageRequest } from "./image-handler";
 
+function sanitizeRedirectUrl(url: string): string {
+  const stripped = url.replace(/[\r\n]/g, "");
+  if (stripped.startsWith("/") || stripped.startsWith("#")) return stripped;
+  return "/";
+}
+
 export interface FetchHandlerOptions {
   routes: Route[];
   /** Pre-imported route modules, keyed by filePath. */
@@ -69,7 +75,7 @@ export function createFetchHandler(options: FetchHandlerOptions) {
           return new Response(null, {
             status: err.statusCode,
             headers: {
-              Location: err.url,
+              Location: sanitizeRedirectUrl(err.url),
               ...buildSecurityHeaders(),
             },
           });

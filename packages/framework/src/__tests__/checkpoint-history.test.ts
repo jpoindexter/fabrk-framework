@@ -135,7 +135,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
     await store.save("cp-h1", makeState({ id: "cp-h1", agentName: "hist-agent", iteration: 0 }));
     await store.append(makeState({ id: "cp-h1", agentName: "hist-agent", iteration: 1 }));
 
-    const resp = await handleAgentHistory("hist-agent", "cp-h1", store);
+    const resp = await handleAgentHistory("hist-agent", "cp-h1", store, "127.0.0.1");
     expect(resp.status).toBe(200);
     const body = await resp.json() as CheckpointState[];
     expect(Array.isArray(body)).toBe(true);
@@ -146,10 +146,24 @@ describe("handleAgentHistory and handleAgentRollback", () => {
   it("handleAgentHistory returns empty array for unknown session", async () => {
     const { handleAgentHistory } = await import("../agents/durable-handler");
     const store = new InMemoryCheckpointStore();
-    const resp = await handleAgentHistory("nobody", "no-session", store);
+    const resp = await handleAgentHistory("nobody", "no-session", store, "127.0.0.1");
     expect(resp.status).toBe(200);
     const body = await resp.json() as CheckpointState[];
     expect(body).toEqual([]);
+  });
+
+  it("handleAgentHistory returns 403 for non-localhost remoteAddress", async () => {
+    const { handleAgentHistory } = await import("../agents/durable-handler");
+    const store = new InMemoryCheckpointStore();
+    const resp = await handleAgentHistory("nobody", "no-session", store, "192.168.1.10");
+    expect(resp.status).toBe(403);
+  });
+
+  it("handleAgentHistory returns 403 when remoteAddress is absent (fail-closed)", async () => {
+    const { handleAgentHistory } = await import("../agents/durable-handler");
+    const store = new InMemoryCheckpointStore();
+    const resp = await handleAgentHistory("nobody", "no-session", store);
+    expect(resp.status).toBe(403);
   });
 
   it("handleAgentRollback returns 400 for invalid JSON", async () => {
@@ -159,7 +173,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: "not json",
     });
-    const resp = await handleAgentRollback("myAgent", req, store);
+    const resp = await handleAgentRollback("myAgent", req, store, "127.0.0.1");
     expect(resp.status).toBe(400);
     const body = await resp.json() as { error: string };
     expect(body.error).toContain("Invalid JSON");
@@ -172,7 +186,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "sess-1" }), // missing targetIteration
     });
-    const resp = await handleAgentRollback("myAgent", req, store);
+    const resp = await handleAgentRollback("myAgent", req, store, "127.0.0.1");
     expect(resp.status).toBe(400);
   });
 
@@ -183,7 +197,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "cp-x", targetIteration: 42 }),
     });
-    const resp = await handleAgentRollback("myAgent", req, store);
+    const resp = await handleAgentRollback("myAgent", req, store, "127.0.0.1");
     expect(resp.status).toBe(404);
   });
 
@@ -197,7 +211,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "cp-rb", targetIteration: 0 }),
     });
-    const resp = await handleAgentRollback("rb-agent", req, store);
+    const resp = await handleAgentRollback("rb-agent", req, store, "127.0.0.1");
     expect(resp.status).toBe(200);
     const body = await resp.json() as CheckpointState;
     expect(body.iteration).toBe(0);
@@ -206,7 +220,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
   it("handleAgentHistory response includes security headers", async () => {
     const { handleAgentHistory } = await import("../agents/durable-handler");
     const store = new InMemoryCheckpointStore();
-    const resp = await handleAgentHistory("nobody", "no-session", store);
+    const resp = await handleAgentHistory("nobody", "no-session", store, "127.0.0.1");
     expect(resp.headers.get("x-content-type-options")).toBe("nosniff");
   });
 
@@ -217,7 +231,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "no-sess", targetIteration: 0 }),
     });
-    const resp = await handleAgentRollback("agent", req, store);
+    const resp = await handleAgentRollback("agent", req, store, "127.0.0.1");
     expect(resp.headers.get("x-content-type-options")).toBe("nosniff");
   });
 
@@ -228,7 +242,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "sess-1", targetIteration: -1 }),
     });
-    const resp = await handleAgentRollback("myAgent", req, store);
+    const resp = await handleAgentRollback("myAgent", req, store, "127.0.0.1");
     expect(resp.status).toBe(400);
   });
 
@@ -239,7 +253,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "sess-1", targetIteration: 10000 }),
     });
-    const resp = await handleAgentRollback("myAgent", req, store);
+    const resp = await handleAgentRollback("myAgent", req, store, "127.0.0.1");
     expect(resp.status).toBe(400);
   });
 
@@ -250,7 +264,7 @@ describe("handleAgentHistory and handleAgentRollback", () => {
       method: "POST",
       body: JSON.stringify({ sessionId: "sess-1", targetIteration: 1.5 }),
     });
-    const resp = await handleAgentRollback("myAgent", req, store);
+    const resp = await handleAgentRollback("myAgent", req, store, "127.0.0.1");
     expect(resp.status).toBe(400);
   });
 

@@ -1,4 +1,5 @@
 import type { A2AAgentCard, A2ATask, A2ATaskResult } from './types.js';
+import { buildSecurityHeaders } from '../../middleware/security.js';
 
 export interface A2AAgentEntry {
   name: string;
@@ -46,7 +47,7 @@ export function createA2AServer(
       };
       return new Response(JSON.stringify(card), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
       });
     }
 
@@ -57,14 +58,14 @@ export function createA2AServer(
       } catch {
         return new Response(JSON.stringify({ error: 'Invalid JSON' }), {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
         });
       }
 
       if (!task.id || !task.message?.parts?.length) {
         return new Response(JSON.stringify({ error: 'Invalid task' }), {
           status: 400,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
         });
       }
 
@@ -74,7 +75,7 @@ export function createA2AServer(
       const agentName = agentMatch ? agentMatch[1] : agentNames[0];
       const input = agentMatch ? text.slice(agentMatch[0].length) : text;
 
-      const agent = agentName ? options.agents[agentName] : undefined;
+      const agent = agentName && Object.hasOwn(options.agents, agentName) ? options.agents[agentName] : undefined;
       if (!agent) {
         const result: A2ATaskResult = {
           id: task.id,
@@ -83,7 +84,7 @@ export function createA2AServer(
         };
         return new Response(JSON.stringify(result), {
           status: 404,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
         });
       }
 
@@ -96,7 +97,7 @@ export function createA2AServer(
         };
         return new Response(JSON.stringify(result), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
         });
       } catch (err) {
         const result: A2ATaskResult = {
@@ -106,7 +107,7 @@ export function createA2AServer(
         };
         return new Response(JSON.stringify(result), {
           status: 500,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...buildSecurityHeaders() },
         });
       }
     }

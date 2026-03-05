@@ -80,8 +80,8 @@ export function JsonLdScript({
   data: JsonLdData | JsonLdData[];
 }): React.ReactElement {
   const items = Array.isArray(data) ? data.map(normalizeData) : normalizeData(data);
-  const json = JSON.stringify(items);
-  // eslint-disable-next-line react/no-danger -- JSON.stringify output is safe; standard JSON-LD pattern
+  const json = escapeJsonLd(JSON.stringify(items));
+  // eslint-disable-next-line react/no-danger -- escapeJsonLd sanitizes </script> sequences; standard JSON-LD pattern
   return React.createElement("script", {
     type: "application/ld+json",
     dangerouslySetInnerHTML: { __html: json },

@@ -275,6 +275,21 @@ describe("A2AClient", () => {
     ).rejects.toMatchObject({ status: 500 });
   });
 
+  it("constructor rejects non-http/https scheme", () => {
+    expect(() => new A2AClient('ftp://example.com')).toThrow('Invalid A2A base URL scheme');
+    expect(() => new A2AClient('javascript:alert(1)')).toThrow();
+    expect(() => new A2AClient('file:///etc/passwd')).toThrow('Invalid A2A base URL scheme');
+  });
+
+  it("constructor rejects unparseable URL strings", () => {
+    expect(() => new A2AClient('not-a-url')).toThrow('Invalid A2A base URL');
+  });
+
+  it("constructor accepts valid http and https URLs", () => {
+    expect(() => new A2AClient('http://localhost:3000')).not.toThrow();
+    expect(() => new A2AClient('https://remote.example.com')).not.toThrow();
+  });
+
   it("A2AClientError captures the status code", () => {
     const err = new A2AClientError('test error', 403);
     expect(err).toBeInstanceOf(Error);

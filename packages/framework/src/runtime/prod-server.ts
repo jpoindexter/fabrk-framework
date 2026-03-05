@@ -179,7 +179,15 @@ export async function startProdServer(
         return;
       }
 
+      const remoteAddr = (req as unknown as { socket?: { remoteAddress?: string } }).socket?.remoteAddress ?? "";
+      const LOCAL_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
       const approvalUrl = new URL(req.url || "/", "http://localhost");
+      if (approvalUrl.pathname.startsWith("/__ai/") && !LOCAL_ADDRS.has(remoteAddr)) {
+        res.writeHead(403, { "Content-Type": "text/plain" });
+        res.end("Forbidden");
+        return;
+      }
+
       if (
         approvalUrl.pathname.startsWith("/__ai/agents/") &&
         approvalUrl.pathname.endsWith("/approve") &&

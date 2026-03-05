@@ -101,7 +101,9 @@ export function createToolExecutor(
           throw new Error(`Tool execution rejected by user: ${name}`);
         }
         if (result.modifiedInput) {
-          input = { ...input, ...result.modifiedInput };
+          // JSON round-trip strips prototype chain from approval handler response
+          const safe = JSON.parse(JSON.stringify(result.modifiedInput)) as Record<string, unknown>;
+          input = { ...input, ...safe };
         }
       }
 

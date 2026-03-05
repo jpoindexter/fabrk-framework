@@ -104,9 +104,10 @@ export async function handleOGRequest(
     );
   }
 
+  const BLOCKED_OG_KEYS = new Set(["__proto__", "constructor", "prototype"]);
   const params: Record<string, string> = {};
   for (const [key, value] of url.searchParams.entries()) {
-    if (key !== "template") params[key] = value;
+    if (key !== "template" && !BLOCKED_OG_KEYS.has(key)) params[key] = value;
   }
 
   try {

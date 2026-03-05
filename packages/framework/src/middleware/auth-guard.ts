@@ -50,8 +50,9 @@ export function createAuthGuard(
         return errorResponse({ error: "Invalid token" }, 403);
       }
     } else if (mode === "required") {
-      console.warn(
-        "[fabrk] auth-guard: validateToken not configured — all Bearer tokens accepted"
+      return new Response(
+        JSON.stringify({ error: "Agent auth misconfiguration: validateToken is required when auth mode is \"required\"" }),
+        { status: 500, headers: { "Content-Type": "application/json", ...buildSecurityHeaders() } }
       );
     }
 

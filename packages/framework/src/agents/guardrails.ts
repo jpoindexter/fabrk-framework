@@ -101,17 +101,19 @@ const PII_PATTERNS: Array<{ pattern: RegExp; label: string }> = [
 
 export function piiRedactor(): Guardrail {
   return (content) => {
-    let redacted = content;
+    // NFKC normalization maps Unicode digit variants (fullwidth, Arabic-Indic, etc.) to ASCII
+    // so regex patterns using \d correctly match all digit forms
+    let normalized = content.normalize("NFKC");
     let changed = false;
     for (const { pattern } of PII_PATTERNS) {
       const regex = new RegExp(pattern.source, pattern.flags);
-      if (regex.test(redacted)) {
+      if (regex.test(normalized)) {
         changed = true;
-        redacted = redacted.replace(new RegExp(pattern.source, pattern.flags), "[REDACTED]");
+        normalized = normalized.replace(new RegExp(pattern.source, pattern.flags), "[REDACTED]");
       }
     }
     if (changed) {
-      return { pass: true, replacement: redacted };
+      return { pass: true, replacement: normalized };
     }
     return { pass: true };
   };

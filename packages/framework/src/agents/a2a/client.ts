@@ -17,7 +17,17 @@ export class A2AClientError extends Error {
  * ```
  */
 export class A2AClient {
-  constructor(private readonly baseUrl: string) {}
+  constructor(private readonly baseUrl: string) {
+    try {
+      const parsed = new URL(baseUrl);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        throw new Error(`Invalid A2A base URL scheme: ${parsed.protocol}`);
+      }
+    } catch (e) {
+      if (e instanceof TypeError) throw new Error(`Invalid A2A base URL: ${baseUrl}`);
+      throw e;
+    }
+  }
 
   /** Fetch the remote agent card from `GET /.well-known/agent.json`. */
   async discover(): Promise<A2AAgentCard> {

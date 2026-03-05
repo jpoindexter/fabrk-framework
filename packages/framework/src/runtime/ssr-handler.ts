@@ -19,6 +19,12 @@ import { runWithContext } from "./server-context";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReactModuleLoader = () => Promise<[any, any]>;
 
+function sanitizeRedirectUrl(url: string): string {
+  const stripped = url.replace(/[\r\n]/g, "");
+  if (stripped.startsWith("/") || stripped.startsWith("#")) return stripped;
+  return "/";
+}
+
 export interface SSRHandlerOptions {
   routes: Route[];
   viteServer: ViteDevServer;
@@ -379,7 +385,7 @@ async function handlePageRoute(
       return new Response(null, {
         status: err.statusCode,
         headers: {
-          Location: err.url,
+          Location: sanitizeRedirectUrl(err.url),
           ...buildSecurityHeaders(),
         },
       });
@@ -480,11 +486,11 @@ async function buildDevHtml(
 
   const pageRelative = "/" + path.relative(root, matched.route.filePath).replace(/\\/g, "/");
   const clientScript = `<script type="module">
-import "${pageRelative}";
+import ${JSON.stringify(pageRelative)};
 </script>`;
 
   const layoutImports = matched.route.layoutPaths
-    .map((lp) => `import "/${path.relative(root, lp).replace(/\\/g, "/")}";`)
+    .map((lp) => `import ${JSON.stringify("/" + path.relative(root, lp).replace(/\\/g, "/"))};`)
     .join("\n");
   const layoutScript = layoutImports
     ? `<script type="module">\n${layoutImports}\n</script>`

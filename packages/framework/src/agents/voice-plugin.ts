@@ -45,6 +45,20 @@ export function voicePlugin(): Plugin {
 
           if (pathname !== "/__ai/tts" && pathname !== "/__ai/stt") return next();
 
+          const remoteAddr = req.socket?.remoteAddress;
+          if (
+            remoteAddr &&
+            remoteAddr !== "127.0.0.1" &&
+            remoteAddr !== "::1" &&
+            remoteAddr !== "::ffff:127.0.0.1"
+          ) {
+            res.statusCode = 403;
+            res.setHeader("Content-Type", "application/json");
+            applySecurityHeaders(res);
+            res.end(JSON.stringify({ error: "Voice endpoints only available on localhost" }));
+            return;
+          }
+
           await configReady;
 
           if (!fabrkConfig.voice?.enabled) {

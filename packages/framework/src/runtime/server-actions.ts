@@ -105,9 +105,10 @@ export async function handleServerAction(
         actionId = formData.get("$ACTION_ID") as string | null;
 
         if (actionId) {
+          const BLOCKED_KEYS = new Set(["__proto__", "constructor", "prototype"]);
           const data: Record<string, FormDataEntryValue> = {};
           formData.forEach((value, key) => {
-            if (key !== "$ACTION_ID") data[key] = value;
+            if (key !== "$ACTION_ID" && !BLOCKED_KEYS.has(key)) data[key] = value;
           });
           args = [data];
         }

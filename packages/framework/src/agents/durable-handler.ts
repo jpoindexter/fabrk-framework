@@ -35,9 +35,9 @@ function jsonResponse(data: unknown, status: number): Response {
 
 const LOCAL_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
-/** Returns true when remoteAddress is absent (not enforced) or is a loopback address. */
+/** Returns true only when remoteAddress is a known loopback address. */
 function isLocalRequest(remoteAddress?: string): boolean {
-  if (remoteAddress === undefined) return true;
+  if (!remoteAddress) return false;  // fail-closed: unknown address = deny
   return LOCAL_ADDRS.has(remoteAddress);
 }
 
@@ -251,7 +251,11 @@ export async function handleAgentHistory(
   agentName: string,
   sessionId: string,
   store: CheckpointStore,
+  remoteAddress?: string,
 ): Promise<Response> {
+  if (!isLocalRequest(remoteAddress)) {
+    return jsonResponse({ error: "Forbidden" }, 403);
+  }
   const history = await store.listHistory(agentName, sessionId);
   return jsonResponse(history, 200);
 }

@@ -25,14 +25,19 @@ describe("createAuthGuard", () => {
     expect(body.error).toContain("Authorization");
   });
 
-  it("passes when auth is 'required' and Bearer token present", async () => {
+  it("returns 500 when auth is 'required', Bearer token present, but validateToken not configured", async () => {
     const guard = createAuthGuard("required");
     const req = new Request("http://localhost/api/agents/chat", {
       method: "POST",
       headers: { Authorization: "Bearer sk-test-123" },
     });
     const result = await guard(req);
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect(result!.status).toBe(500);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const body = await result!.json();
+    expect(body.error).toContain("misconfiguration");
   });
 
   it("passes when auth is 'optional' and no token", async () => {
@@ -164,18 +169,19 @@ describe("createAuthGuard", () => {
     expect(result!.headers.get("X-Frame-Options")).toBe("DENY");
   });
 
-  it("warns when mode is 'required' and no validateToken configured", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("returns 500 with misconfiguration error when mode is 'required' and no validateToken configured", async () => {
     const guard = createAuthGuard("required");
     const req = new Request("http://localhost/api/agents/chat", {
       method: "POST",
       headers: { Authorization: "Bearer any-token" },
     });
     const result = await guard(req);
-    expect(result).toBeNull();
-    expect(warn).toHaveBeenCalledOnce();
-    expect(warn.mock.calls[0][0]).toContain("validateToken not configured");
-    warn.mockRestore();
+    expect(result).not.toBeNull();
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    expect(result!.status).toBe(500);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const body = await result!.json();
+    expect(body.error).toContain("validateToken is required");
   });
 
   it("does not warn in 'optional' mode without validateToken", async () => {

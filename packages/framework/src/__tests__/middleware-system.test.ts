@@ -40,9 +40,14 @@ describe("compileMatcher", () => {
     expect(re.test("/")).toBe(true);
   });
 
+  it("rejects patterns with unescaped brackets", () => {
+    expect(() => compileMatcher("/(a+)+")).toThrow("[fabrk] Middleware matcher");
+    expect(() => compileMatcher("[/admin]")).toThrow("[fabrk] Middleware matcher");
+  });
+
   it("rejects patterns with nested quantifiers (ReDoS)", () => {
-    expect(() => compileMatcher("/(a+)+")).toThrow("ReDoS");
-    expect(() => compileMatcher("/(*+)")).toThrow("ReDoS");
+    // Patterns without brackets but with nested quantifiers
+    expect(() => compileMatcher("/test*+")).toThrow("ReDoS");
   });
 });
 

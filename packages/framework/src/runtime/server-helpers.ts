@@ -29,23 +29,20 @@ export function permanentRedirect(url: string): never {
 
 /**
  * Validate redirect URLs to prevent open redirect attacks.
- * Allows: relative paths (/foo, /foo/bar)
- * Blocks: javascript:, data:, vbscript: schemes; // protocol-relative (resolves to arbitrary host); CRLF
+ * Allowlist: only relative paths starting with "/" (not "//") are permitted.
+ * This blocks absolute URLs (http://, https://), protocol-relative (//),
+ * scheme-injection (javascript:, data:), and CRLF header injection.
  */
 export function validateRedirectUrl(url: string): void {
-  const stripped = url.replace(/[\r\n]/g, "");
-  const lower = stripped.toLowerCase().trimStart();
+  // Strip all control characters and whitespace variants that could be used
+  // to smuggle scheme prefixes past trimStart() (tab, VT, FF, CRLF, etc.)
+  const stripped = url.replace(/[\x00-\x20\x7f]/g, "");
 
-  const dangerousSchemes = ["javascript:", "data:", "vbscript:"];
-  for (const scheme of dangerousSchemes) {
-    if (lower.startsWith(scheme)) {
-      throw new Error(`Unsafe redirect URL scheme: ${scheme}`);
-    }
-  }
-
-  // // prefix is a protocol-relative URL — browser resolves to attacker's domain
-  if (lower.startsWith("//")) {
-    throw new Error(`Unsafe redirect URL: protocol-relative URLs not allowed`);
+  // Allowlist: must start with exactly one "/" (relative path).
+  // "//" is a protocol-relative URL and resolves to an arbitrary host.
+  // Any other prefix (http://, https://, javascript:, etc.) is rejected.
+  if (!stripped.startsWith("/") || stripped.startsWith("//")) {
+    throw new Error("Unsafe redirect URL: only relative paths are allowed");
   }
 }
 

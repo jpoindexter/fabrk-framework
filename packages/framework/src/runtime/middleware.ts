@@ -33,6 +33,15 @@ export type MiddlewareHandler = (
 export function compileMatcher(pattern: string): RegExp {
   let normalized = pattern === "/" ? "/" : pattern.replace(/\/+$/, "");
 
+  // Reject bare `[` or `(` chars — they create unescaped regex character classes
+  // or groups that can silently mis-match routes (e.g. "[/admin]" matches any
+  // single char from the set, not the literal path "/admin") causing auth bypass.
+  if (/[[(]/.test(normalized)) {
+    throw new Error(
+      `[fabrk] Middleware matcher pattern rejected (unescaped brackets): ${pattern}`,
+    );
+  }
+
   // Escape literal dots so /api/v1.2/foo matches only literal dots, not any char.
   normalized = normalized.replace(/\./g, "\\.");
 

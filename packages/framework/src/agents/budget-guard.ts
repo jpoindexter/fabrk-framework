@@ -116,8 +116,13 @@ export function recordCost(
     dailyCosts.set(agentName, { total: cost, date: currentDay });
   }
 
-  evictOldest(sessionCosts, MAX_SESSIONS, sessionId);
-  sessionCosts.set(sessionId, (sessionCosts.get(sessionId) ?? 0) + cost);
+  // Do NOT evict on record — eviction resets an existing session's spend, enabling
+  // a budget-bypass attack where an attacker rotates session IDs to push their own
+  // old entries out and regain budget. Instead: cap-full new sessions are silently
+  // dropped (no harm — budget was never tracked, so future checkBudget allows them).
+  if (sessionCosts.has(sessionId) || sessionCosts.size < MAX_SESSIONS) {
+    sessionCosts.set(sessionId, (sessionCosts.get(sessionId) ?? 0) + cost);
+  }
 
   if (ctx?.userId) {
     const userEntry = userDailyCosts.get(ctx.userId);

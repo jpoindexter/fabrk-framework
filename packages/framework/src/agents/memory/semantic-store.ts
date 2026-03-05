@@ -7,6 +7,10 @@ export interface SemanticMemoryOptions {
   threshold?: number;
 }
 
+// Hard cap: prevents unbounded embedding map growth when base store evicts a thread
+// without calling deleteThread on the semantic wrapper (e.g. LRU eviction in InMemoryMemoryStore).
+const MAX_EMBEDDINGS = 500_000;
+
 export class SemanticMemoryStore implements MemoryStore {
   private baseStore: MemoryStore;
   private embeddings = new Map<string, number[]>();
@@ -153,6 +157,16 @@ export class SemanticMemoryStore implements MemoryStore {
     meta: { threadId: string; role: string; createdAt: Date },
     agentName?: string
   ): void {
+    // Guard against unbounded growth when base store silently evicts threads (LRU)
+    // without calling deleteThread on the semantic wrapper.
+    if (this.messageContent.size >= MAX_EMBEDDINGS) {
+      const oldest = this.messageContent.keys().next().value;
+      if (oldest !== undefined) {
+        this.messageContent.delete(oldest);
+        this.embeddings.delete(oldest);
+        this.messageAgentMap.delete(oldest);
+      }
+    }
     this.messageContent.set(messageId, { ...meta, content });
     this.provider.embed(content).then(
       (vec) => {

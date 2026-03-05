@@ -14,7 +14,7 @@ import { createSSEResponse, type SSEEvent } from "./sse-stream";
 import { createToolExecutor } from "./tool-executor";
 import { runAgentLoop, type AgentLoopEvent } from "./agent-loop";
 import { checkDelegationDepth } from "./orchestration/agent-tool";
-import { getAgentApprovals, createApprovalHandler } from "./approval-handler";
+import { getAgentApprovals, waitForApproval, createApprovalHandler } from "./approval-handler";
 import { compressThread } from "./memory/compress";
 
 const approvalHandler = createApprovalHandler();
@@ -330,15 +330,12 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
     try {
       if (hasTools) {
+        // Use waitForApproval (not raw set) so TTL, reject callback, and cap checks apply.
         const onApprovalRequired: ToolExecutorHooks["onApprovalRequired"] = (
           toolName,
           _input,
           approvalId
-        ) => {
-          return new Promise<{ approved: boolean; modifiedInput?: Record<string, unknown> }>((resolve) => {
-            getAgentApprovals(agentName).set(approvalId, { resolve, toolName });
-          });
-        };
+        ) => waitForApproval(agentName, approvalId, toolName);
 
         const mergedHooks: ToolExecutorHooks = {
           ...options.toolHooks,

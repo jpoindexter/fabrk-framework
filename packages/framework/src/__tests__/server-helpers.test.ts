@@ -64,15 +64,23 @@ describe("redirect", () => {
   });
 
   it("rejects javascript: URLs", () => {
-    expect(() => redirect("javascript:alert(1)")).toThrow("Unsafe redirect URL scheme");
+    expect(() => redirect("javascript:alert(1)")).toThrow("Unsafe redirect URL");
   });
 
   it("rejects data: URLs", () => {
-    expect(() => redirect("data:text/html,<h1>hi</h1>")).toThrow("Unsafe redirect URL scheme");
+    expect(() => redirect("data:text/html,<h1>hi</h1>")).toThrow("Unsafe redirect URL");
   });
 
   it("rejects vbscript: URLs", () => {
-    expect(() => redirect("vbscript:foo")).toThrow("Unsafe redirect URL scheme");
+    expect(() => redirect("vbscript:foo")).toThrow("Unsafe redirect URL");
+  });
+
+  it("rejects absolute https:// URLs (open redirect fix)", () => {
+    expect(() => redirect("https://evil.com/steal")).toThrow("Unsafe redirect URL");
+  });
+
+  it("rejects absolute http:// URLs (open redirect fix)", () => {
+    expect(() => redirect("http://evil.com")).toThrow("Unsafe redirect URL");
   });
 
   it("allows relative URLs", () => {
@@ -80,15 +88,6 @@ describe("redirect", () => {
       redirect("/dashboard/settings");
     } catch (err) {
       expect((err as { url: string }).url).toBe("/dashboard/settings");
-      return;
-    }
-  });
-
-  it("allows absolute URLs", () => {
-    try {
-      redirect("https://example.com/callback");
-    } catch (err) {
-      expect((err as { url: string }).url).toBe("https://example.com/callback");
       return;
     }
   });

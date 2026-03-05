@@ -87,7 +87,7 @@ export function resolveOutputPath(
   let resolved = pattern;
 
   for (const [key, value] of Object.entries(params)) {
-    resolved = resolved.replace(`:${key}`, value);
+    resolved = resolved.replace(`:${key}`, () => value);
   }
 
   if (resolved === "/") return "/index.html";

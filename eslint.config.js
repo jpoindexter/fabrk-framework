@@ -148,7 +148,7 @@ export default [
     },
     rules: {
       // Design system
-      'fabrk/no-hardcoded-colors': 'warn',
+      'fabrk/no-hardcoded-colors': 'error',
 
       // Disable base rules that TypeScript handles natively
       'no-unused-vars': 'off',

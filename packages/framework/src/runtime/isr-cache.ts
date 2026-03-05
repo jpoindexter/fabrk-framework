@@ -181,7 +181,12 @@ export class FilesystemISRCache implements ISRCacheHandler {
 
   private keyToFile(key: string): string {
     const safe = key.replace(/^\//, "").replace(/\//g, "__") || "__root";
-    return nodePath.join(this.dir, `${safe}.json`);
+    const resolved = nodePath.resolve(this.dir, `${safe}.json`);
+    // Containment guard — prevent path traversal via crafted cache keys
+    if (!resolved.startsWith(nodePath.resolve(this.dir) + nodePath.sep)) {
+      throw new Error(`[fabrk] ISR cache key escapes cache directory: ${key}`);
+    }
+    return resolved;
   }
 
   async get(key: string): Promise<ISRCacheEntry | null> {

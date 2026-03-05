@@ -1,5 +1,12 @@
 import type { AuthAdapter, Session, ApiKeyInfo } from '@fabrk/core'
 
+const SEC: Record<string, string> = {
+  'Content-Type': 'application/json',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+}
+
 type AuthenticatedHandler = (
   request: Request,
   session: Session
@@ -33,7 +40,7 @@ export function withAuth(
     if (!session) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: SEC,
       })
     }
 
@@ -54,7 +61,7 @@ export function withApiKey(
         JSON.stringify({ error: 'API key required' }),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
+          headers: SEC,
         }
       )
     }
@@ -66,7 +73,7 @@ export function withApiKey(
         JSON.stringify({ error: 'Invalid API key' }),
         {
           status: 401,
-          headers: { 'Content-Type': 'application/json' },
+          headers: SEC,
         }
       )
     }
@@ -76,7 +83,7 @@ export function withApiKey(
         JSON.stringify({ error: 'Insufficient permissions' }),
         {
           status: 403,
-          headers: { 'Content-Type': 'application/json' },
+          headers: SEC,
         }
       )
     }
@@ -109,7 +116,7 @@ export function withAuthOrApiKey(
             JSON.stringify({ error: 'Insufficient API key scope' }),
             {
               status: 403,
-              headers: { 'Content-Type': 'application/json' },
+              headers: SEC,
             }
           )
         }
@@ -122,7 +129,7 @@ export function withAuthOrApiKey(
       JSON.stringify({ error: 'Authentication required' }),
       {
         status: 401,
-        headers: { 'Content-Type': 'application/json' },
+        headers: SEC,
       }
     )
   }

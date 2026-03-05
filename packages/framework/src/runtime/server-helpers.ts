@@ -32,7 +32,7 @@ export function permanentRedirect(url: string): never {
  * Allows: relative paths (/foo, /foo/bar), protocol-relative (//example.com)
  * Blocks: javascript:, data:, vbscript: schemes
  */
-function validateRedirectUrl(url: string): void {
+export function validateRedirectUrl(url: string): void {
   const lower = url.toLowerCase().trim();
 
   const dangerousSchemes = ["javascript:", "data:", "vbscript:"];

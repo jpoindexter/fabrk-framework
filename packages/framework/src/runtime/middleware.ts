@@ -1,4 +1,5 @@
 import { buildSecurityHeaders } from "../middleware/security";
+import { validateRedirectUrl } from "./server-helpers";
 
 export interface MiddlewareResult {
   /** If false, the response is returned directly (short-circuit). */
@@ -31,6 +32,9 @@ export type MiddlewareHandler = (
  */
 export function compileMatcher(pattern: string): RegExp {
   let normalized = pattern === "/" ? "/" : pattern.replace(/\/+$/, "");
+
+  // Escape literal dots so /api/v1.2/foo matches only literal dots, not any char.
+  normalized = normalized.replace(/\./g, "\\.");
 
   // Named params first (before glob conversion so :path* isn't mangled)
   normalized = normalized.replace(/:[\w]+\*/g, "(.+)");
@@ -112,6 +116,16 @@ export async function runMiddleware(
   }
 
   if (result.redirectUrl) {
+    try {
+      validateRedirectUrl(result.redirectUrl);
+    } catch {
+      return {
+        response: new Response(JSON.stringify({ error: "Invalid redirect URL" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+        }),
+      };
+    }
     return {
       response: new Response(null, {
         status: 307,

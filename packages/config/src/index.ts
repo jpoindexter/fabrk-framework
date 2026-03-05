@@ -7,16 +7,12 @@
 
 import { z } from 'zod'
 
-// ─── Framework ───────────────────────────────────────
-
 const frameworkConfigSchema = z.object({
   runtime: z.enum(['nextjs', 'vite']).default('nextjs'),
   typescript: z.boolean().default(true),
   srcDir: z.string().default('src'),
   database: z.enum(['prisma', 'drizzle', 'none']).default('none'),
 })
-
-// ─── AI ───────────────────────────────────────────────
 
 const aiConfigSchema = z.object({
   costTracking: z.boolean().default(true),
@@ -29,15 +25,11 @@ const aiConfigSchema = z.object({
   }).optional(),
 })
 
-// ─── Theme ───────────────────────────────────────────
-
 const themeConfigSchema = z.object({
   system: z.string().default('terminal'),
   colorScheme: z.string().default('green'),
   radius: z.enum(['sharp', 'rounded', 'pill']).default('sharp'),
 })
-
-// ─── Payments ─────────────────────────────────────────
 
 const paymentsConfigSchema = z.object({
   adapter: z.enum(['stripe', 'polar', 'lemonsqueezy']),
@@ -49,8 +41,6 @@ const paymentsConfigSchema = z.object({
     priceIds: z.record(z.string()).optional(),
   }).optional(),
 })
-
-// ─── Auth ─────────────────────────────────────────────
 
 const authConfigSchema = z.object({
   adapter: z.enum(['nextauth', 'custom']).default('nextauth'),
@@ -70,8 +60,6 @@ const authConfigSchema = z.object({
   }).optional(),
 })
 
-// ─── Email ────────────────────────────────────────────
-
 const emailConfigSchema = z.object({
   adapter: z.enum(['resend', 'console', 'custom']).default('console'),
   from: z.string().optional(),
@@ -80,8 +68,6 @@ const emailConfigSchema = z.object({
     apiKey: z.string().optional(),
   }).optional(),
 })
-
-// ─── Storage ──────────────────────────────────────────
 
 const storageConfigSchema = z.object({
   adapter: z.enum(['s3', 'r2', 'local']).default('local'),
@@ -97,8 +83,6 @@ const storageConfigSchema = z.object({
     localPath: z.string().optional(),
   }).optional(),
 })
-
-// ─── Security ─────────────────────────────────────────
 
 const securityConfigSchema = z.object({
   csrf: z.object({
@@ -131,15 +115,11 @@ const securityConfigSchema = z.object({
   }).optional(),
 })
 
-// ─── Notifications ────────────────────────────────────
-
 const notificationsConfigSchema = z.object({
   enabled: z.boolean().default(true),
   persistToDb: z.boolean().default(false),
   maxPerUser: z.number().default(100),
 })
-
-// ─── Teams / Organizations ────────────────────────────
 
 const teamsConfigSchema = z.object({
   enabled: z.boolean().default(false),
@@ -148,14 +128,10 @@ const teamsConfigSchema = z.object({
   roles: z.array(z.string()).default(['owner', 'admin', 'member', 'guest']),
 })
 
-// ─── Feature Flags ────────────────────────────────────
-
 const featureFlagsConfigSchema = z.object({
   enabled: z.boolean().default(false),
   adapter: z.enum(['memory', 'custom']).default('memory'),
 })
-
-// ─── Webhooks ─────────────────────────────────────────
 
 const webhooksConfigSchema = z.object({
   enabled: z.boolean().default(false),
@@ -164,16 +140,12 @@ const webhooksConfigSchema = z.object({
   retryDelayMs: z.number().default(1000),
 })
 
-// ─── Job Queue ────────────────────────────────────────
-
 const jobsConfigSchema = z.object({
   enabled: z.boolean().default(false),
   adapter: z.enum(['memory', 'custom']).default('memory'),
   concurrency: z.number().default(5),
   retryAttempts: z.number().default(3),
 })
-
-// ─── Full Config ──────────────────────────────────────
 
 export const fabrkConfigSchema = z.object({
   framework: frameworkConfigSchema.optional(),

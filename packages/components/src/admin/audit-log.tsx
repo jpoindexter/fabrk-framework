@@ -73,8 +73,6 @@ export interface AuditLogProps {
   initialLogs?: AuditLogEntry[];
 }
 
-/* ----- Helper Functions ----- */
-
 const getActionIcon = (action: AuditAction) => {
   if (action.startsWith('user.')) return <User className="h-3 w-3" />;
   if (action.startsWith('settings.')) return <Settings className="h-3 w-3" />;
@@ -97,8 +95,6 @@ const getActionBadgeVariant = (action: AuditAction) => {
 const getActionLabel = (action: AuditAction) => {
   return action.toUpperCase().replace(/\./g, '_');
 };
-
-/* ----- Sub-Components ----- */
 
 function LogFilters({
   searchQuery,

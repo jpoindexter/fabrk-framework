@@ -6,8 +6,6 @@
  * the framework needing to know which provider is being used.
  */
 
-// PAYMENTS
-
 export interface CheckoutOptions {
   /** Price ID from payment provider */
   priceId: string
@@ -86,8 +84,6 @@ export interface SubscriptionInfo {
   cancelAtPeriodEnd: boolean
 }
 
-// AUTH
-
 export interface Session {
   /** User ID */
   userId: string
@@ -149,8 +145,6 @@ export interface MfaVerifyResult {
   usedBackupCode?: boolean
 }
 
-// EMAIL
-
 export interface EmailOptions {
   /** Recipient email(s) */
   to: string | string[]
@@ -187,8 +181,6 @@ export interface EmailTemplateData {
   /** Template variables */
   data: Record<string, unknown>
 }
-
-// STORAGE
 
 export interface UploadOptions {
   /** File data (ArrayBuffer, Blob, or ReadableStream) */
@@ -236,8 +228,6 @@ export interface SignedUrlResult {
   expiresAt: Date
 }
 
-// RATE LIMITING
-
 export interface RateLimitOptions {
   /** Identifier (e.g. IP address, user ID) */
   identifier: string
@@ -261,8 +251,6 @@ export interface RateLimitResult {
   /** Retry-After header value in seconds */
   retryAfter?: number
 }
-
-// NOTIFICATIONS
 
 export type NotificationType =
   | 'info'
@@ -310,8 +298,6 @@ export interface Notification extends NotificationOptions {
   dismissed: boolean
 }
 
-// FEATURE FLAGS
-
 export interface FeatureFlagOptions {
   /** Flag name */
   name: string
@@ -326,8 +312,6 @@ export interface FeatureFlagOptions {
   /** Arbitrary metadata */
   metadata?: Record<string, unknown>
 }
-
-// JOB QUEUE
 
 export type JobStatus = 'pending' | 'running' | 'completed' | 'failed'
 
@@ -365,8 +349,6 @@ export interface Job extends JobOptions {
   result?: unknown
 }
 
-// WEBHOOKS
-
 export interface WebhookConfig {
   /** Webhook ID */
   id: string
@@ -400,8 +382,6 @@ export interface WebhookDelivery {
   /** Response body (truncated) */
   response?: string
 }
-
-// TEAMS / ORGANIZATIONS
 
 export type OrgRole = 'owner' | 'admin' | 'member' | 'guest'
 
@@ -458,8 +438,6 @@ export interface OrgInvite {
   accepted: boolean
 }
 
-// AUDIT LOG
-
 export interface AuditEvent {
   /** Event ID */
   id: string
@@ -486,8 +464,6 @@ export interface AuditEvent {
   /** Tamper-proof hash */
   hash?: string
 }
-
-// STORE INTERFACES
 
 export interface PaymentStore {
   getCustomer(userId: string): Promise<CustomerInfo | null>

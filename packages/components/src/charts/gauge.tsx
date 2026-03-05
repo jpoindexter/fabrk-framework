@@ -114,14 +114,12 @@ export function Gauge({
   return (
     <div className={cn('flex flex-col items-center gap-2', className)}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        {/* Background arc */}
         <path
           d={getArcPath(radius, startAngle, endAngle, thickness)}
           fill={backgroundColor}
           className="gauge-background"
         />
 
-        {/* Segments or single value arc */}
         {segments ? (
           segments.map((segment, index) => {
             const prevValue = segments.slice(0, index).reduce((sum, s) => sum + s.value, 0);
@@ -146,14 +144,12 @@ export function Gauge({
           />
         )}
 
-        {/* Needle */}
         <polygon
           points={getNeedlePoints()}
           fill="var(--color-foreground)"
           className="gauge-needle transition-all"
         />
 
-        {/* Center dot */}
         <circle
           cx={center}
           cy={center}
@@ -164,7 +160,6 @@ export function Gauge({
           className="gauge-center"
         />
 
-        {/* Min/Max labels */}
         {showMinMax && (
           <>
             <text
@@ -189,7 +184,6 @@ export function Gauge({
         )}
       </svg>
 
-      {/* Value and label below gauge */}
       {showValue && (
         <div className="text-center">
           <p className="text-3xl leading-none font-semibold">

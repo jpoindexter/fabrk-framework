@@ -26,7 +26,6 @@ import type { PolarAdapterConfig } from '../types'
 import { timingSafeEqual, hashPayload } from '@fabrk/core'
 import { createIdempotencyCache } from '../idempotency'
 
-// Shared idempotency cache to reject duplicate webhook events
 const polarCache = createIdempotencyCache(10_000)
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

@@ -223,7 +223,6 @@ export async function* streamWithTools(
             toolCallAccum.get(tc.id)!.args += tc.function.arguments;
           }
         } else if (eventType === "tool-call-end") {
-          // Emit all accumulated tool calls
           for (const [id, entry] of toolCallAccum) {
             let args: Record<string, unknown> = {};
             try {
@@ -248,7 +247,7 @@ export async function* streamWithTools(
     reader.releaseLock();
   }
 
-  // Emit any remaining tool calls
+  // Flush tool calls that arrived without a matching tool-call-end event
   for (const [, entry] of toolCallAccum) {
     let args: Record<string, unknown> = {};
     try {
@@ -258,7 +257,6 @@ export async function* streamWithTools(
   }
 }
 
-// Register Cohere provider
 registerProvider("cohere", {
   key: "cohere",
   prefixes: ["command-"],

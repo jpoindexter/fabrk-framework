@@ -167,7 +167,6 @@ export function createCachedFetch(
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const method = init?.method ?? (typeof input === "object" && "method" in input ? input.method : "GET");
 
-    // Only cache GET/HEAD requests
     if (method.toUpperCase() !== "GET" && method.toUpperCase() !== "HEAD") {
       return originalFetch(input, init);
     }

@@ -193,8 +193,6 @@ export function BarChart({
   );
 }
 
-/* ----- Bar Chart Card Wrapper ----- */
-
 export interface BarChartCardProps extends BarChartProps {
   /** Card title */
   title: string;
@@ -226,8 +224,6 @@ export function BarChartCard({
     </ChartCard>
   );
 }
-
-/* ----- Stacked Bar Chart Variant ----- */
 
 export interface StackedBarChartProps extends Omit<BarChartProps, 'series'> {
   /** Data keys for each stack segment */

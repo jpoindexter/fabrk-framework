@@ -2,8 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-// CONTEXT TYPES
-
 // Color themes correspond to CRT phosphor palettes in globals.css
 export type ColorThemeName =
   | 'amber'
@@ -74,11 +72,7 @@ export interface ThemeScriptProps {
   nonce?: string;
 }
 
-// CONTEXT
-
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-// PROVIDER
 
 export function ThemeProvider({
   children,
@@ -145,8 +139,6 @@ export function ThemeProvider({
   );
 }
 
-// HOOKS
-
 export function useThemeContext(): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -158,8 +150,6 @@ export function useThemeContext(): ThemeContextValue {
 export function useOptionalThemeContext(): ThemeContextValue | null {
   return useContext(ThemeContext);
 }
-
-// SCRIPT FOR SSR FLASH PREVENTION
 
 /**
  * Escape a string for safe interpolation inside a single-quoted JS string

@@ -6,8 +6,6 @@
  * Components should only reference semantic tokens.
  */
 
-// COLOR PRIMITIVES
-
 export const colors = {
   white: '#ffffff',
   black: '#000000',
@@ -97,8 +95,6 @@ export const colors = {
   },
 } as const;
 
-// SPACING PRIMITIVES (8-point grid)
-
 export const space = {
   0: '0',
   px: '1px',
@@ -118,8 +114,6 @@ export const space = {
   48: '12rem', // 192px
   64: '16rem', // 256px
 } as const;
-
-// TYPOGRAPHY PRIMITIVES
 
 export const fontFamily = {
   sans: '"Inter", system-ui, -apple-system, sans-serif',
@@ -202,8 +196,6 @@ export const letterSpacing = {
   widest: '0.1em',
 } as const;
 
-// RADIUS PRIMITIVES
-
 export const radius = {
   none: '0',
   sm: '0.125rem', // 2px
@@ -215,8 +207,6 @@ export const radius = {
   full: '9999px',
 } as const;
 
-// SHADOW PRIMITIVES
-
 export const shadow = {
   none: 'none',
   xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
@@ -227,8 +217,6 @@ export const shadow = {
   '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
   inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
 } as const;
-
-// MOTION PRIMITIVES
 
 export const duration = {
   instant: '0ms',
@@ -248,8 +236,6 @@ export const easing = {
   spring: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
 } as const;
 
-// BREAKPOINT PRIMITIVES
-
 export const breakpoint = {
   xs: '0px',
   sm: '480px',
@@ -259,8 +245,6 @@ export const breakpoint = {
   '2xl': '1280px',
   '3xl': '1536px',
 } as const;
-
-// CONTAINER PRIMITIVES
 
 export const container = {
   xs: '320px',
@@ -273,8 +257,6 @@ export const container = {
   full: '100%',
   prose: '65ch',
 } as const;
-
-// Z-INDEX PRIMITIVES
 
 export const zIndex = {
   behind: -1,
@@ -290,16 +272,12 @@ export const zIndex = {
   max: 9999,
 } as const;
 
-// BORDER PRIMITIVES
-
 export const borderWidth = {
   none: '0',
   default: '1px',
   2: '2px',
   4: '4px',
 } as const;
-
-// ACCESSIBILITY PRIMITIVES
 
 export const accessibility = {
   touchTarget: {
@@ -311,8 +289,6 @@ export const accessibility = {
     offset: '2px',
   },
 } as const;
-
-// BUNDLED EXPORT
 
 export const primitives = {
   colors,

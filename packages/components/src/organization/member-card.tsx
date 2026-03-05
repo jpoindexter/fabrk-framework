@@ -40,8 +40,6 @@ export interface MemberCardProps {
   className?: string;
 }
 
-/* ----- Helpers ----- */
-
 const getStatusColor = (status?: 'online' | 'away' | 'offline') => {
   switch (status) {
     case 'online':
@@ -60,8 +58,6 @@ const formatMemberSince = (date?: Date | string) => {
   const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 };
-
-/* ----- Sub-Components ----- */
 
 function MemberActionsDropdown({
   member,
@@ -192,7 +188,6 @@ const MemberCard = React.forwardRef<HTMLDivElement, MemberCardProps>(
       );
     }
 
-    // Full card variant
     return (
       <div
         ref={ref}

@@ -27,7 +27,6 @@ import type { LemonSqueezyAdapterConfig } from '../types'
 import { timingSafeEqual, hashPayload, bytesToHex } from '@fabrk/core'
 import { createIdempotencyCache } from '../idempotency'
 
-// Shared idempotency cache to reject duplicate webhook events
 const lsCache = createIdempotencyCache(10_000)
 
 export function createLemonSqueezyAdapter(config: LemonSqueezyAdapterConfig): PaymentAdapter {

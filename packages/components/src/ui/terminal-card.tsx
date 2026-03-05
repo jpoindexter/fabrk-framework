@@ -1,9 +1,3 @@
-/**
- * Terminal Card Components
- * Marketing-oriented card variants with terminal patterns
- * Used for feature showcases, metrics, and template documentation
- */
-
 import * as React from 'react';
 
 import { cn } from '@fabrk/core';

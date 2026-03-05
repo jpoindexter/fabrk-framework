@@ -151,7 +151,6 @@ export async function autoWire(
   return { registry, features }
 }
 
-// ADAPTER WIRING
 // Dynamic imports use string variables so TypeScript doesn't resolve them at build time.
 // The packages are optional peer dependencies.
 
@@ -241,8 +240,6 @@ async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): 
     // @fabrk/storage not installed — skip
   }
 }
-
-// FEATURE MODULE WIRING
 
 function wireFeatures(config: FabrkConfigInput, stores?: StoreOverrides): FeatureModules {
   const features: FeatureModules = {

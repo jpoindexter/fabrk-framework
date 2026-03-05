@@ -24,6 +24,93 @@ function serializeContentForMemory(content: string | unknown[]): string {
   return JSON.stringify(content);
 }
 
+const ALLOWED_ROLES = new Set(["user", "assistant"]);
+const MAX_PARTS = 20;
+const MAX_BASE64_BYTES = 2 * 1024 * 1024;
+
+function validateMessages(
+  messages: Array<{ role: unknown; content: unknown }>
+): string | null {
+  if (messages.length > 200) return "Too many messages (max 200)";
+
+  for (const msg of messages) {
+    if (typeof msg.role !== "string") return "Each message must have a role string";
+    if (!ALLOWED_ROLES.has(msg.role)) return `Invalid role: ${msg.role}`;
+
+    if (typeof msg.content === "string") {
+      if (msg.content.length > 100_000) return "Message content too large";
+    } else if (Array.isArray(msg.content)) {
+      if (msg.content.length > MAX_PARTS) {
+        return `Message content array exceeds max parts (${MAX_PARTS})`;
+      }
+      for (const part of msg.content) {
+        if (typeof part !== "object" || part === null || typeof (part as Record<string, unknown>).type !== "string") {
+          return "Each content part must have a type field";
+        }
+        const p = part as Record<string, unknown>;
+        if (typeof p.base64 === "string" && p.base64.length > MAX_BASE64_BYTES) {
+          return "base64 image content exceeds 2MB limit";
+        }
+      }
+    } else {
+      return "Each message must have content as a string or array of parts";
+    }
+  }
+
+  return null;
+}
+
+type LongTermConfig = {
+  store: { set: (ns: string, k: string, v: string) => Promise<void>; search: (ns: string, q: string, n: number) => Promise<unknown[]> };
+  namespace?: string;
+  autoInjectTool?: boolean;
+};
+
+function buildLongTermMemoryTools(longTermConfig: LongTermConfig, agentName: string): ToolDefinition[] {
+  if (longTermConfig.autoInjectTool === false) return [];
+
+  const ltStore = longTermConfig.store;
+  const ltNamespace = longTermConfig.namespace || agentName;
+
+  return [
+    {
+      name: "memory_store",
+      description: "Store a value in long-term memory across threads. Use this to persist important information for future conversations.",
+      schema: {
+        type: "object",
+        properties: {
+          key: { type: "string", description: "The key to store the value under" },
+          value: { type: "string", description: "The value to store" },
+        },
+        required: ["key", "value"],
+      },
+      handler: async (input) => {
+        const key = String(input.key ?? "");
+        const value = String(input.value ?? "");
+        await ltStore.set(ltNamespace, key, value);
+        return textResult(`Stored "${key}" in long-term memory.`);
+      },
+    },
+    {
+      name: "memory_recall",
+      description: "Search long-term memory for relevant information from past conversations.",
+      schema: {
+        type: "object",
+        properties: {
+          query: { type: "string", description: "The search query to find relevant memories" },
+        },
+        required: ["query"],
+      },
+      handler: async (input) => {
+        const query = String(input.query ?? "");
+        const results = await ltStore.search(ltNamespace, query, 5);
+        if (results.length === 0) return textResult("No relevant memories found.");
+        return textResult(JSON.stringify(results));
+      },
+    },
+  ];
+}
+
 export interface AgentHandlerOptions
   extends Omit<AgentDefinition, "budget" | "fallback" | "systemPrompt" | "tools" | "stream"> {
   systemPrompt?: string;
@@ -108,51 +195,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
   const agentName = options.model.split("/").pop() || "agent";
 
   const longTermConfig = typeof options.memory === "object" ? options.memory?.longTerm : undefined;
-  const longTermTools: ToolDefinition[] = [];
-  if (longTermConfig && longTermConfig.autoInjectTool !== false) {
-    const ltStore = longTermConfig.store;
-    const ltNamespace = longTermConfig.namespace || agentName;
-
-    longTermTools.push({
-      name: "memory_store",
-      description: "Store a value in long-term memory across threads. Use this to persist important information for future conversations.",
-      schema: {
-        type: "object",
-        properties: {
-          key: { type: "string", description: "The key to store the value under" },
-          value: { type: "string", description: "The value to store" },
-        },
-        required: ["key", "value"],
-      },
-      handler: async (input) => {
-        const key = String(input.key ?? "");
-        const value = String(input.value ?? "");
-        await ltStore.set(ltNamespace, key, value);
-        return textResult(`Stored "${key}" in long-term memory.`);
-      },
-    });
-
-    longTermTools.push({
-      name: "memory_recall",
-      description: "Search long-term memory for relevant information from past conversations.",
-      schema: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "The search query to find relevant memories" },
-        },
-        required: ["query"],
-      },
-      handler: async (input) => {
-        const query = String(input.query ?? "");
-        const results = await ltStore.search(ltNamespace, query, 5);
-        if (results.length === 0) {
-          return textResult("No relevant memories found.");
-        }
-        return textResult(JSON.stringify(results));
-      },
-    });
-  }
-
+  const longTermTools = longTermConfig ? buildLongTermMemoryTools(longTermConfig as LongTermConfig, agentName) : [];
   const resolvedToolDefinitions = [...(options.toolDefinitions ?? []), ...longTermTools];
   const hasTools = resolvedToolDefinitions.length > 0;
 
@@ -181,41 +224,8 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       return jsonResponse({ error: "messages array required" }, 400);
     }
 
-    if (body.messages.length > 200) {
-      return jsonResponse({ error: "Too many messages (max 200)" }, 400);
-    }
-
-    const ALLOWED_ROLES = new Set(["user", "assistant"]);
-    const MAX_PARTS = 20;
-    const MAX_BASE64_BYTES = 2 * 1024 * 1024; // 2 MB
-    for (const msg of body.messages) {
-      if (typeof msg.role !== "string") {
-        return jsonResponse({ error: "Each message must have a role string" }, 400);
-      }
-      if (!ALLOWED_ROLES.has(msg.role)) {
-        return jsonResponse({ error: `Invalid role: ${msg.role}` }, 400);
-      }
-      if (typeof msg.content === "string") {
-        if (msg.content.length > 100_000) {
-          return jsonResponse({ error: "Message content too large" }, 400);
-        }
-      } else if (Array.isArray(msg.content)) {
-        if (msg.content.length > MAX_PARTS) {
-          return jsonResponse({ error: `Message content array exceeds max parts (${MAX_PARTS})` }, 400);
-        }
-        for (const part of msg.content) {
-          if (typeof part !== "object" || part === null || typeof (part as Record<string, unknown>).type !== "string") {
-            return jsonResponse({ error: "Each content part must have a type field" }, 400);
-          }
-          const p = part as Record<string, unknown>;
-          if (typeof p.base64 === "string" && p.base64.length > MAX_BASE64_BYTES) {
-            return jsonResponse({ error: "base64 image content exceeds 2MB limit" }, 400);
-          }
-        }
-      } else {
-        return jsonResponse({ error: "Each message must have content as a string or array of parts" }, 400);
-      }
-    }
+    const validationError = validateMessages(body.messages);
+    if (validationError) return jsonResponse({ error: validationError }, 400);
 
     const sessionId = typeof body.sessionId === "string"
       ? body.sessionId.slice(0, 128)

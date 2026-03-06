@@ -174,7 +174,7 @@ create-fabrk-app CLI (scaffolding)
 
 pnpm install        # Install dependencies
 pnpm build          # Build all 19 packages (13 libs + 6 examples)
-pnpm test           # Run 858 tests
+pnpm test           # Run 2,677 tests
 pnpm type-check     # TypeScript validation across 22 packages
 pnpm dev            # Watch mode
 ```

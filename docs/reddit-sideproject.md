@@ -43,7 +43,7 @@ not sure if thats a thing people care about yet but it felt like the right bet.
 ### where its at
 
 - 13 packages published on npm under `@fabrk/*`
-- 858 tests, all passing
+- 2,677 tests, all passing
 - typescript strict, mit licensed
 - cli scaffolding tool: `npx create-fabrk-app my-app`
 - docs site with live demo, component gallery, 18 theme switcher

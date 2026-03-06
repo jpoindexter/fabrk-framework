@@ -1,6 +1,7 @@
 import type { TracingConfig } from "../config/fabrk-config.js";
 
-let _tracer: unknown = null;
+type TracerLike = { startActiveSpan: <T>(name: string, fn: (span: OtelSpan) => T) => T };
+let _tracer: TracerLike | null = null;
 let _trace: typeof import("@opentelemetry/api").trace | null = null;
 let _initialized = false;
 

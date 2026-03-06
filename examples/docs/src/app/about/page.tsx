@@ -1,4 +1,3 @@
-import { cn } from '@fabrk/core'
 import { mode } from '@fabrk/design-system'
 import { DocLayout, Section } from '@/components/doc-layout'
 import { STATS } from '@/data/stats'
@@ -96,19 +95,19 @@ export default function AboutPage() {
           Stripe or S3 by changing one config line instead of writing integration code.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
-          <div className={cn('border border-border bg-card p-4 text-center', mode.radius)}>
+          <div className={`border border-border bg-card p-4 text-center ${mode.radius}`}>
             <div className="text-2xl font-bold text-primary">{STATS.packages}</div>
             <div className="text-xs text-muted-foreground uppercase mt-1">PACKAGES</div>
           </div>
-          <div className={cn('border border-border bg-card p-4 text-center', mode.radius)}>
+          <div className={`border border-border bg-card p-4 text-center ${mode.radius}`}>
             <div className="text-2xl font-bold text-primary">{STATS.components}</div>
             <div className="text-xs text-muted-foreground uppercase mt-1">COMPONENTS</div>
           </div>
-          <div className={cn('border border-border bg-card p-4 text-center', mode.radius)}>
+          <div className={`border border-border bg-card p-4 text-center ${mode.radius}`}>
             <div className="text-2xl font-bold text-primary">{STATS.themes}</div>
             <div className="text-xs text-muted-foreground uppercase mt-1">THEMES</div>
           </div>
-          <div className={cn('border border-border bg-card p-4 text-center', mode.radius)}>
+          <div className={`border border-border bg-card p-4 text-center ${mode.radius}`}>
             <div className="text-2xl font-bold text-primary">{STATS.tests}</div>
             <div className="text-xs text-muted-foreground uppercase mt-1">TESTS</div>
           </div>

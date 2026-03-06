@@ -1,25 +1,5 @@
 import { describe, it, expect } from "vitest";
-
-// Mirrors parseArgs from cli.ts (entry script, not a library export).
-function parseArgs(args: string[]): Record<string, string | boolean> {
-  const parsed: Record<string, string | boolean> = {};
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg.startsWith("--")) {
-      const key = arg.slice(2);
-      const next = args[i + 1];
-      if (next && !next.startsWith("--")) {
-        parsed[key] = next;
-        i++;
-      } else {
-        parsed[key] = true;
-      }
-    } else if (arg.startsWith("-")) {
-      parsed[arg.slice(1)] = true;
-    }
-  }
-  return parsed;
-}
+import { parseArgs } from "../cli/parse-args";
 
 describe("CLI arg parser", () => {
   it("parses --port with value", () => {
@@ -79,8 +59,11 @@ describe("CLI command structure", () => {
     expect(source).toContain("case \"check\":");
     expect(source).toContain("case \"test\":");
 
-    expect(source).toContain("createServer");
+    expect(source).toContain("runDev");
     expect(source).toContain("runBuild");
+    expect(source).toContain("runStart");
+    expect(source).toContain("runCheck");
+    expect(source).toContain("runTest");
   });
 
   it("cli.ts has correct version", async () => {

@@ -1,5 +1,7 @@
 import path from "node:path";
 import fs from "node:fs";
+import { parseArgs } from "./parse-args";
+import { loadFabrkViteConfig } from "./load-config";
 
 type ViteBuildFn = typeof import("vite")["build"];
 type BuildPlugins = NonNullable<Parameters<ViteBuildFn>[0]>["plugins"];
@@ -8,23 +10,8 @@ export async function runBuild(
   root: string,
   rawArgs: string[],
   version: string,
-  loadFabrkViteConfig: (root: string) => Promise<{
-    fabrkPlugin: () => unknown;
-    agentPlugin: () => unknown;
-    dashboardPlugin: () => unknown;
-    userConfigPath: string | undefined;
-  }>
 ): Promise<void> {
-  const args: Record<string, string | boolean> = {};
-  for (let i = 0; i < rawArgs.length; i++) {
-    const arg = rawArgs[i];
-    if (arg.startsWith("--")) {
-      const key = arg.slice(2);
-      const next = rawArgs[i + 1];
-      if (next && !next.startsWith("--")) { args[key] = next; i++; }
-      else args[key] = true;
-    }
-  }
+  const args = parseArgs(rawArgs);
   const target = typeof args.target === "string" ? args.target : "node";
 
   // eslint-disable-next-line no-console

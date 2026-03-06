@@ -15,7 +15,7 @@ export * from './types'
 export * from './utils'
 
 export * from './plugins'
-export * from './plugin-types'
+export * from './plugin-types/index'
 export { useFabrk, useOptionalFabrk } from './context'
 export type { FabrkContextValue } from './context'
 

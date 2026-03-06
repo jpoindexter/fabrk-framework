@@ -272,8 +272,8 @@ describe("createAgentHandler", () => {
       }),
       appendMessage: async (_threadId, msg) => ({
         id: "msg-1",
-        threadId: "thread-1",
         ...msg,
+        threadId: "thread-1",
         createdAt: new Date(),
       }),
       getMessages: async () => [

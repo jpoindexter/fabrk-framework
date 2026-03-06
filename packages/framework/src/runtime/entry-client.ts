@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — react-server-dom-webpack has no bundled type declarations
 import { createFromReadableStream } from "react-server-dom-webpack/client";
 import { rscStream } from "rsc-html-stream/client";
 import { hydrateRoot } from "react-dom/client";

@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "node:fs";
 
 type ViteBuildFn = typeof import("vite")["build"];
-type BuildPlugins = Parameters<ViteBuildFn>[0]["plugins"];
+type BuildPlugins = NonNullable<Parameters<ViteBuildFn>[0]>["plugins"];
 
 export async function runBuild(
   root: string,

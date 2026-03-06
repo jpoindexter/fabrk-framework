@@ -136,12 +136,12 @@ describe('dashboard call inspector', () => {
 
   describe('dashboardPlugin — /__ai/api/export method guard', () => {
     /** Capture the Connect middleware from a freshly-built plugin. */
-    async function getMiddleware() {
+    async function getMiddleware(): Promise<((...args: any[]) => void) | null> {
       const mod = await freshModule();
       const plugin = mod.dashboardPlugin();
-      let middleware: ((...args: unknown[]) => void) | null = null;
+      let middleware: ((...args: any[]) => void) | null = null;
       const fakeServer = {
-        middlewares: { use(fn: (...args: unknown[]) => void) { middleware = fn; } },
+        middlewares: { use(fn: (...args: any[]) => void) { middleware = fn; } },
       };
       // configureServer returns a function that registers the middleware
       (plugin.configureServer as (s: typeof fakeServer) => (() => void) | void)(fakeServer)?.();

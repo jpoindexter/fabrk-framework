@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/storage",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Storage adapters for FABRK framework (S3, R2, local)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

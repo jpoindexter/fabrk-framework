@@ -1,5 +1,14 @@
 # fabrk-example-basic-usage
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @fabrk/components@0.4.0
+  - @fabrk/core@0.3.0
+  - @fabrk/design-system@0.4.0
+
 ## 0.0.2
 
 ### Patch Changes

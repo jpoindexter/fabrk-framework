@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/ai",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "AI development toolkit with cost tracking, validation, and testing",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

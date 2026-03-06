@@ -1,6 +1,6 @@
 {
   "name": "create-fabrk-app",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "CLI tool to scaffold new FABRK applications",
   "bin": {
     "create-fabrk-app": "./dist/index.js",

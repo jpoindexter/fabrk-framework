@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/store-prisma",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Prisma store implementations for FABRK Framework — persistent database adapters",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

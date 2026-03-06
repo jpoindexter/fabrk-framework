@@ -1,5 +1,16 @@
 # @fabrk/auth
 
+## 0.3.0
+
+### Minor Changes
+
+- Security hardening (12 rounds), @fabrk/framework new capabilities (AI agents, tools, MCP, A2A protocol, StateGraph, agent network, long-term memory, SSE dashboard, OTel tracing), design system enforcement (ESLint rules, CLI lint), and RAG reranking support.
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @fabrk/core@0.3.0
+
 ## 0.2.1
 
 ### Patch Changes

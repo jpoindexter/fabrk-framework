@@ -37,6 +37,29 @@ describe("resolveOutputPath", () => {
   it("strips trailing slashes", () => {
     expect(resolveOutputPath("/about/", {})).toBe("/about/index.html");
   });
+
+  it("sanitizes path traversal in params (../../ sequences)", () => {
+    const result = resolveOutputPath("/blog/:slug", { slug: "../../etc/passwd" });
+    // Must not contain .. or absolute path components that escape outDir
+    expect(result).not.toContain("..");
+    expect(result).not.toContain("/etc/passwd");
+  });
+
+  it("sanitizes backslash separators in params", () => {
+    const result = resolveOutputPath("/blog/:slug", { slug: "foo\\bar" });
+    expect(result).not.toContain("\\");
+  });
+
+  it("sanitizes forward-slash separators in params", () => {
+    const result = resolveOutputPath("/blog/:slug", { slug: "foo/bar" });
+    // The slash in the param should not create an extra directory segment
+    expect(result).toBe("/blog/foo-bar/index.html");
+  });
+
+  it("falls back to _ for params that are entirely traversal sequences", () => {
+    const result = resolveOutputPath("/blog/:slug", { slug: "../.." });
+    expect(result).toBe("/blog/_/index.html");
+  });
 });
 
 // ---------------------------------------------------------------------------

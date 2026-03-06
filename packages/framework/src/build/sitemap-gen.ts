@@ -84,10 +84,14 @@ ${urls.join("\n")}
 }
 
 function buildRobotsTxt(baseUrl: string): string {
+  // Strip newlines and carriage returns to prevent robots.txt directive injection.
+  // A baseUrl containing \n could inject arbitrary User-agent/Disallow lines.
+  // eslint-disable-next-line no-control-regex
+  const safeBase = baseUrl.replace(/[\r\n\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "");
   return `User-agent: *
 Allow: /
 
-Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${safeBase}/sitemap.xml
 `;
 }
 

@@ -191,6 +191,37 @@ describe("generateSitemap", () => {
     expect(robots).toContain("Allow: /");
   });
 
+  it("strips newlines from baseUrl in robots.txt to prevent directive injection", async () => {
+    const outDir = mkTmp();
+    await generateSitemap({
+      baseUrl: "https://evil.com\nUser-agent: *\nDisallow: /",
+      routes: [makeRoute("/")],
+      outDir,
+    });
+
+    const robots = fs.readFileSync(path.join(outDir, "robots.txt"), "utf-8");
+    // The injected Disallow line must not appear as a separate directive
+    expect(robots).not.toMatch(/^Disallow:/m);
+    // No raw newlines from inside the URL portion
+    const sitemapLine = robots.split("\n").find((l) => l.startsWith("Sitemap:")) ?? "";
+    expect(sitemapLine).not.toContain("\n");
+  });
+
+  it("strips carriage returns from baseUrl in robots.txt", async () => {
+    const outDir = mkTmp();
+    await generateSitemap({
+      baseUrl: "https://example.com\r\nX-Injected: header",
+      routes: [makeRoute("/")],
+      outDir,
+    });
+
+    const robots = fs.readFileSync(path.join(outDir, "robots.txt"), "utf-8");
+    // "X-Injected" must not appear as a standalone directive line.
+    // After stripping \r\n the content is concatenated into the URL (invalid URL
+    // but not a directive injection — the critical property is no separate line).
+    expect(robots).not.toMatch(/^X-Injected:/m);
+  });
+
   it("creates outDir if missing", async () => {
     const base = mkTmp();
     const outDir = path.join(base, "nested", "dist");

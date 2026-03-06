@@ -364,6 +364,67 @@ describe("parallel and intercepting routes", () => {
 });
 
 // ---------------------------------------------------------------------------
+// scanRoutes symlink traversal prevention
+// ---------------------------------------------------------------------------
+
+describe("scanRoutes: symlink traversal prevention", () => {
+  it("does not register symlinks as routes", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-symlink-"));
+    const appDir = path.join(tmpDir, "app");
+    const outsideDir = path.join(tmpDir, "outside");
+    fs.mkdirSync(appDir, { recursive: true });
+    fs.mkdirSync(outsideDir, { recursive: true });
+
+    // Create a legitimate page file outside app/
+    const outsidePage = path.join(outsideDir, "page.tsx");
+    fs.writeFileSync(outsidePage, "export default function P() { return null; }");
+
+    // Create a symlink inside app/ pointing to the outside file
+    const symlinkPage = path.join(appDir, "page.tsx");
+    try {
+      fs.symlinkSync(outsidePage, symlinkPage);
+    } catch {
+      // Skip on systems that disallow symlinks in test environments
+      fs.rmSync(tmpDir, { recursive: true });
+      return;
+    }
+
+    const routes = scanRoutes(appDir);
+    // The symlinked page.tsx must NOT be registered as a route
+    expect(routes.find((r) => r.filePath === symlinkPage)).toBeUndefined();
+
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+
+  it("does not recurse into symlinked directories", () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-symlinkdir-"));
+    const appDir = path.join(tmpDir, "app");
+    const outsideDir = path.join(tmpDir, "outside");
+    fs.mkdirSync(appDir, { recursive: true });
+    fs.mkdirSync(path.join(outsideDir, "secret"), { recursive: true });
+    fs.writeFileSync(
+      path.join(outsideDir, "secret", "page.tsx"),
+      "export default function Secret() { return null; }",
+    );
+
+    // Symlink a directory inside app/ pointing outside
+    const symlinkDir = path.join(appDir, "leaked");
+    try {
+      fs.symlinkSync(outsideDir, symlinkDir);
+    } catch {
+      fs.rmSync(tmpDir, { recursive: true });
+      return;
+    }
+
+    const routes = scanRoutes(appDir);
+    // Must not discover the route inside the symlinked directory
+    expect(routes.find((r) => r.filePath.includes("secret"))).toBeUndefined();
+
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Sitemap generation tests
 // ---------------------------------------------------------------------------
 

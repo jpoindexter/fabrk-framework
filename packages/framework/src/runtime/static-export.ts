@@ -79,6 +79,9 @@ function hasDynamicSegments(pattern: string): boolean {
  * `/blog/:slug` + `{ slug: "hello" }` → `/blog/hello/index.html`
  * `/` → `/index.html`
  * `/about` → `/about/index.html`
+ *
+ * Param values are sanitized: path separators and `..` sequences are stripped
+ * to prevent directory traversal when the output path is joined with outDir.
  */
 export function resolveOutputPath(
   pattern: string,
@@ -87,7 +90,15 @@ export function resolveOutputPath(
   let resolved = pattern;
 
   for (const [key, value] of Object.entries(params)) {
-    resolved = resolved.replace(`:${key}`, () => value);
+    // Strip traversal sequences and path separators from param values so that
+    // a generateStaticParams() returning { slug: "../../evil" } cannot escape
+    // the output directory when the result is joined with path.join(outDir, …).
+    const safeValue = value
+      .replace(/\.\./g, "")          // remove ..
+      .replace(/[/\\]/g, "-")        // replace separators with a dash
+      .replace(/^[-]+/, "")          // strip leading dashes from stripping
+      || "_";                        // fall back to "_" if value becomes empty
+    resolved = resolved.replace(`:${key}`, () => safeValue);
   }
 
   if (resolved === "/") return "/index.html";

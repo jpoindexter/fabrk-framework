@@ -175,6 +175,11 @@ function walkDir(dir: string, appDir: string, routes: Route[]): void {
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
 
+    // Refuse to follow symlinks during route scanning. A symlink in app/ could
+    // point outside the project root (e.g. /etc/passwd) and cause ssrLoadModule
+    // to load arbitrary files or leak secrets via route registration.
+    if (entry.isSymbolicLink()) continue;
+
     if (entry.isDirectory()) {
       if (entry.name.startsWith(".") || entry.name === "node_modules") continue;
 

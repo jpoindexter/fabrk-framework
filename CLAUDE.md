@@ -502,7 +502,7 @@ Read these files for context:
 
 ### Current Stats
 
-- **18/18 packages build** (13 packages + 5 examples)
+- **19/19 packages build** (13 packages + 6 examples)
 - **2,677 tests**, all passing
 - **109+ components**, 15 hooks, 8 chart types, 18 themes
 - **13 packages** (12 @fabrk/* + fabrk runtime), **24/24 type-check**

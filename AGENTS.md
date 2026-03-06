@@ -13,7 +13,7 @@
 
 ```bash
 pnpm install          # Install all dependencies
-pnpm build            # Build all 18 packages (13 libs + 5 examples)
+pnpm build            # Build all 19 packages (13 libs + 6 examples)
 pnpm dev              # Watch mode
 pnpm test             # Run 2,677 tests
 pnpm type-check       # TypeScript validation

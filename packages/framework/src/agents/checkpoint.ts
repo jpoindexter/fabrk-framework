@@ -89,6 +89,7 @@ export class InMemoryCheckpointStore implements CheckpointStore {
     if (!this.history.has(key)) {
       this.history.set(key, []);
     }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- key set above
     const entries = this.history.get(key)!;
     entries.push(state);
     if (entries.length > MAX_HISTORY_PER_SESSION) {

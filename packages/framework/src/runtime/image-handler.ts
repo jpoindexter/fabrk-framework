@@ -26,6 +26,7 @@ class ImageCache {
 
   set(key: string, entry: CacheEntry): void {
     if (this.map.has(key)) {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by has() check above
       const old = this.map.get(key)!;
       this.totalSize -= old.size;
       this.map.delete(key);
@@ -37,6 +38,7 @@ class ImageCache {
     ) {
       const oldest = this.map.keys().next();
       if (oldest.done) break;
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- oldest.done is false, value exists
       const oldEntry = this.map.get(oldest.value)!;
       this.totalSize -= oldEntry.size;
       this.map.delete(oldest.value);

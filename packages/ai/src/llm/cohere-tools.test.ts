@@ -19,7 +19,7 @@ const MESSAGES: LLMMessage[] = [
 ];
 
 describe("cohere-tools — generateWithTools", () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any;
 
   beforeEach(() => {
@@ -120,7 +120,7 @@ describe("cohere-tools — generateWithTools", () => {
   it("sends correct request body with tools", async () => {
     let capturedBody: unknown = null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     fetchSpy.mockImplementation(async (_url: any, init: any) => {
       capturedBody = JSON.parse(init.body as string);
       return new Response(
@@ -164,7 +164,7 @@ describe("cohere-tools — provider registration", () => {
 });
 
 describe("cohere-tools — streamWithTools", () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any;
 
   function makeSSEStream(lines: string[]): Response {

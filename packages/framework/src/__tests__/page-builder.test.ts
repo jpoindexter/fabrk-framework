@@ -8,7 +8,7 @@ import {
 } from "../runtime/error-boundary";
 import type { Route } from "../runtime/router";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 type AnyEl = React.ReactElement<any>;
 
 function makeRoute(overrides: Partial<Route> = {}): Route {

@@ -66,6 +66,7 @@ describe('runAgentLoop with stopWhen', () => {
       calculateCost: () => ({ costUSD: 0 }),
     }));
     // Should stop after 1 tool iteration, not continue to text
+     
     const done = events.find((e: any) => e.type === 'done');
     expect(done).toBeDefined();
     // callCount should be 1 (stopped before asking LLM for text after tool)
@@ -92,6 +93,7 @@ describe('runAgentLoop with stopWhen', () => {
       },
       calculateCost: () => ({ costUSD: 0 }),
     }));
+     
     const done = events.find((e: any) => e.type === 'done');
     expect(done).toBeDefined();
     expect(callCount).toBe(1);
@@ -117,6 +119,7 @@ describe('runAgentLoop with stopWhen', () => {
       },
       calculateCost: () => ({ costUSD: 0 }),
     }));
+     
     expect(events.find((e: any) => e.type === 'done')).toBeDefined();
     expect(callCount).toBe(1);
   });
@@ -135,7 +138,9 @@ describe('runAgentLoop with stopWhen', () => {
       generateWithTools: async () => ({ content: 'Hello!', usage: { promptTokens: 5, completionTokens: 5 } }),
       calculateCost: () => ({ costUSD: 0 }),
     }));
+     
     expect(events.find((e: any) => e.type === 'text')).toBeDefined();
+     
     expect(events.find((e: any) => e.type === 'done')).toBeDefined();
   });
 });

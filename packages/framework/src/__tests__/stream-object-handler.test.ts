@@ -99,7 +99,7 @@ describe('handleStreamObject', () => {
     vi.doMock('@fabrk/ai', () => ({
       // eslint-disable-next-line require-yield
       streamObject: async function* () {
-        // eslint-disable-next-line @typescript-eslint/only-throw-error
+         
         throw 'string error';
       },
     }));

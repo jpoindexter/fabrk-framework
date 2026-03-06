@@ -265,8 +265,8 @@ export function dashboardPlugin(): Plugin {
             const cases = records
               .filter((r) => r.inputMessages?.length && r.outputText)
               .map((r) => ({
-                input: r.inputMessages!.at(-1)!.content.slice(0, 2000),
-                expectedOutput: r.outputText!.slice(0, 2000),
+                input: (r.inputMessages?.at(-1)?.content ?? "").slice(0, 2000),
+                expectedOutput: (r.outputText ?? "").slice(0, 2000),
               }));
 
             const dataset = {

@@ -13,6 +13,7 @@ describe("workflow suspend/resume", () => {
     expect(result.status).toBe("suspended");
     if (result.status === "suspended") {
       expect(result.suspendedAtStepId).toBe("approval");
+       
       expect((result.suspendData as any).amount).toBe(100);
       expect(result.completedSteps).toHaveLength(0);
     }
@@ -57,6 +58,7 @@ describe("workflow suspend/resume", () => {
     expect(suspended.status).toBe("suspended");
     if (suspended.status !== "suspended") return;
     await resumeWorkflow(wf, suspended, { token: "abc123" });
+     
     expect((capturedResumeData as any).token).toBe("abc123");
   });
 

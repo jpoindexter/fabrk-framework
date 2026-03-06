@@ -18,9 +18,9 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(401);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const body = await result!.json();
     expect(body.error).toContain("Authorization");
   });
@@ -33,9 +33,9 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(500);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const body = await result!.json();
     expect(body.error).toContain("misconfiguration");
   });
@@ -67,7 +67,7 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(401);
   });
 
@@ -79,7 +79,7 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(401);
   });
 
@@ -101,9 +101,9 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(invalidReq);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(403);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const body = await result!.json();
     expect(body.error).toBe("Invalid token");
   });
@@ -163,9 +163,9 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.headers.get("X-Content-Type-Options")).toBe("nosniff");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.headers.get("X-Frame-Options")).toBe("DENY");
   });
 
@@ -177,9 +177,9 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(500);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const body = await result!.json();
     expect(body.error).toContain("validateToken is required");
   });
@@ -223,7 +223,7 @@ describe("createAuthGuard", () => {
     });
     const result = await guard(req);
     expect(result).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result!.status).toBe(403);
   });
 });

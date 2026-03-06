@@ -1,13 +1,11 @@
 import type { TracingConfig } from "../config/fabrk-config.js";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let _tracer: any = null;
+let _tracer: unknown = null;
 let _trace: typeof import("@opentelemetry/api").trace | null = null;
 let _initialized = false;
 
 export type SpanAttributes = Record<string, string | number | boolean>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type OtelSpan = { end: () => void; setStatus: (s: { code: number }) => void; recordException: (e: unknown) => void; setAttributes: (a: SpanAttributes) => void; setAttribute: (k: string, v: string | number | boolean) => void };
 
 /**
@@ -26,14 +24,14 @@ export async function initTracer(nameOrConfig?: string | TracingConfig): Promise
 
     if (config.exporter === 'console') {
       try {
-        console.log(`[fabrk] OTel console tracing initialized for service: ${serviceName}`);
+        console.warn(`[fabrk] OTel console tracing initialized for service: ${serviceName}`);
       } catch {
         // package not available — skip silently
       }
     } else if (config.exporter === 'otlp') {
       const endpoint = config.endpoint ?? 'http://localhost:4318/v1/traces';
       try {
-        console.log(`[fabrk] OTel OTLP tracing initialized: ${endpoint} for service: ${serviceName}`);
+        console.warn(`[fabrk] OTel OTLP tracing initialized: ${endpoint} for service: ${serviceName}`);
       } catch {
         console.warn('[fabrk] @opentelemetry/exporter-trace-otlp-http not installed, skipping OTLP tracing');
       }
@@ -106,8 +104,7 @@ export function setSpanAttributes(attrs: SpanAttributes): void {
   span?.setAttributes(attrs);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getActiveSpan(): any | undefined {
+export function getActiveSpan(): unknown {
   if (!_trace) return undefined;
   return _trace.getActiveSpan();
 }

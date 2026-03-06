@@ -16,7 +16,7 @@ function cleanup(dir: string): void {
 async function callSearch(skillDir: string, query: string): Promise<string> {
   const skill = docsSearch({ dir: skillDir });
   const tool = skill.tools[0];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const result = await (tool as any).handler({ query });
   // Tool returns { content: [{ type: "text", text: "..." }] }
   return result.content[0].text as string;

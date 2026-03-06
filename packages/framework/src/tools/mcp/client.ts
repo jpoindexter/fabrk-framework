@@ -16,8 +16,6 @@ const MAX_TOOLS_PER_SERVER = 256;
 // Prevents OOM from a malicious or misbehaving server.
 const MAX_HTTP_RESPONSE_BYTES = 2 * 1024 * 1024; // 2 MB
 
-// Maximum byte length of a single stdio line (1 MB).
-const MAX_STDIO_LINE_BYTES = 1 * 1024 * 1024; // 1 MB
 
 /**
  * Validate a tool name returned by a remote MCP server.
@@ -209,6 +207,7 @@ async function connectHTTP(
       return `Bearer ${opts.auth.token}`;
     }
     if (opts.auth.type === "oauth2") {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- tokenCache initialized when auth.type === "oauth2"
       const token = await tokenCache!.getToken(opts.auth);
       return `Bearer ${token}`;
     }

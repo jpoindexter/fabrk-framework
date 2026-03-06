@@ -14,10 +14,9 @@ import { createSSEResponse, type SSEEvent } from "./sse-stream";
 import { createToolExecutor } from "./tool-executor";
 import { runAgentLoop, type AgentLoopEvent } from "./agent-loop";
 import { checkDelegationDepth } from "./orchestration/agent-tool";
-import { getAgentApprovals, waitForApproval, createApprovalHandler } from "./approval-handler";
+import { waitForApproval } from "./approval-handler";
 import { compressThread } from "./memory/compress";
 
-const approvalHandler = createApprovalHandler();
 
 function serializeContentForMemory(content: string | unknown[]): string {
   if (typeof content === "string") return content;

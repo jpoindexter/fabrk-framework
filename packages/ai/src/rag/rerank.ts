@@ -91,6 +91,7 @@ export function embeddingReranking(embedder: EmbeddingProvider): RerankProvider 
       const scored = dVecs.map((dv, i) => ({
         originalIndex: i,
         score: cosineSimilarity(qVec, dv),
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- i is a valid array index
         document: documents[i]!,
       }));
       scored.sort((a, b) => b.score - a.score);

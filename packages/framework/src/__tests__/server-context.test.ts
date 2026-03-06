@@ -36,6 +36,7 @@ describe("server-context", () => {
     const outer = new Request("http://localhost/", { headers: { cookie: "a=1" } });
     const inner = new Request("http://localhost/", { headers: { cookie: "b=2" } });
     runWithContext(outer, () => {
+       
       let outerCookies!: Map<string, string>;
       runWithContext(inner, () => { /* inner context only */ });
       outerCookies = cookies();

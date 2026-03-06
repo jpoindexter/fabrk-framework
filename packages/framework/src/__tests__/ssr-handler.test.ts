@@ -33,7 +33,7 @@ function renderMockElement(element: unknown): string {
   return "";
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function mockReactLoader(): () => Promise<[any, any]> {
   return async () => [
     {
@@ -295,7 +295,7 @@ describe("handleRequest — route headers CRLF sanitization", () => {
     fs.rmSync(tmpDir, { recursive: true });
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function mockReactLoader(): () => Promise<[any, any]> {
     return async () => [
       { renderToString: () => "<div>page</div>" },
@@ -396,7 +396,7 @@ describe("handleRequest — redirect URL sanitization", () => {
 
   // Use a mock React loader so the throw from the component propagates directly
   // to the catch block in handlePageRoute without going through real React rendering.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function mockLoaderThrowing(throwFn: () => never): () => Promise<[any, any]> {
     return async () => [
       {

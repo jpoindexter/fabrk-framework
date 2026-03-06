@@ -141,9 +141,9 @@ describe("matchRoute", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.route.pattern).toBe("/");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params).toEqual({});
   });
 
@@ -151,7 +151,7 @@ describe("matchRoute", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/about");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.route.pattern).toBe("/about");
   });
 
@@ -159,9 +159,9 @@ describe("matchRoute", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/blog/hello-world");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.route.pattern).toBe("/blog/:slug");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params).toEqual({ slug: "hello-world" });
   });
 
@@ -174,7 +174,7 @@ describe("matchRoute", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/about/");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.route.pattern).toBe("/about");
   });
 });

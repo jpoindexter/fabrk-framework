@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { describe, it, expect, vi } from 'vitest'
 import { autoWire } from './auto-wire'
 import type { TeamStore, NotificationStore } from './plugin-types'

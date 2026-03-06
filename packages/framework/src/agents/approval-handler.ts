@@ -41,6 +41,7 @@ function totalPending(): number {
 
 export function getAgentApprovals(agentName: string): Map<string, ApprovalEntry> {
   if (!pendingApprovals.has(agentName)) pendingApprovals.set(agentName, new Map());
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- set above, guaranteed non-null
   return pendingApprovals.get(agentName)!;
 }
 

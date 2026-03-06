@@ -61,7 +61,7 @@ describe("PPR — Partial Pre-Rendering", () => {
   });
 
   it("onPostpone is NOT passed when ppr is false", () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const renderOptions: any = {};
     const ppr = false;
     if (ppr) {
@@ -71,7 +71,7 @@ describe("PPR — Partial Pre-Rendering", () => {
   });
 
   it("onPostpone is NOT passed when ppr is undefined", () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const renderOptions: any = {};
     const ppr = undefined;
     if (ppr) {
@@ -81,7 +81,7 @@ describe("PPR — Partial Pre-Rendering", () => {
   });
 
   it("onPostpone callback is a no-op", () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const renderOptions: any = {};
     const ppr = true;
     if (ppr) {

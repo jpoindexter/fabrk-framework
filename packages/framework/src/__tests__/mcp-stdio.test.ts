@@ -44,7 +44,7 @@ describe("createStdioClient — full flow", () => {
    */
   function makeFakeMcpServer(tools: Array<{ name: string; description: string; inputSchema: Record<string, unknown> }>) {
     const stdinWritten: string[] = [];
-    let requestIdCounter = 0;
+    const requestIdCounter = 0;
 
     // EventEmitter used as the mock readline interface
     const rlEmitter = new EventEmitter() as EventEmitter & {

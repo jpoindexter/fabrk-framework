@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { createStripeAdapter } from './stripe/adapter'
 import { createPolarAdapter } from './polar/adapter'

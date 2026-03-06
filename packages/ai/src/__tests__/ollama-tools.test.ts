@@ -69,6 +69,7 @@ describe('ollama-tools — generateWithTools', () => {
     const result = await generateWithTools(MESSAGES, [TOOL], {})
 
     expect(result.toolCalls).toHaveLength(1)
+     
     expect(result.toolCalls![0]).toEqual({
       id: 'call_0',
       name: 'get_weather',
@@ -96,7 +97,9 @@ describe('ollama-tools — generateWithTools', () => {
     const { generateWithTools } = await import('../llm/ollama-tools')
     const result = await generateWithTools(MESSAGES, [TOOL], {})
 
+     
     expect(result.toolCalls![0].id).toBe('call_0')
+     
     expect(result.toolCalls![0].name).toBe('get_weather')
   })
 

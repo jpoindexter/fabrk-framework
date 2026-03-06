@@ -260,7 +260,7 @@ describe("Phase 1 Bug Fixes", () => {
 
       await tool.handler({ message: "hi" });
       expect(capturedReq).not.toBeNull();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       expect(capturedReq!.headers.get("X-Fabrk-Delegation-Depth")).toBe("3");
     });
 
@@ -277,7 +277,7 @@ describe("Phase 1 Bug Fixes", () => {
       );
 
       await tool.handler({ message: "hi" });
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       expect(capturedReq!.headers.get("X-Fabrk-Delegation-Depth")).toBe("1");
     });
   });

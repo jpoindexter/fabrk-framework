@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+ 
 import { describe, it, expect, beforeEach } from 'vitest'
 import { InMemoryAuthStore, InMemoryApiKeyStore } from '../types'
 import type { Session, ApiKeyInfo } from '@fabrk/core'

@@ -20,7 +20,9 @@ describe('rerank()', () => {
       query: 'test',
       documents: ['doc0', 'doc1', 'doc2'],
     });
+     
     expect(ranking[0]!.score).toBe(0.9);
+     
     expect(ranking[0]!.document).toBe('doc1');
   });
 
@@ -40,6 +42,7 @@ describe('rerank()', () => {
       query: 'test',
       documents: ['first', 'second'],
     });
+     
     expect(ranking[0]!.originalIndex).toBe(1);
   });
 });
@@ -88,7 +91,9 @@ describe('cohereReranking()', () => {
 
     const provider = cohereReranking('rerank-v3.5', 'key');
     const results = await provider.rerank('q', ['doc-a', 'doc-b', 'doc-c']);
+     
     expect(results[0]!.originalIndex).toBe(2);
+     
     expect(results[0]!.score).toBe(0.7);
     vi.unstubAllGlobals();
   });
@@ -123,6 +128,7 @@ describe('embeddingReranking()', () => {
   it('ranks documents by cosine similarity', async () => {
     const provider = embeddingReranking(mockEmbedder);
     const results = await provider.rerank('rain', ['sunny', 'rainy', 'snowy']);
+     
     expect(results[0]!.document).toBe('rainy'); // highest cosine with [1,0]
   });
 

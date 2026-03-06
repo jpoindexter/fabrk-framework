@@ -36,7 +36,7 @@ describe("catch-all routes", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/docs/intro");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params.slug).toBe("intro");
   });
 
@@ -47,7 +47,7 @@ describe("catch-all routes", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/docs/api/auth/login");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params.slug).toBe("api/auth/login");
   });
 
@@ -92,7 +92,7 @@ describe("optional catch-all routes", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/shop");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params.slug).toBeUndefined();
   });
 
@@ -103,7 +103,7 @@ describe("optional catch-all routes", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/shop/electronics");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params.slug).toBe("electronics");
   });
 
@@ -114,7 +114,7 @@ describe("optional catch-all routes", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/shop/electronics/phones/iphone");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params.slug).toBe("electronics/phones/iphone");
   });
 });
@@ -149,7 +149,7 @@ describe("route groups", () => {
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/pricing");
     expect(matched).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.route.pattern).toBe("/pricing");
   });
 
@@ -233,9 +233,9 @@ describe("route sorting priority", () => {
 
     const routes = scanRoutes(appDir);
     const matched = matchRoute(routes, "/docs/intro");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.route.pattern).toBe("/docs/intro");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(matched!.params).toEqual({});
   });
 });

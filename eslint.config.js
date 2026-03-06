@@ -257,6 +257,18 @@ export default [
     },
   },
 
+  // Test files — relax rules that produce noise without catching real bugs in tests
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
+      'prefer-const': 'off',
+    },
+  },
+
   // JavaScript files
   {
     files: ['**/*.js', '**/*.mjs', '**/*.cjs'],

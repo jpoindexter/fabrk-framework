@@ -99,7 +99,7 @@ describe("runMiddleware", () => {
     const req = new Request("http://localhost/test");
     const result = await runMiddleware(req, handler);
     expect(result.response).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result.response!.status).toBe(403);
   });
 
@@ -110,9 +110,9 @@ describe("runMiddleware", () => {
     });
     const req = new Request("http://localhost/dashboard");
     const result = await runMiddleware(req, handler);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result.response!.status).toBe(307);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result.response!.headers.get("Location")).toBe("/login");
   });
 
@@ -134,7 +134,7 @@ describe("runMiddleware", () => {
     });
     const req = new Request("http://localhost/test");
     const result = await runMiddleware(req, handler);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result.response!.status).toBe(418);
   });
 
@@ -157,7 +157,7 @@ describe("runMiddleware", () => {
     const matchers = [compileMatcher("/api/:path*")];
     const req = new Request("http://localhost/api/users");
     const result = await runMiddleware(req, handler, matchers);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result.response!.status).toBe(200);
   });
 
@@ -167,7 +167,7 @@ describe("runMiddleware", () => {
     });
     const req = new Request("http://localhost/test");
     const result = await runMiddleware(req, handler);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(result.response!.status).toBe(200);
   });
 });

@@ -24,7 +24,7 @@ function mockError(status: number): Response {
 // ---------------------------------------------------------------------------
 
 describe('AzureEmbeddingProvider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any
 
   beforeEach(() => {
@@ -108,7 +108,7 @@ describe('AzureEmbeddingProvider', () => {
 // ---------------------------------------------------------------------------
 
 describe('CohereEmbeddingProvider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any
 
   beforeEach(() => {
@@ -177,7 +177,7 @@ describe('CohereEmbeddingProvider', () => {
 // ---------------------------------------------------------------------------
 
 describe('OllamaEmbeddingProvider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any
 
   beforeEach(() => {
@@ -257,7 +257,7 @@ describe('OllamaEmbeddingProvider', () => {
 // ---------------------------------------------------------------------------
 
 describe('VoyageEmbeddingProvider', () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any
 
   beforeEach(() => {

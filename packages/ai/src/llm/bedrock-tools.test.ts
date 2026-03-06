@@ -93,12 +93,12 @@ describe("bedrock-tools — generateWithTools", () => {
   });
 
   it("strips bedrock: prefix from model ID", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let capturedInput: any = null;
 
     vi.doMock("@aws-sdk/client-bedrock-runtime", () => ({
       BedrockRuntimeClient: class {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         async send(cmd: any) {
           capturedInput = cmd.input;
           return {
@@ -160,12 +160,12 @@ describe("bedrock-tools — generateWithTools", () => {
   });
 
   it("extracts system messages for Bedrock format", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     let capturedInput: any = null;
 
     vi.doMock("@aws-sdk/client-bedrock-runtime", () => ({
       BedrockRuntimeClient: class {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         async send(cmd: any) {
           capturedInput = cmd.input;
           return {

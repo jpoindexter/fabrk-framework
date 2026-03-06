@@ -47,7 +47,7 @@ function makeMcpFetch(opts: {
   tokenResponse?: ReturnType<typeof makeTokenResponse>;
   extraCalls?: Array<ReturnType<typeof makeJsonRpcResponse>>;
 } = {}) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   const calls: Array<Promise<any>> = [];
 
   if (opts.tokenUrl) {

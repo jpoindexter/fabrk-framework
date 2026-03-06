@@ -176,6 +176,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
               layoutModules.set(lp, await import(lp));
             } catch { /* ignore */ }
           }
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- module loaded above, non-null in this path
           const html = await renderStaticPage(mod!, params, layoutModules, route.layoutPaths);
           const destPath = path.join(outDir, outputPath);
           fs.mkdirSync(path.dirname(destPath), { recursive: true });
@@ -187,10 +188,10 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
       }
 
       if (prerendered > 0) {
-        console.log(`[fabrk] Pre-rendered ${prerendered} static page(s)`);
+        console.warn(`[fabrk] Pre-rendered ${prerendered} static page(s)`);
       }
       if (isrPrerendered > 0) {
-        console.log(`[fabrk] Pre-rendered ${isrPrerendered} ISR page(s) for warm cache`);
+        console.warn(`[fabrk] Pre-rendered ${isrPrerendered} ISR page(s) for warm cache`);
       }
 
       try {
@@ -200,7 +201,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
         const baseUrl = (fabrkConfig as Record<string, unknown>).baseUrl as string | undefined
           ?? "http://localhost:3000";
         await generateSitemap({ baseUrl, routes, modules, outDir });
-        console.log(`[fabrk] Generated sitemap.xml and robots.txt`);
+        console.warn(`[fabrk] Generated sitemap.xml and robots.txt`);
       } catch (err) {
         console.warn("[fabrk] Sitemap generation failed:", err);
       }
@@ -262,7 +263,6 @@ function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin
             await import(/* @vite-ignore */ compilerSpecifier);
             compilerAvailable = true;
           } catch {
-            // eslint-disable-next-line no-console
             console.warn(
               "[fabrk] reactCompiler: true requires babel-plugin-react-compiler. " +
               "Install it with: pnpm add -D babel-plugin-react-compiler"
@@ -344,7 +344,6 @@ function designSystemPlugin(): Plugin {
           // Error in production builds — ESLint should catch this in CI but belt-and-suspenders
           this.error(msg);
         } else {
-          // eslint-disable-next-line no-console
           console.warn(msg);
         }
       }

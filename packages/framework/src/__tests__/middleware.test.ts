@@ -20,7 +20,7 @@ function createMockViteServer(
   } as unknown as ViteDevServer;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function mockReactLoader(): () => Promise<[any, any]> {
   return async () => [
     {

@@ -44,12 +44,12 @@ export function agentPlugin(): Plugin {
       })();
 
       if (agents.length > 0) {
-        console.log(
+        console.warn(
           `[fabrk] Discovered ${agents.length} agent(s): ${agents.map((a) => a.name).join(", ")}`
         );
       }
       if (scannedTools.length > 0) {
-        console.log(
+        console.warn(
           `[fabrk] Discovered ${scannedTools.length} tool(s): ${scannedTools.map((t) => t.name).join(", ")}`
         );
       }

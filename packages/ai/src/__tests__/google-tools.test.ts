@@ -72,6 +72,7 @@ describe('google-tools — generateWithTools', () => {
 
     expect(result.content).toBeNull()
     expect(result.toolCalls).toHaveLength(1)
+     
     expect(result.toolCalls![0]).toEqual({
       id: 'call_0',
       name: 'get_weather',
@@ -107,7 +108,9 @@ describe('google-tools — generateWithTools', () => {
     const result = await generateWithTools(MESSAGES, [TOOL], { googleApiKey: 'test-key' })
 
     expect(result.toolCalls).toHaveLength(2)
+     
     expect(result.toolCalls![0].arguments).toEqual({ location: 'London' })
+     
     expect(result.toolCalls![1].arguments).toEqual({ location: 'Paris' })
   })
 
@@ -251,7 +254,7 @@ describe('google-tools — message format translation', () => {
     ]
     await generateWithTools(msgs, [TOOL], { googleApiKey: 'test-key' })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const req = capturedRequest as { contents: any[] }
     const toolMsg = req.contents[2]
     expect(toolMsg.role).toBe('function')

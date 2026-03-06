@@ -76,13 +76,13 @@ describe("callWithFallback (via route handler)", () => {
     await handler(req);
 
     expect(callRecord).not.toBeNull();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(callRecord!.agent).toBe("gpt-4");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(callRecord!.model).toBe("openai/gpt-4");
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(callRecord!.tokens).toBe(150);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     expect(callRecord!.cost).toBe(0.01);
   });
 });

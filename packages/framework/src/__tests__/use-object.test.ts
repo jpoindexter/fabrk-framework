@@ -4,7 +4,7 @@ import { renderHook, act } from "@testing-library/react";
 import { useObject } from "../client/use-object";
 
 describe("useObject", () => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   let fetchSpy: any;
 
   beforeEach(() => {

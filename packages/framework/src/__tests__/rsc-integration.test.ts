@@ -31,7 +31,7 @@ describe("Plugin virtual entries", () => {
   describe("virtual module resolution", () => {
     it("resolves virtual:fabrk/entry-client", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
       const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
 
@@ -42,7 +42,7 @@ describe("Plugin virtual entries", () => {
 
     it("resolves virtual:fabrk/entry-client-hydrate", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
       const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
 
@@ -53,7 +53,7 @@ describe("Plugin virtual entries", () => {
 
     it("resolves virtual:fabrk/routes", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
       const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
 
@@ -64,7 +64,7 @@ describe("Plugin virtual entries", () => {
 
     it("does not resolve unknown virtual modules", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
       const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
 
@@ -74,7 +74,7 @@ describe("Plugin virtual entries", () => {
 
     it("does not resolve removed RSC virtual modules", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
       const resolveId = virtualPlugin.resolveId as (id: string) => string | null;
 
@@ -86,10 +86,10 @@ describe("Plugin virtual entries", () => {
   describe("virtual module loading", () => {
     it("loads entry-client with hydrateRoot and SPA navigation", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const configHook = plugins.find((p) => p.name === "fabrk:router")!.config as (
         c: { root?: string }
       ) => unknown;
@@ -104,10 +104,10 @@ describe("Plugin virtual entries", () => {
 
     it("loads entry-client-hydrate with route-based hydration", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const configHook = plugins.find((p) => p.name === "fabrk:router")!.config as (
         c: { root?: string }
       ) => unknown;
@@ -123,10 +123,10 @@ describe("Plugin virtual entries", () => {
 
     it("returns null for removed RSC virtual modules", () => {
       const plugins = fabrkPlugin();
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const virtualPlugin = plugins.find((p) => p.name === "fabrk:virtual-entries")!;
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+       
       const configHook = plugins.find((p) => p.name === "fabrk:router")!.config as (
         c: { root?: string }
       ) => unknown;

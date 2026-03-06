@@ -77,7 +77,7 @@ describe("Fetch Handler (Edge/Worker)", () => {
   });
 
   it("dispatches API route to correct method handler", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const apiRoute = routes.find((r) => r.type === "api")!;
     const modules = new Map<string, Record<string, unknown>>();
     modules.set(apiRoute.filePath, {
@@ -96,7 +96,7 @@ describe("Fetch Handler (Edge/Worker)", () => {
   });
 
   it("returns 405 for unsupported API methods", async () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+     
     const apiRoute = routes.find((r) => r.type === "api")!;
     const modules = new Map<string, Record<string, unknown>>();
     modules.set(apiRoute.filePath, {

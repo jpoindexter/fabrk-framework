@@ -7,12 +7,12 @@
  */
 
 export const FRAMEWORK_VERSION =
-  process.env.NEXT_PUBLIC_FRAMEWORK_VERSION ?? '0.2.0'
+  process.env.NEXT_PUBLIC_FRAMEWORK_VERSION ?? '0.3.0'
 
 export const STATS = {
   version: FRAMEWORK_VERSION,
   packages: 13,
   components: '109+',
   themes: 18,
-  tests: 2690,
+  tests: 2677,
 } as const

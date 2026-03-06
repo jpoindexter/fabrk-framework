@@ -109,6 +109,7 @@ const FILES = [
   'CHANGELOG.md',
   'docs/reddit-sideproject.md',
   'packages/framework/AGENTS.md',
+  'examples/docs/src/data/stats.ts',
 ]
 
 const formattedTests = testCount.toLocaleString('en-US')
@@ -116,6 +117,8 @@ const formattedTests = testCount.toLocaleString('en-US')
 const replacements: Array<[RegExp, (m: string) => string]> = [
   // "2,677 tests" or "858 tests" (any count followed by " tests")
   [/\b\d[\d,]* tests\b/g, () => `${formattedTests} tests`],
+  // stats.ts numeric field: tests: 2677
+  [/(?<=tests:\s*)\d+(?=,)/g, () => String(testCount)],
 ]
 
 let totalChanges = 0

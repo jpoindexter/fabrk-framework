@@ -12,15 +12,13 @@ import { generateRouteTypes } from "./route-types-gen";
 import { initTracer } from "./tracer";
 import { ENTRY_CLIENT_CODE, ENTRY_CLIENT_HYDRATE_CODE } from "./entry-client-templates";
 import { designSystemPlugin } from "./design-system-plugin";
-
-const MIDDLEWARE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
+import { reactRefreshPlugin, findMiddleware, shouldSkipPath, generateRoutesModule } from "./plugin-helpers";
+import { loadRouteModules, prerenderStaticPages, generateSitemapSafe } from "./plugin-static-build";
+export { shouldSkipPath } from "./plugin-helpers";
 
 export interface FabrkRuntimeOptions {
-  /** Directory containing app/ routes. Defaults to project root. */
   appDir?: string;
-  /** Custom HTML shell function. */
   htmlShell?: (options: { head: string; body: string }) => string;
-  /** OG image templates keyed by name. */
   ogTemplates?: Map<string, OGTemplate>;
 }
 
@@ -46,12 +44,7 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
         );
       }
 
-      return {
-        appType: "custom",
-        ssr: {
-          external: true,
-        },
-      };
+      return { appType: "custom", ssr: { external: true } };
     },
 
     configureServer(server: ViteDevServer) {
@@ -59,7 +52,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
 
       let fabrkConfig: FabrkConfig = {};
       const configReady = loadFabrkConfig(root).then((c) => { fabrkConfig = c; sharedFabrkConfig = c; });
-
       server.watcher.on("all", (event: string, filePath: string) => {
         if (event !== "add" && event !== "unlink") return;
         if (!filePath.startsWith(appDirResolved)) return;
@@ -71,32 +63,26 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
         if (!watchedFiles.has(basename) && !isIsland) return;
 
         routes = scanRoutes(appDirResolved);
-        // eslint-disable-next-line no-console
-        console.log(`[fabrk] Routes updated (${routes.length} routes)`);
+        console.log(`[fabrk] Routes updated (${routes.length} routes)`); // eslint-disable-line no-console
       });
-
       return () => {
         server.middlewares.use(async (req, res: ServerResponse, next) => {
           const url = req.url ?? "/";
           const pathname = url.split("?")[0];
-
           if (shouldSkipPath(pathname)) return next();
-
           await configReady;
 
           try {
             if (isImageRequest(pathname)) {
               const publicDir = path.join(root, "public");
               const webReq = await nodeToWebRequest(req, url);
-              const webRes = await handleImageRequest(webReq, publicDir);
-              await writeWebResponse(res, webRes);
+              await writeWebResponse(res, await handleImageRequest(webReq, publicDir));
               return;
             }
 
             if (isOGRequest(pathname) && options.ogTemplates) {
               const webReq = await nodeToWebRequest(req, url);
-              const webRes = await handleOGRequest(webReq, options.ogTemplates);
-              await writeWebResponse(res, webRes);
+              await writeWebResponse(res, await handleOGRequest(webReq, options.ogTemplates));
               return;
             }
 
@@ -109,7 +95,6 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
               appDir: appDirResolved,
               i18n: fabrkConfig.i18n,
             });
-
             await writeWebResponse(res, webRes);
           } catch (err) {
             console.error("[fabrk] Request handling error:", err);
@@ -121,91 +106,20 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
 
     async closeBundle() {
       if (this.meta?.watchMode !== false) return;
-
       const outDir = path.resolve(root, "dist", "client");
       if (!fs.existsSync(outDir)) return;
 
       const { collectStaticRoutes, renderStaticPage } = await import("./static-export");
-      const modules = new Map<string, Record<string, unknown>>();
-      for (const route of routes) {
-        try {
-          const mod = await import(route.filePath);
-          modules.set(route.filePath, mod);
-        } catch {
-          // ignore missing modules
-        }
-      }
-
+      const modules = await loadRouteModules(routes);
       const staticRoutes = await collectStaticRoutes({ routes, modules });
-      let prerendered = 0;
 
-      const isrPreDir = path.resolve(root, "dist", "server", "isr-prerender");
-      let isrPrerendered = 0;
+      const { prerendered, isrPrerendered } = await prerenderStaticPages(
+        staticRoutes, modules, root, outDir, renderStaticPage,
+      );
 
-      for (const { route, params, outputPath } of staticRoutes) {
-        const mod = modules.get(route.filePath);
-
-        if (mod && typeof mod.revalidate === "number") {
-          try {
-            const layoutModules = new Map<string, Record<string, unknown>>();
-            for (const lp of route.layoutPaths) {
-              try {
-                layoutModules.set(lp, await import(lp));
-              } catch { /* ignore */ }
-            }
-            const html = await renderStaticPage(mod, params, layoutModules, route.layoutPaths);
-            const safeKey = outputPath.replace(/\//g, "__").replace(/\.html$/, ".json");
-            const destPath = path.join(isrPreDir, safeKey);
-            fs.mkdirSync(isrPreDir, { recursive: true });
-            fs.writeFileSync(destPath, JSON.stringify({
-              pathname: outputPath.replace(/\/index\.html$/, "") || "/",
-              html,
-              revalidate: mod.revalidate as number,
-              tags: Array.isArray(mod.tags) ? mod.tags : [],
-            }), "utf-8");
-            isrPrerendered++;
-          } catch (err) {
-            console.warn(`[fabrk] ISR pre-render failed for ${route.pattern}:`, err);
-          }
-          continue;
-        }
-
-        try {
-          const layoutModules = new Map<string, Record<string, unknown>>();
-          for (const lp of route.layoutPaths) {
-            try {
-              layoutModules.set(lp, await import(lp));
-            } catch { /* ignore */ }
-          }
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- module loaded above, non-null in this path
-          const html = await renderStaticPage(mod!, params, layoutModules, route.layoutPaths);
-          const destPath = path.join(outDir, outputPath);
-          fs.mkdirSync(path.dirname(destPath), { recursive: true });
-          fs.writeFileSync(destPath, html, "utf-8");
-          prerendered++;
-        } catch (err) {
-          console.warn(`[fabrk] Static pre-render failed for ${route.pattern}:`, err);
-        }
-      }
-
-      if (prerendered > 0) {
-        console.warn(`[fabrk] Pre-rendered ${prerendered} static page(s)`);
-      }
-      if (isrPrerendered > 0) {
-        console.warn(`[fabrk] Pre-rendered ${isrPrerendered} ISR page(s) for warm cache`);
-      }
-
-      try {
-        const { generateSitemap } = await import("../build/sitemap-gen");
-        const { loadFabrkConfig } = await import("../config/fabrk-config");
-        const fabrkConfig = await loadFabrkConfig(root).catch(() => ({}));
-        const baseUrl = (fabrkConfig as Record<string, unknown>).baseUrl as string | undefined
-          ?? "http://localhost:3000";
-        await generateSitemap({ baseUrl, routes, modules, outDir });
-        console.warn(`[fabrk] Generated sitemap.xml and robots.txt`);
-      } catch (err) {
-        console.warn("[fabrk] Sitemap generation failed:", err);
-      }
+      if (prerendered > 0) console.warn(`[fabrk] Pre-rendered ${prerendered} static page(s)`);
+      if (isrPrerendered > 0) console.warn(`[fabrk] Pre-rendered ${isrPrerendered} ISR page(s) for warm cache`);
+      await generateSitemapSafe(root, routes, modules, outDir);
     },
   };
 
@@ -221,122 +135,15 @@ export function fabrkPlugin(options: FabrkRuntimeOptions = {}): Plugin[] {
     },
 
     load(id: string) {
-      if (id === "\0virtual:fabrk/routes") {
-        return generateRoutesModule(routes);
-      }
-      if (id === "\0virtual:fabrk/route-types") {
-        return generateRouteTypes(routes);
-      }
-      if (id === "\0virtual:fabrk/entry-client") {
-        return ENTRY_CLIENT_CODE;
-      }
-      if (id === "\0virtual:fabrk/entry-client-hydrate") {
-        return ENTRY_CLIENT_HYDRATE_CODE;
-      }
+      if (id === "\0virtual:fabrk/routes") return generateRoutesModule(routes);
+      if (id === "\0virtual:fabrk/route-types") return generateRouteTypes(routes);
+      if (id === "\0virtual:fabrk/entry-client") return ENTRY_CLIENT_CODE;
+      if (id === "\0virtual:fabrk/entry-client-hydrate") return ENTRY_CLIENT_HYDRATE_CODE;
       return null;
     },
   };
 
   const plugins: Plugin[] = [routerPlugin, virtualPlugin, designSystemPlugin()];
-
   plugins.push(reactRefreshPlugin({ getFabrkConfig: () => sharedFabrkConfig }));
-
   return plugins;
 }
-
-function reactRefreshPlugin(opts: { getFabrkConfig: () => FabrkConfig }): Plugin {
-  return {
-    name: "fabrk:react-refresh",
-
-    async config(config) {
-      try {
-        const specifier = "@vitejs/plugin-react";
-        const mod = await import(/* @vite-ignore */ specifier);
-        const pluginReact = mod.default as (opts?: Record<string, unknown>) => Plugin[];
-
-        const reactPluginOptions: Record<string, unknown> = {};
-        const fabrkConfig = opts.getFabrkConfig();
-
-        if (fabrkConfig?.reactCompiler) {
-          let compilerAvailable = false;
-          try {
-            const compilerSpecifier = "babel-plugin-react-compiler";
-            await import(/* @vite-ignore */ compilerSpecifier);
-            compilerAvailable = true;
-          } catch {
-            console.warn(
-              "[fabrk] reactCompiler: true requires babel-plugin-react-compiler. " +
-              "Install it with: pnpm add -D babel-plugin-react-compiler"
-            );
-          }
-
-          if (compilerAvailable) {
-            const compilerOptions =
-              typeof fabrkConfig.reactCompiler === "object"
-                ? fabrkConfig.reactCompiler
-                : {};
-            reactPluginOptions["babel"] = {
-              plugins: [["babel-plugin-react-compiler", compilerOptions]],
-            };
-          }
-        }
-
-        const refreshPlugins = pluginReact(
-          Object.keys(reactPluginOptions).length > 0 ? reactPluginOptions : undefined
-        );
-        const existing = Array.isArray(config.plugins) ? config.plugins : [];
-        config.plugins = [...existing, ...refreshPlugins];
-      } catch {
-        // eslint-disable-next-line no-console
-        console.log("[fabrk] @vitejs/plugin-react not found — HMR/Fast Refresh disabled");
-      }
-    },
-  };
-}
-
-function findMiddleware(appDir: string): string | null {
-  for (const ext of MIDDLEWARE_EXTENSIONS) {
-    const filePath = path.join(appDir, `middleware${ext}`);
-    if (fs.existsSync(filePath)) return filePath;
-  }
-  return null;
-}
-
-export function shouldSkipPath(pathname: string): boolean {
-  if (
-    pathname.startsWith("/@") ||
-    pathname.startsWith("/__") ||
-    pathname.startsWith("/node_modules/")
-  ) {
-    return true;
-  }
-  const lastSeg = pathname.split("/").pop() ?? "";
-  return lastSeg.includes(".");
-}
-
-function generateRoutesModule(routes: Route[]): string {
-  const imports: string[] = [];
-  const routeEntries: string[] = [];
-
-  // Only include page routes in the client bundle. API routes have server-only
-  // imports (DB credentials, secret keys, etc.) that must not reach the browser.
-  const clientRoutes = routes.filter((r) => r.type === "page");
-
-  for (let i = 0; i < clientRoutes.length; i++) {
-    const route = clientRoutes[i];
-    const varName = `route${i}`;
-    imports.push(`import * as ${varName} from ${JSON.stringify(route.filePath)};`);
-    routeEntries.push(
-      `  { pattern: ${JSON.stringify(route.pattern)}, module: ${varName}, type: ${JSON.stringify(route.type)} }`
-    );
-  }
-
-  return [
-    ...imports,
-    "",
-    `export const routes = [`,
-    routeEntries.join(",\n"),
-    `];`,
-  ].join("\n");
-}
-

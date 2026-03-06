@@ -1,13 +1,9 @@
 import { matchRoute, type Route } from "./router";
 import { buildSecurityHeaders } from "../middleware/security";
 import { isRedirectError, isNotFoundError } from "./server-helpers";
-import { buildPageTree, type PageModules } from "./page-builder";
-import {
-  resolveMetadata,
-  mergeMetadata,
-  buildMetadataHtml,
-} from "./metadata";
 import { isImageRequest } from "./image-handler";
+import { handleWorkerApiRoute } from "./worker-renderer";
+import { handleWorkerPageRoute } from "./worker-page";
 
 function sanitizeRedirectUrl(url: string): string {
   const stripped = url.replace(/[\r\n]/g, "");
@@ -47,10 +43,10 @@ export function createFetchHandler(options: FetchHandlerOptions) {
         const url = new URL(request.url);
 
         if (isImageRequest(url.pathname)) {
-          return new Response(JSON.stringify({ error: "Image optimization not available in worker mode" }), {
-            status: 501,
-            headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
-          });
+          return new Response(
+            JSON.stringify({ error: "Image optimization not available in worker mode" }),
+            { status: 501, headers: { "Content-Type": "application/json", ...buildSecurityHeaders() } },
+          );
         }
 
         const isSoftNav = request.headers.get("x-fabrk-navigation") === "soft";
@@ -59,302 +55,42 @@ export function createFetchHandler(options: FetchHandlerOptions) {
         if (!matched) {
           return new Response("Not Found", {
             status: 404,
-            headers: {
-              "Content-Type": "text/plain",
-              ...buildSecurityHeaders(),
-            },
+            headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
           });
         }
 
         if (matched.route.type === "api") {
-          return handleApiRoute(request, matched, modules);
+          return handleWorkerApiRoute(request, matched, modules);
         }
 
-        return handlePageRoute(request, matched, modules, layoutModules);
+        return handleWorkerPageRoute(request, matched, modules, layoutModules);
       } catch (err) {
-        if (isRedirectError(err)) {
-          return new Response(null, {
-            status: err.statusCode,
-            headers: {
-              Location: sanitizeRedirectUrl(err.url),
-              ...buildSecurityHeaders(),
-            },
-          });
-        }
-
-        if (isNotFoundError(err)) {
-          return new Response("Not Found", {
-            status: 404,
-            headers: {
-              "Content-Type": "text/plain",
-              ...buildSecurityHeaders(),
-            },
-          });
-        }
-
-        console.error("[fabrk] Worker error:", err);
-        return new Response("Internal server error", {
-          status: 500,
-          headers: {
-            "Content-Type": "text/plain",
-            ...buildSecurityHeaders(),
-          },
-        });
+        return handleTopLevelError(err);
       }
     },
   };
 }
 
-async function handleApiRoute(
-  request: Request,
-  matched: { route: Route; params: Record<string, string> },
-  modules?: Map<string, Record<string, unknown>>
-): Promise<Response> {
-  const method = request.method.toUpperCase();
-
-  const mod = modules?.get(matched.route.filePath);
-  if (!mod) {
-    return new Response(
-      JSON.stringify({ error: "Route module not available" }),
-      {
-        status: 501,
-        headers: {
-          "Content-Type": "application/json",
-          ...buildSecurityHeaders(),
-        },
-      }
-    );
-  }
-
-  const handler = mod[method] ?? mod[method.toLowerCase()];
-  if (typeof handler !== "function") {
-    return new Response(
-      JSON.stringify({ error: `Method ${method} not allowed` }),
-      {
-        status: 405,
-        headers: {
-          "Content-Type": "application/json",
-          ...buildSecurityHeaders(),
-        },
-      }
-    );
-  }
-
-  try {
-    const response = await handler(request, { params: matched.params });
-    return response;
-  } catch (err) {
-    console.error("[fabrk] API route error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error" }),
-      {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-          ...buildSecurityHeaders(),
-        },
-      }
-    );
-  }
-}
-
-async function handlePageRoute(
-  request: Request,
-  matched: { route: Route; params: Record<string, string> },
-  modules?: Map<string, Record<string, unknown>>,
-  layoutModules?: Map<string, Record<string, unknown>>
-): Promise<Response> {
-  const mod = modules?.get(matched.route.filePath);
-  if (!mod) {
-    return new Response(
-      JSON.stringify({ error: "Route module not available" }),
-      {
-        status: 501,
-        headers: {
-          "Content-Type": "application/json",
-          ...buildSecurityHeaders(),
-        },
-      }
-    );
-  }
-
-  const PageComponent = mod.default;
-  if (typeof PageComponent !== "function") {
-    return new Response("Page component must export a default function", {
-      status: 500,
-      headers: {
-        "Content-Type": "text/plain",
-        ...buildSecurityHeaders(),
-      },
+function handleTopLevelError(err: unknown): Response {
+  if (isRedirectError(err)) {
+    return new Response(null, {
+      status: err.statusCode,
+      headers: { Location: sanitizeRedirectUrl(err.url), ...buildSecurityHeaders() },
     });
   }
 
-  try {
-    const [reactDomServer, React] = await Promise.all([
-      import("react-dom/server"),
-      import("react"),
-    ]);
-
-    const createElement = React.createElement ?? React.default?.createElement;
-    const renderToReadableStream =
-      reactDomServer.renderToReadableStream ??
-      reactDomServer.default?.renderToReadableStream;
-    const renderToString =
-      reactDomServer.renderToString ??
-      reactDomServer.default?.renderToString;
-
-    if (typeof createElement !== "function") {
-      return new Response("React not available in worker environment", {
-        status: 500,
-        headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
-      });
-    }
-
-    const url = new URL(request.url);
-    const searchParams = Object.fromEntries(url.searchParams.entries());
-    const metadataContext = { params: matched.params, searchParams };
-
-    const metadataLayers = [];
-    const layouts: Array<React.ComponentType<{ children: React.ReactNode }>> = [];
-    if (layoutModules) {
-      for (const lp of matched.route.layoutPaths) {
-        const layoutMod = layoutModules.get(lp);
-        if (layoutMod) {
-          metadataLayers.push(await resolveMetadata(layoutMod, metadataContext));
-          if (typeof layoutMod.default === "function") {
-            layouts.push(layoutMod.default as React.ComponentType<{ children: React.ReactNode }>);
-          }
-        }
-      }
-    }
-    metadataLayers.push(await resolveMetadata(mod, metadataContext));
-    const metadata = mergeMetadata(metadataLayers);
-    const head = buildMetadataHtml(metadata);
-
-    const pageModules: PageModules = {
-      page: PageComponent as PageModules["page"],
-      layouts,
-    };
-
-    if (matched.route.errorPath && modules) {
-      const errMod = modules.get(matched.route.errorPath);
-      if (errMod && typeof errMod.default === "function") {
-        pageModules.errorFallback = errMod.default as PageModules["errorFallback"];
-      }
-    }
-    if (matched.route.loadingPath && modules) {
-      const loadMod = modules.get(matched.route.loadingPath);
-      if (loadMod && typeof loadMod.default === "function") {
-        pageModules.loadingFallback = loadMod.default as PageModules["loadingFallback"];
-      }
-    }
-    if (matched.route.notFoundPath && modules) {
-      const nfMod = modules.get(matched.route.notFoundPath);
-      if (nfMod && typeof nfMod.default === "function") {
-        pageModules.notFoundFallback = nfMod.default as PageModules["notFoundFallback"];
-      }
-    }
-
-    const hasBoundaries = pageModules.errorFallback || pageModules.loadingFallback || pageModules.notFoundFallback;
-
-    let element: React.ReactNode;
-    if (hasBoundaries) {
-      element = buildPageTree({
-        route: matched.route,
-        params: matched.params,
-        searchParams,
-        modules: pageModules,
-        pathname: url.pathname,
-        React,
-      });
-    } else {
-      element = createElement(
-        PageComponent as React.FC<Record<string, unknown>>,
-        { params: matched.params, searchParams }
-      );
-      for (let i = layouts.length - 1; i >= 0; i--) {
-        element = createElement(layouts[i], { children: element });
-      }
-    }
-
-    if (typeof renderToReadableStream === "function") {
-      const stream = await renderToReadableStream(element);
-
-      const prefix = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  ${head}
-</head>
-<body>
-  <div id="root">`;
-      const suffix = `</div>
-</body>
-</html>`;
-
-      const encoder = new TextEncoder();
-      const reader = stream.getReader();
-
-      const wrappedStream = new ReadableStream({
-        async start(controller) {
-          controller.enqueue(encoder.encode(prefix));
-        },
-        async pull(controller) {
-          const { done, value } = await reader.read();
-          if (done) {
-            controller.enqueue(encoder.encode(suffix));
-            controller.close();
-            return;
-          }
-          controller.enqueue(value);
-        },
-      });
-
-      return new Response(wrappedStream, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          ...buildSecurityHeaders(),
-        },
-      });
-    }
-
-    if (typeof renderToString === "function") {
-      const ssrBody = renderToString(element);
-      const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  ${head}
-</head>
-<body>
-  <div id="root">${ssrBody}</div>
-</body>
-</html>`;
-
-      return new Response(html, {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          ...buildSecurityHeaders(),
-        },
-      });
-    }
-
-    return new Response("React SSR not available in worker", {
-      status: 500,
+  if (isNotFoundError(err)) {
+    return new Response("Not Found", {
+      status: 404,
       headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
     });
-  } catch (err) {
-    console.error("[fabrk] Page render error:", err);
-    return new Response("Internal server error", {
-      status: 500,
-      headers: {
-        "Content-Type": "text/plain",
-        ...buildSecurityHeaders(),
-      },
-    });
   }
+
+  console.error("[fabrk] Worker error:", err);
+  return new Response("Internal server error", {
+    status: 500,
+    headers: { "Content-Type": "text/plain", ...buildSecurityHeaders() },
+  });
 }
 
 export type { Route } from "./router";

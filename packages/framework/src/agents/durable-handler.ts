@@ -4,7 +4,9 @@ import type { ToolExecutor } from "./tool-executor";
 import type { CheckpointStore, CheckpointState } from "./checkpoint";
 import { generateCheckpointId } from "./checkpoint";
 import { runAgentLoop, type AgentLoopEvent } from "./agent-loop";
-import { buildSecurityHeaders } from "../middleware/security";
+
+// Re-export route handlers so existing barrel imports keep working
+export { handleAgentStatus, handleAgentHistory, handleAgentRollback } from "./durable-routes";
 
 export interface DurableAgentOptions {
   agentName: string;
@@ -26,45 +28,29 @@ export interface DurableAgentOptions {
   calculateCost: (model: string, promptTokens: number, completionTokens: number) => { costUSD: number };
 }
 
-function jsonResponse(data: unknown, status: number): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
-  });
-}
-
-const LOCAL_ADDRS = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
-
-/** Returns true only when remoteAddress is a known loopback address. */
-function isLocalRequest(remoteAddress?: string): boolean {
-  if (!remoteAddress) return false;  // fail-closed: unknown address = deny
-  return LOCAL_ADDRS.has(remoteAddress);
-}
-
-export async function handleStartAgent(
+function buildCheckpointState(
+  checkpointId: string,
+  base: { agentName: string; createdAt: number },
   messages: LLMMessage[],
-  options: DurableAgentOptions,
-): Promise<{ checkpointId: string; events: AgentLoopEvent[] }> {
-  const checkpointId = generateCheckpointId();
-  const now = Date.now();
-
-  const initialState: CheckpointState = {
+  iteration: number,
+  toolResults: Array<{ name: string; output: string }>,
+  status: CheckpointState["status"],
+): CheckpointState {
+  return {
     id: checkpointId,
-    agentName: options.agentName,
-    messages: [...messages],
-    iteration: 0,
-    toolResults: [],
-    status: "running",
-    createdAt: now,
-    updatedAt: now,
+    agentName: base.agentName,
+    messages,
+    iteration,
+    toolResults,
+    status,
+    createdAt: base.createdAt,
+    updatedAt: Date.now(),
   };
-  await options.checkpointStore.save(checkpointId, initialState);
+}
 
-  const events: AgentLoopEvent[] = [];
-  const loopMessages = [...messages];
-
-  const gen = runAgentLoop({
-    messages: loopMessages,
+function makeLoopOptions(messages: LLMMessage[], options: DurableAgentOptions) {
+  return {
+    messages,
     toolExecutor: options.toolExecutor,
     toolSchemas: options.toolSchemas,
     agentName: options.agentName,
@@ -72,13 +58,24 @@ export async function handleStartAgent(
     model: options.model,
     budget: options.budget,
     maxIterations: options.maxIterations,
-    stream: false,
+    stream: false as const,
     generateWithTools: options.generateWithTools,
     calculateCost: options.calculateCost,
-  });
+  };
+}
 
-  let iteration = 0;
-  const toolResults: Array<{ name: string; output: string }> = [];
+async function drainLoop(
+  gen: AsyncGenerator<AgentLoopEvent>,
+  checkpointId: string,
+  base: { agentName: string; createdAt: number },
+  loopMessages: LLMMessage[],
+  store: CheckpointStore,
+  initialIteration: number,
+  initialToolResults: Array<{ name: string; output: string }>,
+): Promise<AgentLoopEvent[]> {
+  const events: AgentLoopEvent[] = [];
+  let iteration = initialIteration;
+  const toolResults = [...initialToolResults];
 
   for await (const event of gen) {
     events.push(event);
@@ -89,44 +86,35 @@ export async function handleStartAgent(
     }
 
     if (event.type === "tool-result" || event.type === "usage") {
-      await options.checkpointStore.save(checkpointId, {
-        id: checkpointId,
-        agentName: options.agentName,
-        messages: loopMessages,
-        iteration,
-        toolResults,
-        status: "running",
-        createdAt: initialState.createdAt,
-        updatedAt: Date.now(),
-      });
+      await store.save(checkpointId, buildCheckpointState(checkpointId, base, loopMessages, iteration, toolResults, "running"));
     }
-
     if (event.type === "done") {
-      await options.checkpointStore.save(checkpointId, {
-        id: checkpointId,
-        agentName: options.agentName,
-        messages: loopMessages,
-        iteration,
-        toolResults,
-        status: "completed",
-        createdAt: initialState.createdAt,
-        updatedAt: Date.now(),
-      });
+      await store.save(checkpointId, buildCheckpointState(checkpointId, base, loopMessages, iteration, toolResults, "completed"));
     }
-
     if (event.type === "error") {
-      await options.checkpointStore.save(checkpointId, {
-        id: checkpointId,
-        agentName: options.agentName,
-        messages: loopMessages,
-        iteration,
-        toolResults,
-        status: "error",
-        createdAt: initialState.createdAt,
-        updatedAt: Date.now(),
-      });
+      await store.save(checkpointId, buildCheckpointState(checkpointId, base, loopMessages, iteration, toolResults, "error"));
     }
   }
+
+  return events;
+}
+
+export async function handleStartAgent(
+  messages: LLMMessage[],
+  options: DurableAgentOptions,
+): Promise<{ checkpointId: string; events: AgentLoopEvent[] }> {
+  const checkpointId = generateCheckpointId();
+  const now = Date.now();
+  const base = { agentName: options.agentName, createdAt: now };
+
+  await options.checkpointStore.save(
+    checkpointId,
+    buildCheckpointState(checkpointId, base, [...messages], 0, [], "running"),
+  );
+
+  const loopMessages = [...messages];
+  const gen = runAgentLoop(makeLoopOptions(loopMessages, options));
+  const events = await drainLoop(gen, checkpointId, base, loopMessages, options.checkpointStore, 0, []);
 
   return { checkpointId, events };
 }
@@ -136,170 +124,16 @@ export async function handleResumeAgent(
   options: DurableAgentOptions,
 ): Promise<{ events: AgentLoopEvent[] }> {
   const state = await options.checkpointStore.load(checkpointId);
-  if (!state) {
-    throw new Error("Checkpoint not found");
-  }
-  if (state.agentName !== options.agentName) {
-    throw new Error("Checkpoint does not belong to this agent");
-  }
-  if (state.status === "completed") {
-    throw new Error("Agent execution already completed");
-  }
+  if (!state) throw new Error("Checkpoint not found");
+  if (state.agentName !== options.agentName) throw new Error("Checkpoint does not belong to this agent");
+  if (state.status === "completed") throw new Error("Agent execution already completed");
 
-  const events: AgentLoopEvent[] = [];
+  const base = { agentName: state.agentName, createdAt: state.createdAt };
+  await options.checkpointStore.save(checkpointId, { ...state, status: "running", updatedAt: Date.now() });
+
   const loopMessages = [...state.messages];
-
-  await options.checkpointStore.save(checkpointId, {
-    ...state,
-    status: "running",
-    updatedAt: Date.now(),
-  });
-
-  const gen = runAgentLoop({
-    messages: loopMessages,
-    toolExecutor: options.toolExecutor,
-    toolSchemas: options.toolSchemas,
-    agentName: options.agentName,
-    sessionId: options.sessionId,
-    model: options.model,
-    budget: options.budget,
-    maxIterations: options.maxIterations,
-    stream: false,
-    generateWithTools: options.generateWithTools,
-    calculateCost: options.calculateCost,
-  });
-
-  let iteration = state.iteration;
-  const toolResults = [...state.toolResults];
-
-  for await (const event of gen) {
-    events.push(event);
-
-    if (event.type === "tool-result") {
-      toolResults.push({ name: event.name, output: event.output });
-      iteration = event.iteration;
-    }
-
-    if (event.type === "tool-result" || event.type === "usage") {
-      await options.checkpointStore.save(checkpointId, {
-        ...state,
-        messages: loopMessages,
-        iteration,
-        toolResults,
-        status: "running",
-        updatedAt: Date.now(),
-      });
-    }
-
-    if (event.type === "done") {
-      await options.checkpointStore.save(checkpointId, {
-        ...state,
-        messages: loopMessages,
-        iteration,
-        toolResults,
-        status: "completed",
-        updatedAt: Date.now(),
-      });
-    }
-
-    if (event.type === "error") {
-      await options.checkpointStore.save(checkpointId, {
-        ...state,
-        messages: loopMessages,
-        iteration,
-        toolResults,
-        status: "error",
-        updatedAt: Date.now(),
-      });
-    }
-  }
+  const gen = runAgentLoop(makeLoopOptions(loopMessages, options));
+  const events = await drainLoop(gen, checkpointId, base, loopMessages, options.checkpointStore, state.iteration, state.toolResults);
 
   return { events };
-}
-
-export async function handleAgentStatus(
-  agentName: string,
-  checkpointId: string,
-  store: CheckpointStore,
-  remoteAddress?: string,
-): Promise<Response> {
-  if (!isLocalRequest(remoteAddress)) {
-    return jsonResponse({ error: "Not available outside localhost" }, 403);
-  }
-  const state = await store.load(checkpointId);
-  if (!state) {
-    return jsonResponse({ error: "Checkpoint not found" }, 404);
-  }
-  if (state.agentName !== agentName) {
-    // Do not reveal whether the checkpoint exists for a different agent
-    return jsonResponse({ error: "Checkpoint not found" }, 404);
-  }
-
-  return jsonResponse({
-    id: state.id,
-    agentName: state.agentName,
-    status: state.status,
-    iteration: state.iteration,
-    toolResults: state.toolResults,
-    createdAt: state.createdAt,
-    updatedAt: state.updatedAt,
-    messageCount: state.messages.length,
-  }, 200);
-}
-
-export async function handleAgentHistory(
-  agentName: string,
-  sessionId: string,
-  store: CheckpointStore,
-  remoteAddress?: string,
-): Promise<Response> {
-  if (!isLocalRequest(remoteAddress)) {
-    return jsonResponse({ error: "Forbidden" }, 403);
-  }
-  const history = await store.listHistory(agentName, sessionId);
-  return jsonResponse(history, 200);
-}
-
-export async function handleAgentRollback(
-  agentName: string,
-  req: Request,
-  store: CheckpointStore,
-  remoteAddress?: string,
-): Promise<Response> {
-  if (!isLocalRequest(remoteAddress)) {
-    return jsonResponse({ error: "Not available outside localhost" }, 403);
-  }
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return jsonResponse({ error: "Invalid JSON" }, 400);
-  }
-
-  const { sessionId, targetIteration } = body as Record<string, unknown>;
-  if (typeof sessionId !== "string" || typeof targetIteration !== "number") {
-    return jsonResponse(
-      { error: "sessionId (string) and targetIteration (number) required" },
-      400
-    );
-  }
-  if (
-    !Number.isInteger(targetIteration) ||
-    targetIteration < 0 ||
-    targetIteration >= 10_000
-  ) {
-    return jsonResponse(
-      { error: "targetIteration must be a non-negative integer less than 10000" },
-      400
-    );
-  }
-
-  try {
-    const restored = await store.rollback(agentName, sessionId, targetIteration);
-    return jsonResponse(restored, 200);
-  } catch (err) {
-    // Log details server-side; return a generic message to the caller
-    console.error("[fabrk] Rollback failed:", err instanceof Error ? err.message : err);
-    return jsonResponse({ error: "Rollback failed" }, 404);
-  }
 }

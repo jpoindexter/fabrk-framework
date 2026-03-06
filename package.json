@@ -29,7 +29,8 @@
     "release": "turbo run build && changeset publish",
     "docs:api": "typedoc",
     "test:e2e": "playwright test",
-    "size": "npx size-limit"
+    "size": "npx size-limit",
+    "update-stats": "tsx scripts/update-stats.ts"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.2",
@@ -53,6 +54,7 @@
     "jsdom": "^28.0.0",
     "prettier": "^3.2.5",
     "size-limit": "^12.0.0",
+    "tsx": "^4.21.0",
     "turbo": "^1.12.4",
     "typedoc": "^0.28.16",
     "typedoc-plugin-markdown": "^4.10.0",

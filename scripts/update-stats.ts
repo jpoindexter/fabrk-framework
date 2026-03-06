@@ -22,6 +22,7 @@ const STATS_CACHE = join(ROOT, '.vitest-stats.json')
 const args = process.argv.slice(2)
 const skipRun = args.includes('--no-run')
 const dryRun = args.includes('--dry-run')
+const checkOnly = args.includes('--check')
 
 // ---------------------------------------------------------------------------
 // 1. Collect stats
@@ -89,17 +90,6 @@ function countPackages(): number {
     .length
 }
 
-const testCount = skipRun ? readCachedCount() : runTests()
-const pkgCount = countPackages()
-
-console.log(`\nStats:`)
-console.log(`  tests:    ${testCount.toLocaleString('en-US')}`)
-console.log(`  packages: ${pkgCount}`)
-
-// ---------------------------------------------------------------------------
-// 2. Update docs
-// ---------------------------------------------------------------------------
-
 const FILES = [
   'README.md',
   'CLAUDE.md',
@@ -111,6 +101,54 @@ const FILES = [
   'packages/framework/AGENTS.md',
   'examples/docs/src/data/stats.ts',
 ]
+
+// ---------------------------------------------------------------------------
+// --check mode: verify all docs have consistent test counts (no tests needed)
+// ---------------------------------------------------------------------------
+
+if (checkOnly) {
+  const SKIP_CHECK = new Set(['CHANGELOG.md'])
+  const allCounts = new Set<string>()
+  for (const rel of FILES) {
+    if (SKIP_CHECK.has(rel)) continue
+    const fullPath = join(ROOT, rel)
+    if (!existsSync(fullPath)) continue
+    const content = readFileSync(fullPath, 'utf8')
+
+    // Prose: "2,677 tests"
+    for (const m of content.matchAll(/\b(\d[\d,]*) tests\b/g)) {
+      allCounts.add(m[1].replace(/,/g, ''))
+    }
+    // Badge: tests-NNNN-green
+    for (const m of content.matchAll(/tests-(\d+)-green/g)) {
+      allCounts.add(m[1])
+    }
+    // stats.ts: tests: NNNN
+    for (const m of content.matchAll(/tests:\s*(\d+)/g)) {
+      allCounts.add(m[1])
+    }
+  }
+
+  if (allCounts.size <= 1) {
+    console.log(`Stats are consistent across all docs (${[...allCounts][0] ?? 'no counts found'}).`)
+    process.exit(0)
+  } else {
+    console.error(`Stats are inconsistent! Found different test counts: ${[...allCounts].join(', ')}`)
+    console.error('Run "pnpm update-stats" to fix.')
+    process.exit(1)
+  }
+}
+
+const testCount = skipRun ? readCachedCount() : runTests()
+const pkgCount = countPackages()
+
+console.log(`\nStats:`)
+console.log(`  tests:    ${testCount.toLocaleString('en-US')}`)
+console.log(`  packages: ${pkgCount}`)
+
+// ---------------------------------------------------------------------------
+// 2. Update docs
+// ---------------------------------------------------------------------------
 
 const formattedTests = testCount.toLocaleString('en-US')
 

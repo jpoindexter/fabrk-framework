@@ -306,6 +306,117 @@ describe("runAgentLoop", () => {
   });
 });
 
+describe("runAgentLoop — stopWhen safety", () => {
+  it("yields error event (not raw throw) when stopWhen throws in batch path", async () => {
+    const tool = makeTool("t");
+    const executor = createToolExecutor([tool]);
+    let callCount = 0;
+
+    const events = await collectEvents(
+      runAgentLoop({
+        messages: [{ role: "user", content: "Go" }],
+        toolExecutor: executor,
+        toolSchemas: executor.toLLMSchema(),
+        agentName: "test",
+        sessionId: "sw-throw-batch",
+        model: "test-model",
+        stream: false,
+        generateWithTools: async () => {
+          callCount++;
+          if (callCount === 1) {
+            return {
+              content: null,
+              toolCalls: [{ id: "tc1", name: "t", arguments: {} }],
+              usage: { promptTokens: 5, completionTokens: 5 },
+            };
+          }
+          return { content: "done", usage: { promptTokens: 5, completionTokens: 5 } };
+        },
+        calculateCost: mockCalculateCost(),
+        stopWhen: () => { throw new Error("stopWhen exploded"); },
+      })
+    );
+
+    const errorEvent = events.find((e) => e.type === "error") as Extract<AgentLoopEvent, { type: "error" }>;
+    expect(errorEvent).toBeDefined();
+    expect(errorEvent.message).toContain("stopWhen exploded");
+    // Generator must terminate cleanly — no hanging
+    expect(events.at(-1)?.type).toBe("error");
+  });
+
+  it("yields error event (not raw throw) when stopWhen throws in streaming path", async () => {
+    const tool = makeTool("t");
+    const executor = createToolExecutor([tool]);
+
+    async function* fakeStream(): AsyncGenerator<LLMStreamEvent> {
+      yield { type: "tool-call", id: "tc1", name: "t", arguments: {} };
+      yield { type: "usage", promptTokens: 5, completionTokens: 5 };
+    }
+
+    const events = await collectEvents(
+      runAgentLoop({
+        messages: [{ role: "user", content: "Go" }],
+        toolExecutor: executor,
+        toolSchemas: executor.toLLMSchema(),
+        agentName: "test",
+        sessionId: "sw-throw-stream",
+        model: "test-model",
+        stream: true,
+        streamWithTools: fakeStream,
+        generateWithTools: async () => ({ content: "unreachable", usage: { promptTokens: 0, completionTokens: 0 } }),
+        calculateCost: mockCalculateCost(),
+        stopWhen: () => { throw new Error("stream stopWhen exploded"); },
+      })
+    );
+
+    const errorEvent = events.find((e) => e.type === "error") as Extract<AgentLoopEvent, { type: "error" }>;
+    expect(errorEvent).toBeDefined();
+    expect(errorEvent.message).toContain("stream stopWhen exploded");
+  });
+});
+
+describe("runAgentLoop — message history cap", () => {
+  it("does not pass more than MAX_HISTORY_MESSAGES messages to the LLM", async () => {
+    const tool = makeTool("t");
+    const executor = createToolExecutor([tool]);
+    let callCount = 0;
+    const messageLengthsSeenByLLM: number[] = [];
+
+    // Run 10 iterations each adding a tool-call + tool-result pair (2 messages per iter)
+    // plus the original user message = 1 + 10*2 = 21 messages total accumulated.
+    // With MAX_HISTORY_MESSAGES=200 this won't trigger the cap in normal use,
+    // but we verify the call with a synthetic very-large history by pre-seeding messages.
+    // Easiest: pass 210 history messages into the loop and verify LLM never sees > 200.
+    const largeHistory: import("@fabrk/ai").LLMMessage[] = Array.from({ length: 210 }, (_, i) => ({
+      role: i % 2 === 0 ? "user" as const : "assistant" as const,
+      content: `message ${i}`,
+    }));
+
+    await collectEvents(
+      runAgentLoop({
+        messages: largeHistory,
+        toolExecutor: executor,
+        toolSchemas: executor.toLLMSchema(),
+        agentName: "test",
+        sessionId: "history-cap",
+        model: "test-model",
+        stream: false,
+        generateWithTools: async (msgs) => {
+          callCount++;
+          messageLengthsSeenByLLM.push(msgs.length);
+          return { content: "done", usage: { promptTokens: 5, completionTokens: 5 } };
+        },
+        calculateCost: mockCalculateCost(),
+      })
+    );
+
+    expect(callCount).toBeGreaterThan(0);
+    for (const len of messageLengthsSeenByLLM) {
+      expect(len).toBeLessThanOrEqual(200);
+    }
+  });
+});
+
 describe("runAgentLoop — streaming path (stream: true + streamWithTools)", () => {
   it("yields text-delta events and done on text-only stream", async () => {
     const executor = createToolExecutor([]);

@@ -47,6 +47,20 @@ export async function verifyTotp(
   code: string,
   options?: { window?: number }
 ): Promise<boolean> {
+  // Reject obviously invalid inputs before any cryptographic work.
+  // TOTP codes are always exactly 6 decimal digits (RFC 4226 §5.3).
+  // Reject non-numeric or wrong-length strings immediately to prevent:
+  //   1. Unnecessary HMAC-SHA1 computation across the full window
+  //   2. Large replay-protection Map entries for garbage inputs
+  //   3. Misuse of this exported primitive without a brute-force guard
+  if (!code || !/^\d{6}$/.test(code)) return false
+
+  // Cap secret length to prevent base32Decode DoS on maliciously large inputs.
+  // A legitimate TOTP secret is at most 160 chars (100 bytes base32-encoded).
+  // Allow up to 512 chars to accommodate non-standard secrets while still
+  // bounding memory/CPU usage.
+  if (!secret || secret.length > 512) return false
+
   // Cap window to prevent excessively large search ranges that weaken TOTP security
   const safeWindow = Math.min(options?.window ?? 1, 5)
   const now = Math.floor(Date.now() / 1000)

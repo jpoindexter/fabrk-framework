@@ -251,4 +251,21 @@ describe("maxSteps guard", () => {
       runWorkflow({ name: "overflow", steps, maxSteps: 3 }, "in")
     ).rejects.toThrow("[fabrk] Workflow exceeded max steps (3)");
   });
+
+  it("parallel sub-steps count against the shared step budget", async () => {
+    // parallelStep with 3 sub-steps + 1 wrapper = 4 steps consumed.
+    // maxSteps: 3 should be exceeded before all sub-steps complete.
+    const steps = [
+      parallelStep("p", [
+        agentStep("a", async () => "a"),
+        agentStep("b", async () => "b"),
+        agentStep("c", async () => "c"),
+      ]),
+    ];
+    // With the fix, sub-step counts are shared — 3 sub-steps + 1 parallel wrapper = 4 total.
+    // maxSteps=3 means the third sub-step push should throw.
+    await expect(
+      runWorkflow({ name: "par-budget", steps, maxSteps: 3 }, "in")
+    ).rejects.toThrow("[fabrk] Workflow exceeded max steps");
+  });
 });

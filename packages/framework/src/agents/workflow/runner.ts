@@ -98,13 +98,21 @@ async function runSteps(
             writer: ctx.writer,
           };
           const subStepResults: StepResult[] = [];
-          const subCount = { n: stepCount.n };
+          // Share stepCount by reference so parallel branches consume from the
+          // global step budget. Using a copy would let nested parallel steps
+          // bypass MAX_STEPS_HARD_CAP entirely.
+          // Budget/step-cap errors are re-thrown so they propagate through
+          // Promise.all and terminate the workflow. Normal step errors are
+          // converted to [error: ...] strings to preserve branch isolation.
           try {
-            const out = await runSteps([sub], subCtx, subStepResults, subCount, maxSteps, skipIds, onProgress);
+            const out = await runSteps([sub], subCtx, subStepResults, stepCount, maxSteps, skipIds, onProgress);
             return { out, subStepResults };
           } catch (err) {
-            const errMsg = err instanceof Error ? err.message : String(err);
-            return { out: `[error: ${errMsg}]`, subStepResults };
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg.startsWith("[fabrk] Workflow exceeded max steps")) {
+              throw err;
+            }
+            return { out: `[error: ${msg}]`, subStepResults };
           }
         })
       );

@@ -219,7 +219,10 @@ describe("generateSitemap", () => {
     // "X-Injected" must not appear as a standalone directive line.
     // After stripping \r\n the content is concatenated into the URL (invalid URL
     // but not a directive injection — the critical property is no separate line).
+    // The residual text may appear within the Sitemap URL, but must not be an
+    // independent robots.txt directive.
     expect(robots).not.toMatch(/^X-Injected:/m);
+    expect(robots).not.toMatch(/^X-Injected\s/m);
   });
 
   it("creates outDir if missing", async () => {

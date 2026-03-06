@@ -8,6 +8,23 @@ import { setSpanAttributes } from "../runtime/tracer";
 import type { StopCondition, StopConditionContext } from "./stop-conditions";
 
 const MAX_ITERATIONS_HARD_CAP = 25;
+// Maximum number of messages kept in the running history sent to the LLM.
+// Prevents unbounded memory growth from long tool-call chains.
+// System messages are always kept; the sliding window applies to the rest.
+const MAX_HISTORY_MESSAGES = 200;
+
+/**
+ * Returns a trimmed view of messages that never exceeds MAX_HISTORY_MESSAGES.
+ * System messages (always at position 0 when present) are preserved; the
+ * most-recent non-system messages are kept within the window.
+ */
+function trimMessages(messages: LLMMessage[]): LLMMessage[] {
+  if (messages.length <= MAX_HISTORY_MESSAGES) return messages;
+  const systemMsgs = messages.filter((m) => m.role === "system");
+  const nonSystem = messages.filter((m) => m.role !== "system");
+  const keep = nonSystem.slice(-(MAX_HISTORY_MESSAGES - systemMsgs.length));
+  return [...systemMsgs, ...keep];
+}
 
 export type AgentLoopEvent =
   | { type: "text-delta"; content: string }
@@ -105,7 +122,7 @@ export async function* runAgentLoop(
       let totalPromptTokens = 0;
       let totalCompletionTokens = 0;
 
-      for await (const event of options.streamWithTools(messages, options.toolSchemas, options.generationOptions)) {
+      for await (const event of options.streamWithTools(trimMessages(messages), options.toolSchemas, options.generationOptions)) {
         if (event.type === "text-delta") {
           fullText += event.content;
           yield { type: "text-delta", content: event.content };
@@ -180,7 +197,14 @@ export async function* runAgentLoop(
           : [];
         if (conditions.length > 0) {
           const stopCtx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
-          if (conditions.some((c) => c(stopCtx))) {
+          let shouldStop = false;
+          try {
+            shouldStop = conditions.some((c) => c(stopCtx));
+          } catch (stopErr) {
+            yield { type: "error", message: `Stop condition threw: ${stopErr instanceof Error ? stopErr.message : String(stopErr)}` };
+            return;
+          }
+          if (shouldStop) {
             yield { type: "done" };
             return;
           }
@@ -215,7 +239,7 @@ export async function* runAgentLoop(
       return;
     }
 
-    const result = await options.generateWithTools(messages, options.toolSchemas, options.generationOptions);
+    const result = await options.generateWithTools(trimMessages(messages), options.toolSchemas, options.generationOptions);
     const { costUSD } = options.calculateCost(
       options.model,
       result.usage.promptTokens,
@@ -279,7 +303,14 @@ export async function* runAgentLoop(
         : [];
       if (conditions.length > 0) {
         const stopCtx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
-        if (conditions.some((c) => c(stopCtx))) {
+        let shouldStop = false;
+        try {
+          shouldStop = conditions.some((c) => c(stopCtx));
+        } catch (stopErr) {
+          yield { type: "error", message: `Stop condition threw: ${stopErr instanceof Error ? stopErr.message : String(stopErr)}` };
+          return;
+        }
+        if (shouldStop) {
           yield { type: "done" };
           return;
         }

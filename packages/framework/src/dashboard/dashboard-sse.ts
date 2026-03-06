@@ -22,7 +22,10 @@ export function broadcastSSE(data: string): void {
   for (const sink of sinks) {
     try {
       sink.write(data);
-    } catch {
+    } catch (err) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('[fabrk] SSE sink write failed:', err);
+      }
       sinks.delete(sink);
     }
   }

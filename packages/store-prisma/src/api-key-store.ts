@@ -50,8 +50,7 @@ export class PrismaApiKeyStore implements ApiKeyStore {
       orderBy: { createdAt: 'desc' },
       take: limit,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return keys.map((k: any) => mapKey(k))
+    return keys.map((k: Record<string, unknown>) => mapKey(k))
   }
 
   async updateLastUsed(id: string): Promise<void> {
@@ -62,16 +61,15 @@ export class PrismaApiKeyStore implements ApiKeyStore {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapKey(raw: any): ApiKeyInfo {
+function mapKey(raw: Record<string, unknown>): ApiKeyInfo {
   return {
-    id: raw.id,
-    prefix: raw.prefix,
-    name: raw.name,
-    scopes: raw.scopes ?? [],
-    createdAt: raw.createdAt,
-    lastUsedAt: raw.lastUsedAt ?? undefined,
-    expiresAt: raw.expiresAt ?? undefined,
-    active: raw.active,
+    id: raw.id as string,
+    prefix: raw.prefix as string,
+    name: raw.name as string,
+    scopes: (raw.scopes ?? []) as string[],
+    createdAt: raw.createdAt as Date,
+    lastUsedAt: (raw.lastUsedAt as Date | undefined) ?? undefined,
+    expiresAt: (raw.expiresAt as Date | undefined) ?? undefined,
+    active: raw.active as boolean,
   }
 }

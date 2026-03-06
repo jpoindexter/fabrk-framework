@@ -124,8 +124,10 @@ async function wirePayment(config: FabrkConfigInput, registry: PluginRegistry): 
       if (!webhookSecret && isDev()) console.warn('[FABRK] LEMONSQUEEZY_WEBHOOK_SECRET is not set — Lemon Squeezy webhook verification will not function')
       registry.register('payment', payments.createLemonSqueezyAdapter({ apiKey, storeId, webhookSecret }))
     }
-  } catch {
-    // @fabrk/payments not installed — skip
+  } catch (err) {
+    if (isDev() && String(err) !== `Error: Cannot find module '${pkgName}'`) {
+      console.warn(`[fabrk] failed to auto-wire ${pkgName}:`, err);
+    }
   }
 }
 
@@ -148,8 +150,10 @@ async function wireEmail(config: FabrkConfigInput, registry: PluginRegistry): Pr
         from: config.email?.from ?? 'dev@localhost',
       }))
     }
-  } catch {
-    // @fabrk/email not installed — skip
+  } catch (err) {
+    if (isDev() && String(err) !== `Error: Cannot find module '${pkgName}'`) {
+      console.warn(`[fabrk] failed to auto-wire ${pkgName}:`, err);
+    }
   }
 }
 
@@ -180,8 +184,10 @@ async function wireStorage(config: FabrkConfigInput, registry: PluginRegistry): 
         directory: env('STORAGE_PATH', './uploads'),
       }))
     }
-  } catch {
-    // @fabrk/storage not installed — skip
+  } catch (err) {
+    if (isDev() && String(err) !== `Error: Cannot find module '${pkgName}'`) {
+      console.warn(`[fabrk] failed to auto-wire ${pkgName}:`, err);
+    }
   }
 }
 

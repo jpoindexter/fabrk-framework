@@ -108,7 +108,12 @@ export function tryParseStructuredOutput(
   try {
     const data = JSON.parse(text);
     return { event: { type: "structured-output", data, iteration }, parsed: data };
-  } catch { return { event: null, parsed: undefined }; }
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn('[fabrk] failed to parse structured output:', err);
+    }
+    return { event: null, parsed: undefined };
+  }
 }
 
 export function collectToolCallNames(toolCalls: Array<{ name: string }>): string[] {

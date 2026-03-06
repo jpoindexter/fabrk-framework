@@ -22,7 +22,10 @@ export class FileEvalRunStore implements EvalRunStore {
     let files: string[];
     try {
       files = await readdir(datasetDir);
-    } catch {
+    } catch (err) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('[fabrk] failed to read eval run directory:', err);
+      }
       return [];
     }
     const summaries: EvalRunSummary[] = [];
@@ -36,7 +39,11 @@ export class FileEvalRunStore implements EvalRunStore {
           passRate: raw.passRate,
           pass: raw.pass,
         });
-      } catch { /* skip malformed */ }
+      } catch (err) {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          console.warn('[fabrk] failed to parse eval run file:', f, err);
+        }
+      }
     }
     return summaries;
   }
@@ -46,7 +53,10 @@ export class FileEvalRunStore implements EvalRunStore {
     let files: string[];
     try {
       files = await readdir(datasetDir);
-    } catch {
+    } catch (err) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('[fabrk] failed to read latest eval run:', err);
+      }
       return null;
     }
     const sorted = files.filter((f) => f.endsWith('.json')).sort();

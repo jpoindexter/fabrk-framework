@@ -68,7 +68,11 @@ export function agentAsTool(
             if (event.type === "text" || event.type === "text-delta") {
               result += event.content;
             }
-          } catch { /* skip malformed */ }
+          } catch (err) {
+            if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+              console.warn('[fabrk] failed to parse agent SSE event:', err);
+            }
+          }
         }
         return { content: [{ type: "text", text: result || "No response" }] };
       }

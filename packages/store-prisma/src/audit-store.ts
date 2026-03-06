@@ -55,24 +55,22 @@ export class PrismaAuditStore implements AuditStore {
       skip: Math.min(options.offset ?? 0, MAX_AUDIT_OFFSET),
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return events.map((e: any) => mapAuditEvent(e))
+    return events.map((e: Record<string, unknown>) => mapAuditEvent(e))
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapAuditEvent(raw: any): AuditEvent {
+function mapAuditEvent(raw: Record<string, unknown>): AuditEvent {
   return {
-    id: raw.id,
-    actorId: raw.actorId,
-    action: raw.action,
-    resourceType: raw.resourceType,
-    resourceId: raw.resourceId,
-    orgId: raw.orgId ?? undefined,
-    metadata: raw.metadata ?? undefined,
-    ipAddress: raw.ipAddress ?? undefined,
-    userAgent: raw.userAgent ?? undefined,
-    timestamp: raw.timestamp,
-    hash: raw.hash ?? undefined,
+    id: raw.id as string,
+    actorId: raw.actorId as string,
+    action: raw.action as string,
+    resourceType: raw.resourceType as string,
+    resourceId: raw.resourceId as string,
+    orgId: (raw.orgId as string | undefined) ?? undefined,
+    metadata: (raw.metadata as Record<string, unknown> | undefined) ?? undefined,
+    ipAddress: (raw.ipAddress as string | undefined) ?? undefined,
+    userAgent: (raw.userAgent as string | undefined) ?? undefined,
+    timestamp: raw.timestamp as Date,
+    hash: (raw.hash as string | undefined) ?? undefined,
   }
 }

@@ -53,7 +53,10 @@ async function loadSatori(): Promise<SatoriModule | null> {
     const mod = await (Function('return import("satori")')() as Promise<SatoriModule>);
     satoriMod = mod;
     return satoriMod;
-  } catch {
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn('[fabrk] failed to load satori:', err);
+    }
     satoriMod = false;
     return null;
   }
@@ -66,7 +69,10 @@ async function loadResvg(): Promise<ResvgModule | null> {
     const mod = await (Function('return import("@resvg/resvg-js")')() as Promise<ResvgModule>);
     resvgMod = mod;
     return resvgMod;
-  } catch {
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn('[fabrk] failed to load @resvg/resvg-js:', err);
+    }
     resvgMod = false;
     return null;
   }

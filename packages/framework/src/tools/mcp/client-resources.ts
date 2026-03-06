@@ -92,7 +92,12 @@ function buildConnection(
       try {
         const r = await rpcCall("resources/list") as { resources?: Array<{ uri: string; name: string; description?: string; mimeType?: string }> };
         return r.resources ?? [];
-      } catch { return []; }
+      } catch (err) {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          console.warn('[fabrk] failed to list MCP resources:', err);
+        }
+        return [];
+      }
     },
     readResource: async (uri: string) => {
       const r = await rpcCall("resources/read", { uri }) as { contents?: Array<{ text?: string }> };
@@ -102,7 +107,12 @@ function buildConnection(
       try {
         const r = await rpcCall("prompts/list") as { prompts?: Array<{ name: string; description?: string }> };
         return r.prompts ?? [];
-      } catch { return []; }
+      } catch (err) {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          console.warn('[fabrk] failed to list MCP prompts:', err);
+        }
+        return [];
+      }
     },
     getPrompt: async (name: string, args?: Record<string, string>) => {
       const r = await rpcCall("prompts/get", { name, arguments: args ?? {} }) as {

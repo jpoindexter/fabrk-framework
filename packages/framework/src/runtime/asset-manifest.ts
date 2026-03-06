@@ -15,7 +15,10 @@ export function readManifest(distDir: string): Manifest | null {
   try {
     const raw = fs.readFileSync(path.join(distDir, ".vite", "manifest.json"), "utf-8");
     return JSON.parse(raw) as Manifest;
-  } catch {
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn('[fabrk] failed to read asset manifest:', err);
+    }
     return null;
   }
 }

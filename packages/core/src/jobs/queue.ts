@@ -64,8 +64,7 @@ export function createJobQueue(store?: JobStore): JobQueue {
   const jobStore = store ?? new InMemoryJobStore()
   const handlers = new Map<string, (job: Job) => Promise<void>>()
   let running = false
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let pollTimer: any = null
+  let pollTimer: ReturnType<typeof setInterval> | null = null
 
   async function processNext(): Promise<boolean> {
     const types = Array.from(handlers.keys())
@@ -84,7 +83,10 @@ export function createJobQueue(store?: JobStore): JobQueue {
         lastAttemptAt: new Date(),
         attempts: nextAttempts,
       })
-    } catch {
+    } catch (err) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('[fabrk] job status update to running failed:', err);
+      }
       // Reset to pending so inFlight is cleared and job can be retried
       await jobStore.update(job.id, { status: 'pending' }).catch(() => {})
       return false
@@ -143,7 +145,11 @@ export function createJobQueue(store?: JobStore): JobQueue {
         if (!running) return
         try {
           await processNext()
-        } catch { /* processNext errors are intentionally swallowed — job error shouldn't crash the poll loop */ }
+        } catch (err) {
+          if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            console.warn('[fabrk] job queue processNext error:', err);
+          }
+        }
       }, interval)
 
       // Prevent interval from keeping process alive

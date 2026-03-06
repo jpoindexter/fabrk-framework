@@ -31,7 +31,10 @@ export function parseSSELine(line: string): SSEEvent | null {
   const json = line.slice("data: ".length);
   try {
     return JSON.parse(json);
-  } catch {
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn('[fabrk] failed to parse SSE line:', err);
+    }
     return null;
   }
 }

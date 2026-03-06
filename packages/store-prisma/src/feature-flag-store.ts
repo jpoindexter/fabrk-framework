@@ -18,8 +18,7 @@ export class PrismaFeatureFlagStore implements FeatureFlagStore {
       orderBy: { name: 'asc' },
       take: 1000, // Feature flags are an admin resource; cache at application layer if needed
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return flags.map((f: any) => mapFlag(f))
+    return flags.map((f: Record<string, unknown>) => mapFlag(f))
   }
 
   /** @security No authorization check — caller must verify the requesting user has admin privileges. */
@@ -45,14 +44,13 @@ export class PrismaFeatureFlagStore implements FeatureFlagStore {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapFlag(raw: any): FeatureFlagOptions {
+function mapFlag(raw: Record<string, unknown>): FeatureFlagOptions {
   return {
-    name: raw.name,
-    enabled: raw.enabled,
-    rolloutPercent: raw.rolloutPercent ?? undefined,
-    targetUsers: raw.targetUsers ?? [],
-    targetRoles: raw.targetRoles ?? [],
-    metadata: raw.metadata ?? undefined,
+    name: raw.name as string,
+    enabled: raw.enabled as boolean,
+    rolloutPercent: (raw.rolloutPercent as number | undefined) ?? undefined,
+    targetUsers: (raw.targetUsers ?? []) as string[],
+    targetRoles: (raw.targetRoles ?? []) as string[],
+    metadata: (raw.metadata as Record<string, unknown> | undefined) ?? undefined,
   }
 }

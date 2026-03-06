@@ -1,4 +1,4 @@
-import type { NotificationStore, Notification } from '@fabrk/core'
+import type { NotificationStore, Notification, NotificationType, NotificationPriority } from '@fabrk/core'
 import type { PrismaClient } from './types'
 
 export class PrismaNotificationStore implements NotificationStore {
@@ -41,8 +41,7 @@ export class PrismaNotificationStore implements NotificationStore {
       take: options?.limit ?? 200,
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return notifications.map((n: any) => mapNotification(n))
+    return notifications.map((n: Record<string, unknown>) => mapNotification(n))
   }
 
   async markRead(id: string, userId: string): Promise<void> {
@@ -80,20 +79,19 @@ export class PrismaNotificationStore implements NotificationStore {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapNotification(raw: any): Notification {
+function mapNotification(raw: Record<string, unknown>): Notification {
   return {
-    id: raw.id,
-    type: raw.type,
-    title: raw.title,
-    message: raw.message,
-    priority: raw.priority ?? undefined,
-    actionUrl: raw.actionUrl ?? undefined,
-    actionLabel: raw.actionLabel ?? undefined,
-    userIds: raw.userIds ?? [],
-    metadata: raw.metadata ?? undefined,
-    read: raw.read,
-    dismissed: raw.dismissed,
-    createdAt: raw.createdAt,
+    id: raw.id as string,
+    type: raw.type as NotificationType,
+    title: raw.title as string,
+    message: raw.message as string,
+    priority: (raw.priority as NotificationPriority | undefined) ?? undefined,
+    actionUrl: (raw.actionUrl as string | undefined) ?? undefined,
+    actionLabel: (raw.actionLabel as string | undefined) ?? undefined,
+    userIds: (raw.userIds ?? []) as string[],
+    metadata: (raw.metadata as Record<string, unknown> | undefined) ?? undefined,
+    read: raw.read as boolean,
+    dismissed: raw.dismissed as boolean,
+    createdAt: raw.createdAt as Date,
   }
 }

@@ -53,14 +53,23 @@ export function useObject<T>(options: UseObjectOptions<T>) {
             if (!line.startsWith("data: ")) continue;
             const json = line.slice("data: ".length);
             let event: { type: string; text?: string; object?: T };
-            try { event = JSON.parse(json); } catch { continue; }
+            try {
+              event = JSON.parse(json);
+            } catch (err) {
+              if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+                console.warn('[fabrk] failed to parse SSE event in useObject:', err);
+              }
+              continue;
+            }
 
             if (event.type === "delta" && event.text) {
               accumulated += event.text;
               try {
                 const partial = JSON.parse(accumulated) as Partial<T>;
                 setObject(partial);
-              } catch { /* keep accumulating */ }
+              } catch {
+                // Expected — partial JSON while accumulating stream deltas
+              }
             } else if (event.type === "done" && event.object) {
               setObject(event.object as Partial<T>);
               options.onFinish?.(event.object);

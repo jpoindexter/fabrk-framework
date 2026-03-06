@@ -27,8 +27,7 @@ export class PrismaJobStore implements JobStore {
     // Use $queryRaw with tagged template literals (Prisma's safe SQL API).
     // When types are provided they are passed as parameters via the IN list;
     // we build separate positional slots so no value is ever string-interpolated.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let rows: any[]
+    let rows: Record<string, unknown>[]
     if (types?.length) {
       // Build a safe parameterized query using Prisma's $queryRaw tagged-template
       // calling convention without importing @prisma/client. $queryRaw accepts the
@@ -115,8 +114,7 @@ export class PrismaJobStore implements JobStore {
       orderBy: { createdAt: 'desc' },
       take: limit ?? 100,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return jobs.map((j: any) => mapJob(j))
+    return jobs.map((j: Record<string, unknown>) => mapJob(j))
   }
 }
 
@@ -126,8 +124,7 @@ export class PrismaJobStore implements JobStore {
  * return camelCase. This mapper handles both so `mapJob` works for both
  * code paths.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalizeJobRow(raw: any): any {
+function normalizeJobRow(raw: Record<string, unknown>): Record<string, unknown> {
   return {
     id: raw.id,
     type: raw.type,
@@ -146,23 +143,22 @@ function normalizeJobRow(raw: any): any {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapJob(raw: any): Job {
+function mapJob(raw: Record<string, unknown>): Job {
   const r = normalizeJobRow(raw)
   return {
-    id: r.id,
-    type: r.type,
-    payload: r.payload ?? {},
-    priority: r.priority ?? 0,
-    maxRetries: r.maxRetries ?? 3,
-    delay: r.delay ?? undefined,
-    scheduledAt: r.scheduledAt ?? undefined,
+    id: r.id as string,
+    type: r.type as string,
+    payload: (r.payload ?? {}) as Record<string, unknown>,
+    priority: (r.priority as number | undefined) ?? 0,
+    maxRetries: (r.maxRetries as number | undefined) ?? 3,
+    delay: (r.delay as number | undefined) ?? undefined,
+    scheduledAt: (r.scheduledAt as Date | undefined) ?? undefined,
     status: r.status as JobStatus,
-    attempts: r.attempts,
-    createdAt: r.createdAt,
-    lastAttemptAt: r.lastAttemptAt ?? undefined,
-    completedAt: r.completedAt ?? undefined,
-    error: r.error ?? undefined,
-    result: r.result ?? undefined,
+    attempts: r.attempts as number,
+    createdAt: r.createdAt as Date,
+    lastAttemptAt: (r.lastAttemptAt as Date | undefined) ?? undefined,
+    completedAt: (r.completedAt as Date | undefined) ?? undefined,
+    error: (r.error as string | undefined) ?? undefined,
+    result: (r.result as Record<string, unknown> | undefined) ?? undefined,
   }
 }

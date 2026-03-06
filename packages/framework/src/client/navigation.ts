@@ -163,7 +163,11 @@ export function prefetchUrl(url: string): void {
           storePrefetchResponse(url, await res.text());
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          console.warn('[fabrk] prefetch failed:', err);
+        }
+      });
   });
 }
 

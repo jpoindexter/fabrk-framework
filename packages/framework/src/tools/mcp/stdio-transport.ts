@@ -147,7 +147,11 @@ export async function createStdioClient(
           p.resolve(msg.result);
         }
       }
-    } catch { /* skip malformed */ }
+    } catch (err) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('[fabrk] MCP stdio: failed to parse response line:', err);
+      }
+    }
   });
 
   function send(method: string, params?: Record<string, unknown>): Promise<unknown> {

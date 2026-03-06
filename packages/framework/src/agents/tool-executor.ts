@@ -62,7 +62,11 @@ async function safeHook(fn: (() => void | Promise<void>) | undefined): Promise<v
   if (!fn) return;
   try {
     await fn();
-  } catch { /* hooks must never break execution */ }
+  } catch (err) {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+      console.warn('[fabrk] tool executor hook threw:', err);
+    }
+  }
 }
 
 function mergeHooks(

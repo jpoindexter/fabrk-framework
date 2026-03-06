@@ -68,7 +68,11 @@ async function loadAgentEntries(
             tools: (def.tools as string[]) ?? [],
           };
         }
-      } catch { /* skip invalid agent files */ }
+      } catch (err) {
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+          console.warn(`[fabrk] failed to load agent definition for "${a.name}":`, err);
+        }
+      }
       return {
         name: a.name,
         route: a.routePattern,

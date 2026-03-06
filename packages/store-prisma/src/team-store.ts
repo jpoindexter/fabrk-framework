@@ -60,16 +60,18 @@ export class PrismaTeamStore implements TeamStore {
       include: { user: true },
       take: 500,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return members.map((m: any) => ({
-      userId: m.userId,
-      orgId: m.organizationId,
-      role: (m.role as string).toLowerCase() as OrgRole,
-      joinedAt: m.joinedAt ?? m.createdAt,
-      name: m.user?.name,
-      email: m.user?.email ?? '',
-      image: m.user?.image,
-    }))
+    return members.map((m: Record<string, unknown>) => {
+      const user = m.user as Record<string, unknown> | undefined
+      return {
+        userId: m.userId as string,
+        orgId: m.organizationId as string,
+        role: (m.role as string).toLowerCase() as OrgRole,
+        joinedAt: (m.joinedAt ?? m.createdAt) as Date,
+        name: user?.name as string | undefined,
+        email: (user?.email ?? '') as string,
+        image: user?.image as string | undefined,
+      }
+    })
   }
 
   async addMember(member: OrgMember): Promise<void> {
@@ -133,29 +135,27 @@ export class PrismaTeamStore implements TeamStore {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapOrg(raw: any): Organization {
+function mapOrg(raw: Record<string, unknown>): Organization {
   return {
-    id: raw.id,
-    name: raw.name,
-    slug: raw.slug,
-    ownerId: raw.ownerId ?? raw.createdBy,
-    logoUrl: raw.logoUrl ?? raw.logo,
-    createdAt: raw.createdAt,
-    settings: raw.settings,
+    id: raw.id as string,
+    name: raw.name as string,
+    slug: raw.slug as string,
+    ownerId: (raw.ownerId ?? raw.createdBy) as string,
+    logoUrl: (raw.logoUrl ?? raw.logo) as string | undefined,
+    createdAt: raw.createdAt as Date,
+    settings: raw.settings as Record<string, unknown> | undefined,
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapInvite(raw: any): OrgInvite {
+function mapInvite(raw: Record<string, unknown>): OrgInvite {
   return {
-    id: raw.id,
-    orgId: raw.organizationId,
-    email: raw.email,
+    id: raw.id as string,
+    orgId: raw.organizationId as string,
+    email: raw.email as string,
     role: (raw.role as string).toLowerCase() as OrgRole,
-    token: raw.token,
-    invitedBy: raw.invitedBy,
-    expiresAt: raw.expiresAt,
+    token: raw.token as string,
+    invitedBy: raw.invitedBy as string,
+    expiresAt: raw.expiresAt as Date,
     accepted: !!raw.acceptedAt,
   }
 }

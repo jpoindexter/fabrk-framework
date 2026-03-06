@@ -83,8 +83,10 @@ export function seedISRCache(distDir: string, isrCache: ISRCacheHandler) {
         revalidate: data.revalidate,
         tags: data.tags,
       });
-    } catch {
-      // ignore corrupt files
+    } catch (err) {
+      if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+        console.warn('[fabrk] failed to parse ISR prerender file:', file, err);
+      }
     }
   }
 }

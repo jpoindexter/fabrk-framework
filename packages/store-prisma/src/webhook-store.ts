@@ -33,14 +33,12 @@ export class PrismaWebhookStore implements WebhookStore {
       },
       take: 100,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return webhooks.map((w: any) => mapWebhook(w))
+    return webhooks.map((w: Record<string, unknown>) => mapWebhook(w))
   }
 
   async listAll(): Promise<WebhookConfig[]> {
     const webhooks = await this.prisma.webhook.findMany({ take: 1000 })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return webhooks.map((w: any) => mapWebhook(w))
+    return webhooks.map((w: Record<string, unknown>) => mapWebhook(w))
   }
 
   async update(id: string, updates: Partial<WebhookConfig>): Promise<void> {
@@ -89,14 +87,13 @@ export class PrismaWebhookStore implements WebhookStore {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapWebhook(raw: any): WebhookConfig {
+function mapWebhook(raw: Record<string, unknown>): WebhookConfig {
   return {
-    id: raw.id,
-    url: raw.url,
-    events: raw.events ?? [],
+    id: raw.id as string,
+    url: raw.url as string,
+    events: (raw.events ?? []) as string[],
     secret: '***',
-    active: raw.active,
-    createdAt: raw.createdAt,
+    active: raw.active as boolean,
+    createdAt: raw.createdAt as Date,
   }
 }

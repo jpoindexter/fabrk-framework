@@ -8,7 +8,7 @@
   <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-13-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-109%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-2810-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-2677-green" alt="Tests" />
   <img src="https://img.shields.io/badge/themes-18-green" alt="Themes" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />

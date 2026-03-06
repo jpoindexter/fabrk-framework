@@ -119,6 +119,8 @@ const replacements: Array<[RegExp, (m: string) => string]> = [
   [/\b\d[\d,]* tests\b/g, () => `${formattedTests} tests`],
   // stats.ts numeric field: tests: 2677
   [/(?<=tests:\s*)\d+(?=,)/g, () => String(testCount)],
+  // shields.io badge: tests-NNNN-green
+  [/(?<=tests-)\d+(?=-green)/g, () => String(testCount)],
 ]
 
 let totalChanges = 0

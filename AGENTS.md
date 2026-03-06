@@ -15,7 +15,7 @@
 pnpm install          # Install all dependencies
 pnpm build            # Build all 18 packages (13 libs + 5 examples)
 pnpm dev              # Watch mode
-pnpm test             # Run 858 tests
+pnpm test             # Run 2,677 tests
 pnpm type-check       # TypeScript validation
 pnpm lint             # Lint all packages
 pnpm size             # Bundle size tracking

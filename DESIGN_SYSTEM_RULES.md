@@ -520,24 +520,49 @@ These functions are preferred over manual string formatting when building new co
 
 ## Automated Enforcement
 
-The design system rules are enforced at three layers:
+The design system rules are enforced at four layers:
 
 ### 1. ESLint Rule (`fabrk/no-hardcoded-colors`)
 
-Runs automatically on `pnpm lint`. Reports a **warning** for any hardcoded Tailwind color class in `className` props and `cn()` / `clsx()` calls:
+Runs automatically on `pnpm lint`. Reports an **error** for any hardcoded Tailwind color class in `className` props and `cn()` / `clsx()` / `cx()` calls:
 
 ```
-warning  Hardcoded color "bg-blue-500" violates FABRK design system.
-         Use semantic tokens: bg-primary, text-foreground, border-border, etc.
+error  Hardcoded color "bg-blue-500" violates FABRK design system.
+       Use semantic tokens: bg-primary, text-foreground, border-border, etc.
+       See DESIGN_SYSTEM_RULES.md
 ```
 
-The rule checks `className` literals, JSX expression containers, template literal static parts, and `cn('...')` / `clsx('...')` call arguments.
+The rule checks `className` literals, JSX expression containers, template literal static parts, and `cn('...')` / `clsx('...')` call arguments. It strips responsive/state prefixes (`sm:`, `hover:`, `dark:`, etc.) before checking, so `hover:bg-blue-500` is correctly flagged.
 
-### 2. Vite Dev-Server Warning (`fabrk:design-system`)
+### 2. ESLint Rule (`fabrk/no-font-mono`)
 
-During `pnpm dev`, the FABRK Vite plugin scans `.tsx` / `.jsx` files at transform time. Any `className` string containing a hardcoded color class emits a console warning with the file path and offending classes.
+Prevents raw `font-mono` in `className` props and `cn()` / `clsx()` / `cx()` calls. Reports an **error**:
 
-### 3. Programmatic Check
+```
+error  Hardcoded "font-mono" violates FABRK design system.
+       Use mode.font from @fabrk/design-system so the font adapts with the active theme.
+```
+
+Both rules are defined inline in `eslint.config.js` under the `fabrk` plugin namespace and run at `'error'` severity on all `.ts` / `.tsx` files.
+
+### 3. Vite Dev-Server Warning (`fabrk:design-system`)
+
+During `pnpm dev`, the `designSystemPlugin()` from `packages/framework/src/runtime/design-system-plugin.ts` scans `.tsx` / `.jsx` files at transform time. Any `className` string containing a hardcoded color class emits a console warning with the file path and offending classes. In production builds (`fabrk build`) the same check is promoted to a **build error** via `this.error(msg)`, failing the build outright.
+
+### 4. `fabrk lint` CLI Command
+
+Run manually or in CI to check design system compliance across `.tsx` / `.jsx` source files:
+
+```bash
+fabrk lint              # scans src/ by default
+fabrk lint --dir app    # scan a different directory
+```
+
+Reports hardcoded colors, hardcoded radius classes (`rounded-lg`, etc. — use `mode.radius`), raw `font-mono` occurrences, and inline `style={{}}` usage. Unlike the ESLint rules, `fabrk lint` works without an ESLint setup and is suitable for CI gates on projects that don't run the full lint pipeline.
+
+> `fabrk check` is a separate command that validates project health (Node.js version, config files, agents, tools) — it does not run design system checks. Use `fabrk lint` for design system compliance.
+
+### Programmatic Check
 
 ```ts
 import { checkDesignTokens, isDesignSystemCompliant } from '@fabrk/design-system'

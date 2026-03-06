@@ -72,7 +72,7 @@ Turbo handles the build order automatically, so running `pnpm build` at the root
 ### Running Tests
 
 ```bash
-# Run all tests (858 across all test files)
+# Run all tests (2,677 across all test files)
 pnpm test
 
 # Watch mode
@@ -89,9 +89,15 @@ pnpm type-check
 ### Linting
 
 ```bash
-# Lint all packages
+# Lint all packages (includes fabrk/no-hardcoded-colors and fabrk/no-font-mono ESLint rules)
 pnpm lint
+
+# Design system compliance check (hardcoded colors, radius, font-mono, inline styles)
+fabrk lint              # scans src/ by default
+fabrk lint --dir app    # scan app/ directory
 ```
+
+The `fabrk/no-hardcoded-colors` and `fabrk/no-font-mono` ESLint rules run at `error` severity on every `pnpm lint` invocation. `fabrk lint` provides the same checks without requiring an ESLint setup.
 
 ### Clean Rebuild
 

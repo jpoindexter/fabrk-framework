@@ -123,7 +123,7 @@ export default defineFabrkConfig({
 import {
   KPICard, Card, Badge, Button, DataTable, BarChart
 } from '@fabrk/components'
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 import { mode } from '@fabrk/design-system'
 
 const stats = [

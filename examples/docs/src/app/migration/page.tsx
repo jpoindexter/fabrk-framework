@@ -89,7 +89,7 @@ import { cn } from '@/lib/utils'
 import { cn } from '@/utils'
 
 // AFTER: FABRK package imports
-import { cn } from '@fabrk/core'`}</CodeBlock>
+import { cn } from '@/lib/utils'`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">
           DESIGN SYSTEM IMPORTS
@@ -330,7 +330,7 @@ import QRCode from 'qrcode.react'
 
 // AFTER: mode.radius from design system
 import { mode } from '@fabrk/design-system'
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 
 <Card className={cn("border border-border p-4", mode.radius)}>
 <Button className={cn("px-4 py-2", mode.radius)}>{'>'} CLICK</Button>`}</CodeBlock>
@@ -423,7 +423,7 @@ const fabrk = autoWire(config, undefined, {
         <CodeBlock title="when to add use client">{`// NEEDS 'use client' — uses cn(), useState, onClick, etc.
 'use client'
 
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 import { mode } from '@fabrk/design-system'
 import { Button, Card } from '@fabrk/components'
 
@@ -750,7 +750,7 @@ export default function Page() {
 
 'use client'  // ← Add this
 
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 // ... component code`}</CodeBlock>
 
         <h3 className="text-sm font-semibold text-foreground uppercase mt-6 mb-3">

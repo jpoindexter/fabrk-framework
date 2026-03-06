@@ -1,5 +1,5 @@
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 import { mode } from '@fabrk/design-system'
 
 export default function AgentsPage() {

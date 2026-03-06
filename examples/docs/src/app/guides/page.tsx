@@ -73,7 +73,7 @@ pnpm install`}</CodeBlock>
         </p>
         <CodeBlock title="app/dashboard/layout.tsx">{`'use client'
 
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 import { mode } from '@fabrk/design-system'
 
 const navItems = [
@@ -143,7 +143,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <CodeBlock title="src/app/dashboard/page.tsx">{`'use client'
 
 import { KPICard, Card, Badge, BarChart, LineChart, DataTable } from '@fabrk/components'
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 import { mode } from '@fabrk/design-system'
 
 // KPI data — in production, fetch this from your API
@@ -1272,7 +1272,7 @@ export async function POST(req: Request) {
         <CodeBlock title="app/chat/page.tsx">{`'use client'
 
 import { useAgent } from 'fabrk/client'
-import { cn } from '@fabrk/core'
+import { cn } from '@/lib/utils'
 import { mode } from '@fabrk/design-system'
 
 export default function ChatPage() {

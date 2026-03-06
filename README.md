@@ -200,7 +200,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, workflow, and comm
 
 ## Who Built This
 
-Built by [Jason Poindexter](https://github.com/jpoindexter). FABRK is the distillation of years of shipping SaaS products — every pattern that worked, extracted and packaged so the next project starts further ahead.
+Built by [Jason Poindexter](https://github.com/jpoindexter). FABRK started as a production boilerplate at [fabrk.dev](https://fabrk.dev) — years of shipping SaaS products distilled into a framework so the next project starts further ahead.
 
 ## License
 

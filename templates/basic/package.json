@@ -10,10 +10,10 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@fabrk/components": "^0.1.0",
-    "@fabrk/config": "^0.1.0",
-    "@fabrk/core": "^0.1.0",
-    "@fabrk/design-system": "^0.1.0",
+    "@fabrk/components": "^0.3.0",
+    "@fabrk/config": "^0.3.0",
+    "@fabrk/core": "^0.3.0",
+    "@fabrk/design-system": "^0.3.0",
     "next": "^15.1.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

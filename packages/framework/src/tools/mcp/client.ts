@@ -32,7 +32,7 @@ function validateToolName(name: unknown): string {
   if (name.length > 128) {
     throw new MCPClientError(`MCP server returned a tool name exceeding 128 chars: "${name.slice(0, 32)}..."`);
   }
-  if (!/^[\w.\-]+$/.test(name)) {
+  if (!/^[\w.-]+$/.test(name)) {
     throw new MCPClientError(`MCP server returned a tool name with invalid characters: "${name}"`);
   }
   return name;
@@ -47,6 +47,7 @@ function validateToolName(name: unknown): string {
 function sanitizeToolDescription(description: unknown): string {
   if (typeof description !== "string") return "";
   // Strip ASCII control characters (keep printable + standard whitespace)
+  // eslint-disable-next-line no-control-regex -- intentional: sanitizing control chars from untrusted MCP server output
   const cleaned = description.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
   return cleaned.slice(0, 2_000);
 }

@@ -121,3 +121,15 @@ docs/plans/
 
 # Git worktrees
 .worktrees/
+
+# Local-only demo apps (not for public repo)
+apps/ux-audit/
+
+# OS / editor artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/settings.json

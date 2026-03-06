@@ -256,6 +256,7 @@ describe("sanitizeToolDescription", () => {
   it("strips ASCII control characters", () => {
     const withCtrl = "tool\x00desc\x01\x02\x1F";
     const result = sanitizeToolDescription(withCtrl);
+    // eslint-disable-next-line no-control-regex -- intentional: verifying control chars were stripped
     expect(result).not.toMatch(/[\x00-\x08\x0B\x0C\x0E-\x1F]/);
   });
 

@@ -5,10 +5,10 @@
 
 <p align="center">
   <a href="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml"><img src="https://github.com/jpoindexter/fabrk-framework/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/github/license/jpoindexter/fabrk-framework" alt="License" /></a>
+  <a href="https://github.com/jpoindexter/fabrk-framework/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License" /></a>
   <img src="https://img.shields.io/badge/packages-13-green" alt="Packages" />
   <img src="https://img.shields.io/badge/components-109%2B-green" alt="Components" />
-  <img src="https://img.shields.io/badge/tests-858-green" alt="Tests" />
+  <img src="https://img.shields.io/badge/tests-2810-green" alt="Tests" />
   <img src="https://img.shields.io/badge/themes-18-green" alt="Themes" />
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node" />
   <img src="https://img.shields.io/badge/TypeScript-strict-blue" alt="TypeScript" />

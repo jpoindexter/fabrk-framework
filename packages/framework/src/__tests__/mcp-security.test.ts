@@ -502,6 +502,114 @@ describe("createStdioClient — oversized stdio line guard", () => {
   });
 });
 
+// ─── 14a. Stdio — JSON-RPC ID type confusion attack ─────────────────────────
+// A malicious stdio MCP server could send responses with non-numeric IDs
+// (objects, arrays, floats, strings) crafted to collide with a pending
+// request's integer ID via Map key coercion. After the fix, only exact
+// integer matches are resolved.
+describe("createStdioClient — JSON-RPC ID type validation", () => {
+  beforeEach(() => { vi.resetModules(); });
+
+  it("ignores responses with object ID that would coerce to a matching string", async () => {
+    const rlEmitter = new EventEmitter() as EventEmitter & { close(): void };
+    rlEmitter.close = vi.fn();
+
+    const fakeStdin = {
+      write: vi.fn((data: string) => {
+        setImmediate(() => {
+          try {
+            const req = JSON.parse(data.trim());
+            let result: unknown;
+            if (req.method === "initialize") {
+              result = { protocolVersion: "2024-11-05", capabilities: {} };
+              // Send with correct numeric id
+              rlEmitter.emit("line", JSON.stringify({ jsonrpc: "2.0", id: req.id, result }));
+            } else if (req.method === "tools/list") {
+              result = { tools: [] };
+              // Malicious: respond with a string id "1" instead of numeric 1
+              // (or an object {valueOf: 1}) — should NOT resolve the pending promise
+              rlEmitter.emit("line", JSON.stringify({ jsonrpc: "2.0", id: String(req.id), result }));
+              // Then send the legitimate numeric response
+              rlEmitter.emit("line", JSON.stringify({ jsonrpc: "2.0", id: req.id, result }));
+            } else {
+              result = {};
+              rlEmitter.emit("line", JSON.stringify({ jsonrpc: "2.0", id: req.id, result }));
+            }
+          } catch { /* ignore */ }
+        });
+      }),
+    };
+
+    const fakeChild = {
+      stdin: fakeStdin,
+      stdout: new EventEmitter(),
+      killed: false,
+      kill: vi.fn(),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === "exit") setImmediate(cb);
+      }),
+    };
+
+    vi.doMock("node:child_process", () => ({ spawn: vi.fn().mockReturnValue(fakeChild) }));
+    vi.doMock("node:readline", () => ({
+      createInterface: vi.fn().mockReturnValue(rlEmitter),
+    }));
+
+    const { createStdioClient } = await import("../tools/mcp/stdio-transport");
+    // Must resolve normally (numeric id fallback is sent after the poisoned string id)
+    const client = await createStdioClient("node", []);
+    expect(client.tools).toHaveLength(0);
+    await client.disconnect();
+  });
+
+  it("ignores responses with null ID (server-side notifications)", async () => {
+    const rlEmitter = new EventEmitter() as EventEmitter & { close(): void };
+    rlEmitter.close = vi.fn();
+
+    const fakeStdin = {
+      write: vi.fn((data: string) => {
+        setImmediate(() => {
+          try {
+            const req = JSON.parse(data.trim());
+            let result: unknown;
+            if (req.method === "initialize") {
+              result = { protocolVersion: "2024-11-05", capabilities: {} };
+            } else if (req.method === "tools/list") {
+              result = { tools: [] };
+            } else {
+              result = {};
+            }
+            // First emit a null-id notification (should be ignored, not crash)
+            rlEmitter.emit("line", JSON.stringify({ jsonrpc: "2.0", id: null, method: "notifications/tools/list_changed" }));
+            // Then send real response
+            rlEmitter.emit("line", JSON.stringify({ jsonrpc: "2.0", id: req.id, result }));
+          } catch { /* ignore */ }
+        });
+      }),
+    };
+
+    const fakeChild = {
+      stdin: fakeStdin,
+      stdout: new EventEmitter(),
+      killed: false,
+      kill: vi.fn(),
+      on: vi.fn((event: string, cb: () => void) => {
+        if (event === "exit") setImmediate(cb);
+      }),
+    };
+
+    vi.doMock("node:child_process", () => ({ spawn: vi.fn().mockReturnValue(fakeChild) }));
+    vi.doMock("node:readline", () => ({
+      createInterface: vi.fn().mockReturnValue(rlEmitter),
+    }));
+
+    const { createStdioClient } = await import("../tools/mcp/stdio-transport");
+    const client = await createStdioClient("node", []);
+    expect(client.tools).toHaveLength(0);
+    await client.disconnect();
+  });
+});
+
 // ─── 14. Stdio — tool count cap ───────────────────────────────────────────────
 
 describe("createStdioClient — tool count cap", () => {

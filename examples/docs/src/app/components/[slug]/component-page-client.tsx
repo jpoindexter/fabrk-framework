@@ -97,7 +97,7 @@ export default function ComponentPageClient() {
                     {doc.a11y.keyboard.map((kb, i) => (
                       <tr key={i} className="border-b border-border last:border-b-0">
                         <td className="px-3 py-2 text-primary font-bold whitespace-nowrap">
-                          <kbd className="bg-muted px-1.5 py-0.5 border border-border text-xs">{kb.key}</kbd>
+                          <kbd className={cn('bg-muted px-1.5 py-0.5 border border-border text-xs', mode.radius)}>{kb.key}</kbd>
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">{kb.action}</td>
                       </tr>

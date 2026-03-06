@@ -7,6 +7,23 @@ import { checkBudget, recordCost, type BudgetContext } from "./budget-guard";
 import { setSpanAttributes } from "../runtime/tracer";
 import type { StopCondition, StopConditionContext } from "./stop-conditions";
 
+function evaluateStopConditions(
+  stopWhen: StopCondition | StopCondition[] | undefined,
+  iteration: number,
+  lastToolCallNames: string[]
+): { stop: boolean; error?: string } {
+  const conditions = stopWhen
+    ? Array.isArray(stopWhen) ? stopWhen : [stopWhen]
+    : [];
+  if (conditions.length === 0) return { stop: false };
+  const ctx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
+  try {
+    return { stop: conditions.some((c) => c(ctx)) };
+  } catch (stopErr) {
+    return { stop: true, error: `Stop condition threw: ${stopErr instanceof Error ? stopErr.message : String(stopErr)}` };
+  }
+}
+
 const MAX_ITERATIONS_HARD_CAP = 25;
 // Maximum number of messages kept in the running history sent to the LLM.
 // Prevents unbounded memory growth from long tool-call chains.
@@ -192,23 +209,9 @@ export async function* runAgentLoop(
           }
         }
 
-        const conditions = options.stopWhen
-          ? Array.isArray(options.stopWhen) ? options.stopWhen : [options.stopWhen]
-          : [];
-        if (conditions.length > 0) {
-          const stopCtx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
-          let shouldStop = false;
-          try {
-            shouldStop = conditions.some((c) => c(stopCtx));
-          } catch (stopErr) {
-            yield { type: "error", message: `Stop condition threw: ${stopErr instanceof Error ? stopErr.message : String(stopErr)}` };
-            return;
-          }
-          if (shouldStop) {
-            yield { type: "done" };
-            return;
-          }
-        }
+        const stopResult = evaluateStopConditions(options.stopWhen, iteration, lastToolCallNames);
+        if (stopResult.error) { yield { type: "error", message: stopResult.error }; return; }
+        if (stopResult.stop) { yield { type: "done" }; return; }
 
         continue;
       }
@@ -298,23 +301,9 @@ export async function* runAgentLoop(
         }
       }
 
-      const conditions = options.stopWhen
-        ? Array.isArray(options.stopWhen) ? options.stopWhen : [options.stopWhen]
-        : [];
-      if (conditions.length > 0) {
-        const stopCtx: StopConditionContext = { iterationCount: iteration + 1, lastToolCallNames };
-        let shouldStop = false;
-        try {
-          shouldStop = conditions.some((c) => c(stopCtx));
-        } catch (stopErr) {
-          yield { type: "error", message: `Stop condition threw: ${stopErr instanceof Error ? stopErr.message : String(stopErr)}` };
-          return;
-        }
-        if (shouldStop) {
-          yield { type: "done" };
-          return;
-        }
-      }
+      const stopResult = evaluateStopConditions(options.stopWhen, iteration, lastToolCallNames);
+      if (stopResult.error) { yield { type: "error", message: stopResult.error }; return; }
+      if (stopResult.stop) { yield { type: "done" }; return; }
 
       continue;
     }

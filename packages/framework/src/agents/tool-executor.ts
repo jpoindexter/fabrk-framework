@@ -36,10 +36,22 @@ function validateRequiredFields(
 }
 
 function truncateOutput(result: ToolResult): string {
-  const text = result.content
-    .filter((c) => c.type === "text")
-    .map((c) => c.text)
-    .join("\n");
+  // Build a single text representation from all content parts.
+  // Non-text parts (image, file) contribute their base64 data which can be
+  // very large — include them in the total budget so a tool returning a huge
+  // binary payload cannot bypass the 50K char cap.
+  const parts: string[] = [];
+  for (const c of result.content) {
+    if (c.type === "text") {
+      parts.push(c.text);
+    } else if (c.type === "image") {
+      // Represent image inline so it counts toward the cap.
+      parts.push(`[image:${c.mediaType};base64,${c.data}]`);
+    } else if (c.type === "file") {
+      parts.push(`[file:${c.name};base64,${c.data}]`);
+    }
+  }
+  const text = parts.join("\n");
   if (text.length > MAX_OUTPUT_CHARS) {
     return text.slice(0, MAX_OUTPUT_CHARS) + "\n...[truncated]";
   }
@@ -75,6 +87,11 @@ export function createToolExecutor(
 ): ToolExecutor {
   const resolvedTools = new Map<string, ToolDefinition>();
   for (const tool of tools) {
+    if (resolvedTools.has(tool.name)) {
+      throw new Error(
+        `Duplicate tool name: "${tool.name}". Each tool must have a unique name to prevent shadowing attacks.`
+      );
+    }
     resolvedTools.set(tool.name, tool);
   }
 

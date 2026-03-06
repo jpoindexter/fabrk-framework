@@ -57,7 +57,7 @@ export function ThemeSwitcher() {
       </button>
 
       {open && (
-        <div className="mt-1 max-h-48 overflow-y-auto border border-border bg-card">
+        <div className={cn("mt-1 max-h-48 overflow-y-auto border border-border bg-card", mode.radius)}>
           {THEMES.map((t) => (
             <button
               key={t.value}

@@ -241,7 +241,7 @@ export function Search() {
               mode.font
             )}
           />
-          <kbd className="text-xs text-muted-foreground border border-border px-1.5 py-0.5 ml-2">
+          <kbd className={cn('text-xs text-muted-foreground border border-border px-1.5 py-0.5 ml-2', mode.radius)}>
             ESC
           </kbd>
         </div>
@@ -301,16 +301,16 @@ export function Search() {
         {flatResults.length > 0 && (
           <div className="border-t border-border px-4 py-2 flex items-center gap-4 text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
-              <kbd className="border border-border px-1">&#8593;</kbd>
-              <kbd className="border border-border px-1">&#8595;</kbd>
+              <kbd className={cn('border border-border px-1', mode.radius)}>&#8593;</kbd>
+              <kbd className={cn('border border-border px-1', mode.radius)}>&#8595;</kbd>
               NAVIGATE
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="border border-border px-1">&#9166;</kbd>
+              <kbd className={cn('border border-border px-1', mode.radius)}>&#9166;</kbd>
               SELECT
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="border border-border px-1">ESC</kbd>
+              <kbd className={cn('border border-border px-1', mode.radius)}>ESC</kbd>
               CLOSE
             </span>
           </div>
@@ -343,7 +343,7 @@ export function SearchTrigger() {
     >
       <span>{'>'}</span>
       <span className="flex-1 text-left">SEARCH...</span>
-      <kbd className="border border-border px-1.5 py-0.5 text-xs">
+      <kbd className={cn('border border-border px-1.5 py-0.5 text-xs', mode.radius)}>
         <span className="text-[10px]">&#8984;</span>K
       </kbd>
     </button>

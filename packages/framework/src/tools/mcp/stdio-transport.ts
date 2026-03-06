@@ -132,7 +132,11 @@ export async function createStdioClient(
 
     try {
       const msg = JSON.parse(line);
-      if (msg.id !== undefined && pending.has(msg.id)) {
+      // Only accept numeric IDs that match a pending request.
+      // A malicious child process could send non-numeric ids (objects, arrays)
+      // whose coerced toString() matches a valid id, or send a crafted id that
+      // resolves a request it did not handle. Strict Number check prevents this.
+      if (typeof msg.id === "number" && Number.isInteger(msg.id) && pending.has(msg.id)) {
         const p = pending.get(msg.id);
         if (!p) return;
         pending.delete(msg.id);

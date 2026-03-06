@@ -22,10 +22,12 @@ type ReactModuleLoader = () => Promise<[any, any]>;
 /**
  * Strip CRLF and other control characters from a header value to prevent
  * HTTP response splitting. Returns the cleaned string.
+ * Range \x00-\x1f covers all C0 controls including \x09 (HT/tab) which can
+ * be used for obsolete header line-folding in some HTTP stacks.
  */
 function sanitizeHeaderValue(value: string): string {
-  // eslint-disable-next-line no-control-regex -- strip all ASCII control chars
-  return value.replace(/[\x00-\x08\x0a-\x1f\x7f]/g, "").replace(/\r/g, "");
+  // eslint-disable-next-line no-control-regex -- strip all ASCII control chars including tab (\x09)
+  return value.replace(/[\x00-\x1f\x7f]/g, "");
 }
 
 /**
@@ -99,10 +101,20 @@ export async function handleRequest(
         }
         if (middlewareResult && typeof middlewareResult === "object") {
           if (typeof middlewareResult.rewriteUrl === "string") {
-            request = new Request(
-              new URL(middlewareResult.rewriteUrl, request.url).toString(),
-              request
-            );
+            // Only allow relative paths (same-origin rewrites). Absolute URLs
+            // or protocol-relative paths would change the request origin seen
+            // by downstream SSR code.
+            // eslint-disable-next-line no-control-regex
+            const stripped = middlewareResult.rewriteUrl.replace(/[\x00-\x20\x7f]/g, "");
+            const safeRewrite = (stripped.startsWith("/") && !stripped.startsWith("//"))
+              ? middlewareResult.rewriteUrl
+              : null;
+            if (safeRewrite) {
+              request = new Request(
+                new URL(safeRewrite, request.url).toString(),
+                request
+              );
+            }
           }
           if (middlewareResult.responseHeaders instanceof Headers) {
             mwResponseHeaders = middlewareResult.responseHeaders;

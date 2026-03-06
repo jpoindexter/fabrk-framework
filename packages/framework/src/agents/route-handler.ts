@@ -1,7 +1,6 @@
 import type { AgentDefinition } from "./define-agent";
 import type { ToolDefinition } from "../tools/define-tool";
 import type { LLMMessage, LLMToolResult, LLMToolSchema, LLMStreamEvent } from "@fabrk/ai";
-import { textResult } from "../tools/define-tool";
 import type { MemoryStore } from "./memory/types";
 import type { Guardrail } from "./guardrails";
 import type { ToolExecutorHooks } from "./tool-executor";
@@ -16,17 +15,13 @@ import { runAgentLoop, type AgentLoopEvent } from "./agent-loop";
 import { checkDelegationDepth } from "./orchestration/agent-tool";
 import { waitForApproval } from "./approval-handler";
 import { compressThread } from "./memory/compress";
-
-
-function serializeContentForMemory(content: string | unknown[]): string {
-  if (typeof content === "string") return content;
-  return JSON.stringify(content);
-}
+import { persistMessages } from "./memory-helpers";
+import { buildLongTermMemoryTools, type LongTermConfig } from "./long-term-memory-tools";
 
 const ALLOWED_ROLES = new Set(["user", "assistant"]);
 const MAX_PARTS = 20;
 const MAX_BASE64_BYTES = 2 * 1024 * 1024;
-const MAX_REQUEST_BYTES = 4 * 1024 * 1024; // 4 MB hard cap before JSON parsing
+const MAX_REQUEST_BYTES = 4 * 1024 * 1024;
 
 function validateMessages(
   messages: Array<{ role: unknown; content: unknown }>
@@ -58,57 +53,6 @@ function validateMessages(
   }
 
   return null;
-}
-
-type LongTermConfig = {
-  store: { set: (ns: string, k: string, v: string) => Promise<void>; search: (ns: string, q: string, n: number) => Promise<unknown[]> };
-  namespace?: string;
-  autoInjectTool?: boolean;
-};
-
-function buildLongTermMemoryTools(longTermConfig: LongTermConfig, agentName: string): ToolDefinition[] {
-  if (longTermConfig.autoInjectTool === false) return [];
-
-  const ltStore = longTermConfig.store;
-  const ltNamespace = longTermConfig.namespace || agentName;
-
-  return [
-    {
-      name: "memory_store",
-      description: "Store a value in long-term memory across threads. Use this to persist important information for future conversations.",
-      schema: {
-        type: "object",
-        properties: {
-          key: { type: "string", description: "The key to store the value under" },
-          value: { type: "string", description: "The value to store" },
-        },
-        required: ["key", "value"],
-      },
-      handler: async (input) => {
-        const key = String(input.key ?? "");
-        const value = String(input.value ?? "");
-        await ltStore.set(ltNamespace, key, value);
-        return textResult(`Stored "${key}" in long-term memory.`);
-      },
-    },
-    {
-      name: "memory_recall",
-      description: "Search long-term memory for relevant information from past conversations.",
-      schema: {
-        type: "object",
-        properties: {
-          query: { type: "string", description: "The search query to find relevant memories" },
-        },
-        required: ["query"],
-      },
-      handler: async (input) => {
-        const query = String(input.query ?? "");
-        const results = await ltStore.search(ltNamespace, query, 5);
-        if (results.length === 0) return textResult("No relevant memories found.");
-        return textResult(JSON.stringify(results));
-      },
-    },
-  ];
 }
 
 export interface AgentHandlerOptions
@@ -158,36 +102,37 @@ export interface AgentHandlerOptions
 }
 
 function jsonResponse(data: unknown, status: number): Response {
-  const headers = {
-    "Content-Type": "application/json",
-    ...buildSecurityHeaders(),
-  };
-  return new Response(JSON.stringify(data), { status, headers });
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "Content-Type": "application/json", ...buildSecurityHeaders() },
+  });
 }
 
 function agentLoopEventToSSE(event: AgentLoopEvent): SSEEvent | null {
   switch (event.type) {
-    case "text-delta":
-      return { type: "text-delta", content: event.content };
-    case "text":
-      return { type: "text", content: event.content };
-    case "tool-call":
-      return { type: "tool-call", name: event.name, input: event.input, iteration: event.iteration };
-    case "tool-result":
-      return { type: "tool-result", name: event.name, output: event.output, durationMs: event.durationMs, iteration: event.iteration };
-    case "usage":
-      return { type: "usage", promptTokens: event.promptTokens, completionTokens: event.completionTokens, cost: event.cost };
-    case "done":
-      return { type: "done" };
-    case "error":
-      return { type: "error", message: event.message };
-    case "approval-required":
-      return { type: "approval-required", toolName: event.toolName, input: event.input, approvalId: event.approvalId, iteration: event.iteration };
-    case "handoff":
-      return { type: "handoff", targetAgent: event.targetAgent, input: event.input, iteration: event.iteration };
-    case "structured-output":
-      return { type: "structured-output", data: event.data, iteration: event.iteration };
+    case "text-delta": return { type: "text-delta", content: event.content };
+    case "text": return { type: "text", content: event.content };
+    case "tool-call": return { type: "tool-call", name: event.name, input: event.input, iteration: event.iteration };
+    case "tool-result": return { type: "tool-result", name: event.name, output: event.output, durationMs: event.durationMs, iteration: event.iteration };
+    case "usage": return { type: "usage", promptTokens: event.promptTokens, completionTokens: event.completionTokens, cost: event.cost };
+    case "done": return { type: "done" };
+    case "error": return { type: "error", message: event.message };
+    case "approval-required": return { type: "approval-required", toolName: event.toolName, input: event.input, approvalId: event.approvalId, iteration: event.iteration };
+    case "handoff": return { type: "handoff", targetAgent: event.targetAgent, input: event.input, iteration: event.iteration };
+    case "structured-output": return { type: "structured-output", data: event.data, iteration: event.iteration };
   }
+}
+
+async function deriveUserIdFromBearer(authHeader: string | null): Promise<string | undefined> {
+  if (!authHeader?.startsWith("Bearer ")) return undefined;
+  const token = authHeader.slice(7).trim();
+  if (!token) return undefined;
+  const encoded = new TextEncoder().encode(token);
+  const hashBuf = await crypto.subtle.digest("SHA-256", encoded);
+  return Array.from(new Uint8Array(hashBuf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+    .slice(0, 32);
 }
 
 export function createAgentHandler(options: AgentHandlerOptions) {
@@ -200,37 +145,18 @@ export function createAgentHandler(options: AgentHandlerOptions) {
   const hasTools = resolvedToolDefinitions.length > 0;
 
   return async (req: Request): Promise<Response> => {
-    if (req.method !== "POST") {
-      return jsonResponse({ error: "Method not allowed" }, 405);
-    }
+    if (req.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
     const authResult = await authGuard(req);
     if (authResult) return authResult;
 
     // Derive a stable, opaque userId from the Bearer token so threads are bound
     // to the caller's credential. SHA-256 avoids storing raw tokens in memory.
-    // Auth mode "none" has no token → no userId → no per-user isolation (expected).
-    const authHeader = req.headers.get("Authorization");
-    let requestUserId: string | undefined;
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.slice(7).trim();
-      if (token) {
-        const encoded = new TextEncoder().encode(token);
-        const hashBuf = await crypto.subtle.digest("SHA-256", encoded);
-        requestUserId = Array.from(new Uint8Array(hashBuf))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("")
-          .slice(0, 32);
-      }
-    }
+    const requestUserId = await deriveUserIdFromBearer(req.headers.get("Authorization"));
 
     const depthError = checkDelegationDepth(req);
-    if (depthError) {
-      return jsonResponse({ error: depthError }, 429);
-    }
+    if (depthError) return jsonResponse({ error: depthError }, 429);
 
-    // Enforce body size limit before parsing — prevents memory exhaustion DoS.
-    // Content-Length header is checked first; streaming bodies are capped by byte count.
     const contentLength = req.headers.get("content-length");
     if (contentLength && parseInt(contentLength, 10) > MAX_REQUEST_BYTES) {
       return jsonResponse({ error: "Request body too large" }, 413);
@@ -240,9 +166,7 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     let body: { messages?: IncomingMessage[]; sessionId?: string; threadId?: string };
     try {
       const text = await req.text();
-      if (text.length > MAX_REQUEST_BYTES) {
-        return jsonResponse({ error: "Request body too large" }, 413);
-      }
+      if (text.length > MAX_REQUEST_BYTES) return jsonResponse({ error: "Request body too large" }, 413);
       body = JSON.parse(text);
     } catch {
       return jsonResponse({ error: "Invalid JSON" }, 400);
@@ -255,18 +179,13 @@ export function createAgentHandler(options: AgentHandlerOptions) {
     const validationError = validateMessages(body.messages);
     if (validationError) return jsonResponse({ error: validationError }, 400);
 
-    const sessionId = typeof body.sessionId === "string"
-      ? body.sessionId.slice(0, 128)
-      : "default";
+    const sessionId = typeof body.sessionId === "string" ? body.sessionId.slice(0, 128) : "default";
 
     // Per-user and per-tenant budgets must come from authenticated middleware context,
     // not raw request headers — any caller could otherwise spoof budget bucket keys.
     const budgetContext: BudgetContext = {};
-
     const budgetError = checkBudget(agentName, sessionId, options.budget, budgetContext);
-    if (budgetError) {
-      return jsonResponse({ error: budgetError }, 429);
-    }
+    if (budgetError) return jsonResponse({ error: budgetError }, 429);
 
     let threadId = typeof body.threadId === "string" ? body.threadId.slice(0, 128) : undefined;
     let historyMessages: Array<{ role: string; content: string | unknown[] }> = [];
@@ -314,13 +233,22 @@ export function createAgentHandler(options: AgentHandlerOptions) {
       const threadMessages = await options.memoryStore.getMessages(threadId);
       const wmContent = buildWorkingMemory(threadMessages, memoryConfig.workingMemory);
       if (wmContent.trim()) {
-        workingMemoryPrefix = { role: "system", content: wmContent };
+        // Sanitize working memory before injecting into the system role.
+        // Stored messages contain user-supplied text; without sanitization a
+        // user can craft a message like "IGNORE ALL PREVIOUS INSTRUCTIONS" that
+        // lands verbatim in the system prompt (prompt injection via memory).
+        // Strip ASCII control chars (except tab/LF/CR), cap at 8 KB, and wrap
+        // in explicit delimiters so the LLM can distinguish framework context.
+        // eslint-disable-next-line no-control-regex -- intentional: stripping control chars from stored memory
+        const wmSanitized = wmContent.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").slice(0, 8_192);
+        workingMemoryPrefix = {
+          role: "system",
+          content: `<working_memory>\n${wmSanitized}\n</working_memory>`,
+        };
       }
     }
 
-    const baseMessages = workingMemoryPrefix
-      ? [workingMemoryPrefix, ...allMessages]
-      : allMessages;
+    const baseMessages = workingMemoryPrefix ? [workingMemoryPrefix, ...allMessages] : allMessages;
     const messages = options.systemPrompt
       ? [{ role: "system", content: options.systemPrompt }, ...baseMessages]
       : baseMessages;
@@ -329,309 +257,203 @@ export function createAgentHandler(options: AgentHandlerOptions) {
 
     try {
       if (hasTools) {
-        // Use waitForApproval (not raw set) so TTL, reject callback, and cap checks apply.
-        const onApprovalRequired: ToolExecutorHooks["onApprovalRequired"] = (
-          toolName,
-          _input,
-          approvalId
-        ) => waitForApproval(agentName, approvalId, toolName);
-
-        const mergedHooks: ToolExecutorHooks = {
-          ...options.toolHooks,
-          onApprovalRequired,
-        };
-
-        const toolExecutor = createToolExecutor(resolvedToolDefinitions as ToolDefinition[], mergedHooks);
-        const toolSchemas = toolExecutor.toLLMSchema();
-
-        const getGenerateWithTools = async () => {
-          if (options._generateWithTools) return options._generateWithTools;
-          const bridge = createLLMBridge({ model: options.model });
-          return resolveToolGenerateFn(bridge);
-        };
-
-        const getStreamWithTools = async () => {
-          if (options._streamWithTools) return options._streamWithTools;
-          const bridge = createLLMBridge({ model: options.model });
-          return resolveToolStreamFn(bridge);
-        };
-
-        const getCalculateCost = async () => {
-          if (options._calculateCost) return options._calculateCost;
-          const { calculateModelCost } = await import("@fabrk/ai");
-          return calculateModelCost;
-        };
-
-        const [generateFn, streamFn, calculateCost] = await Promise.all([
-          getGenerateWithTools(),
-          options.stream ? getStreamWithTools() : Promise.resolve(undefined),
-          getCalculateCost(),
-        ]);
-
-        const llmMessages: LLMMessage[] = messages.map((m) => ({
-          role: m.role as LLMMessage["role"],
-          content: m.content as LLMMessage["content"],
-        }));
-
-        const loopGen = runAgentLoop({
-          messages: llmMessages,
-          toolExecutor,
-          toolSchemas,
-          agentName,
-          sessionId,
-          model: options.model,
-          budget: options.budget,
-          budgetContext,
-          maxIterations: options.maxIterations,
-          stream: options.stream ?? false,
-          generationOptions: options.generationOptions,
-          generateWithTools: generateFn,
-          streamWithTools: streamFn,
-          calculateCost,
-          inputGuardrails: options.inputGuardrails,
-          outputGuardrails: options.outputGuardrails,
-          handoffs: options.handoffs,
-          outputSchema: options.outputSchema,
-        });
-
-        if (options.stream) {
-          return createSSEResponse(async function* (): AsyncGenerator<SSEEvent> {
-            let totalTokens = 0;
-            let totalCost = 0;
-            let streamContent = "";
-
-            for await (const event of loopGen) {
-              if (event.type === "usage") {
-                totalTokens += event.promptTokens + event.completionTokens;
-                totalCost += event.cost;
-              }
-              if (event.type === "text") {
-                streamContent = event.content;
-              }
-              if (event.type === "tool-result") {
-                options.onToolCall?.({
-                  agent: agentName,
-                  tool: event.name,
-                  durationMs: event.durationMs,
-                  iteration: event.iteration,
-                });
-              }
-              if (event.type === "error") {
-                options.onError?.({
-                  agent: agentName,
-                  error: event.message,
-                  timestamp: Date.now(),
-                });
-              }
-              const sseEvent = agentLoopEventToSSE(event);
-              if (sseEvent) yield sseEvent;
-            }
-
-            options.onCallComplete?.({
-              agent: agentName,
-              model: options.model,
-              tokens: totalTokens,
-              cost: totalCost,
-              durationMs: Date.now() - requestStartMs,
-              inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
-              outputText: streamContent || undefined,
-            });
-
-            if (options.memoryStore && threadId) {
-              const lastUserMsg = sanitized[sanitized.length - 1];
-              if (lastUserMsg) {
-                await options.memoryStore.appendMessage(threadId, {
-                  threadId,
-                  role: "user",
-                  content: serializeContentForMemory(lastUserMsg.content),
-                });
-              }
-              if (streamContent) {
-                await options.memoryStore.appendMessage(threadId, {
-                  threadId,
-                  role: "assistant",
-                  content: streamContent,
-                });
-              }
-            }
-          });
-        }
-
-        let content = "";
-        let totalPromptTokens = 0;
-        let totalCompletionTokens = 0;
-        let totalCost = 0;
-        const toolCalls: Array<{ name: string; input: Record<string, unknown>; output: string }> = [];
-        let currentToolCall: { name: string; input: Record<string, unknown> } | null = null;
-
-        for await (const event of loopGen) {
-          if (event.type === "text") content = event.content;
-          else if (event.type === "usage") {
-            totalPromptTokens += event.promptTokens;
-            totalCompletionTokens += event.completionTokens;
-            totalCost += event.cost;
-          } else if (event.type === "tool-call") {
-            currentToolCall = { name: event.name, input: event.input };
-          } else if (event.type === "tool-result") {
-            if (currentToolCall) {
-              toolCalls.push({ ...currentToolCall, output: event.output });
-              currentToolCall = null;
-            }
-            options.onToolCall?.({
-              agent: agentName,
-              tool: event.name,
-              durationMs: event.durationMs,
-              iteration: event.iteration,
-            });
-          } else if (event.type === "error") {
-            options.onError?.({
-              agent: agentName,
-              error: event.message,
-              timestamp: Date.now(),
-            });
-          }
-        }
-
-        options.onCallComplete?.({
-          agent: agentName,
-          model: options.model,
-          tokens: totalPromptTokens + totalCompletionTokens,
-          cost: totalCost,
-          durationMs: Date.now() - requestStartMs,
-          inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
-          outputText: content || undefined,
-        });
-
-        if (options.memoryStore && threadId) {
-          const lastUserMsg = sanitized[sanitized.length - 1];
-          if (lastUserMsg) {
-            await options.memoryStore.appendMessage(threadId, {
-              threadId,
-              role: "user",
-              content: serializeContentForMemory(lastUserMsg.content),
-            });
-          }
-          if (content) {
-            await options.memoryStore.appendMessage(threadId, {
-              threadId,
-              role: "assistant",
-              content,
-            });
-          }
-        }
-
-        return jsonResponse({
-          content,
-          usage: { promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens },
-          cost: totalCost,
-          toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
-          threadId,
-        }, 200);
-      }
-
-      if (options.stream) {
-        return createSSEResponse(async function* (): AsyncGenerator<SSEEvent> {
-          let result: LLMCallResult;
-
-          if (options._llmCall) {
-            result = await options._llmCall(messages);
-          } else {
-            const primary = createLLMBridge({ model: options.model });
-            const fallbacks = (options.fallback ?? []).map((m) =>
-              createLLMBridge({ model: m })
-            );
-            result = await callWithFallback(primary, fallbacks, messages);
-          }
-
-          const totalTokens = result.usage.promptTokens + result.usage.completionTokens;
-          recordCost(agentName, sessionId, result.cost, budgetContext);
-
-          options.onCallComplete?.({
-            agent: agentName,
-            model: options.model,
-            tokens: totalTokens,
-            cost: result.cost,
-            durationMs: Date.now() - requestStartMs,
-            inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
-            outputText: result.content || undefined,
-          });
-
-          if (options.memoryStore && threadId) {
-            const lastUserMsg = sanitized[sanitized.length - 1];
-            if (lastUserMsg) {
-              await options.memoryStore.appendMessage(threadId, {
-                threadId,
-                role: "user",
-                content: serializeContentForMemory(lastUserMsg.content),
-              });
-            }
-            if (result.content) {
-              await options.memoryStore.appendMessage(threadId, {
-                threadId,
-                role: "assistant",
-                content: result.content,
-              });
-            }
-          }
-
-          yield { type: "text", content: result.content };
-          yield {
-            type: "usage",
-            promptTokens: result.usage.promptTokens,
-            completionTokens: result.usage.completionTokens,
-            cost: result.cost,
-          };
-          yield { type: "done" };
+        return await handleWithTools(options, {
+          agentName, sessionId, threadId, sanitized, messages, budgetContext,
+          resolvedToolDefinitions, requestStartMs,
         });
       }
-
-      let result: LLMCallResult;
-
-      if (options._llmCall) {
-        result = await options._llmCall(messages);
-      } else {
-        const primary = createLLMBridge({ model: options.model });
-        const fallbacks = (options.fallback ?? []).map((m) =>
-          createLLMBridge({ model: m })
-        );
-        result = await callWithFallback(primary, fallbacks, messages);
-      }
-
-      const totalTokens = result.usage.promptTokens + result.usage.completionTokens;
-      recordCost(agentName, sessionId, result.cost, budgetContext);
-
-      options.onCallComplete?.({
-        agent: agentName,
-        model: options.model,
-        tokens: totalTokens,
-        cost: result.cost,
-        durationMs: Date.now() - requestStartMs,
-        inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
-        outputText: result.content || undefined,
+      return await handleNoTools(options, {
+        agentName, sessionId, threadId, sanitized, messages, budgetContext, requestStartMs,
       });
-
-      if (options.memoryStore && threadId) {
-        const lastUserMsg = sanitized[sanitized.length - 1];
-        if (lastUserMsg) {
-          await options.memoryStore.appendMessage(threadId, {
-            threadId,
-            role: "user",
-            content: serializeContentForMemory(lastUserMsg.content),
-          });
-        }
-        if (result.content) {
-          await options.memoryStore.appendMessage(threadId, {
-            threadId,
-            role: "assistant",
-            content: result.content,
-          });
-        }
-      }
-
-      return jsonResponse({ ...result, threadId }, 200);
     } catch (err) {
       console.error("[fabrk] Agent handler error:", err);
       return jsonResponse({ error: "Internal server error" }, 500);
     }
   };
+}
+
+interface LoopContext {
+  agentName: string;
+  sessionId: string;
+  threadId?: string;
+  sanitized: Array<{ role: string; content: string | unknown[] }>;
+  messages: Array<{ role: string; content: string | unknown[] }>;
+  budgetContext: BudgetContext;
+  requestStartMs: number;
+}
+
+interface ToolLoopContext extends LoopContext {
+  resolvedToolDefinitions: ToolDefinition[];
+}
+
+async function handleWithTools(options: AgentHandlerOptions, ctx: ToolLoopContext): Promise<Response> {
+  const { agentName, sessionId, threadId, sanitized, messages, budgetContext, resolvedToolDefinitions, requestStartMs } = ctx;
+
+  const onApprovalRequired: ToolExecutorHooks["onApprovalRequired"] = (toolName, _input, approvalId) =>
+    waitForApproval(agentName, approvalId, toolName);
+
+  const mergedHooks: ToolExecutorHooks = { ...options.toolHooks, onApprovalRequired };
+  const toolExecutor = createToolExecutor(resolvedToolDefinitions as ToolDefinition[], mergedHooks);
+  const toolSchemas = toolExecutor.toLLMSchema();
+
+  const getGenerateWithTools = async () => {
+    if (options._generateWithTools) return options._generateWithTools;
+    return resolveToolGenerateFn(createLLMBridge({ model: options.model }));
+  };
+
+  const getStreamWithTools = async () => {
+    if (options._streamWithTools) return options._streamWithTools;
+    return resolveToolStreamFn(createLLMBridge({ model: options.model }));
+  };
+
+  const getCalculateCost = async () => {
+    if (options._calculateCost) return options._calculateCost;
+    const { calculateModelCost } = await import("@fabrk/ai");
+    return calculateModelCost;
+  };
+
+  const [generateFn, streamFn, calculateCost] = await Promise.all([
+    getGenerateWithTools(),
+    options.stream ? getStreamWithTools() : Promise.resolve(undefined),
+    getCalculateCost(),
+  ]);
+
+  const llmMessages: LLMMessage[] = messages.map((m) => ({
+    role: m.role as LLMMessage["role"],
+    content: m.content as LLMMessage["content"],
+  }));
+
+  const loopGen = runAgentLoop({
+    messages: llmMessages, toolExecutor, toolSchemas, agentName, sessionId,
+    model: options.model, budget: options.budget, budgetContext,
+    maxIterations: options.maxIterations, stream: options.stream ?? false,
+    generationOptions: options.generationOptions, generateWithTools: generateFn,
+    streamWithTools: streamFn, calculateCost,
+    inputGuardrails: options.inputGuardrails, outputGuardrails: options.outputGuardrails,
+    handoffs: options.handoffs, outputSchema: options.outputSchema,
+  });
+
+  if (options.stream) {
+    return createSSEResponse(async function* (): AsyncGenerator<SSEEvent> {
+      let totalTokens = 0;
+      let totalCost = 0;
+      let streamContent = "";
+
+      for await (const event of loopGen) {
+        if (event.type === "usage") { totalTokens += event.promptTokens + event.completionTokens; totalCost += event.cost; }
+        if (event.type === "text") streamContent = event.content;
+        if (event.type === "tool-result") {
+          options.onToolCall?.({ agent: agentName, tool: event.name, durationMs: event.durationMs, iteration: event.iteration });
+        }
+        if (event.type === "error") options.onError?.({ agent: agentName, error: event.message, timestamp: Date.now() });
+        const sseEvent = agentLoopEventToSSE(event);
+        if (sseEvent) yield sseEvent;
+      }
+
+      options.onCallComplete?.({
+        agent: agentName, model: options.model, tokens: totalTokens, cost: totalCost,
+        durationMs: Date.now() - requestStartMs,
+        inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+        outputText: streamContent || undefined,
+      });
+
+      if (options.memoryStore && threadId) {
+        await persistMessages(options.memoryStore, threadId, sanitized[sanitized.length - 1], streamContent);
+      }
+    });
+  }
+
+  let content = "";
+  let totalPromptTokens = 0;
+  let totalCompletionTokens = 0;
+  let totalCost = 0;
+  const toolCalls: Array<{ name: string; input: Record<string, unknown>; output: string }> = [];
+  let currentToolCall: { name: string; input: Record<string, unknown> } | null = null;
+
+  for await (const event of loopGen) {
+    if (event.type === "text") content = event.content;
+    else if (event.type === "usage") {
+      totalPromptTokens += event.promptTokens;
+      totalCompletionTokens += event.completionTokens;
+      totalCost += event.cost;
+    } else if (event.type === "tool-call") {
+      currentToolCall = { name: event.name, input: event.input };
+    } else if (event.type === "tool-result") {
+      if (currentToolCall) { toolCalls.push({ ...currentToolCall, output: event.output }); currentToolCall = null; }
+      options.onToolCall?.({ agent: agentName, tool: event.name, durationMs: event.durationMs, iteration: event.iteration });
+    } else if (event.type === "error") {
+      options.onError?.({ agent: agentName, error: event.message, timestamp: Date.now() });
+    }
+  }
+
+  options.onCallComplete?.({
+    agent: agentName, model: options.model,
+    tokens: totalPromptTokens + totalCompletionTokens,
+    cost: totalCost, durationMs: Date.now() - requestStartMs,
+    inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+    outputText: content || undefined,
+  });
+
+  if (options.memoryStore && threadId) {
+    await persistMessages(options.memoryStore, threadId, sanitized[sanitized.length - 1], content);
+  }
+
+  return jsonResponse({
+    content,
+    usage: { promptTokens: totalPromptTokens, completionTokens: totalCompletionTokens },
+    cost: totalCost,
+    toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+    threadId,
+  }, 200);
+}
+
+async function handleNoTools(options: AgentHandlerOptions, ctx: LoopContext): Promise<Response> {
+  const { agentName, sessionId, threadId, sanitized, messages, budgetContext, requestStartMs } = ctx;
+
+  const callLLM = async (): Promise<LLMCallResult> => {
+    if (options._llmCall) return options._llmCall(messages);
+    const primary = createLLMBridge({ model: options.model });
+    const fallbacks = (options.fallback ?? []).map((m) => createLLMBridge({ model: m }));
+    return callWithFallback(primary, fallbacks, messages);
+  };
+
+  if (options.stream) {
+    return createSSEResponse(async function* (): AsyncGenerator<SSEEvent> {
+      const result = await callLLM();
+      recordCost(agentName, sessionId, result.cost, budgetContext);
+
+      options.onCallComplete?.({
+        agent: agentName, model: options.model,
+        tokens: result.usage.promptTokens + result.usage.completionTokens,
+        cost: result.cost, durationMs: Date.now() - requestStartMs,
+        inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+        outputText: result.content || undefined,
+      });
+
+      if (options.memoryStore && threadId) {
+        await persistMessages(options.memoryStore, threadId, sanitized[sanitized.length - 1], result.content);
+      }
+
+      yield { type: "text", content: result.content };
+      yield { type: "usage", promptTokens: result.usage.promptTokens, completionTokens: result.usage.completionTokens, cost: result.cost };
+      yield { type: "done" };
+    });
+  }
+
+  const result = await callLLM();
+  recordCost(agentName, sessionId, result.cost, budgetContext);
+
+  options.onCallComplete?.({
+    agent: agentName, model: options.model,
+    tokens: result.usage.promptTokens + result.usage.completionTokens,
+    cost: result.cost, durationMs: Date.now() - requestStartMs,
+    inputMessages: messages.map((m) => ({ role: m.role, content: m.content })),
+    outputText: result.content || undefined,
+  });
+
+  if (options.memoryStore && threadId) {
+    await persistMessages(options.memoryStore, threadId, sanitized[sanitized.length - 1], result.content);
+  }
+
+  return jsonResponse({ ...result, threadId }, 200);
 }

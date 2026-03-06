@@ -46,7 +46,10 @@ export function registerLintCommand(program: Command): void {
         const content = fs.readFileSync(file, 'utf-8');
         const issues: string[] = [];
 
-        const colorRegex = /(?:bg|text|border)-(?:red|blue|green|yellow|purple|pink|orange|indigo|gray|slate|zinc|neutral|stone|amber|lime|emerald|teal|cyan|sky|violet|fuchsia|rose)-\d{2,3}/g;
+        // Matches all Tailwind color names with numeric shade (e.g. bg-blue-500, text-gray-50)
+        // and bare white/black specifiers (e.g. bg-white, text-black).
+        // Keep in sync with DS_HARDCODED_COLORS and DS_BARE_RE in eslint.config.js.
+        const colorRegex = /(?:bg|text|border|ring|fill|stroke|outline|decoration|from|via|to)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+|(?:bg|text|border|ring)-(?:white|black)/g;
         const colorMatches = content.match(colorRegex);
         if (colorMatches) {
           const unique = [...new Set(colorMatches)];

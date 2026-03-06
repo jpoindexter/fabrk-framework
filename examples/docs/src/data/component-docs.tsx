@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/design-system'
 import type { PropDef } from '@/components/doc-layout'
 
 // ─── Types ──────────────────────────────────────────────────────────────
@@ -485,7 +487,7 @@ export const COMPONENT_DOCS: Record<string, ComponentDoc> = {
         title: 'Basic Table',
         get element() {
           return React.createElement('div', {
-            className: 'text-xs text-muted-foreground p-4 border border-border text-center'
+            className: cn('text-xs text-muted-foreground p-4 border border-border text-center', mode.radius)
           }, 'DataTable requires TanStack Table column definitions. See code example.')
         },
         source: `import { DataTable } from '@fabrk/components'
@@ -946,7 +948,7 @@ const columns = [
         title: 'Usage',
         get element() {
           return React.createElement('div', {
-            className: 'text-xs text-muted-foreground p-4 border border-border text-center'
+            className: cn('text-xs text-muted-foreground p-4 border border-border text-center', mode.radius)
           }, 'DashboardShell is a full-page layout. See code example for usage.')
         },
         source: `<DashboardShell
@@ -1090,7 +1092,7 @@ const columns = [
         title: 'Basic',
         get element() {
           return React.createElement('div', {
-            className: 'text-xs text-muted-foreground p-4 border border-border text-center'
+            className: cn('text-xs text-muted-foreground p-4 border border-border text-center', mode.radius)
           }, 'AuditLog renders a filterable table. See code example.')
         },
         source: `<AuditLog

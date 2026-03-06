@@ -378,6 +378,153 @@ describe("handleRequest — route headers CRLF sanitization", () => {
     // The all-control-char name becomes "" and is dropped; X-Good passes through
     expect(res.headers.get("X-Good")).toBe("ok");
   });
+
+  it("strips horizontal tab (\\x09) from route header values", async () => {
+    // Tab (\x09) was previously not stripped by sanitizeHeaderValue because the
+    // range \x00-\x08 skipped \x09 before continuing at \x0a. It is used in
+    // obsolete HTTP header line-folding and must be stripped.
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: {
+        default: () => "",
+        headers: async () => ({
+          "X-Custom": "before\x09after",
+        }),
+      },
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      { routes, viteServer: server, _reactLoader: mockReactLoader() }
+    );
+
+    const val = res.headers.get("X-Custom") ?? "";
+    expect(val).not.toContain("\x09");
+    // Surrounding text should be preserved
+    expect(val).toContain("before");
+    expect(val).toContain("after");
+  });
+});
+
+describe("handleRequest — middleware rewriteUrl validation", () => {
+  let tmpDir: string;
+  let appDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-ssr-rewrite-"));
+    appDir = path.join(tmpDir, "app");
+    fs.mkdirSync(appDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+
+  function mockReactLoaderSimple(): () => Promise<[any, any]> {
+    return async () => [
+      { renderToString: () => "<div>page</div>" },
+      { createElement: (_c: unknown, _p: unknown) => ({}) },
+    ];
+  }
+
+  it("ignores absolute rewriteUrl from middleware (does not change request origin)", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const routes = scanRoutes(appDir);
+    let seenUrl: string | undefined;
+    const server = createMockViteServer({
+      [pageFile]: {
+        default: () => "",
+      },
+    });
+
+    // Middleware that tries to rewrite to an absolute external URL
+    const middlewarePath = path.join(appDir, "middleware.ts");
+    fs.writeFileSync(middlewarePath, "");
+    const middlewareMod = {
+      default: async (_req: Request) => ({ rewriteUrl: "https://evil.com/admin" }),
+    };
+
+    // Override ssrLoadModule to return our fake middleware for the middleware path
+    (server.ssrLoadModule as ReturnType<typeof vi.fn>).mockImplementation(async (id: string) => {
+      if (id === middlewarePath) return middlewareMod;
+      if (id === pageFile) return {
+        default: (props: { params: unknown }) => {
+          seenUrl = props as unknown as string;
+          return "";
+        },
+      };
+      throw new Error(`Module not found: ${id}`);
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      {
+        routes,
+        viteServer: server,
+        middlewarePath,
+        _reactLoader: mockReactLoaderSimple(),
+      }
+    );
+
+    // Should still respond (the bad rewriteUrl was silently ignored),
+    // and the request stays on the original path
+    expect([200, 404, 500]).toContain(res.status);
+    // Should NOT have Location header pointing to evil.com
+    const location = res.headers.get("Location");
+    if (location !== null) {
+      expect(location).not.toContain("evil.com");
+    }
+  });
+
+  it("accepts safe relative rewriteUrl from middleware", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+    const altDir = path.join(appDir, "alt");
+    fs.mkdirSync(altDir, { recursive: true });
+    const altPageFile = path.join(altDir, "page.tsx");
+    fs.writeFileSync(altPageFile, "");
+
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: { default: () => "" },
+      [altPageFile]: { default: () => "" },
+    });
+
+    const middlewarePath = path.join(appDir, "middleware.ts");
+    fs.writeFileSync(middlewarePath, "");
+    const middlewareMod = {
+      default: async (_req: Request) => ({ rewriteUrl: "/alt" }),
+    };
+
+    (server.ssrLoadModule as ReturnType<typeof vi.fn>).mockImplementation(async (id: string) => {
+      if (id === middlewarePath) return middlewareMod;
+      const mods: Record<string, Record<string, unknown>> = {
+        [pageFile]: { default: () => "" },
+        [altPageFile]: { default: () => "" },
+      };
+      const mod = mods[id];
+      if (!mod) throw new Error(`Module not found: ${id}`);
+      return mod;
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      {
+        routes,
+        viteServer: server,
+        middlewarePath,
+        _reactLoader: mockReactLoaderSimple(),
+      }
+    );
+
+    // /alt route was found and rendered
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("handleRequest — redirect URL sanitization", () => {

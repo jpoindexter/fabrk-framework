@@ -1,3 +1,5 @@
+import { cn } from '@fabrk/core'
+import { mode } from '@fabrk/design-system'
 import { DocLayout, Section, CodeBlock, InfoCard } from '@/components/doc-layout'
 
 export default function PhilosophyPage() {
@@ -225,37 +227,37 @@ const app = await autoWire(config, undefined, {
 
       <Section id="summary" title="SUMMARY">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="border border-border bg-card p-4">
+          <div className={cn('border border-border bg-card p-4', mode.radius)}>
             <div className="text-xs font-bold text-primary uppercase">I18N</div>
             <div className="text-xs text-muted-foreground mt-1">
               All text as props. Bring your own i18n library.
             </div>
           </div>
-          <div className="border border-border bg-card p-4">
+          <div className={cn('border border-border bg-card p-4', mode.radius)}>
             <div className="text-xs font-bold text-primary uppercase">DATA FETCHING</div>
             <div className="text-xs text-muted-foreground mt-1">
               Callback props. No built-in fetching. Any strategy works.
             </div>
           </div>
-          <div className="border border-border bg-card p-4">
+          <div className={cn('border border-border bg-card p-4', mode.radius)}>
             <div className="text-xs font-bold text-primary uppercase">NO CSS-IN-JS</div>
             <div className="text-xs text-muted-foreground mt-1">
               Tailwind + CSS variables. Zero runtime CSS overhead.
             </div>
           </div>
-          <div className="border border-border bg-card p-4">
+          <div className={cn('border border-border bg-card p-4', mode.radius)}>
             <div className="text-xs font-bold text-primary uppercase">ADAPTERS</div>
             <div className="text-xs text-muted-foreground mt-1">
               Provider-agnostic interfaces. Switch via config.
             </div>
           </div>
-          <div className="border border-border bg-card p-4">
+          <div className={cn('border border-border bg-card p-4', mode.radius)}>
             <div className="text-xs font-bold text-primary uppercase">STORES</div>
             <div className="text-xs text-muted-foreground mt-1">
               In-memory defaults. Prisma for production. Same code everywhere.
             </div>
           </div>
-          <div className="border border-border bg-card p-4">
+          <div className={cn('border border-border bg-card p-4', mode.radius)}>
             <div className="text-xs font-bold text-primary uppercase">AI-FIRST</div>
             <div className="text-xs text-muted-foreground mt-1">
               Every decision optimizes for AI agent productivity.

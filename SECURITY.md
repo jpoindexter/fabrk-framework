@@ -6,8 +6,8 @@ We release patches for security vulnerabilities in the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.2.x   | :white_check_mark: |
-| < 0.2   | :x:                |
+| 0.3.x   | :white_check_mark: |
+| < 0.3   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -75,59 +75,27 @@ When using FABRK framework:
 - Enable HTTPS in production
 - Implement proper authentication and authorization
 
-## Known Security Considerations
+## Security Hardening
 
-### AI Provider API Keys
+FABRK has undergone 12 rounds of adversarial security audits. Key practices:
 
-- Never expose API keys in client-side code
-- Use environment variables and server-side endpoints
-- Implement rate limiting on AI endpoints
-- Monitor API usage and costs
-- Rotate API keys regularly
+- **Web Crypto API** — all cryptographic operations (no Node.js `crypto`), runs on edge runtimes
+- **API key hashing** — SHA-256 via Web Crypto
+- **Timing-safe comparison** — HMAC-SHA256 constant-time (not XOR)
+- **Path traversal protection** — `path.resolve().startsWith(base)` validation
+- **Prototype pollution prevention** — `Object.hasOwn()` throughout
+- **Input sanitization** — at all system boundaries
+- **Budget enforcement** — `Number.isFinite()` + `>= 0` validation
+- **Dashboard localhost-only** — `/__ai` restricted to `127.0.0.1`, `::1`, `::ffff:127.0.0.1`
+- **Security headers** — `buildSecurityHeaders()` on all HTTP response paths
 
-### Cost Tracking
+### Built-in Security Package
 
-- Cost tracking data may contain usage patterns
-- Implement proper access controls for cost dashboards
-- Sanitize user inputs in AI prompts
-
-## Security-Related Configuration
-
-### Environment Variables
-
-Always use `.env.local` for sensitive data (not committed to git):
-
-```env
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-DATABASE_URL=postgresql://...
-```
-
-### Recommended Security Headers
-
-For Next.js applications using FABRK, configure security headers in `next.config.js`:
-
-```js
-module.exports = {
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
-        ],
-      },
-    ]
-  },
-}
-```
+`@fabrk/security` provides CSRF, CSP, CORS, rate limiting, audit logging, GDPR compliance, and bot protection out of the box.
 
 ## Bug Bounty Program
 
-We do not currently offer a bug bounty program. However, we greatly appreciate security researchers who responsibly disclose vulnerabilities and will publicly acknowledge their contributions.
+We do not currently offer a bug bounty program. We credit researchers who responsibly disclose vulnerabilities.
 
 ## Contact
 
@@ -138,4 +106,4 @@ For security concerns or questions about this policy:
 
 ---
 
-**Last Updated**: 2026-02-06
+**Last Updated**: 2026-03-06

@@ -90,6 +90,14 @@ function countPackages(): number {
     .length
 }
 
+function countExamples(): number {
+  const exDir = join(ROOT, 'examples')
+  if (!existsSync(exDir)) return 0
+  return readdirSync(exDir, { withFileTypes: true })
+    .filter(d => d.isDirectory() && existsSync(join(exDir, d.name, 'package.json')))
+    .length
+}
+
 const FILES = [
   'README.md',
   'CLAUDE.md',
@@ -141,10 +149,14 @@ if (checkOnly) {
 
 const testCount = skipRun ? readCachedCount() : runTests()
 const pkgCount = countPackages()
+const exCount = countExamples()
+const buildCount = pkgCount + exCount
 
 console.log(`\nStats:`)
 console.log(`  tests:    ${testCount.toLocaleString('en-US')}`)
 console.log(`  packages: ${pkgCount}`)
+console.log(`  examples: ${exCount}`)
+console.log(`  builds:   ${buildCount} (${pkgCount} packages + ${exCount} examples)`)
 
 // ---------------------------------------------------------------------------
 // 2. Update docs
@@ -159,7 +171,20 @@ const replacements: Array<[RegExp, (m: string) => string]> = [
   [/(?<=tests:\s*)\d+(?=,)/g, () => String(testCount)],
   // shields.io badge: tests-NNNN-green
   [/(?<=tests-)\d+(?=-green)/g, () => String(testCount)],
+  // shields.io badge: packages-NN-green
+  [/(?<=packages-)\d+(?=-green)/g, () => String(pkgCount)],
+  // "NN/NN packages build" pattern (e.g. "19/19 packages build")
+  [/\d+\/\d+ packages build/g, () => `${buildCount}/${buildCount} packages build`],
+  // "(NN packages + NN examples)" pattern
+  [/\(\d+ packages \+ \d+ examples\)/g, () => `(${pkgCount} packages + ${exCount} examples)`],
+  // "Build all NN packages" in code comments
+  [/(?<=Build all )\d+(?= packages)/g, () => `${buildCount}`],
+  // "NN/NN build" standalone (e.g. "19/19 build")
+  [/\d+\/\d+ build\b/g, () => `${buildCount}/${buildCount} build`],
 ]
+
+// Files with historical numbers that shouldn't get prose replacements
+const SKIP_PROSE = new Set(['CHANGELOG.md'])
 
 let totalChanges = 0
 
@@ -171,6 +196,8 @@ for (const rel of FILES) {
   const original = content
 
   for (const [pattern, replacer] of replacements) {
+    // Skip broad prose patterns (test count, build count) in files with historical data
+    if (SKIP_PROSE.has(rel) && /tests\\b|Build all|packages build/.test(pattern.source)) continue
     content = content.replace(pattern, replacer)
   }
 

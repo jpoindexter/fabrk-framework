@@ -101,7 +101,7 @@ export default function SettingsPage() {
       sidebarItems={sidebarItems}
       title="CodeScan"
       logo={
-        <div className="flex size-7 items-center justify-center rounded-md bg-accent text-accent-foreground text-[10px] font-bold">
+        <div className={cn("flex size-7 items-center justify-center bg-accent text-accent-foreground text-[10px] font-bold", mode.radius)}>
           CS
         </div>
       }
@@ -319,7 +319,7 @@ export default function SettingsPage() {
                     {teamMembers.map((member) => (
                       <div
                         key={member.email}
-                        className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                        className={cn("flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors", mode.radius)}
                       >
                         <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-muted-foreground">
                           {member.avatar}
@@ -387,7 +387,7 @@ export default function SettingsPage() {
                     {apiKeys.map((key) => (
                       <div
                         key={key.name}
-                        className="flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                        className={cn("flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors", mode.radius)}
                       >
                         <KeyRound className="size-4 shrink-0 text-muted-foreground" />
                         <div className="flex-1 min-w-0">

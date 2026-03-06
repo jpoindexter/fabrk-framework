@@ -14,6 +14,13 @@ const ALLOWED_COMMANDS = new Set([
   "bun",
 ]);
 
+// Maximum number of tools a single stdio MCP server may register.
+const MAX_TOOLS_PER_SERVER = 256;
+
+// Maximum byte length of a single newline-delimited stdio line (1 MB).
+// Prevents OOM from a rogue child process flooding stdout.
+const MAX_STDIO_LINE_BYTES = 1 * 1024 * 1024; // 1 MB
+
 function validateCommand(command: string): void {
   // Extract the binary name from a full path (e.g. /usr/local/bin/node → node)
   const base = command.split("/").pop()?.split("\\").pop()?.trim() ?? command;
@@ -23,6 +30,27 @@ function validateCommand(command: string): void {
       `Allowed: ${[...ALLOWED_COMMANDS].join(", ")}. ` +
       `Pass an absolute path to one of these binaries if needed.`
     );
+  }
+}
+
+/**
+ * Validate spawn args array.
+ * - Must be an array of strings (no objects, no numbers that could be coerced)
+ * - Each arg capped at 4 096 chars to prevent oversized command lines
+ * - Rejects args that are null/undefined (spawn would serialize them as "null")
+ */
+function validateArgs(args: string[]): void {
+  if (!Array.isArray(args)) {
+    throw new Error("MCP stdio args must be an array");
+  }
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (typeof arg !== "string") {
+      throw new Error(`MCP stdio args[${i}] must be a string, got ${typeof arg}`);
+    }
+    if (arg.length > 4096) {
+      throw new Error(`MCP stdio args[${i}] exceeds maximum length of 4096 characters`);
+    }
   }
 }
 
@@ -74,6 +102,7 @@ export async function createStdioClient(
   disconnect: () => Promise<void>;
 }> {
   validateCommand(command);
+  validateArgs(args);
 
   const { spawn } = await import("node:child_process");
   const readline = await import("node:readline");
@@ -95,6 +124,12 @@ export async function createStdioClient(
   const pending = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
 
   rl.on("line", (line: string) => {
+    // Guard against oversized lines before parsing (1 MB hard cap)
+    if (line.length > MAX_STDIO_LINE_BYTES) {
+      console.error(`[fabrk] MCP stdio: discarding oversized line (${line.length} bytes)`);
+      return;
+    }
+
     try {
       const msg = JSON.parse(line);
       if (msg.id !== undefined && pending.has(msg.id)) {
@@ -102,7 +137,8 @@ export async function createStdioClient(
         if (!p) return;
         pending.delete(msg.id);
         if (msg.error) {
-          p.reject(new Error(msg.error.message));
+          // Sanitize error message to prevent internal details leaking
+          p.reject(new Error(String(msg.error.message ?? "MCP stdio error").slice(0, 256)));
         } else {
           p.resolve(msg.result);
         }
@@ -111,6 +147,8 @@ export async function createStdioClient(
   });
 
   function send(method: string, params?: Record<string, unknown>): Promise<unknown> {
+    // Wrap around at Number.MAX_SAFE_INTEGER to prevent precision loss
+    if (requestId >= Number.MAX_SAFE_INTEGER) requestId = 0;
     const id = ++requestId;
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
@@ -139,9 +177,20 @@ export async function createStdioClient(
   });
 
   const listResult = await send("tools/list") as { tools?: Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> };
-  const remoteTools: ToolDefinition[] = (listResult.tools ?? []).map((t) => ({
-    name: t.name,
-    description: t.description,
+
+  const rawTools = listResult.tools ?? [];
+  if (rawTools.length > MAX_TOOLS_PER_SERVER) {
+    throw new Error(
+      `MCP stdio server returned ${rawTools.length} tools, exceeding the limit of ${MAX_TOOLS_PER_SERVER}`
+    );
+  }
+
+  // Import validators from client module
+  const { validateToolName, sanitizeToolDescription } = await import("./client");
+
+  const remoteTools: ToolDefinition[] = rawTools.map((t) => ({
+    name: validateToolName(t.name),
+    description: sanitizeToolDescription(t.description),
     schema: (t.inputSchema ?? { type: "object", properties: {} }) as ToolDefinition["schema"],
     handler: async (input: Record<string, unknown>) => {
       const callResult = await send("tools/call", { name: t.name, arguments: input }) as {

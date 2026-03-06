@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { ColumnDef } from '@tanstack/react-table'
+import { mode } from '@fabrk/design-system'
+import { cn } from '@fabrk/core'
 import {
   DashboardShell,
   DashboardHeader,
@@ -157,7 +159,7 @@ export default function DemoPage() {
       sidebarItems={sidebarItems}
       title="CodeScan"
       logo={
-        <div className="flex size-7 items-center justify-center rounded-md bg-accent text-accent-foreground text-[10px] font-bold">
+        <div className={cn("flex size-7 items-center justify-center bg-accent text-accent-foreground text-[10px] font-bold", mode.radius)}>
           CS
         </div>
       }

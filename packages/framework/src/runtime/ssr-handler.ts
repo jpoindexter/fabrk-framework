@@ -19,10 +19,38 @@ import { runWithContext } from "./server-context";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ReactModuleLoader = () => Promise<[any, any]>;
 
+/**
+ * Strip CRLF and other control characters from a header value to prevent
+ * HTTP response splitting. Returns the cleaned string.
+ */
+function sanitizeHeaderValue(value: string): string {
+  // eslint-disable-next-line no-control-regex -- strip all ASCII control chars
+  return value.replace(/[\x00-\x08\x0a-\x1f\x7f]/g, "").replace(/\r/g, "");
+}
+
+/**
+ * Sanitize a record of route-supplied headers: strip newlines from both
+ * header names and values to prevent response splitting.
+ */
+function sanitizeRouteHeaders(headers: Record<string, string>): Record<string, string> {
+  const safe: Record<string, string> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    // Strip CRLF from header name — a name containing \r\n would split the response line
+    // eslint-disable-next-line no-control-regex
+    const safeName = k.replace(/[\x00-\x1f\x7f]/g, "");
+    if (!safeName) continue;
+    safe[safeName] = sanitizeHeaderValue(v);
+  }
+  return safe;
+}
+
 function sanitizeRedirectUrl(url: string): string {
-  const stripped = url.replace(/[\r\n]/g, "");
+  // Mirror validateRedirectUrl from server-helpers: strip all control chars
+  // (not just CR/LF) to prevent scheme-smuggling via tab, null, etc.
+  // eslint-disable-next-line no-control-regex -- intentionally strips ASCII control chars 0x00–0x20 and DEL (0x7f)
+  const stripped = url.replace(/[\x00-\x20\x7f]/g, "");
   // Reject // prefix — protocol-relative URLs resolve to an arbitrary domain (open redirect)
-  if ((stripped.startsWith("/") && !stripped.startsWith("//")) || stripped.startsWith("#")) return stripped;
+  if (stripped.startsWith("/") && !stripped.startsWith("//")) return stripped;
   return "/";
 }
 
@@ -306,7 +334,7 @@ async function handlePageRoute(
     if (typeof pageMod.headers === "function") {
       try {
         const h = await pageMod.headers(metadataContext);
-        if (h && typeof h === "object") routeHeaders = h as Record<string, string>;
+        if (h && typeof h === "object") routeHeaders = sanitizeRouteHeaders(h as Record<string, string>);
       } catch { /* skip invalid headers export */ }
     }
 

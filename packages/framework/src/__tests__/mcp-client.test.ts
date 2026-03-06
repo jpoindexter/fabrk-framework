@@ -1,10 +1,18 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { connectMCPServer } from "../tools/mcp/client";
 
+// Use a public-looking URL for tests that don't need network access.
+// localhost is blocked by default in connectMCPServer (SSRF prevention).
+// Tests that need localhost pass allowLocalhost: true.
+const TEST_MCP_URL = "https://mcp.example.com/mcp";
+
 function makeJsonRpcResponse(result: unknown) {
+  const body = JSON.stringify({ jsonrpc: "2.0", id: 1, result });
   return Promise.resolve({
     ok: true,
     status: 200,
+    headers: new Headers({ "content-length": String(body.length) }),
+    text: () => Promise.resolve(body),
     json: () => Promise.resolve({ jsonrpc: "2.0", id: 1, result }),
   });
 }
@@ -13,6 +21,8 @@ function makeErrorResponse(status: number) {
   return Promise.resolve({
     ok: false,
     status,
+    headers: new Headers(),
+    text: () => Promise.resolve("{}"),
     json: () => Promise.resolve({}),
   });
 }
@@ -67,7 +77,13 @@ describe("connectMCPServer", () => {
   it("throws on invalid URL scheme (javascript:)", async () => {
     await expect(
       connectMCPServer({ transport: "http", url: "javascript:alert(1)" })
-    ).rejects.toThrow("Invalid MCP URL scheme: javascript:");
+    ).rejects.toThrow();
+  });
+
+  it("throws SSRF error for localhost without allowLocalhost", async () => {
+    await expect(
+      connectMCPServer({ transport: "http", url: "http://localhost:3001/mcp" })
+    ).rejects.toThrow("SSRF blocked");
   });
 
   it("HTTP transport initializes and lists tools", async () => {
@@ -75,7 +91,7 @@ describe("connectMCPServer", () => {
 
     const { tools, disconnect } = await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
     });
 
     expect(tools).toHaveLength(1);
@@ -92,7 +108,7 @@ describe("connectMCPServer", () => {
 
     const { tools } = await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
     });
 
     const result = await tools[0].handler({});
@@ -113,7 +129,7 @@ describe("connectMCPServer", () => {
     );
 
     await expect(
-      connectMCPServer({ transport: "http", url: "http://localhost:3001/mcp" })
+      connectMCPServer({ transport: "http", url: TEST_MCP_URL })
     ).rejects.toThrow("Network failure");
   });
 
@@ -124,7 +140,7 @@ describe("connectMCPServer", () => {
     );
 
     await expect(
-      connectMCPServer({ transport: "http", url: "http://localhost:3001/mcp" })
+      connectMCPServer({ transport: "http", url: TEST_MCP_URL })
     ).rejects.toThrow("MCP HTTP error: 500");
   });
 });

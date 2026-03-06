@@ -78,7 +78,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <div className="flex size-7 items-center justify-center rounded-md bg-accent text-accent-foreground text-xs font-bold">
+            <div className={cn("flex size-7 items-center justify-center bg-accent text-accent-foreground text-xs font-bold", mode.radius)}>
               CS
             </div>
             <span className="text-sm font-bold tracking-tight">CodeScan</span>
@@ -176,7 +176,7 @@ export default function LandingPage() {
             {features.map((f) => (
               <Card key={f.title} size="auto" className={cn('border', mode.radius)}>
                 <CardContent padding="md">
-                  <div className="mb-3 flex size-9 items-center justify-center rounded-md bg-accent/10 text-accent">
+                  <div className={cn("mb-3 flex size-9 items-center justify-center bg-accent/10 text-accent", mode.radius)}>
                     {f.icon}
                   </div>
                   <h3 className="text-sm font-semibold">{f.title}</h3>

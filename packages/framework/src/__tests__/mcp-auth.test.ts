@@ -1,12 +1,18 @@
 import { describe, it, expect, afterEach, vi, beforeEach } from "vitest";
 import { connectMCPServer, MCPClientError, OAuth2TokenCache } from "../tools/mcp/client";
 
+// localhost is blocked by default — use a public-looking URL for tests
+const TEST_MCP_URL = "https://mcp.example.com/mcp";
+
 // --- Fetch mock helpers ---
 
 function makeJsonRpcResponse(result: unknown) {
+  const body = JSON.stringify({ jsonrpc: "2.0", id: 1, result });
   return Promise.resolve({
     ok: true,
     status: 200,
+    headers: new Headers({ "content-length": String(body.length) }),
+    text: () => Promise.resolve(body),
     json: () => Promise.resolve({ jsonrpc: "2.0", id: 1, result }),
   });
 }
@@ -15,6 +21,8 @@ function makeTokenResponse(token: string, expiresIn = 3600) {
   return Promise.resolve({
     ok: true,
     status: 200,
+    headers: new Headers(),
+    text: () => Promise.resolve(JSON.stringify({ access_token: token, expires_in: expiresIn })),
     json: () => Promise.resolve({ access_token: token, expires_in: expiresIn }),
   });
 }
@@ -23,6 +31,8 @@ function makeErrorResponse(status: number) {
   return Promise.resolve({
     ok: false,
     status,
+    headers: new Headers(),
+    text: () => Promise.resolve("{}"),
     json: () => Promise.resolve({}),
   });
 }
@@ -69,7 +79,7 @@ describe("MCP auth — bearer", () => {
 
     await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
       auth: { type: "bearer", token: "abc" },
     });
 
@@ -87,7 +97,7 @@ describe("MCP auth — bearer", () => {
 
     await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
     });
 
     for (const call of mockFetch.mock.calls) {
@@ -109,7 +119,7 @@ describe("MCP auth — OAuth2", () => {
 
     await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
       auth: { type: "oauth2", clientId: "cid", tokenUrl },
     });
 
@@ -134,7 +144,7 @@ describe("MCP auth — OAuth2", () => {
 
     const conn = await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
       auth: { type: "oauth2", clientId: "cid", tokenUrl },
     });
 
@@ -204,20 +214,22 @@ describe("MCP elicitation", () => {
       callCount += 1;
       if (callCount === 1) {
         // initialize — returns an elicitation/create server-initiated message
+        const body = JSON.stringify({
+          jsonrpc: "2.0",
+          method: "elicitation/create",
+          params: { prompt: "What is your name?", schema: { type: "string" } },
+        });
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: () =>
-            Promise.resolve({
-              jsonrpc: "2.0",
-              method: "elicitation/create",
-              params: { prompt: "What is your name?", schema: { type: "string" } },
-            }),
+          headers: new Headers({ "content-length": String(body.length) }),
+          text: () => Promise.resolve(body),
         });
       }
       if (callCount === 2) {
         // elicitation/respond send (fire-and-forget inside rpcCall)
-        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+        const body = "{}";
+        return Promise.resolve({ ok: true, status: 200, headers: new Headers({ "content-length": "2" }), text: () => Promise.resolve(body) });
       }
       if (callCount === 3) {
         // Re-attempt initialize (after elicitation resolves, rpcCall returns {} so the
@@ -233,7 +245,7 @@ describe("MCP elicitation", () => {
 
     await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
       elicitation: elicitationCb,
     });
 
@@ -247,26 +259,28 @@ describe("MCP elicitation", () => {
     let callCount = 0;
     const sentBodies: unknown[] = [];
 
-    const mockFetch = vi.fn((url: string, init?: RequestInit) => {
+    const mockFetch = vi.fn((_url: string, init?: RequestInit) => {
       if (init?.body) sentBodies.push(JSON.parse(init.body as string));
       callCount += 1;
 
       if (callCount === 1) {
         // initialize returns elicitation/create
+        const body = JSON.stringify({
+          jsonrpc: "2.0",
+          method: "elicitation/create",
+          params: { prompt: "Confirm?", schema: { type: "boolean" } },
+        });
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: () =>
-            Promise.resolve({
-              jsonrpc: "2.0",
-              method: "elicitation/create",
-              params: { prompt: "Confirm?", schema: { type: "boolean" } },
-            }),
+          headers: new Headers({ "content-length": String(body.length) }),
+          text: () => Promise.resolve(body),
         });
       }
       if (callCount === 2) {
         // elicitation/respond (fire-and-forget)
-        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve({}) });
+        const body = "{}";
+        return Promise.resolve({ ok: true, status: 200, headers: new Headers({ "content-length": "2" }), text: () => Promise.resolve(body) });
       }
       if (callCount === 3) {
         return makeJsonRpcResponse({ protocolVersion: "2024-11-05" });
@@ -278,7 +292,7 @@ describe("MCP elicitation", () => {
 
     await connectMCPServer({
       transport: "http",
-      url: "http://localhost:3001/mcp",
+      url: TEST_MCP_URL,
       elicitation: elicitationCb,
     });
 
@@ -299,15 +313,16 @@ describe("MCP elicitation", () => {
       callCount += 1;
       if (callCount === 1) {
         // initialize returns elicitation/create but no callback configured
+        const body = JSON.stringify({
+          jsonrpc: "2.0",
+          method: "elicitation/create",
+          params: { prompt: "Ignored?", schema: {} },
+        });
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: () =>
-            Promise.resolve({
-              jsonrpc: "2.0",
-              method: "elicitation/create",
-              params: { prompt: "Ignored?", schema: {} },
-            }),
+          headers: new Headers({ "content-length": String(body.length) }),
+          text: () => Promise.resolve(body),
         });
       }
       if (callCount === 2) {
@@ -322,7 +337,7 @@ describe("MCP elicitation", () => {
     await expect(
       connectMCPServer({
         transport: "http",
-        url: "http://localhost:3001/mcp",
+        url: TEST_MCP_URL,
       })
     ).resolves.toBeDefined();
   });

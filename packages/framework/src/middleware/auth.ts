@@ -4,8 +4,28 @@ export interface AuthGuardOptions {
   validateToken: (token: string) => Promise<boolean> | boolean;
   /** Cookie name to read session token from. Defaults to "session". */
   cookieName?: string;
-  /** If set, failed auth redirects to this path (302). Otherwise returns 401 JSON. */
+  /**
+   * If set, failed auth redirects to this path (302). Otherwise returns 401 JSON.
+   * Must be a relative path starting with "/" (not "//"). Absolute URLs and
+   * protocol-relative paths are rejected to prevent open redirect attacks.
+   */
   loginPath?: string;
+}
+
+/**
+ * Validate that a redirect path is a safe relative URL.
+ * Rejects absolute URLs (http://, https://), protocol-relative paths (//),
+ * scheme injections (javascript:, data:), and control characters.
+ */
+function validateLoginPath(path: string): void {
+  // Strip control characters that could smuggle scheme prefixes
+  // eslint-disable-next-line no-control-regex
+  const stripped = path.replace(/[\x00-\x20\x7f]/g, "");
+  if (!stripped.startsWith("/") || stripped.startsWith("//")) {
+    throw new Error(
+      `loginPath must be a relative path starting with "/" (not "//"). Got: ${JSON.stringify(path)}`
+    );
+  }
 }
 
 /**
@@ -21,6 +41,9 @@ export interface AuthGuardOptions {
  * }
  */
 export function createAuthGuard(options: AuthGuardOptions) {
+  if (options.loginPath !== undefined) {
+    validateLoginPath(options.loginPath);
+  }
   const cookieName = options.cookieName ?? "session";
   return async function guard(req: Request): Promise<Response | null> {
     let token: string | undefined;

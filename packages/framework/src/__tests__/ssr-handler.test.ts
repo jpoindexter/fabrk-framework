@@ -280,3 +280,219 @@ describe("handleRequest — API routes", () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe("handleRequest — route headers CRLF sanitization", () => {
+  let tmpDir: string;
+  let appDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-ssr-headers-"));
+    appDir = path.join(tmpDir, "app");
+    fs.mkdirSync(appDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function mockReactLoader(): () => Promise<[any, any]> {
+    return async () => [
+      { renderToString: () => "<div>page</div>" },
+      { createElement: (_c: unknown, _p: unknown) => ({}) },
+    ];
+  }
+
+  it("strips CRLF from route header values to prevent response splitting", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: {
+        default: () => "",
+        headers: async () => ({
+          "X-Custom": "legit\r\nX-Injected: evil",
+        }),
+      },
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      { routes, viteServer: server, _reactLoader: mockReactLoader() }
+    );
+
+    expect(res.status).toBe(200);
+    // The CR and LF must be stripped — injected header must not appear
+    const customVal = res.headers.get("X-Custom") ?? "";
+    expect(customVal).not.toContain("\r");
+    expect(customVal).not.toContain("\n");
+    expect(res.headers.get("X-Injected")).toBeNull();
+  });
+
+  it("strips null bytes and other control chars from header values", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: {
+        default: () => "",
+        headers: async () => ({
+          "X-Custom": "value\x00with\x01nulls",
+        }),
+      },
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      { routes, viteServer: server, _reactLoader: mockReactLoader() }
+    );
+
+    const val = res.headers.get("X-Custom") ?? "";
+    expect(val).not.toContain("\x00");
+    expect(val).not.toContain("\x01");
+  });
+
+  it("drops header entries whose name is entirely control characters", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: {
+        default: () => "",
+        // Header name is all control chars — sanitized name is empty, so it's dropped
+        headers: async () => ({
+          "\x00\x01\x02": "payload",
+          "X-Good": "ok",
+        }),
+      },
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      { routes, viteServer: server, _reactLoader: mockReactLoader() }
+    );
+
+    // The all-control-char name becomes "" and is dropped; X-Good passes through
+    expect(res.headers.get("X-Good")).toBe("ok");
+  });
+});
+
+describe("handleRequest — redirect URL sanitization", () => {
+  let tmpDir: string;
+  let appDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "fabrk-ssr-redirect-"));
+    appDir = path.join(tmpDir, "app");
+    fs.mkdirSync(appDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true });
+  });
+
+  // Use a mock React loader so the throw from the component propagates directly
+  // to the catch block in handlePageRoute without going through real React rendering.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function mockLoaderThrowing(throwFn: () => never): () => Promise<[any, any]> {
+    return async () => [
+      {
+        renderToString: (_element: unknown) => {
+          throwFn();
+        },
+      },
+      { createElement: (_c: unknown, _p: unknown) => ({}) },
+    ];
+  }
+
+  it("falls back to / for protocol-relative redirect URLs", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const { FABRK_REDIRECT } = await import("../runtime/error-boundary");
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: { default: () => "" },
+    });
+
+    const redirectErr = Object.assign(new Error("redirect"), {
+      digest: FABRK_REDIRECT,
+      url: "//evil.com/steal",
+      statusCode: 307,
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      {
+        routes,
+        viteServer: server,
+        _reactLoader: mockLoaderThrowing(() => { throw redirectErr; }),
+      }
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("Location")).toBe("/");
+  });
+
+  it("falls back to / for redirect URLs with tab-smuggled scheme", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const { FABRK_REDIRECT } = await import("../runtime/error-boundary");
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: { default: () => "" },
+    });
+
+    const redirectErr = Object.assign(new Error("redirect"), {
+      digest: FABRK_REDIRECT,
+      // Tab + space before https:// — could bypass naive trim()
+      url: "\t https://evil.com",
+      statusCode: 307,
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      {
+        routes,
+        viteServer: server,
+        _reactLoader: mockLoaderThrowing(() => { throw redirectErr; }),
+      }
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("Location")).toBe("/");
+  });
+
+  it("preserves safe relative redirect URLs unchanged", async () => {
+    const pageFile = path.join(appDir, "page.tsx");
+    fs.writeFileSync(pageFile, "");
+
+    const { FABRK_REDIRECT } = await import("../runtime/error-boundary");
+    const routes = scanRoutes(appDir);
+    const server = createMockViteServer({
+      [pageFile]: { default: () => "" },
+    });
+
+    const redirectErr = Object.assign(new Error("redirect"), {
+      digest: FABRK_REDIRECT,
+      url: "/dashboard?tab=settings",
+      statusCode: 302,
+    });
+
+    const res = await handleRequest(
+      new Request("http://localhost/"),
+      {
+        routes,
+        viteServer: server,
+        _reactLoader: mockLoaderThrowing(() => { throw redirectErr; }),
+      }
+    );
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get("Location")).toBe("/dashboard?tab=settings");
+  });
+});

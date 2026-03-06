@@ -16,6 +16,8 @@ import {
   CardHeader,
   Button,
 } from '@fabrk/components'
+import { mode } from '@fabrk/design-system'
+import { cn } from '@fabrk/core'
 import {
   GitBranch,
   ShieldAlert,
@@ -229,7 +231,7 @@ export default function DashboardPage() {
       sidebarItems={sidebarItems}
       title="CodeScan"
       logo={
-        <div className="flex size-7 items-center justify-center rounded-md bg-accent text-accent-foreground text-[10px] font-bold">
+        <div className={cn("flex size-7 items-center justify-center bg-accent text-accent-foreground text-[10px] font-bold", mode.radius)}>
           CS
         </div>
       }

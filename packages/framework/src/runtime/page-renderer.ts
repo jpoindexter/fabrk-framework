@@ -12,6 +12,22 @@ import {
 } from "./isr-cache";
 import type { ServerEntry } from "./route-handlers";
 
+/**
+ * Strip CRLF and other control characters from route-supplied header names
+ * and values to prevent HTTP response splitting.
+ */
+function sanitizeRouteHeaders(headers: Record<string, string>): Record<string, string> {
+  const safe: Record<string, string> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    // eslint-disable-next-line no-control-regex
+    const safeName = k.replace(/[\x00-\x1f\x7f]/g, "");
+    if (!safeName) continue;
+    // eslint-disable-next-line no-control-regex
+    safe[safeName] = v.replace(/[\x00-\x08\x0a-\x1f\x7f]/g, "").replace(/\r/g, "");
+  }
+  return safe;
+}
+
 export async function renderPageToString(
   route: ServerEntry["routes"][number],
   params: Record<string, string>,
@@ -108,7 +124,7 @@ export async function handlePageRoute(
         const url = new URL(reqUrl, "http://localhost");
         const ctx = { params, searchParams: Object.fromEntries(url.searchParams.entries()) };
         const h = await (route.module.headers as (ctx: { params: Record<string, string>; searchParams: Record<string, string> }) => Promise<Record<string, string>> | Record<string, string>)(ctx);
-        if (h && typeof h === "object") routeHeaders = h;
+        if (h && typeof h === "object") routeHeaders = sanitizeRouteHeaders(h as Record<string, string>);
       } catch { /* skip invalid headers export */ }
     }
 

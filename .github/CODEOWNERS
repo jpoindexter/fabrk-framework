@@ -1,0 +1,10 @@
+# Global owner — review required on all PRs
+* @jpoindexter
+
+# Package owners
+packages/framework/  @jpoindexter
+packages/core/       @jpoindexter
+packages/ai/         @jpoindexter
+packages/components/ @jpoindexter
+packages/auth/       @jpoindexter
+packages/security/   @jpoindexter

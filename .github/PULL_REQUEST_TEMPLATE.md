@@ -19,6 +19,7 @@
 - [ ] `@fabrk/storage`
 - [ ] `@fabrk/security`
 - [ ] `@fabrk/store-prisma`
+- [ ] `@fabrk/framework`
 - [ ] `create-fabrk-app`
 - [ ] Templates / Examples
 - [ ] Documentation

@@ -7,7 +7,7 @@ const rawArgs = process.argv.slice(3);
 function printHelp(): void {
   // eslint-disable-next-line no-console
   console.log(`
-  fabrk v${VERSION} — AI-first full-stack framework
+  fabrk v${VERSION} — modular full-stack framework
 
   Usage: fabrk <command> [options]
 

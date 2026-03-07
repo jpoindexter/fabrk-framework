@@ -1,5 +1,14 @@
 # fabrk-agent-demo
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @fabrk/core@0.3.1
+  - @fabrk/design-system@0.4.1
+  - @fabrk/components@0.4.1
+
 ## 0.1.3
 
 ### Patch Changes

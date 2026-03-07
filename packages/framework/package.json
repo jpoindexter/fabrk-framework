@@ -1,7 +1,7 @@
 {
   "name": "@fabrk/framework",
   "version": "0.3.2",
-  "description": "AI-first full-stack framework — file-system routing, SSR, AI agents, tools, MCP",
+  "description": "Modular full-stack framework — file-system routing, SSR, AI agents, tools, MCP",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",

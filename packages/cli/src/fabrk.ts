@@ -39,7 +39,7 @@ const VERSION = '0.1.0';
 
 program
   .name('fabrk')
-  .description('FABRK Framework CLI — The AI-first React meta-framework')
+  .description('FABRK Framework CLI — modular React meta-framework')
   .version(VERSION);
 
 // Register all commands

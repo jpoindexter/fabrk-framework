@@ -1,6 +1,6 @@
 <p align="center">
   <strong>> FABRK</strong><br/>
-  <em>The first UI framework designed for AI coding agents</em>
+  <em>modular full stack framework built for ai assisted development</em>
 </p>
 
 <p align="center">

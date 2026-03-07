@@ -8,7 +8,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'FABRK Docs — Framework for AI Coding Agents',
-  description: 'The first UI framework designed for AI coding agents. Build full-stack apps in minutes with pre-built components and tools.',
+  description: 'Modular full stack framework built for AI assisted development. 109+ components, 18 themes, auth, payments, AI, security.',
 }
 
 export default function RootLayout({

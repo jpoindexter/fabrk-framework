@@ -1,5 +1,14 @@
 # fabrk-framework-demo
 
+## 0.1.4
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @fabrk/design-system@0.4.1
+  - @fabrk/components@0.4.1
+  - @fabrk/framework@0.3.2
+
 ## 0.1.3
 
 ### Patch Changes

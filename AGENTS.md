@@ -4,7 +4,7 @@
 
 ## TL;DR
 
-- **What**: AI-first full-stack framework — 13 packages, 109+ components, 18 themes, own Vite 7 runtime
+- **What**: Modular full-stack framework for AI assisted development — 13 packages, 109+ components, 18 themes, own Vite 7 runtime
 - **Stack**: TypeScript 5.x • React 19 • Vite 7 • pnpm workspaces • Turbo
 - **Package manager**: pnpm (NOT npm, NOT yarn)
 - **Rule #1**: USE EXISTING COMPONENTS — don't rebuild what's already here

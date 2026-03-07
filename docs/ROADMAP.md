@@ -15,7 +15,7 @@
 
 | | vinext (Cloudflare) | Next.js 16 | fabrk |
 |---|---|---|---|
-| **Positioning** | Next.js API on Vite | The standard | AI-first framework |
+| **Positioning** | Next.js API on Vite | The standard | Modular, AI assisted |
 | **Routing** | Full Next.js compat | Full | Full (own impl) |
 | **SSR/RSC** | Full + streaming | Full | Full + streaming |
 | **AI Agents** | None | None | Built-in |

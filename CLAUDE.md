@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-FABRK Framework is a monorepo that provides the first UI framework designed specifically for AI coding agents. It enables AI assistants (Claude Code, Cursor, GitHub Copilot, v0.dev) to build full-stack applications in minutes by importing pre-built components and tools instead of writing everything from scratch.
+FABRK Framework is a modular TypeScript monorepo built for AI assisted development. It enables AI assistants (Claude Code, Cursor, GitHub Copilot, v0.dev) to build full-stack applications in minutes by importing pre-built components and tools instead of writing everything from scratch.
 
 **Tech Stack:** TypeScript 5.x • pnpm workspaces • Turbo monorepo • React 19 • Vite 7 (own runtime) • Changesets for versioning
 

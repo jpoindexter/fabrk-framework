@@ -6,7 +6,7 @@ export default function AboutPage() {
   return (
     <DocLayout
       title="ABOUT FABRK"
-      description="The story behind the framework. How a production boilerplate became the first UI framework designed for AI coding agents."
+      description="The story behind the framework. How a boilerplate became a modular full stack framework built for ai assisted development."
     >
       <Section id="origin" title="THE ORIGIN">
         <p className="text-sm text-muted-foreground mb-4">
@@ -81,7 +81,7 @@ export default function AboutPage() {
           who it&apos;s built for.
         </p>
         <p className="text-sm text-muted-foreground mb-4">
-          FABRK is the first UI framework designed specifically for AI coding agents.
+          FABRK is a modular framework designed for AI assisted development.
           Claude Code, Cursor, GitHub Copilot, v0.dev &mdash; these tools are how apps
           get built now. When an AI agent can import a complete dashboard shell, a
           pre-built auth flow, or a payment integration instead of generating hundreds

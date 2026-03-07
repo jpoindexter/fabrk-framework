@@ -162,7 +162,7 @@ export function generateAIRules(root: string, manifest: object): string {
   return `# CLAUDE.md — ${m.name}
 
 ## Project Overview
-This is a FABRK application built with the AI-first React meta-framework.
+This is a FABRK application built with the modular React meta-framework.
 
 ## Stack
 - **Framework:** FABRK (wraps Next.js)

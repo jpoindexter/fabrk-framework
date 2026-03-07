@@ -1,6 +1,6 @@
 # @fabrk/framework
 
-**AI-first full-stack framework — own Vite 7 runtime with file-system routing, SSR, streaming, and middleware.**
+**Modular full-stack framework — own Vite 7 runtime with file-system routing, SSR, streaming, and middleware.**
 
 [![npm](https://img.shields.io/npm/v/@fabrk/framework)](https://www.npmjs.com/package/@fabrk/framework)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

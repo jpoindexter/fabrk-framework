@@ -20,7 +20,7 @@ A modern web application built with [FABRK Framework](https://github.com/jpoinde
 ## What's Included
 
 - ✅ **Next.js 15** with App Router
-- ✅ **105+ UI Components** from `@fabrk/components`
+- ✅ **109+ UI Components** from `@fabrk/components`
 - ✅ **Terminal Design System** with 18 themes
 - ✅ **TypeScript** for type safety
 - ✅ **Tailwind CSS** for styling

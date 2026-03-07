@@ -1,7 +1,7 @@
 /**
  * @fabrk/components
  *
- * 105+ production-ready UI components and charts
+ * 109+ production-ready UI components and charts
  */
 
 // UI Components

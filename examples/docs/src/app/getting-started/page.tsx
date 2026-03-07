@@ -434,7 +434,7 @@ fabrk test`}</CodeBlock>
             Explore the {STATS.packages} packages &mdash; payments, auth, email, storage, security, and more.
           </InfoCard>
           <InfoCard title="COMPONENTS">
-            Browse 105+ components &mdash; charts, forms, admin panels, AI chat, and more.
+            Browse 109+ components &mdash; charts, forms, admin panels, AI chat, and more.
           </InfoCard>
           <InfoCard title="GUIDES">
             Step-by-step guides: build a dashboard, add auth, integrate payments, deploy.

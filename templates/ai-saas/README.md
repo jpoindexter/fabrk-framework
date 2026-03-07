@@ -20,7 +20,7 @@ A complete AI-powered SaaS application built with [FABRK Framework](https://gith
 ## What's Included
 
 - ✅ **Next.js 15** with App Router
-- ✅ **105+ UI Components** from `@fabrk/components`
+- ✅ **109+ UI Components** from `@fabrk/components`
 - ✅ **AI Toolkit** with cost tracking and validation
 - ✅ **Terminal Design System** with 18 themes
 - ✅ **TypeScript** for type safety

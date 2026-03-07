@@ -1,52 +1,111 @@
-import { Button, Card } from '@fabrk/components'
-import { cn } from '@fabrk/core'
+'use client'
+
+import { useState } from 'react'
+import { AiChat, Card, Badge, Button, Separator } from '@fabrk/components'
 import { mode } from '@fabrk/design-system'
+import { cn } from '@fabrk/core'
+
+const MOCK_USAGE = {
+  todayCost: 2.47,
+  totalTokens: 184_230,
+  requests: 42,
+  avgLatency: 1.2,
+}
 
 export default function Home() {
+  const [showChat, setShowChat] = useState(true)
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24">
-      <div className="max-w-2xl w-full space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight">
-            Welcome to FABRK
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Start building your application with 105+ components
-          </p>
+    <div className="flex flex-col h-screen">
+      {/* Top Bar */}
+      <header className={cn('flex items-center justify-between px-4 py-2 border-b', mode.color.border.default)}>
+        <div className="flex items-center gap-3">
+          <h1 className="text-sm font-bold uppercase tracking-wider">AI SAAS</h1>
+          <Badge className="text-xs">[FABRK]</Badge>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="p-6">
-            <h3 className="font-semibold mb-2">Components</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              105+ production-ready UI components with terminal aesthetic
-            </p>
-            <Button className="w-full">
-              Explore Components
-            </Button>
-          </Card>
-
-          <Card className="p-6">
-            <h3 className="font-semibold mb-2">Design System</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              18 terminal themes with design tokens and utilities
-            </p>
-            <Button variant="outline" className="w-full">
-              View Themes
-            </Button>
-          </Card>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span>TOKENS: <span className="text-primary font-bold">{MOCK_USAGE.totalTokens.toLocaleString()}</span></span>
+          <span>COST: <span className="text-primary font-bold">${MOCK_USAGE.todayCost.toFixed(2)}</span></span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-xs h-7"
+            onClick={() => setShowChat(!showChat)}
+          >
+            {showChat ? '> METRICS' : '> CHAT'}
+          </Button>
         </div>
+      </header>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Edit{' '}
-            <code className={cn('bg-muted px-2 py-1 text-xs', mode.radius, mode.font)}>
-              app/page.tsx
-            </code>{' '}
-            to get started
-          </p>
+      {/* Main Content */}
+      {showChat ? (
+        <div className="flex-1 overflow-hidden">
+          <AiChat />
         </div>
-      </div>
-    </main>
+      ) : (
+        <div className="flex-1 overflow-auto p-6 space-y-6">
+          <h2 className="text-xl font-bold uppercase">[USAGE METRICS]</h2>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className={cn('p-4 border border-border', mode.radius)}>
+              <p className="text-xs text-muted-foreground uppercase">TODAY COST</p>
+              <p className="text-2xl font-bold text-primary">${MOCK_USAGE.todayCost.toFixed(2)}</p>
+            </Card>
+            <Card className={cn('p-4 border border-border', mode.radius)}>
+              <p className="text-xs text-muted-foreground uppercase">TOTAL TOKENS</p>
+              <p className="text-2xl font-bold text-primary">{MOCK_USAGE.totalTokens.toLocaleString()}</p>
+            </Card>
+            <Card className={cn('p-4 border border-border', mode.radius)}>
+              <p className="text-xs text-muted-foreground uppercase">REQUESTS</p>
+              <p className="text-2xl font-bold text-primary">{MOCK_USAGE.requests}</p>
+            </Card>
+            <Card className={cn('p-4 border border-border', mode.radius)}>
+              <p className="text-xs text-muted-foreground uppercase">AVG LATENCY</p>
+              <p className="text-2xl font-bold text-primary">{MOCK_USAGE.avgLatency}s</p>
+            </Card>
+          </div>
+
+          <Separator />
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase">[RECENT ACTIVITY]</h3>
+            <Card className={cn('p-4 border border-border text-sm space-y-2', mode.radius, mode.font)}>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">14:32:01</span>
+                <span className="text-primary">GPT-4o</span>
+                <span>1,240 tokens</span>
+                <span className="text-muted-foreground">$0.04</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">14:31:45</span>
+                <span className="text-primary">Claude 3.5</span>
+                <span>890 tokens</span>
+                <span className="text-muted-foreground">$0.02</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">14:30:12</span>
+                <span className="text-primary">GPT-4o</span>
+                <span>2,100 tokens</span>
+                <span className="text-muted-foreground">$0.07</span>
+              </div>
+            </Card>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold uppercase">[CONFIGURATION]</h3>
+            <Card className={cn('p-4 border border-border text-xs space-y-1', mode.radius, mode.font)}>
+              <p className="text-muted-foreground">// fabrk.config.ts</p>
+              <p>{'export default createFabrkConfig({'}</p>
+              <p className="pl-4">{'ai: {'}</p>
+              <p className="pl-8 text-primary">{'defaultProvider: "openai",'}</p>
+              <p className="pl-8 text-primary">{'costTracking: true,'}</p>
+              <p className="pl-8 text-primary">{'maxCostPerDay: 50,'}</p>
+              <p className="pl-4">{'}'}</p>
+              <p>{'})'};</p>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

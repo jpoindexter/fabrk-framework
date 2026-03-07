@@ -1,6 +1,6 @@
-# FABRK Dashboard
+# FABRK App
 
-A production-ready admin dashboard built with [FABRK Framework](https://github.com/jpoindexter/fabrk-framework).
+A modern web application built with [FABRK Framework](https://github.com/jpoindexter/fabrk-framework).
 
 ## Getting Started
 
@@ -19,50 +19,21 @@ A production-ready admin dashboard built with [FABRK Framework](https://github.c
 
 ## What's Included
 
-- ✅ **DashboardShell** with responsive sidebar navigation
-- ✅ **KPI Cards & Stats Grids** for metrics visualization
-- ✅ **8+ Chart Components** (bar, line, area, pie, donut, funnel)
-- ✅ **DataTable** with sorting, filtering, and pagination
-- ✅ **Terminal Design System** with 18 themes
-- ✅ **105+ UI Components** from `@fabrk/components`
 - ✅ **Next.js 15** with App Router
+- ✅ **105+ UI Components** from `@fabrk/components`
+- ✅ **Terminal Design System** with 18 themes
 - ✅ **TypeScript** for type safety
+- ✅ **Tailwind CSS** for styling
+- ✅ **React 19** with latest features
 
-## Dashboard Components
+## Project Structure
 
-```tsx
-import {
-  DashboardShell,
-  DashboardHeader,
-  StatsGrid,
-  BarChart,
-  LineChart,
-  DataTable,
-} from '@fabrk/components'
-
-export default function Dashboard() {
-  return (
-    <DashboardShell
-      sidebarItems={[
-        { id: 'overview', label: 'Overview', href: '/dashboard' },
-        { id: 'analytics', label: 'Analytics', href: '/dashboard/analytics' },
-      ]}
-      user={{ name: 'Jason', tier: 'pro' }}
-      logo={<span className="text-accent text-xl">#</span>}
-      onSignOut={() => signOut()}
-    >
-      <DashboardHeader title="Overview" subtitle="Last 30 days" />
-      <StatsGrid items={[
-        { label: 'Revenue', value: 45200, change: '+12%' },
-        { label: 'Users', value: 1234, change: '+8%' },
-      ]} />
-      <div className="p-4">
-        <LineChart data={chartData} />
-        <DataTable columns={columns} data={tableData} />
-      </div>
-    </DashboardShell>
-  )
-}
+```
+├── app/              # Next.js app router
+│   ├── layout.tsx    # Root layout with FABRK providers
+│   └── page.tsx      # Home page
+├── public/           # Static assets
+└── package.json      # Dependencies
 ```
 
 ## Available Scripts
@@ -76,8 +47,8 @@ export default function Dashboard() {
 ## Learn More
 
 - [FABRK Documentation](https://github.com/jpoindexter/fabrk-framework)
-- [Dashboard Components](https://github.com/jpoindexter/fabrk-framework/tree/main/packages/components)
-- [Chart Examples](https://github.com/jpoindexter/fabrk-framework/tree/main/packages/components/src/charts)
+- [Next.js Documentation](https://nextjs.org/docs)
+- [Component Examples](https://github.com/jpoindexter/fabrk-framework/tree/main/packages/components)
 
 ## Deploy
 

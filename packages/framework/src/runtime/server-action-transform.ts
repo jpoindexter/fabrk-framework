@@ -34,7 +34,7 @@ function hasFileLevelDirective(code: string): boolean {
 
 function findInlineServerFunctions(code: string): Set<string> {
   const names = new Set<string>();
-  const fnRegex = /export\s+(?:async\s+)?function\s+(\w+)\s*\([^)]*\)\s*\{/g;
+  const fnRegex = /export\s(?:async\s)?function\s(\w+)\s*\([^)]*\)\s*\{/g;
   let match: RegExpExecArray | null;
 
   while ((match = fnRegex.exec(code)) !== null) {
@@ -71,7 +71,7 @@ function extractExports(code: string): ExportedFn[] {
     exports.push({ name: m[2], isDefault: false, isAsync: !!m[1] });
   }
 
-  const constRe = /export\s+const\s+(\w+)\s*=\s*(async\s+)?(?:function|\(|[^=]+=>\s*)/g;
+  const constRe = /export\sconst\s(\w+)\s*=\s*(async\s)?(?:function|\(|\w+=>\s*)/g;
   while ((m = constRe.exec(code)) !== null) {
     const name = m[1];
     if (!exports.some((e) => e.name === name)) {

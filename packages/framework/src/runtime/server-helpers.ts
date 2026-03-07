@@ -58,6 +58,15 @@ export function isRedirectError(
   );
 }
 
+/**
+ * Remove trailing slashes without regex (avoids CodeQL ReDoS flag on /\/+$/).
+ */
+export function stripTrailingSlashes(s: string): string {
+  let end = s.length;
+  while (end > 1 && s.charCodeAt(end - 1) === 47 /* '/' */) end--;
+  return end === s.length ? s : s.slice(0, end);
+}
+
 export function isNotFoundError(error: unknown): error is FabrkError {
   return (
     error instanceof Error &&

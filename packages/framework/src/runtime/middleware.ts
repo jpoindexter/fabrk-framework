@@ -1,5 +1,5 @@
 import { buildSecurityHeaders } from "../middleware/security";
-import { validateRedirectUrl } from "./server-helpers";
+import { validateRedirectUrl, stripTrailingSlashes } from "./server-helpers";
 
 export interface MiddlewareResult {
   /** If false, the response is returned directly (short-circuit). */
@@ -31,7 +31,7 @@ export type MiddlewareHandler = (
  * Rejects patterns with nested quantifiers (ReDoS protection).
  */
 export function compileMatcher(pattern: string): RegExp {
-  let normalized = pattern === "/" ? "/" : pattern.replace(/\/+$/, "");
+  let normalized = pattern === "/" ? "/" : stripTrailingSlashes(pattern);
 
   // Reject bare `[` or `(` chars — they create unescaped regex character classes
   // or groups that can silently mis-match routes (e.g. "[/admin]" matches any
@@ -42,8 +42,10 @@ export function compileMatcher(pattern: string): RegExp {
     );
   }
 
-  // Escape literal dots so /api/v1.2/foo matches only literal dots, not any char.
-  normalized = normalized.replace(/\./g, "\\.");
+  // Escape regex metacharacters that aren't part of our pattern syntax.
+  // Our syntax only uses: *, :param, / — everything else is literal.
+  // Brackets/parens already rejected above.
+  normalized = normalized.replace(/[.+?^${}|\\]/g, "\\$&");
 
   // Named params first (before glob conversion so :path* isn't mangled)
   normalized = normalized.replace(/:[\w]+\*/g, "(.+)");

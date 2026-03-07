@@ -1,5 +1,6 @@
 import http from "node:http";
 import { buildSecurityHeaders } from "../middleware/security";
+import { stripTrailingSlashes } from "./server-helpers";
 
 const MAX_BODY = 1024 * 1024;
 
@@ -30,7 +31,7 @@ export function matchRoute(
   route: ServerEntry["routes"][number];
   params: Record<string, string>;
 } | null {
-  const normalized = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
+  const normalized = pathname === "/" ? "/" : stripTrailingSlashes(pathname);
 
   for (const route of routes) {
     const match = route.regex.exec(normalized);

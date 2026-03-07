@@ -20,7 +20,9 @@ export function calledToolWith(
 
 export function respondedWith(result: TestAgentResult, text: string | RegExp): boolean {
   if (typeof text === "string") return result.content.includes(text);
-  return text.test(result.content);
+  // Limit content length to prevent ReDoS when caller passes a complex regex
+  const content = result.content.length > 100_000 ? result.content.slice(0, 100_000) : result.content;
+  return text.test(content);
 }
 
 export function costUnder(result: TestAgentResult, maxCost: number): boolean {

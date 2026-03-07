@@ -45,9 +45,11 @@ describe("compileMatcher", () => {
     expect(() => compileMatcher("[/admin]")).toThrow("[fabrk] Middleware matcher");
   });
 
-  it("rejects patterns with nested quantifiers (ReDoS)", () => {
-    // Patterns without brackets but with nested quantifiers
-    expect(() => compileMatcher("/test*+")).toThrow("ReDoS");
+  it("escapes metacharacters that would create nested quantifiers", () => {
+    // '+' is escaped to '\+' before glob conversion, so no nested quantifier
+    const re = compileMatcher("/test*+");
+    expect(re.test("/testing+")).toBe(true);
+    expect(re.test("/testing")).toBe(false);
   });
 });
 

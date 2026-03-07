@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { Route } from "../runtime/router";
+import { stripTrailingSlashes } from "../runtime/server-helpers";
 
 export interface SitemapEntry {
   loc: string;
@@ -18,7 +19,7 @@ export interface SitemapOptions {
 
 export async function generateSitemap(options: SitemapOptions): Promise<void> {
   const { baseUrl, routes, modules, outDir } = options;
-  const normalizedBase = baseUrl.replace(/\/+$/, "");
+  const normalizedBase = stripTrailingSlashes(baseUrl);
 
   const entries: SitemapEntry[] = [];
 

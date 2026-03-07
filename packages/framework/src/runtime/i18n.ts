@@ -1,3 +1,5 @@
+import { stripTrailingSlashes } from "./server-helpers";
+
 export interface I18nConfig {
   locales: string[];
   defaultLocale: string;
@@ -26,7 +28,7 @@ export function extractLocale(
 
   if (candidate && LOCALE_RE.test(candidate) && isValidLocale(candidate, config)) {
     const stripped = "/" + segments.slice(2).join("/");
-    const normalizedPath = stripped === "/" ? "/" : stripped.replace(/\/+$/, "");
+    const normalizedPath = stripped === "/" ? "/" : stripTrailingSlashes(stripped);
     return { locale: candidate, pathname: normalizedPath };
   }
 
@@ -107,7 +109,7 @@ export function createI18nMiddleware(
     const firstSeg = segments[1] ?? "";
     if (firstSeg === config.defaultLocale) {
       const stripped = "/" + segments.slice(2).join("/");
-      const normalizedStripped = stripped === "/" ? "/" : stripped.replace(/\/+$/, "");
+      const normalizedStripped = stripped === "/" ? "/" : stripTrailingSlashes(stripped);
       const redirectUrl = new URL(normalizedStripped + url.search, request.url);
       return Response.redirect(redirectUrl.toString(), 307);
     }

@@ -24,7 +24,7 @@ function toMarkdownTable(rows: Record<string, unknown>[]): string {
   const header = `| ${cols.join(" | ")} |`;
   const divider = `| ${cols.map(() => "---").join(" | ")} |`;
   const body = rows
-    .map((row) => `| ${cols.map((c) => String(row[c] ?? "").replace(/\|/g, "\\|")).join(" | ")} |`)
+    .map((row) => `| ${cols.map((c) => String(row[c] ?? "").replace(/\\/g, "\\\\").replace(/\|/g, "\\|")).join(" | ")} |`)
     .join("\n");
 
   return [header, divider, body].join("\n");

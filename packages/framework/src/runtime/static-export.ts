@@ -1,5 +1,6 @@
 import type { Route } from "./router";
 import { resolveMetadata, buildMetadataHtml } from "./metadata";
+import { stripTrailingSlashes } from "./server-helpers";
 
 export interface StaticRoute {
   route: Route;
@@ -102,7 +103,7 @@ export function resolveOutputPath(
   }
 
   if (resolved === "/") return "/index.html";
-  resolved = resolved.replace(/\/+$/, "");
+  resolved = stripTrailingSlashes(resolved);
   return `${resolved}/index.html`;
 }
 

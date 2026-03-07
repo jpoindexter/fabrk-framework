@@ -5,6 +5,7 @@
 
 export type { Route, RouteMatch, SegmentInfo } from "./router-types";
 import type { Route, RouteMatch } from "./router-types";
+import { stripTrailingSlashes } from "./server-helpers";
 
 // Re-export scanner functions
 export { scanRoutes, findFile, collectLayouts, collectBoundaries } from "./route-scanner";
@@ -23,7 +24,7 @@ export function matchRoute(
   pathname: string,
   softNavigation = false,
 ): RouteMatch | null {
-  const normalized = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
+  const normalized = pathname === "/" ? "/" : stripTrailingSlashes(pathname);
   let fallback: RouteMatch | null = null;
 
   for (const route of routes) {

@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/ai",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "AI development toolkit with cost tracking, validation, and testing",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -67,6 +67,7 @@
     "ai",
     "llm",
     "cost-tracking",
+    "budget-enforcement",
     "validation",
     "streaming",
     "embeddings",
@@ -74,6 +75,8 @@
     "anthropic",
     "google-ai",
     "ai-sdk",
+    "ai-agents",
+    "ai-coding",
     "typescript"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",

@@ -1,6 +1,6 @@
 {
   "name": "create-fabrk-app",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "CLI tool to scaffold new FABRK applications",
   "bin": {
     "create-fabrk-app": "./dist/index.js",
@@ -43,8 +43,12 @@
     "starter",
     "template",
     "ai-framework",
-    "nextjs",
-    "typescript"
+    "ai-coding",
+    "vite",
+    "react",
+    "typescript",
+    "saas",
+    "fullstack"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

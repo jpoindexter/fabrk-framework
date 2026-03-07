@@ -1,5 +1,14 @@
 # fabrk
 
+## 0.3.2
+
+### Patch Changes
+
+- Improve npm discoverability with expanded keywords (ai-coding, claude, cursor, copilot, vite, saas, edge-runtime). Update component description to 109+ components, 11 chart types.
+
+- Updated dependencies []:
+  - @fabrk/ai@0.3.1
+
 ## 0.3.1
 
 ### Patch Changes

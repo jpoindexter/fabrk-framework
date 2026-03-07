@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/framework",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "AI-first full-stack framework — file-system routing, SSR, AI agents, tools, MCP",
   "license": "MIT",
   "type": "module",
@@ -72,14 +72,24 @@
   "keywords": [
     "fabrk",
     "vite",
+    "vite-7",
     "react",
     "ssr",
     "file-system-routing",
     "ai-agents",
+    "ai-framework",
     "framework",
+    "fullstack",
     "typescript",
     "mcp",
-    "llm"
+    "llm",
+    "claude",
+    "cursor",
+    "copilot",
+    "edge-runtime",
+    "cloudflare-workers",
+    "saas",
+    "saas-boilerplate"
   ],
   "homepage": "https://framework.fabrk.dev",
   "bugs": {

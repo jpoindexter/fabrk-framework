@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/core",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "FABRK framework runtime — plugins, middleware, feature flags, teams, jobs, and webhooks",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -47,14 +47,20 @@
     "framework",
     "ai",
     "ai-coding",
+    "ai-agents",
+    "claude",
+    "cursor",
+    "copilot",
     "feature-flags",
     "webhooks",
     "jobs",
     "plugins",
     "middleware",
     "react",
-    "nextjs",
-    "typescript"
+    "vite",
+    "typescript",
+    "saas",
+    "saas-boilerplate"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

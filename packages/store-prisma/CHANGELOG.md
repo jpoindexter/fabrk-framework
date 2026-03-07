@@ -1,5 +1,14 @@
 # @fabrk/store-prisma
 
+## 0.3.1
+
+### Patch Changes
+
+- Improve npm discoverability with expanded keywords (ai-coding, claude, cursor, copilot, vite, saas, edge-runtime). Update component description to 109+ components, 11 chart types.
+
+- Updated dependencies []:
+  - @fabrk/core@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/storage",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Storage adapters for FABRK framework (S3, R2, local)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -55,7 +55,8 @@
     "aws",
     "file-upload",
     "typescript",
-    "ai-coding"
+    "ai-coding",
+    "edge-runtime"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

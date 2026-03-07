@@ -1,7 +1,7 @@
 {
   "name": "@fabrk/components",
-  "version": "0.4.0",
-  "description": "105+ production-ready UI components for FABRK framework",
+  "version": "0.4.1",
+  "description": "109+ production-ready UI components, 11 chart types, dashboard shell for FABRK framework",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -89,11 +89,19 @@
     "fabrk",
     "components",
     "ui",
+    "ui-framework",
+    "component-library",
     "react",
-    "nextjs",
+    "vite",
     "radix-ui",
     "tailwind",
-    "terminal-ui"
+    "terminal-ui",
+    "dashboard",
+    "charts",
+    "data-table",
+    "design-system",
+    "ai-coding",
+    "typescript"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

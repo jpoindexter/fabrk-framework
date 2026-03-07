@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/email",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Email adapters for FABRK framework (Resend, console)",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -49,9 +49,9 @@
     "resend",
     "transactional-email",
     "email-templates",
-    "nextjs",
     "typescript",
-    "ai-coding"
+    "ai-coding",
+    "saas"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

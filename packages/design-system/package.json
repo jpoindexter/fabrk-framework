@@ -1,6 +1,6 @@
 {
   "name": "@fabrk/design-system",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Terminal-inspired design system with 18 themes and design tokens",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -48,7 +48,10 @@
     "tailwind",
     "dark-mode",
     "react",
-    "typescript"
+    "typescript",
+    "theming",
+    "ui-framework",
+    "ai-coding"
   ],
   "homepage": "https://github.com/jpoindexter/fabrk-framework#readme",
   "bugs": {

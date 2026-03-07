@@ -139,7 +139,8 @@ export function registerCreateCommand(program: Command): void {
         console.log(chalk.cyan(`  cd ${projectName}`));
         console.log(chalk.cyan('  fabrk dev'));
         console.log();
-        console.log(chalk.dim('  Open http://localhost:3000 to view your app'));
+        const port = template === 'basic' ? '5173' : '3000';
+        console.log(chalk.dim(`  Open http://localhost:${port} to view your app`));
         console.log(chalk.dim('  Edit fabrk.config.ts to configure your app\n'));
       } catch (error) {
         spinner.fail('Failed to create project');

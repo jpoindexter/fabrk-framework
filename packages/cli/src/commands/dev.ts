@@ -5,6 +5,8 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
+import fs from 'fs-extra';
+import path from 'path';
 import { findProjectRoot, hasFabrkConfig, runCommand, validatePort } from './helpers';
 import { generateFabrkDir } from './fabrk-dir';
 
@@ -27,7 +29,14 @@ export function registerDevCommand(program: Command): void {
       // Generate .fabrk/ directory
       generateFabrkDir({ root, configPath });
 
-      console.log(chalk.green('[FABRK]') + chalk.dim(` Starting dev server on port ${options.port}...\n`));
-      runCommand('npx', ['next', 'dev', '-p', options.port], root);
+      // Detect project type: if @fabrk/framework is installed, use its CLI
+      const hasFramework = fs.existsSync(path.join(root, 'node_modules', '@fabrk', 'framework'));
+      if (hasFramework) {
+        console.log(chalk.green('[FABRK]') + chalk.dim(` Starting Vite dev server on port ${options.port}...\n`));
+        runCommand('npx', ['fabrk', 'dev', '--port', options.port], root);
+      } else {
+        console.log(chalk.green('[FABRK]') + chalk.dim(` Starting Next.js dev server on port ${options.port}...\n`));
+        runCommand('npx', ['next', 'dev', '-p', options.port], root);
+      }
     });
 }

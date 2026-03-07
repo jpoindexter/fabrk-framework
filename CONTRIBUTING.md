@@ -72,7 +72,7 @@ Turbo handles the build order automatically, so running `pnpm build` at the root
 ### Running Tests
 
 ```bash
-# Run all tests (2,677 across all test files)
+# Run all tests (3,221 across all test files)
 pnpm test
 
 # Watch mode

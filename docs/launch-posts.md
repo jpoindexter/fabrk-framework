@@ -6,7 +6,7 @@ open sourced the ui framework i've been building for ai coding agents
 
 109+ components, 18 themes, own vite 7 runtime, auth, payments, storage, ai cost tracking — all the stuff i kept rebuilding across projects, now in 13 npm packages
 
-2,677 tests. MIT licensed.
+3,221 tests. MIT licensed.
 
 https://github.com/jpoindexter/fabrk-framework
 https://www.npmjs.com/org/fabrk
@@ -40,7 +40,7 @@ every package includes AGENTS.md files so ai assistants can discover components,
 - `@fabrk/security` — csrf, csp, rate limiting, audit logging
 - `@fabrk/framework` — own vite 7 runtime with file-system routing + ssr + ai agents + mcp
 
-2,677 tests, 12 rounds of security audits, MIT licensed.
+3,221 tests, 12 rounds of security audits, MIT licensed.
 
 github: https://github.com/jpoindexter/fabrk-framework
 npm: https://www.npmjs.com/org/fabrk
@@ -65,6 +65,6 @@ FABRK is a modular TypeScript framework extracted from years of shipping SaaS pr
 
 Each package includes AGENTS.md files for AI assistant discovery. Works with Claude Code, Cursor, Copilot, v0.dev.
 
-2,677 tests, 12 security audit rounds, MIT licensed. Deploys to Node, Cloudflare Workers, Deno, Bun.
+3,221 tests, 12 security audit rounds, MIT licensed. Deploys to Node, Cloudflare Workers, Deno, Bun.
 
 https://github.com/jpoindexter/fabrk-framework

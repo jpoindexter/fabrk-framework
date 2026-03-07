@@ -44,7 +44,7 @@ function StatsSection() {
           { label: 'COMPONENTS', value: '109+' },
           { label: 'THEMES', value: '18' },
           { label: 'PACKAGES', value: '13' },
-          { label: 'TESTS', value: '2,677' },
+          { label: 'TESTS', value: '3,221' },
         ]}
       />
     </section>

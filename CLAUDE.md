@@ -25,7 +25,7 @@ pnpm dev                  # Build all packages in watch mode
 pnpm build                # Build all packages for production
 pnpm type-check           # TypeScript validation across all packages
 pnpm lint                 # Lint all packages
-pnpm test                 # Run all 2,677 tests
+pnpm test                 # Run all 3,221 tests
 pnpm clean                # Remove all build artifacts
 
 # Quality
@@ -82,7 +82,7 @@ fabrk-framework/
 │   ├── config/            # @fabrk/config - Type-safe config builder (13 sections, Zod)
 │   ├── design-system/     # @fabrk/design-system - 18 themes, design tokens
 │   ├── core/              # @fabrk/core - Framework runtime, plugins, middleware, teams, jobs, flags
-│   ├── components/        # @fabrk/components - 109+ UI components, 8 chart types, dashboard shell, 15 hooks
+│   ├── components/        # @fabrk/components - 109+ UI components, 11 chart types, dashboard shell, 15 hooks
 │   ├── ai/                # @fabrk/ai - AI toolkit (cost tracking, streaming, LLM providers, embeddings)
 │   ├── payments/          # @fabrk/payments - Stripe, Polar, Lemon Squeezy adapters
 │   ├── auth/              # @fabrk/auth - NextAuth, API keys, MFA (TOTP + backup codes)
@@ -503,8 +503,8 @@ Read these files for context:
 ### Current Stats
 
 - **19/19 packages build** (13 packages + 6 examples)
-- **2,677 tests**, all passing
-- **109+ components**, 15 hooks, 8 chart types, 18 themes
+- **3,221 tests**, all passing
+- **109+ components**, 15 hooks, 11 chart types, 18 themes
 - **13 packages** (12 @fabrk/* + fabrk runtime), **24/24 type-check**
 - **5 examples**: basic-usage, docs site, saas-analytics, ecommerce, agent-demo
 - **Docs site**: 40+ pages with Cmd+K search, sticky TOC, mobile nav, 18-theme switcher

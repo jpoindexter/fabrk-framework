@@ -71,7 +71,7 @@ const categories: ComponentCategory[] = [
   },
   {
     name: 'CHARTS',
-    description: '8 chart types for data visualization. All use design tokens and support theming.',
+    description: '11 chart types for data visualization. All use design tokens and support theming.',
     items: [
       { name: 'BarChart', description: 'Vertical bar chart' },
       { name: 'LineChart', description: 'Line chart with smooth curves' },
@@ -274,7 +274,7 @@ const data = [
           BARCHART AND LINECHART
         </h3>
         <p className="text-sm text-muted-foreground mb-3">
-          Data visualization with theme-aware colors. All 8 chart types share a consistent API.
+          Data visualization with theme-aware colors. All 11 chart types share a consistent API.
         </p>
         <CodeBlock title="BarChart + LineChart">{`import { BarChart, LineChart, Card } from '@fabrk/components'
 import { cn } from '@fabrk/core'

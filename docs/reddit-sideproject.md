@@ -12,7 +12,7 @@ the breaking point was realizing bug fixes werent propagating. id fix a race con
 
 so i spent a few months extracting everything into standalone npm packages. 13 of them:
 
-- **components** — 109+ ui components, 8 chart types, dashboard shell, data tables, org management
+- **components** — 109+ ui components, 11 chart types, dashboard shell, data tables, org management
 - **design system** — 18 themes with runtime css variable switching, no build step needed
 - **auth** — nextauth adapter, api key management with sha-256 hashing, mfa with totp and backup codes
 - **payments** — stripe, polar, lemon squeezy all behind the same adapter interface
@@ -43,7 +43,7 @@ not sure if thats a thing people care about yet but it felt like the right bet.
 ### where its at
 
 - 13 packages published on npm under `@fabrk/*`
-- 2,677 tests, all passing
+- 3,221 tests, all passing
 - typescript strict, mit licensed
 - cli scaffolding tool: `npx create-fabrk-app my-app`
 - docs site with live demo, component gallery, 18 theme switcher

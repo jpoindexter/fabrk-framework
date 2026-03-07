@@ -305,7 +305,7 @@ All component source is in `packages/components/src/`:
 ```
 src/
 ├── ui/              # 75 UI components
-├── charts/          # 8 chart types (11 exported components)
+├── charts/          # 11 chart types
 ├── ai/              # AI chat components
 ├── admin/           # Admin panel components
 ├── security/        # MFA/security components

@@ -275,7 +275,7 @@ const rows: ComparisonRow[] = [
   {
     category: 'UI & DESIGN',
     feature: 'Charts (built in)',
-    fabrk: 'Yes — 8 chart types',
+    fabrk: 'Yes — 11 chart types',
     nextai: 'No',
     langgraph: 'No',
     fabrkStatus: 'yes',
@@ -792,7 +792,7 @@ shadcn/ui            — UI components (separate install, copy-paste)
                          defineAgent(), defineTool(), MCP server + client
                          agent loop, budget enforcement, cost tracking
                          dev dashboard (/__ai), agent testing framework
-@fabrk/components     — 109+ UI components, 8 chart types, 18 themes
+@fabrk/components     — 109+ UI components, 11 chart types, 18 themes
 @fabrk/auth           — NextAuth, API keys (SHA-256), MFA (TOTP)
 @fabrk/payments       — Stripe, Polar, Lemon Squeezy adapters
 @fabrk/email          — Resend + console adapter, 4 templates

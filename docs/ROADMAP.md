@@ -4,12 +4,12 @@
 
 ## Current State
 
-- **1,186 tests** passing (540 root + 395 components + framework)
+- **3,221 tests** passing
 - **24/24 type-check**, 0 lint errors, 0 warnings
 - **13 packages** + create-fabrk-app CLI
 - Own Vite 7 runtime: file-system routing, SSR/RSC streaming, middleware, static export
 - AI layer: agents, tools, MCP, orchestration, memory, skills, budget, dashboard
-- 109+ UI components, 18 themes, 8 chart types
+- 109+ UI components, 18 themes, 11 chart types
 
 ## Competitive Landscape
 
@@ -22,7 +22,7 @@
 | **Tool Calling** | None | Via AI SDK | Built-in |
 | **MCP** | None | None | HTTP + stdio |
 | **UI Components** | None | None | 109+ |
-| **Tests** | 2,080+ | 10,000+ | 1,186 (→ 3,300 target) |
+| **Tests** | 2,080+ | 10,000+ | 3,221 (target 5,000+) |
 | **Deploy** | CF Workers | Vercel | Generic (Node, Workers, Edge) |
 
 **Our thesis:** vinext reimplements Next.js. We're building something new — the first full-stack framework where AI agents are first-class citizens. Same routing, same SSR, same RSC — plus agents, tools, memory, MCP, orchestration, and 109+ components.
@@ -89,7 +89,7 @@
 | `@fabrk/email` package | 1 test file (~9%) | High |
 | Playwright E2E tests | 0 | High |
 
-**Target:** 1,186 → ~3,300 total tests
+**Target:** 3,221 → ~5,000 total tests
 
 ---
 
@@ -152,7 +152,7 @@ Not in current scope but on the radar:
 
 | Metric | Current | Target |
 |--------|---------|--------|
-| Total tests | 1,186 | 3,300+ |
+| Total tests | 3,221 | 5,000+ |
 | E2E tests | 0 | 50+ |
 | Type-check errors | 0 | 0 |
 | Lint warnings | 0 | 0 |

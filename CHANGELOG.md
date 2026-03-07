@@ -23,7 +23,7 @@ Key capabilities:
 
 ### Security Hardening (Rounds 3–12)
 
-12 rounds of adversarial security auditing. Total: 2,677 tests.
+12 rounds of adversarial security auditing. Total: 3,221 tests.
 
 **Rounds 3–7** (commits 244259c–612a0fd):
 - Open redirect prevention on all redirect paths (same-origin validation)

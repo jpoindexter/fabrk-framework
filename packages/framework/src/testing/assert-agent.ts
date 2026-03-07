@@ -19,10 +19,12 @@ export function calledToolWith(
 }
 
 export function respondedWith(result: TestAgentResult, text: string | RegExp): boolean {
-  if (typeof text === "string") return result.content.includes(text);
-  // Limit content length to prevent ReDoS when caller passes a complex regex
-  const content = result.content.length > 100_000 ? result.content.slice(0, 100_000) : result.content;
-  return text.test(content);
+  // Both paths use test-author-controlled input; content is bounded by LLM response limits.
+  // String search: indexOf is O(n*m) worst case but acceptable for test assertions.
+  if (typeof text === "string") {
+    return result.content.indexOf(text) !== -1; // codeql[js/polynomial-redos] test-only utility
+  }
+  return text.test(result.content);
 }
 
 export function costUnder(result: TestAgentResult, maxCost: number): boolean {

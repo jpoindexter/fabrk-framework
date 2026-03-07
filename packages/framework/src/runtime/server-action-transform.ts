@@ -34,22 +34,20 @@ function hasFileLevelDirective(code: string): boolean {
 
 function findInlineServerFunctions(code: string): Set<string> {
   const names = new Set<string>();
-  const fnRegex = /export\s(?:async\s)?function\s(\w+)\s*\([^)]*\)\s*\{/g;
-  let match: RegExpExecArray | null;
-
-  while ((match = fnRegex.exec(code)) !== null) {
-    const fnName = match[1];
-    const bodyStart = match.index + match[0].length;
-    const bodySlice = code.slice(bodyStart, bodyStart + 200);
-    const firstStatement = bodySlice.split("\n").find((l) => {
-      const t = l.trim();
-      return t !== "" && !t.startsWith("//");
-    });
-    if (
-      firstStatement &&
-      (/^["']use server["'];?$/.test(firstStatement.trim()))
-    ) {
-      names.add(fnName);
+  // Match line-by-line to avoid backtracking across the whole source
+  const lines = code.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const fnMatch = /^export\s(?:async\s)?function\s(\w+)/.exec(line);
+    if (!fnMatch) continue;
+    // Look ahead for "use server" directive in the function body
+    for (let j = i + 1; j < lines.length && j <= i + 10; j++) {
+      const t = lines[j].trim();
+      if (t === "" || t.startsWith("//")) continue;
+      if (/^["']use server["'];?$/.test(t)) {
+        names.add(fnMatch[1]);
+      }
+      break;
     }
   }
 

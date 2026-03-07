@@ -1,5 +1,25 @@
 # fabrk
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix client-side hydration, resolve all CodeQL security alerts, overhaul starter templates
+
+  **@fabrk/framework:**
+  - Fix client hydration: use inline import for virtual module instead of script src
+  - Fix 11 ReDoS vulnerabilities: replace polynomial regex with loop-based helpers
+  - Fix incomplete string escaping in middleware and SQL query tool
+  - Rewrite server-action-transform to line-by-line matching
+
+  **create-fabrk-app:**
+  - Rewrite basic template as polished landing page showcasing FABRK components
+  - Add @vitejs/plugin-react for HMR/Fast Refresh
+  - Add Tailwind v4 @source directive for component class scanning
+  - Add inline SVG favicon
+  - Fix port message (5173 for Vite, 3000 for Next.js)
+  - Make dev/build/start commands detect runtime (Vite vs Next.js)
+
 ## 0.3.0
 
 ### Minor Changes

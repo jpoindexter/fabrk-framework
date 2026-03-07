@@ -29,7 +29,7 @@ We take the security of FABRK framework seriously. If you believe you have found
 
 **Alternatively, email security reports to:**
 
-- Email: jason@fabrk.dev (or repository owner's email)
+- Email: support@fabrk.dev
 - Subject: [SECURITY] Brief description of the issue
 
 ### What to Include in Your Report:
